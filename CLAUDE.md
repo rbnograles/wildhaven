@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Wildhaven is a single-player, top-down browser exploration game. It is still a prototype. On the selection screen the player picks one of three characters: Frontier Scout, Wandering Builder, or Shipwreck Survivor. Each one starts at its own spot in one shared world. The current milestone covers character selection, exploration, supply gathering, discovering three regions, and saving each character separately. The long-term direction is a survival-and-settlement game with building, settlers, survival meters, and wolves. That design is in `docs/superpowers/specs/2026-11-19-survival-settlement-design.md`, but none of it is implemented. **Do not describe roadmap features as if they already exist.**
 
+The standardized game design document is `docs/gdd.md` (imported 2026-11-19 with `/game-import`). It tags every item **[Built]** or **[Planned]**, records the audience (cozy survival), fantasy (exploration/discovery), retention hooks, and the hobby/no-monetization intent, and lists open spec-vs-build mismatches. When the GDD and the code disagree, trust the code.
+
 ## Commands
 
 ```sh
@@ -116,3 +118,11 @@ Version 0.5.0 of [gstack-game](https://github.com/fagemx/gstack-game) (MIT licen
 - Each skill starts with a shell snippet that doesn't quote the project folder name. Because this folder's name contains a space ("game 1"), every skill run creates an empty `1/` folder in the project root. Delete it; it isn't part of the game.
 - `gstack-game-redact` and `gstack-review-log` need Bun, which isn't installed, so those steps are skipped.
 - Don't edit the installed `SKILL.md` files, because upstream generates them from `.tmpl` templates. To update, clone the repo fresh and run its `bin/install.sh --no-prefix .` from this project's root.
+
+## awesome-gamedev-agent-skills Plugins
+
+[awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) (Apache-2.0) is installed as Claude Code plugins at project scope (declared in `.claude/settings.json`). Unlike gstack-game, these skills write game code. Four bundles are enabled: `router`, `web-engines`, `disciplines` and `genres` (31 skills). The router detects Phaser from `package.json` and loads matching skills; the most useful here are `phaser-core`, `survival-crafting`, `save-systems`, `game-ai`, `create-game-assets`, `camera-systems`, `input-systems`, `game-feel` and `game-ui-ux`.
+
+- The other engine bundles were left out to keep the skill list short. The `workflows` bundle was also left out because its `game-docs` skill shares a name with gstack-game's `/game-docs`.
+- This file overrides those skills. In particular: **don't use Phaser Arcade Physics** (the router pairs it with movement work). Collision and movement stay in `state.js`, and input stays in `main.js`. Keep UI in HTML/DOM, not Phaser HUD scenes. Verify through the `wildhaven` launch config rather than adding Playwright.
+- Update with `claude plugin marketplace update awesome-gamedev-agent-skills`.
