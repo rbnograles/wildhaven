@@ -82,6 +82,26 @@ test('finishInteraction hands out a gathered supply, and nothing for an unknown 
   const pine = NODES.find((n) => n.id === 'pine-wood');
   const game = createGame('scout');
   Object.assign(game.player, { x: pine.x - 60, y: pine.y });
-  assert.deepEqual(finishInteraction(game, 'pine-wood'), { kind: 'gather', node: pine });
+  assert.deepEqual(finishInteraction(game, 'pine-wood'), {
+    kind: 'gather',
+    node: pine,
+    wear: null,
+  });
   assert.equal(finishInteraction(game, 'nowhere'), null);
+});
+
+// Guards wear through E: a finished chop costs a stone axe one use, the last use still pays out,
+// then the axe breaks; a bare-hand gather wears nothing.
+test('chopping wears a stone axe, and the last use still pays before it breaks', () => {
+  const pine = NODES.find((n) => n.id === 'pine-wood');
+  const game = createGame('survivor'); // starts with 2 wood
+  Object.assign(game.player, { x: pine.x - 60, y: pine.y });
+  game.tools.axe = { tier: 'stone', uses: 1 };
+  assert.deepEqual(finishInteraction(game, 'pine-wood'), {
+    kind: 'gather',
+    node: pine,
+    wear: 'broke',
+  });
+  assert.equal(game.resources.wood, 2 + pine.amount);
+  assert.equal(game.tools.axe, undefined);
 });

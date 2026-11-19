@@ -34,13 +34,16 @@ export const mapProperty = (name) => MAP.properties.find((p) => p.name === name)
 /** Every object the map placed: trees, rocks, houses, flowers and so on, each with a name and x/y. */
 export const MAP_OBJECTS = layer('objects').objects;
 
-// The solid base of every placed object, as [left, top, right, bottom] boxes. An object's
+// The solid base of every placed object, as [left, top, right, bottom, id] boxes. An object's
 // `footprint` in objects.json is [halfWidth, depth], grown by its `scale`; objects without one are walk-through.
+// The id is `<name>-<x>-<y>`, the same id a tree or rock node has, so a chopped tree's box can be skipped.
 export const OBSTACLES = MAP_OBJECTS.flatMap((o) => {
   const spec = OBJECT_SPECS[o.name],
     base = spec?.footprint,
     s = spec?.scale ?? 1;
-  return base ? [[o.x - base[0] * s, o.y - base[1] * s, o.x + base[0] * s, o.y]] : [];
+  return base
+    ? [[o.x - base[0] * s, o.y - base[1] * s, o.x + base[0] * s, o.y, `${o.name}-${o.x}-${o.y}`]]
+    : [];
 });
 
 // A water tile records which of its corners (TL, TR, BL, BR) are sea; blending them gives a smooth
@@ -156,18 +159,42 @@ for (const rect of OBSTACLES) {
 }
 
 /**
+ * Finds the obstacle boxes filed in the grid square that holds a spot.
+ * Spots just left of or above the world share the first column or row, as the objects there do.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {Array|undefined} The boxes, or undefined when that square has none.
+ */
+const bucketAt = (x, y) =>
+  buckets.get(Math.max(0, Math.floor(y / GRID)) * gridCols + Math.max(0, Math.floor(x / GRID)));
+
+/**
  * Says whether a spot is inside the solid base of any object the map placed.
  *
  * @param {number} x - World x position.
  * @param {number} y - World y position.
+ * @param {Function} [skip] - Given an object's id, returns true to ignore that object, such as a
+ *   tree that has been chopped down. Without it, every object counts.
  * @returns {boolean} True if a tree, rock or building blocks the spot.
  */
-export function hitsObstacle(x, y) {
-  // Spots just left of or above the world share the first column or row, as the objects there do.
-  const near = buckets.get(
-    Math.max(0, Math.floor(y / GRID)) * gridCols + Math.max(0, Math.floor(x / GRID)),
-  );
-  return near ? blocks(near, x, y) : false;
+export function hitsObstacle(x, y, skip) {
+  const near = bucketAt(x, y);
+  if (!near) return false;
+  return blocks(skip ? near.filter((rect) => !skip(rect[4])) : near, x, y);
+}
+
+/**
+ * Lists the map objects whose solid base covers a spot.
+ *
+ * Walking uses it to let a player out of a tree that grew back around them.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {string[]} The objects' ids (empty when the spot is clear).
+ */
+export function obstaclesAt(x, y) {
+  return (bucketAt(x, y) ?? []).filter((rect) => blocks([rect], x, y)).map((rect) => rect[4]);
 }
 
 // Hills (tools/build-map.py, "hills and cliffs"): one letter per tile, row by row. '0' to '3' says how
@@ -258,13 +285,15 @@ const insideWorld = (x, y) =>
  * @param {number[][]} [extra=[]] - More solid boxes to avoid, such as supplies not yet gathered.
  * @param {boolean} [cliffs=true] - False to ignore cliffs, so a player who loads a save made
  *   before a hill stood where they are can still load and walk off it.
+ * @param {Function} [skip] - Given a map object's id, returns true to ignore its solid base (a
+ *   chopped tree, say). Without it every map object counts.
  * @returns {boolean} True if the player may stand there.
  */
-export function isWalkable(x, y, extra = [], cliffs = true) {
+export function isWalkable(x, y, extra = [], cliffs = true, skip = undefined) {
   if (!insideWorld(x, y)) return false;
   return (
     waterAt(x, y) < 0.35 &&
-    !hitsObstacle(x, y) &&
+    !hitsObstacle(x, y, skip) &&
     !blocks(extra, x, y) &&
     !(cliffs && hitsCliff(x, y))
   );

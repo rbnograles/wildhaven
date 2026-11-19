@@ -1,9 +1,11 @@
 // What the E key (and the on-screen interact button) does right now. Several things share the
 // key, so this file picks one in a fixed order and does it: step ashore, board the boat, repair
-// an old boat, or gather a supply.
+// an old boat, or gather a supply. It also finishes timed actions, crafting a tool included.
 
 import { WRECKS } from '../data/places.js';
+import { wearTool } from '../world/tools.js';
 import { nearbyNode, beginGather, finishGather } from './gather.js';
+import { finishCraft, CRAFT_PREFIX } from './craft.js';
 import {
   nearbyWreck,
   beginRepair,
@@ -60,18 +62,26 @@ export function beginInteraction(state, animator) {
 }
 
 /**
- * Hands out the result of a timed action when it finishes: a mended boat or gathered supplies.
+ * Hands out the result of a timed action when it finishes: a mended boat, gathered supplies or a
+ * crafted tool.
  *
  * @param {object} state - The game being played.
- * @param {string} target - The id the action was aimed at: an old boat's or a node's.
- * @returns {{kind: string, wreck?: object, node?: object}|null} What was finished, or null if
- *   nothing was awarded.
+ * @param {string} target - The id the action was aimed at: an old boat's, a node's, or
+ *   `craft:<tool>` for a craft.
+ * @returns {{kind: string, wreck?: object, node?: object, wear?: string|null}|null} What was
+ *   finished, or null if nothing was awarded. After a gather, `wear` is 'warn' or 'broke' when a
+ *   stone tool is wearing out (see wearTool). A craft always gives `{kind: 'craft', ok, ...}` (see
+ *   finishCraft), even when its last check failed.
  */
 export function finishInteraction(state, target) {
+  if (target.startsWith(CRAFT_PREFIX))
+    return { kind: 'craft', ...finishCraft(state, target.slice(CRAFT_PREFIX.length)) };
   if (WRECKS.some((w) => w.id === target)) {
     const wreck = finishRepair(state, target);
     return wreck ? { kind: 'repair', wreck } : null;
   }
   const node = finishGather(state, target);
-  return node ? { kind: 'gather', node } : null;
+  if (!node) return null;
+  // A gather that needed a tool wears it a little; only stone tools wear out.
+  return { kind: 'gather', node, wear: node.tool ? wearTool(state, node.tool) : null };
 }

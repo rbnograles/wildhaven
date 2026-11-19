@@ -754,8 +754,8 @@ kbd {
 }
 
 /* A slot: the resource's picture in a dark painted square, with its count on a small plate at the */
-/* lower right. Food, herbs and Build are buttons; wood and stone are plain. The small key in the */
-/* corner (F, H, B) says which key does the same. Each slot's tooltip says what it is. */
+/* lower right. Food, herbs and Build are buttons; wood, stone and iron are plain. The small key in */
+/* the corner (F, H, B) says which key does the same. Each slot's tooltip says what it is. */
 .slot {
   position: relative;
   flex: none;
@@ -820,7 +820,16 @@ button.slot:hover {
 }
 
 /* A resource the player has none of is greyed, so a full slot stands out. */
-.slot.empty > img {
+/* Iron has no painted picture yet, so its slot shows the line icon at about the pictures' size. */
+.slot > svg {
+  width: 58%;
+  height: 58%;
+  color: #e6dcc0;
+  filter: drop-shadow(0 2px 2px #1b0f08aa);
+}
+
+.slot.empty > img,
+.slot.empty > svg {
   opacity: 0.45;
   filter: grayscale(1);
 }
@@ -861,11 +870,14 @@ button.slot:hover {
 }
 
 /* The build menu sits just above the item box, lined up with its right edge (the Build button). */
+/* With the Tools group the menu is tall, so on a short screen it scrolls instead of running off the top. */
 .build-menu {
   position: absolute;
   right: 0;
   bottom: calc(100% + 10px);
   width: 300px;
+  max-height: 70svh;
+  overflow-y: auto;
   padding: 12px;
 }
 
@@ -931,6 +943,59 @@ button.slot:hover {
 .build-option.short .build-cost {
   color: #a43c2c;
   font-weight: 600;
+}
+
+/* A tool already owned at its best tier: the entry stays in the list but can't be picked. */
+.build-option:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.build-option:disabled:hover {
+  background: #fffdf4;
+}
+
+/* The tool icons in the Tools group are wood-brown, not the campfire's orange. */
+.craft-option svg {
+  color: #8a6a43;
+}
+
+/* ---- Tools row ---- */
+
+/* The tools the player owns, as small chips in a row above the item box. */
+.tool-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tool-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 6px;
+  border: 1px solid #dcdccb;
+  border-radius: 999px;
+  background: #fffdf4;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tool-chip svg {
+  width: 15px;
+  height: 15px;
+  color: #8a6a43;
+}
+
+/* An iron tool's icon turns steel blue, so the upgrade shows at a glance. */
+.tool-chip.iron svg {
+  color: #4f6273;
+}
+
+/* A tool not owned yet is faded, like an empty item slot. */
+.tool-chip.empty {
+  opacity: 0.5;
 }
 
 /* The round face picture, cut from the same idle sprite sheet as the selection cards. */
@@ -1254,9 +1319,10 @@ button.slot:hover {
 
 /* ---- In-game: the action button and pop-up messages ---- */
 /* The "E Pick wild berries" button that appears above the item box when a supply is in reach. */
+/* The action button sits just above the tools row over the item box. */
 .interact {
   position: absolute;
-  bottom: 118px;
+  bottom: 148px;
   left: 50%;
   transform: translateX(-50%);
   border: 1px solid #ebeed4;
@@ -1285,7 +1351,7 @@ button.slot:hover {
 /* A short message such as "+3 wood". It starts invisible and 10px low. */
 .toast {
   position: absolute;
-  bottom: 256px;
+  bottom: 286px;
   left: 50%;
   transform: translate(-50%, 10px);
   background: #263b31ec;
@@ -1517,8 +1583,9 @@ button.slot:hover {
   padding: 1px 8px 1px 2px;
   color: #fbf3d6;
   font-weight: 600;
-  /* Raised to clear the painted item box, which is two rows of slots tall. */
-  bottom: 200px;
+  /* Raised to clear the painted item box, which is two rows of slots tall, and the tools */
+  /* row above it. */
+  bottom: 230px;
 }
 
 .interact kbd {
@@ -2020,7 +2087,7 @@ dialog::backdrop {
     margin-right: 18px;
   }
   .interact {
-    bottom: 150px;
+    bottom: 180px;
   }
 }
 
@@ -2134,12 +2201,12 @@ dialog::backdrop {
   }
   /* The action button and messages sit above the item box. */
   .interact {
-    bottom: 254px;
+    bottom: 284px;
     font-size: 10px;
     max-width: 90vw;
   }
   .toast {
-    bottom: 304px;
+    bottom: 334px;
     font-size: 11px;
   }
   .build-bar {
@@ -2328,6 +2395,11 @@ dialog::backdrop {
 
 /* ---- Action button while gathering ---- */
 /* A running gather shows its status in the action button; E does nothing until it ends. */
+/* A tree or rock that needs a tool the player doesn't have: E only explains, so the button is faded. */
+.interact.locked {
+  opacity: 0.75;
+}
+
 .interact.busy {
   cursor: default;
 }

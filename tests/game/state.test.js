@@ -8,7 +8,14 @@ import assert from 'node:assert/strict';
 import { CHARACTERS } from '../../src/data/characters.js';
 import { SUPPLIES } from '../../src/data/supplies.js';
 import { WRECKS } from '../../src/data/places.js';
-import { START_TIME, SUPPLY_REGROW, TEA_SECONDS, FOG_CELL } from '../../src/data/balance.js';
+import {
+  START_TIME,
+  SUPPLY_REGROW,
+  TEA_SECONDS,
+  FOG_CELL,
+  TOOL_USES,
+} from '../../src/data/balance.js';
+import { startingTools } from '../../src/world/tools.js';
 import { SEA_BORDER, isWalkable } from '../../src/world/map.js';
 import { NODES, nodeBases } from '../../src/world/nodes.js';
 import { REGIONS, regionOf } from '../../src/world/regions.js';
@@ -107,6 +114,20 @@ function v4Save(changes = {}) {
   return { ...game, version: 4, player: before(game.player), fog: oldFog([]), ...changes };
 }
 
+/**
+ * Writes a version 5 save the way the archipelago update did: today's shape, but no iron in the
+ * backpack and no tools.
+ *
+ * @param {string} characterId - Whose save it is.
+ * @param {object} [changes={}] - Fields to set on top.
+ * @returns {string} The save as JSON text.
+ */
+function v5Save(characterId, changes = {}) {
+  const { tools, ...game } = createGame(characterId);
+  const { iron, ...resources } = game.resources;
+  return JSON.stringify({ ...game, version: 5, resources, ...changes });
+}
+
 // Guards against two characters sharing a start spot, a start spot inside water, a tree or a
 // supply's solid base, and against a typo'd character id quietly making a game.
 test('all characters begin at distinct, walkable locations with their own identity', () => {
@@ -127,7 +148,7 @@ test('all characters begin at distinct, walkable locations with their own identi
 test('a new game starts on the morning of day 1 with full meters, on foot, and the fog lifted around the spawn', () => {
   const game = createGame('scout');
   assert.equal(game.version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 5);
+  assert.equal(SAVE_VERSION, 6);
   assert.equal(game.time, START_TIME);
   assert.deepEqual(game.meters, { health: 100, hunger: 100, warmth: 100 });
   assert.equal(game.tea, 0);
@@ -145,7 +166,7 @@ test('save restores character, coordinates and progress without sharing mutable 
   movePlayer(original, 1, 0, 0.1);
   original.resources.wood = 9;
   original.resources.herbs = 4;
-  original.regrowAt[flowers[0].id] = 42;
+  original.regrowAt[flowers[0].id] = 1042; // still growing back at time 1000
   original.landmarks.push('h-square');
   original.waypoints.push('h-wp-village');
   original.discovered.push('meadows');
@@ -197,6 +218,14 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
     (g) => (g.tea = TEA_SECONDS + 1),
     (g) => (g.fog = g.fog.slice(1)),
     (g) => (g.fog = 'x' + g.fog.slice(1)),
+    (g) => (g.tools = undefined),
+    (g) => (g.tools = []),
+    (g) => (g.tools = { saw: { tier: 'stone', uses: 1 } }),
+    (g) => (g.tools = { axe: { tier: 'gold' } }),
+    (g) => (g.tools = { axe: { tier: 'stone', uses: 0 } }),
+    (g) => (g.tools = { axe: { tier: 'stone', uses: 1.5 } }),
+    (g) => (g.tools = { hammer: { tier: 'stone', uses: TOOL_USES.hammer + 1 } }),
+    (g) => (g.resources.iron = -1),
     (g) => (g.camps = {}),
     (g) => g.camps.push({ ...campAt(g), id: 'tent' }),
     (g) => g.camps.push({ ...campAt(g), name: '' }),
@@ -455,4 +484,58 @@ test('a broken version 4 save, or one without the survival fields, is refused', 
 // wild patch ids out by the sea border never renames a supply's timer by mistake.
 test('fixed supply ids never look like a map position', () => {
   for (const supply of SUPPLIES) assert.doesNotMatch(supply.id, /-\d+-\d+$/);
+});
+
+// Guards the starting kit: a new game holds the character's stone tools and an empty iron slot.
+test('a new game starts with the kit tools and no iron', () => {
+  assert.deepEqual(createGame('scout').tools, { axe: { tier: 'stone', uses: TOOL_USES.axe } });
+  assert.deepEqual(createGame('builder').tools, {
+    hammer: { tier: 'stone', uses: TOOL_USES.hammer },
+  });
+  assert.deepEqual(createGame('survivor').tools, {});
+  assert.equal(createGame('scout').resources.iron, 0);
+});
+
+// Guards tools through a save: both tiers come back as they were, as fresh objects.
+test('tools survive a save and load as fresh copies', () => {
+  const game = createGame('scout');
+  game.tools.pickaxe = { tier: 'iron' };
+  game.tools.axe.uses = 7;
+  const restored = restoreGame(serializeGame(game));
+  assert.deepEqual(restored.tools, game.tools);
+  restored.tools.axe.uses = 1;
+  assert.equal(game.tools.axe.uses, 7);
+});
+
+// Guards archipelago saves: a version 5 adventure keeps its progress and gains an empty iron
+// slot and the kit tools the character's card always promised.
+test('a version 5 save gains iron and the character kit tools', () => {
+  for (const id of ['scout', 'builder', 'survivor']) {
+    const game = restoreGame(v5Save(id, { distance: 1234 }));
+    assert.equal(game.version, SAVE_VERSION, id);
+    assert.equal(game.distance, 1234, id);
+    assert.equal(game.resources.iron, 0, id);
+    assert.deepEqual(game.tools, startingTools(id), id);
+  }
+});
+
+// Guards save size: timers that already ran out are dropped, since those nodes are back anyway.
+test('regrowth timers that have run out are dropped on load', () => {
+  const game = createGame('scout'),
+    [a, b] = flowers;
+  game.time = 500;
+  game.regrowAt = { [a.id]: 400, [b.id]: 600 };
+  assert.deepEqual(restoreGame(serializeGame(game)).regrowAt, { [b.id]: 600 });
+});
+
+// Guards loading a save made on a chopped tree's spot: it must load, not be thrown away.
+test('a save made where a chopped tree stood still loads', () => {
+  const tree = NODES.find(
+    (n) =>
+      n.inScenery && !isWalkable(n.x, n.y - 5) && isWalkable(n.x, n.y - 5, [], false, () => true),
+  );
+  const game = createGame('scout');
+  Object.assign(game.player, { x: tree.x, y: tree.y - 5 });
+  game.regrowAt[tree.id] = game.time + 100;
+  assert.deepEqual(restoreGame(serializeGame(game))?.player, game.player);
 });
