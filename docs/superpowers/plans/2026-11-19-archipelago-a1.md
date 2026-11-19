@@ -53,12 +53,12 @@
 
 ### Task 0: Branch
 
-- [ ] **Step 1: Make a branch and commit the design docs**
+- [x] **Step 1: Make a branch and commit the design docs** (done in the worktree)
 
 The spec, the GDD update and this plan are uncommitted on `main`. Another session's untracked `docs/superpowers/specs/2026-11-19-m2-loop-proof-design.md` must **not** be added.
 
 ```bash
-git checkout -b archipelago-a1
+# Done by the controller: the work runs in the worktree .claude/worktrees/archipelago-a1 on branch worktree-archipelago-a1
 ```
 
 ```bash
@@ -2940,7 +2940,7 @@ Add a dated section "Archipelago A1 (2026-11-19)" listing what Task 10's browser
 
 - [ ] **Step 5: Spec status**
 
-In the spec's header, change the status to `**Status:** slice A1 built on branch archipelago-a1`.
+In the spec's header, change the status to `**Status:** slice A1 built on branch worktree-archipelago-a1`.
 
 - [ ] **Step 6: Final checks and commit**
 

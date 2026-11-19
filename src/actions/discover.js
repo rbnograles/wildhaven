@@ -1,9 +1,9 @@
 // The "discover" action: notices when the player first enters a region, comes close to a
-// landmark, or walks up to a signpost.
+// landmark or an old boat, or walks up to a signpost.
 
 import { regionOf } from '../world/regions.js';
-import { LANDMARKS, WAYPOINTS } from '../data/places.js';
-import { LANDMARK_RADIUS, WAYPOINT_RADIUS } from '../data/balance.js';
+import { LANDMARKS, WAYPOINTS, WRECKS } from '../data/places.js';
+import { LANDMARK_RADIUS, WAYPOINT_RADIUS, WRECK_RADIUS } from '../data/balance.js';
 
 /**
  * Marks everything the player has just found and reports it.
@@ -11,9 +11,9 @@ import { LANDMARK_RADIUS, WAYPOINT_RADIUS } from '../data/balance.js';
  * Like stamping a passport: the first visit to a place adds a stamp, and later visits don't add
  * another one. The game loop calls this every frame.
  *
- * @param {object} state - The game being played. New finds are added to `discovered`, `landmarks` or `waypoints`.
+ * @param {object} state - The game being played. New finds are added to `discovered`, `landmarks`, `waypoints` or `wrecks`.
  * @returns {{kind: string, id: string, name: string}[]} What was found just now (usually nothing),
- *   so the HUD can announce it. `kind` is 'region', 'landmark' or 'waypoint'.
+ *   so the HUD can announce it. `kind` is 'region', 'landmark', 'waypoint' or 'wreck'.
  */
 export function discover(state) {
   const found = [];
@@ -24,10 +24,11 @@ export function discover(state) {
     found.push({ kind: 'region', id: region.id, name: region.name });
   }
 
-  // Landmarks and signposts are found by coming close; each list remembers the ids already found.
+  // Landmarks, signposts and old boats are found by coming close; each list remembers the ids already found.
   for (const [kind, places, list, radius] of [
     ['landmark', LANDMARKS, state.landmarks, LANDMARK_RADIUS],
     ['waypoint', WAYPOINTS, state.waypoints, WAYPOINT_RADIUS],
+    ['wreck', WRECKS, state.wrecks, WRECK_RADIUS],
   ])
     for (const place of places) {
       if (list.includes(place.id)) continue;

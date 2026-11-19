@@ -228,17 +228,19 @@ export function setupCamp(session, ui) {
   }
 
   /**
-   * Shows the screen after passing out: what happened, where the player woke, and any new needs.
+   * Shows the screen after passing out: what happened, where the player woke, whether their boat
+   * drifted home, and any new needs.
    *
-   * @param {{camp: object|null, events: object[]}} result - What `passOut` returned.
+   * @param {{camp: object|null, events: object[], boatHome: boolean}} result - What `passOut` returned.
    */
-  function showPassOut({ camp, events }) {
+  function showPassOut({ camp, events, boatHome }) {
     const dawn = events.find((e) => e.kind === 'dawn');
     $('passout-text').textContent = [
       'You got too cold away from a fire.',
       camp
         ? `You woke at ${camp.name} at midday.`
         : 'You woke where you started, at midday. Build a campfire so you have somewhere warm to return to.',
+      boatHome ? 'Your boat drifted back to where you mended it.' : '',
       dawn?.camps.length ? `New needs at ${dawn.camps.join(', ')}.` : '',
     ]
       .filter(Boolean)

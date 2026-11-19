@@ -5,7 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { WORLD, CLIFF_GAP, isWalkable } from '../../src/world/map.js';
 import { RUN_SPEED, MAX_MOVE_DT } from '../../src/data/balance.js';
-import { NODES, nodeBases } from '../../src/world/nodes.js';
+import { NODES, nodeBases, solidBases } from '../../src/world/nodes.js';
+import { WRECKS } from '../../src/data/places.js';
 import { createGame } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
 
@@ -44,6 +45,18 @@ test('supply bases block movement until gathered, and never trap a player alread
   game.player.x = node.x;
   game.player.y = node.y - 5;
   assert.ok(movePlayer(game, -1, 0, 0.1)); // e.g. a save made before the tree stood here
+});
+
+// Guards the old boats on the beach: each is a solid hull to walk around, except the one the
+// player repaired, which has gone to sea.
+test('old boats block walking, except the one the player repaired', () => {
+  const wreck = WRECKS.find((w) => w.id === 'wreck-east');
+  assert.ok(isWalkable(wreck.x, wreck.y - 5));
+  assert.equal(isWalkable(wreck.x, wreck.y - 5, solidBases(createGame('survivor'))), false);
+
+  const owner = createGame('survivor');
+  owner.boat = { from: wreck.id, x: wreck.launch.x, y: wreck.launch.y, dir: 2 };
+  assert.ok(isWalkable(wreck.x, wreck.y - 5, solidBases(owner)));
 });
 
 // Guards the cliff edges against a fast runner: even at running speed with the longest step the

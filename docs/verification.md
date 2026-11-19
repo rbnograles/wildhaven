@@ -233,3 +233,35 @@ Browser at `http://127.0.0.1:5173` (another chat's dev server on this folder; 10
 - No console errors.
 
 Not checked by hand: the canyon kit in game (checked in an offline full-resolution render only), frame rate (the hidden pane is throttled; about 160 sprites are on screen at once), and the 390 px layout (no layout changed).
+
+## Archipelago A1 (2026-11-19)
+
+Browser check (Task 10) at 127.0.0.1:5188, because other sessions held 5173 and 5179. Survivor repaired the Lagoon Rowboat (glow and E cap, progress bar, old boat faded, brown rowboat in the water pointing east), boarded (character shows from the waist up, boat rocks), rowed to Gull Isle ("Found Gull Isle"), hit "Too rough for a small boat." at the deep water, landed on the islet and the mainland, and the boat turned for north and south. Reloading aboard and ashore restored player and boat. Scout found the Pinefall Shore Rowboat, "Pick up driftwood" on the beach, goal card read Wood 6 / 6. A version 3 Builder save loaded with "Welcome back." Narrow screen (375 px): the button read "Board the boat" and boarded by tap. After landing, `player.setCrop()` with no arguments reset the crop (full body again). No console errors; about 60 fps while rowing (requestAnimationFrame count over 5 s).
+
+Known issue: on the world map the "Driftwood Lagoon" label sits over the shallow sea east of the coast, not on land.
+
+## Main's hills and ground detail merged into archipelago A1 — 2026-11-19
+
+`python tools/build-map.py`: 2068 tiles, 6,838 objects, 4.4 MB map file, 25 flights of stairs, 132 cliff tiles; hills per kit: 6 canyon, 8 meadow, 3 snow. Hills are placed in land units on the old land's grid with main's seeds, so main's elevation grid equals the merged grid cropped to tiles 32–287 (rows) × 32–415 (columns), tile for tile: no hill moved or dropped, and the sea border is all level 0. The cliffs layer matches main's too (its tile numbers move up by 240, the new `deep` layer's tiles), and the 25 stairs objects sit at main's spots plus 2,048. Automated: `npm test` 94 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5188` (this worktree's dev server, 800×600, hidden pane), with the test builder save moved by hand; the origin's saves were backed up and restored afterwards:
+- Stonewater Canyons, the hill nearest the west coast (stairs foot at 4096, 9888): walking north climbed the stairs onto the plateau and stopped at its north edge. Walls, stairs, lips and dry grass drew.
+- West coast by the Canyon Coast Rowboat: sea, sand beach and the old boat drew; the minimap showed shallow and deep sea.
+- No console errors on these loads. (The log's 500s and `"<<<<<<< HE"` JSON errors came from Vite reloading while the merge still had conflict markers.)
+
+Not checked by hand: boating next to a hill (no flight of stairs is within 700 units of water), the meadow and snow kits in game, and the 390 px layout (no layout changed).
+
+## Main's M2 survival loop merged into archipelago A1 — 2026-11-19
+
+`python tools/build-map.py`: 2068 tiles, 6837 objects, 4.4 MB map file, 25 flights of stairs, 132 cliff tiles; hills per kit: 6 canyon, 8 meadow, 3 snow (one object fewer than before: M2 took the Scout's fixed campfire out of the map). Automated: `npm test` 159 passing (new: version 5 round trip, version 3 → 5 and version 4 → 5 upgrades with a camp and fog squares landing at +2,048, rejections including the never-released archipelago version 4, `growFog`, the region-reveal margin, `solidBases`, `sendBoatHome`, passing out aboard, no building aboard), `npm run build` and `npm run format:check` pass. An offline check of main's map against the merged one: of the old map's standable spots (100-unit grid), 0.28% are no longer standable after the 2,048 shift, nearly all within 600 units of the old map's edge where the new coast cuts in; a version 4 player there goes to their spawn and a camp there is dropped.
+
+Browser at `http://127.0.0.1:5188` (this worktree's dev server; 1280×800 and the pane's own narrow size). The origin's three saves were backed up, replaced by test saves, and restored afterwards:
+- An M2 version 4 Survivor save (old map positions, old-size fog, one camp) loaded: player and camp both 2,048 further in, fog 2,240 letters, saved back as version 5.
+- The goals card read "AN OLD BOAT · Mend a boat" with Wood 6 / 6 and Stone 2 / 2 while the old boat was found and unmended, then the camp's needs. The key strip read "E Gather · Boat", the big map canvas is 1120×800, and the bottom bar showed the player card, item box with Build and the round minimap.
+- E repaired the old boat (8 s, cost paid once), boarded it ("Board the boat"), B in the boat said "Step ashore to build" and kept the menu shut, rowing east at dusk drew the night layer and the light around the boat over the whole view out to the deep sea, E stepped ashore, and beside the camp the button read "Open Lagoon Camp" and E opened its dialog.
+- Passing out aboard (test save at night, warmth 0, health 2): the pass-out screen said "Your boat drifted back to where you mended it."; the player woke on foot 90 units south of the fire and the boat sat at its launch spot pointing east.
+- World map: the whole 7:5 world under fog, the camp named, the moored boat's brown oval drawn.
+- A fresh Scout began on day 1 morning with "Build a campfire" and no campfire at the Scout's camp. An archipelago-only version 4 save showed "could not be read. Start fresh to play.", as decided.
+- No console errors.
+
+Not checked by hand: the 390 px layout beyond a first look (no layout rule changed), signpost travel while aboard (left for the final fixes), and the far corners of the sea border at night (the camera stops at the world edge and the night layer follows the camera, as in M2).

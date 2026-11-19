@@ -13,11 +13,12 @@ import {
   WAKE_OFFSET,
 } from '../data/balance.js';
 import { isWalkable } from '../world/map.js';
-import { nodeBases, goneSupplies } from '../world/nodes.js';
-import { nearestCamp, campInReach, campBases } from '../world/camps.js';
+import { solidBases } from '../world/nodes.js';
+import { nearestCamp, campInReach } from '../world/camps.js';
 import { meetNeed } from '../world/needs.js';
 import { nextDawn, nextMidday, phaseOf } from '../world/clock.js';
 import { skipTo } from './survive.js';
+import { sendBoatHome } from './boat.js';
 
 /**
  * Hands over the resources a camp's need asks for, which meets the need and grows the fire.
@@ -113,7 +114,7 @@ export function rest(state) {
  * @returns {{x: number, y: number}} A walkable spot, or the fire's own spot if all four are blocked.
  */
 function wakeSpot(state, camp) {
-  const solid = [...nodeBases(goneSupplies(state)), ...campBases(state)];
+  const solid = solidBases(state);
   for (const [dx, dy] of [
     [0, 1],
     [-1, 0],
@@ -132,13 +133,16 @@ function wakeSpot(state, camp) {
  *
  * Nothing is taken away: resources, camps and finds all stay. The clock jumps to the next midday
  * and the player wakes beside the camp fire nearest to where they fell (or at their starting
- * spot if they have no camp yet) with half their health, full warmth and no tea.
+ * spot if they have no camp yet) with half their health, full warmth and no tea. Someone who
+ * passes out in the boat wakes on foot, and the empty boat drifts back to its home mooring.
  *
- * @param {object} state - The game being played. The clock, position, meters and tea change.
- * @returns {{camp: object|null, events: object[]}} The camp they woke at (null for the spawn),
- *   and the events of the skipped time.
+ * @param {object} state - The game being played. The clock, position, meters and tea change, and
+ *   `boat` and `aboard` too when the player was in the boat.
+ * @returns {{camp: object|null, events: object[], boatHome: boolean}} The camp they woke at (null
+ *   for the spawn), the events of the skipped time, and whether the boat drifted home.
  */
 export function passOut(state) {
+  const boatHome = state.aboard && sendBoatHome(state);
   const camp = nearestCamp(state);
   const spot = camp
     ? wakeSpot(state, camp)
@@ -147,5 +151,5 @@ export function passOut(state) {
   Object.assign(state.player, { x: spot.x, y: spot.y, direction: 0 });
   Object.assign(state.meters, { health: WAKE_HEALTH, warmth: 100 });
   state.tea = 0;
-  return { camp, events };
+  return { camp, events, boatHome };
 }

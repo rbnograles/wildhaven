@@ -9,18 +9,21 @@ import {
   MAX_CAMPS,
 } from '../data/balance.js';
 import { isWalkable, blocks } from '../world/map.js';
-import { NODES, nodeBases, goneSupplies } from '../world/nodes.js';
-import { campBases, fireBase, suggestCampName, cleanCampName } from '../world/camps.js';
+import { NODES, solidBases } from '../world/nodes.js';
+import { fireBase, suggestCampName, cleanCampName } from '../world/camps.js';
 import { makeNeeds } from '../world/needs.js';
 
 // The spacing, in world units, of the test points poked across a fire's base (see baseIsClear).
 const PROBE = 16;
 
+/** What the game says when the player tries to build while sitting in the boat. */
+export const BUILD_ABOARD = 'Step ashore to build';
+
 /**
  * Says whether a campfire's whole solid base would stand on open ground.
  *
  * It pokes test points every 16 units across the base, like checking a cake with a skewer, and
- * each one must be clear of water, scenery, standing supplies and other fires.
+ * each one must be clear of water, scenery, standing supplies, old boats and other fires.
  *
  * @param {object} state - The game being played.
  * @param {number} x - World x of the fire.
@@ -29,7 +32,7 @@ const PROBE = 16;
  */
 function baseIsClear(state, x, y) {
   const [left, top, right, bottom] = fireBase(x, y);
-  const solid = [...nodeBases(goneSupplies(state)), ...campBases(state)];
+  const solid = solidBases(state);
   for (let py = top; py < bottom + PROBE; py += PROBE)
     for (let px = left; px < right + PROBE; px += PROBE)
       if (!isWalkable(Math.min(px, right), Math.min(py, bottom), solid)) return false;
@@ -39,17 +42,19 @@ function baseIsClear(state, x, y) {
 /**
  * Checks whether a campfire may be placed at a spot, without changing anything.
  *
- * The first rule that fails is the answer: not enough wood and stone, already as many camps as a
- * save can hold, too far from the player, something in the way, or too close to another camp.
+ * The first rule that fails is the answer: the player is in the boat (a fire can't be lit from
+ * the water), not enough wood and stone, already as many camps as a save can hold, too far from
+ * the player, something in the way, or too close to another camp.
  *
  * @param {object} state - The game being played.
  * @param {number} x - World x of the spot.
  * @param {number} y - World y of the spot.
  * @returns {{ok: boolean, reason?: string, message?: string}} `ok` when the fire may go there;
- *   otherwise `reason` ('cost', 'limit', 'far', 'blocked' or 'close') and a `message` to show.
+ *   otherwise `reason` ('aboard', 'cost', 'limit', 'far', 'blocked' or 'close') and a `message` to show.
  */
 export function checkPlacement(state, x, y) {
   const { resources, player } = state;
+  if (state.aboard) return { ok: false, reason: 'aboard', message: BUILD_ABOARD };
   if (Object.entries(CAMPFIRE_COST).some(([type, amount]) => resources[type] < amount))
     return {
       ok: false,

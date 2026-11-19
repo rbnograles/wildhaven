@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD } from '../../src/world/map.js';
+import { WORLD, isDryLand } from '../../src/world/map.js';
 import {
   REGIONS,
   REGION_GRID,
@@ -11,7 +11,7 @@ import {
   regionOf,
   regionAt,
 } from '../../src/world/regions.js';
-import { LANDMARKS, WAYPOINTS, SPAWNS } from '../../src/data/places.js';
+import { LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
 
 // Guards the grid the map builder stored: it must cover the whole world with known regions.
 test('the region grid covers the world and only names known regions', () => {
@@ -29,10 +29,19 @@ test('the region grid covers the world and only names known regions', () => {
   assert.equal(used.size, 7);
 });
 
+// Guards the world-map labels: a label on the sea (the lagoon) or on a pool (the desert) looks wrong.
+test('every region label is on dry land', () => {
+  for (const r of REGIONS) {
+    assert.ok(isDryLand(r.x, r.y), r.id);
+    assert.equal(regionOf(r.x, r.y).id, r.id, r.id);
+  }
+});
+
 // Guards the link between a place and its region: the HUD counts places per region, so a
 // landmark that sits across a border would be counted where the player never sees it.
-test('every landmark and signpost lies inside the region it names', () => {
-  for (const p of [...LANDMARKS, ...WAYPOINTS]) assert.equal(regionOf(p.x, p.y).id, p.region, p.id);
+test('every landmark, signpost and old boat lies inside the region it names', () => {
+  for (const p of [...LANDMARKS, ...WAYPOINTS, ...WRECKS])
+    assert.equal(regionOf(p.x, p.y).id, p.region, p.id);
 });
 
 // Guards the starting regions and the name shown at the top of the screen.

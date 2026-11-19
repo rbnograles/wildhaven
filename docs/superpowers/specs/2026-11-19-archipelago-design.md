@@ -1,6 +1,6 @@
 # Archipelago Design (slice 1 of 4: island home and a small boat)
 
-**Date:** 2026-11-19 · **Status:** design approved in chat; spec awaiting review
+**Date:** 2026-11-19 · **Status:** slice A1 built on branch worktree-archipelago-a1
 
 ## Vision
 
@@ -64,7 +64,7 @@ With today's supplies:
 - **Land:** press E ("Step ashore") when walkable ground is within `LAND_RANGE` (160 units). The player steps onto the nearest walkable point; the boat stays moored where it is.
 - A boat floats where the sea covers at least half a spot (walking stops at 0.35), so it stays just off the beach.
 - Gathering is on foot only. Discovery works while sailing: regions, landmarks, signposts and old boats are found from the boat.
-- **Signpost travel** leaves the boat where it is, moored or with the player just taken out of it. The player walks back to it.
+- **Signpost travel** takes the player out of the boat and sends the boat drifting back to its old boat's `launch` spot (the player arrives on foot). A boat left at an islet could otherwise never be reached again. The map's travel toast says when the boat drifted home.
 
 ### The reward
 

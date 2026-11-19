@@ -3,7 +3,7 @@
 // one digit per square; each digit is a region's place in the list in assets/world/source/places.json.
 
 import { REGION_LIST } from '../data/places.js';
-import { mapProperty } from './map.js';
+import { mapProperty, isDryLand } from './map.js';
 
 const cell = mapProperty('regionCell'),
   cols = mapProperty('regionCols'),
@@ -24,10 +24,18 @@ export const regionIndexAt = (cx, cy) => Number(grid[cy * cols + cx]);
 
 // A label on the world map needs one spot per region. The average of a region's squares can fall
 // outside an L-shaped region, so the label goes on the region's own square nearest that average.
+// Squares out at sea are left out of both steps, so a label never floats on the water.
 const centreOf = (index) => {
-  const squares = [];
+  const squares = [],
+    dry = [];
   for (let cy = 0; cy < rows; cy++)
-    for (let cx = 0; cx < cols; cx++) if (regionIndexAt(cx, cy) === index) squares.push([cx, cy]);
+    for (let cx = 0; cx < cols; cx++)
+      if (regionIndexAt(cx, cy) === index) {
+        squares.push([cx, cy]);
+        if (isDryLand((cx + 0.5) * cell, (cy + 0.5) * cell)) dry.push([cx, cy]);
+      }
+  // A region with no dry square at all (not today) falls back to all of its squares.
+  if (dry.length) squares.splice(0, squares.length, ...dry);
   const ax = squares.reduce((sum, s) => sum + s[0], 0) / squares.length,
     ay = squares.reduce((sum, s) => sum + s[1], 0) / squares.length;
   const [cx, cy] = squares.reduce((best, s) =>

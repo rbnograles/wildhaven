@@ -5,11 +5,13 @@
 import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
+import { WRECKS } from '../data/places.js';
 import { WILD } from '../data/supplies.js';
 import { FIRE_RADIUS } from '../data/balance.js';
 import { drawMap } from './maps.js';
 import { createLighting } from './lighting.js';
-import { nearbyNode, isAvailable } from '../actions/gather.js';
+import { isAvailable } from '../actions/gather.js';
+import { chooseInteraction } from '../actions/interact.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress } from '../animation/clips.js';
 import mapData from '../../assets/world/map/wildhaven.json';
@@ -38,6 +40,9 @@ const TILE_LAYERS = mapData.layers.filter((l) => l.type === 'tilelayer').map((l)
 
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;
+
+// How much of the character shows above the hull while sitting in the boat, from the top down.
+const SEATED = 0.6;
 
 // Scenery is grouped into squares this many world units wide; only squares near the camera are shown.
 const CHUNK = 1024;
@@ -80,6 +85,7 @@ export async function createRenderer(container, miniCanvas) {
   let player,
     shadow,
     supplies,
+    boat,
     cue,
     bar,
     ghost,
@@ -92,8 +98,10 @@ export async function createRenderer(container, miniCanvas) {
     fires = new Map();
 
   const scene = await new Promise((resolve, reject) => {
+    // On timeout, run fail() so the half-built game is destroyed too; a leftover canvas would cover
+    // the new one on "Try again". The game always exists by then: 20 s is long after it was made.
     const timer = setTimeout(
-      () => reject(new Error('The world took too long to load. Please try again.')),
+      () => fail('The world took too long to load. Please try again.'),
       20000,
     );
 
@@ -162,7 +170,19 @@ export async function createRenderer(container, miniCanvas) {
         // The glow filter is added the first time a supply comes into reach (see glowOf), because the world has
         // hundreds of flower patches and a filter on every one would be slow.
         webgl = this.renderer.type === Phaser.WEBGL;
-        supplies = NODES.map((node) => {
+        // Old boats on the beach are drawn the same way; the one the player repaired fades out.
+        supplies = [
+          ...NODES.map((node) => ({
+            node,
+            /** True while the supply or patch has nothing to give. */
+            gone: (state) => !isAvailable(state, node),
+          })),
+          ...WRECKS.map((w) => ({
+            node: { ...w, sprite: 'old-boat', scale: 1 },
+            /** True once this old boat has been repaired and is at sea. */
+            gone: (state) => state.boat?.from === w.id,
+          })),
+        ].map(({ node, gone }) => {
           const spec = objectSpecs[node.sprite];
           const sprite = this.add
             .image(node.x, node.y, `object-${node.sprite}`)
@@ -172,11 +192,18 @@ export async function createRenderer(container, miniCanvas) {
           // Cue height: the sprite's top, but on a tall tree's canopy rather than its tip, where it would crowd the HUD.
           return {
             node,
+            gone,
             sprite,
             glow: null,
             top: Math.max(node.y - sprite.displayHeight * sprite.originY, node.y - 150),
           };
         });
+
+        // The player's own boat, hidden until they have one.
+        boat = this.add
+          .image(0, 0, 'object-rowboat')
+          .setOrigin(...objectSpecs.rowboat.origin)
+          .setVisible(false);
 
         // The floating "E" key cap over the supply in reach, and the progress bar that replaces it.
         const cap = this.add
@@ -350,20 +377,22 @@ export async function createRenderer(container, miniCanvas) {
     }
 
     // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
-    const nearest = nearbyNode(state),
+    // What E would do now: a supply or old boat it targets glows with an E cap over it.
+    const choice = chooseInteraction(state),
+      aimed = choice?.kind === 'gather' || choice?.kind === 'repair' ? choice.target.id : null,
       busy = animator.pending?.target,
       step = reducedMotion || snap ? 1 : dt * 4;
     let capped = null,
       working = null;
     snap = false;
     for (const s of supplies) {
-      const gone = !isAvailable(state, s.node);
+      const gone = s.gone(state);
       s.sprite.setAlpha(
         gone ? Math.max(0, s.sprite.alpha - step) : Math.min(1, s.sprite.alpha + step),
       );
       s.sprite.setVisible(s.sprite.alpha > 0);
       // Highlight the supply being worked on, or else the nearest one in reach.
-      const target = !gone && (busy ? s.node.id === busy : s.node.id === nearest?.id);
+      const target = !gone && (busy ? s.node.id === busy : s.node.id === aimed);
       if (target) {
         const glow = glowOf(s);
         if (glow) glow.active = true;
@@ -372,6 +401,20 @@ export async function createRenderer(container, miniCanvas) {
         if (busy) working = s;
         else capped = s;
       }
+    }
+
+    // The player's boat, pointing the way it last went and rocking gently on the water.
+    // The art's bow points east: it is mirrored for west and turned a quarter for north and south.
+    const bob = reducedMotion ? 0 : Math.sin(performance.now() / 500) * 2;
+    boat.setVisible(!!state.boat);
+    if (state.boat) {
+      const { x, y, dir } = state.boat;
+      boat
+        .setPosition(x, y + bob)
+        .setFlipX(dir === 1)
+        .setAngle(dir === 0 ? 90 : dir === 3 ? -90 : 0)
+        .setDepth(y - 1);
+      if (choice?.kind === 'board') capped = { node: { x, y }, top: y - 40 };
     }
 
     // The E key cap bobs gently over the supply in reach.
@@ -395,11 +438,12 @@ export async function createRenderer(container, miniCanvas) {
     }
 
     // A timed action is longer than one pass of its clip, so it loops until the action ends.
+    // In the boat the player sits still, so the idle pose is used.
     const pose = resolvePose(
       sheets,
       state.character,
-      animator.clip,
-      animator.time,
+      state.aboard ? 'idle' : animator.clip,
+      state.aboard ? 0 : animator.time,
       state.player.direction,
       animator.pending ? true : undefined,
     );
@@ -410,9 +454,21 @@ export async function createRenderer(container, miniCanvas) {
       .setOrigin(pose.flip ? 1 - pivot : pivot, 1)
       .setFlipX(pose.flip)
       .setScale(PLAYER_HEIGHT / pose.sheet.referenceHeight)
-      .setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift)
       .setDepth(state.player.y);
-    shadow.setPosition(state.player.x, state.player.y - 1).setDepth(state.player.y - 0.5);
+    if (state.aboard) {
+      // Show only the top of the character and sink the cut line into the hull, so they sit in the boat.
+      player
+        .setCrop(0, 0, pose.frame.width, pose.frame.height * SEATED)
+        .setPosition(
+          state.player.x,
+          state.player.y + bob + 10 + player.displayHeight * (1 - SEATED),
+        );
+    } else
+      player.setCrop().setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift);
+    shadow
+      .setVisible(!state.aboard)
+      .setPosition(state.player.x, state.player.y - 1)
+      .setDepth(state.player.y - 0.5);
 
     // The ghost campfire while placing one: tinted green where it may stand and red where it may
     // not, with a ring showing how far a new fire's warmth reaches.

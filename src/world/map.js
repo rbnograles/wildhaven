@@ -43,30 +43,42 @@ export const OBSTACLES = MAP_OBJECTS.flatMap((o) => {
   return base ? [[o.x - base[0] * s, o.y - base[1] * s, o.x + base[0] * s, o.y]] : [];
 });
 
-// A water tile records which of its corners (TL, TR, BL, BR) are sea; blending them gives a smooth shoreline.
+// A water tile records which of its corners (TL, TR, BL, BR) are sea; blending them gives a smooth
+// shoreline. The deep layer does the same for open sea far from land.
 const TILE = MAP.tilewidth,
   water = layer('water').data,
-  firstWater = mapProperty('firstWaterGid');
+  firstWater = mapProperty('firstWaterGid'),
+  deep = layer('deep').data,
+  firstDeep = mapProperty('firstDeepGid');
+
+/** How many world units of sea surround the home continent on every side (PAD in tools/build-map.py). */
+export const SEA_BORDER = mapProperty('seaBorder');
+
+// The sea must cover at least this much of a spot before a boat floats there. Walking stops at
+// 0.35, so a boat stays a little off the sand instead of sitting on the beach.
+const FLOAT_AT = 0.5;
 
 /**
- * Says how wet a spot is, from 0 (dry land) to 1 (open sea).
+ * Says how much of a spot one corner-pattern layer covers, from 0 (none) to 1 (all of it).
  *
- * Each water tile knows which of its four corners are sea. We blend those corners by how close
- * the spot is to each one, like mixing paint, so the coastline is a smooth curve instead of a
- * staircase of squares. The tile's number in the map (its "gid") encodes the corner pattern.
+ * Each tile of the layer knows which of its four corners are covered. We blend those corners by
+ * how close the spot is to each one, like mixing paint, so the coastline is a smooth curve instead
+ * of a staircase of squares. The tile's number in the map (its "gid") encodes the corner pattern.
  *
+ * @param {number[]} data - The layer's tile numbers, row by row.
+ * @param {number} first - The tile number of the layer's first tile.
  * @param {number} x - World x position.
  * @param {number} y - World y position.
- * @returns {number} Wetness between 0 and 1.
+ * @returns {number} How covered the spot is, between 0 and 1.
  */
-function waterAt(x, y) {
+function cover(data, first, x, y) {
   const tx = Math.floor(x / TILE),
     ty = Math.floor(y / TILE),
-    gid = water[ty * MAP.width + tx];
+    gid = data[ty * MAP.width + tx];
   if (!gid) return 0;
 
   // The mask is four on/off bits, one per corner; u and v say how far across the tile the spot is.
-  const mask = Math.floor((gid - firstWater) / 16) + 1,
+  const mask = Math.floor((gid - first) / 16) + 1,
     u = x / TILE - tx,
     v = y / TILE - ty;
   return (
@@ -76,6 +88,29 @@ function waterAt(x, y) {
     ((mask >> 3) & 1) * u * v
   );
 }
+
+/** Says how wet a spot is, from 0 (dry land) to 1 (sea, shallow or deep). */
+const waterAt = (x, y) => cover(water, firstWater, x, y);
+
+/**
+ * Says whether a spot is dry land, with no more water than the player may wade through.
+ *
+ * It uses the same 0.35 limit as walking, so "dry" here means the sea does not cover the spot.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True if the spot is land (or at least not sea).
+ */
+export const isDryLand = (x, y) => waterAt(x, y) < 0.35;
+
+/**
+ * Says whether a spot is deep sea, far from any land, where the small boat can't go.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True for deep water.
+ */
+export const isDeep = (x, y) => cover(deep, firstDeep, x, y) >= 0.35;
 
 /**
  * Checks whether a spot is inside any of the given boxes, with 10 units of padding.
@@ -196,11 +231,27 @@ export function hitsCliff(x, y) {
 }
 
 /**
+ * Says whether a spot is a real position inside the world's border.
+ *
+ * Anything that isn't a real number (like NaN from a broken save) is never inside.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True if the spot is inside the border.
+ */
+const insideWorld = (x, y) =>
+  Number.isFinite(x) &&
+  Number.isFinite(y) &&
+  x >= WORLD.margin &&
+  y >= WORLD.margin &&
+  x <= WORLD.width - WORLD.margin &&
+  y <= WORLD.height - WORLD.margin;
+
+/**
  * Says whether the player is allowed to stand on a spot.
  *
  * A spot is fine when it's inside the world's border, mostly dry, not inside a solid object, and
- * not on a cliff wall or edge. Anything that isn't a real number (like NaN from a broken save) is
- * never allowed.
+ * not on a cliff wall or edge.
  *
  * @param {number} x - World x position.
  * @param {number} y - World y position.
@@ -210,19 +261,26 @@ export function hitsCliff(x, y) {
  * @returns {boolean} True if the player may stand there.
  */
 export function isWalkable(x, y, extra = [], cliffs = true) {
-  if (
-    !Number.isFinite(x) ||
-    !Number.isFinite(y) ||
-    x < WORLD.margin ||
-    y < WORLD.margin ||
-    x > WORLD.width - WORLD.margin ||
-    y > WORLD.height - WORLD.margin
-  )
-    return false;
+  if (!insideWorld(x, y)) return false;
   return (
     waterAt(x, y) < 0.35 &&
     !hitsObstacle(x, y) &&
     !blocks(extra, x, y) &&
     !(cliffs && hitsCliff(x, y))
   );
+}
+
+/**
+ * Says whether the small boat may float on a spot.
+ *
+ * The boat needs enough water under it (it can't sit on the beach), must stay out of the deep
+ * sea, and can't pass through anything solid, such as a rock or a tree standing in the shallows.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True if the boat may be there.
+ */
+export function isSailable(x, y) {
+  if (!insideWorld(x, y)) return false;
+  return waterAt(x, y) >= FLOAT_AT && !isDeep(x, y) && !hitsObstacle(x, y);
 }
