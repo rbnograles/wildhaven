@@ -164,3 +164,11 @@ Browser at `http://127.0.0.1:5178` (1280×720):
 - Builder, fresh start (the old version-2 test save took the start-fresh path): the HUD face shows the builder's head and shoulders (`data-portrait="builder"`, `background-size: 400% 133.333%`); the player stands in the builder's idle pose and walks east on the builder's side-walk sheet. No console errors.
 
 Not checked by hand: the scout and survivor in-game (they use the same code path as the builder) and the 390 px layout (no sizes changed).
+
+## World art split into kind folders — 2026-11-19
+
+Ground textures moved to `assets/world/source/ground/`; object sprites to `objects/{trees,plants,rocks,buildings,props}/`, named by a new `kind` field in `objects.json`; originals to `originals/<kind>/`. Rebuilding with `python tools/build-map.py` before and after the move gave byte-identical `tileset.png`, `wildhaven.json` and `overview.webp` (SHA-256 compared), and `python tools/make-biome-standins.py` found and kept all 15 of its files. Automated: `npm test` 63 passing (3 new in `tests/world/objects.test.js`), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5178` (1280×720), Builder in Hollowstead: all 29 sprites loaded from their kind folders (buildings 7, plants 5, props 4, rocks 6, trees 7); houses, workshop, boulder, log and berry bush drew as before; no console errors.
+
+Not checked by hand: the field journal's keepsake pictures (they use the same `objectUrls` names, which did not change).

@@ -1,8 +1,9 @@
 """Builds the Wildhaven sprite map from assets/world/source/.
 
-Inputs : source/{grass,dirt,jungle,rock,snow,sand,water}.png  seamless ground textures
-         source/objects/<name>.png + source/objects.json       one sprite per world object
-         source/places.json                                    regions, spawns, supplies, landmarks, waypoints
+Inputs : source/ground/{grass,dirt,jungle,rock,snow,sand,water}.png  seamless ground textures
+         source/objects/<kind>/<name>.png + source/objects.json       one sprite per world object; its
+                                                                      objects.json entry names the kind folder
+         source/places.json                                           regions, spawns, supplies, landmarks, waypoints
 Outputs: map/tileset.png    terrain tiles incl. generated soft transitions (64px, 1px extruded)
          map/wildhaven.json Tiled-format map: seven tile layers + "objects" layer + a region grid property
          map/overview.webp  small render of the whole map for the minimap and world map
@@ -87,7 +88,7 @@ def terrain(x, y):
 corner = np.array([[terrain(x * TILE, y * TILE) for x in range(COLS + 1)] for y in range(ROWS + 1)])
 
 # ---- tileset -----------------------------------------------------------------------------
-tex = {n: np.asarray(Image.open(os.path.join(SRC, f'{n}.png')).convert('RGB').resize((TEX, TEX))).astype(float)
+tex = {n: np.asarray(Image.open(os.path.join(SRC, 'ground', f'{n}.png')).convert('RGB').resize((TEX, TEX))).astype(float)
        for n in ['grass'] + OVERLAYS}
 f = np.fft.fft2(np.random.default_rng(3).random((TEX, TEX)))
 fy, fx = np.meshgrid(np.fft.fftfreq(TEX), np.fft.fftfreq(TEX), indexing='ij')
@@ -224,7 +225,7 @@ small = [Image.fromarray(t.astype('uint8')).resize((TILE // S, TILE // S), Image
 for n in ['ground'] + OVERLAYS:
     for i, g in enumerate(layers[n]):
         if g: full.alpha_composite(small[g - 1], ((i % COLS) * TILE // S, (i // COLS) * TILE // S))
-sprites = {n: Image.open(os.path.join(SRC, 'objects', f'{n}.png')).convert('RGBA') for n in spec}
+sprites = {n: Image.open(os.path.join(SRC, 'objects', spec[n]['kind'], f'{n}.png')).convert('RGBA') for n in spec}
 
 # Shrinks a sprite to overview size, allowing for the sprite's own `scale` in objects.json.
 def shrink(n, im): sc = spec[n].get('scale', 1); return im.resize((max(1, int(im.width * sc) // S), max(1, int(im.height * sc) // S)), Image.LANCZOS)

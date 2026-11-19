@@ -2,15 +2,19 @@
 
 It tints or redraws existing textures and sprites so the map can be built before real art is
 generated. It NEVER overwrites: if a file is already there (a stand-in or real art) it is kept.
+Textures go in source/ground/; each sprite goes in the objects/<kind>/ folder its objects.json entry names.
 To replace a stand-in, generate the image from its .prompt.txt, save it over the PNG, and re-run
 tools/build-map.py. Run: python tools/make-biome-standins.py
 """
-import os
+import json, os
 import numpy as np
 from PIL import Image, ImageDraw
 
 SRC = os.path.join(os.path.dirname(__file__), '..', 'assets', 'world', 'source')
-OBJ = os.path.join(SRC, 'objects')
+GROUND = os.path.join(SRC, 'ground')
+# Each sprite's kind folder under objects/ (trees, plants, rocks, buildings or props), from objects.json.
+KIND = {k: v['kind'] for k, v in json.load(open(os.path.join(SRC, 'objects.json'), encoding='utf-8')).items()
+        if not k.startswith('_')}
 STYLE = ('Warm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite '
          'reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down '
          'orthographic game camera. No text, labels, UI, borders, grid lines or characters.')
@@ -58,39 +62,41 @@ def recolor(image, mul, add=(0, 0, 0), gray=0.0):
     return Image.fromarray(a.astype('uint8'))
 
 
-def texture(name): return Image.open(os.path.join(SRC, f'{name}.png'))
-def sprite(name): return Image.open(os.path.join(OBJ, f'{name}.png')).convert('RGBA')
+# Where one sprite's PNG lives: objects/<kind>/<name>.png.
+def obj(name): return os.path.join(SRC, 'objects', KIND[name], f'{name}.png')
+def texture(name): return Image.open(os.path.join(GROUND, f'{name}.png'))
+def sprite(name): return Image.open(obj(name)).convert('RGBA')
 def blank(w, h): return Image.new('RGBA', (w, h), (0, 0, 0, 0))
 
 
 # ---- ground textures ---------------------------------------------------------------------
-save(recolor(texture('grass'), (0.35, 0.36, 0.38), (185, 192, 202), gray=1).convert('RGB'), os.path.join(SRC, 'snow.png'),
+save(recolor(texture('grass'), (0.35, 0.36, 0.38), (185, 192, 202), gray=1).convert('RGB'), os.path.join(GROUND, 'snow.png'),
      texture_prompt('soft packed snow in cool white with faint pale-blue drifts and a few tiny wind ripples; no '
                     'footprints, rocks or plants'))
-save(recolor(texture('dirt'), (0.8, 0.8, 0.82), (10, 10, 14), gray=0.85).convert('RGB'), os.path.join(SRC, 'rock.png'),
+save(recolor(texture('dirt'), (0.8, 0.8, 0.82), (10, 10, 14), gray=0.85).convert('RGB'), os.path.join(GROUND, 'rock.png'),
      texture_prompt('weathered grey-brown canyon bedrock with fine cracks and small pebbles; no large boulders, '
                     'plants or water'))
-save(recolor(texture('grass'), (0.45, 0.72, 0.5), (0, 6, 8)).convert('RGB'), os.path.join(SRC, 'jungle.png'),
+save(recolor(texture('grass'), (0.45, 0.72, 0.5), (0, 6, 8)).convert('RGB'), os.path.join(GROUND, 'jungle.png'),
      texture_prompt('dense dark-green jungle floor of moss, tiny ferns and fallen leaves; no flowers, roots or bare '
                     'earth'))
 
 # ---- sprites derived from existing ones ----------------------------------------------------
-save(recolor(sprite('pine'), (0.75, 0.85, 0.95), (55, 60, 70), gray=0.35), os.path.join(OBJ, 'snowy-pine.png'),
+save(recolor(sprite('pine'), (0.75, 0.85, 0.95), (55, 60, 70), gray=0.35), obj('snowy-pine'),
      object_prompt('one tall pine tree with heavy snow resting on its dark-green branches', 150, 210))
-save(recolor(sprite('rocks-b'), (0.75, 0.9, 1.05), (40, 55, 70), gray=0.7), os.path.join(OBJ, 'ice-rock.png'),
+save(recolor(sprite('rocks-b'), (0.75, 0.9, 1.05), (40, 55, 70), gray=0.7), obj('ice-rock'),
      object_prompt('a low cluster of pale-blue ice-crusted rocks with frosted tops', 265, 135))
-save(recolor(sprite('rocks-a'), (0.85, 0.83, 0.8), gray=0.9), os.path.join(OBJ, 'boulder.png'),
+save(recolor(sprite('rocks-a'), (0.85, 0.83, 0.8), gray=0.9), obj('boulder'),
      object_prompt('a cluster of large rounded grey canyon boulders', 290, 170))
-save(recolor(sprite('rocks-a').resize((290, 255), Image.LANCZOS), (0.7, 0.66, 0.62), gray=0.9), os.path.join(OBJ, 'cliff-rock.png'),
+save(recolor(sprite('rocks-a').resize((290, 255), Image.LANCZOS), (0.7, 0.66, 0.62), gray=0.9), obj('cliff-rock'),
      object_prompt('a tall jagged outcrop of layered grey-brown canyon rock, taller than a person', 290, 255))
-save(recolor(sprite('big-oak'), (0.45, 0.8, 0.5), (0, 5, 5)), os.path.join(OBJ, 'jungle-tree.png'),
+save(recolor(sprite('big-oak'), (0.45, 0.8, 0.5), (0, 5, 5)), obj('jungle-tree'),
      object_prompt('one broad tropical jungle tree with a dense deep-green canopy, buttress roots and hanging vines',
                    270, 320))
-save(recolor(sprite('berry-bush'), (0.5, 0.95, 0.45), gray=0.2), os.path.join(OBJ, 'fern.png'),
+save(recolor(sprite('berry-bush'), (0.5, 0.95, 0.45), gray=0.2), obj('fern'),
      object_prompt('a low spray of broad bright-green jungle fern fronds', 150, 104))
-save(recolor(sprite('oak').resize((200, 300), Image.LANCZOS), (0.8, 1.0, 0.55), (15, 10, 0)), os.path.join(OBJ, 'palm.png'),
+save(recolor(sprite('oak').resize((200, 300), Image.LANCZOS), (0.8, 1.0, 0.55), (15, 10, 0)), obj('palm'),
      object_prompt('one leaning coconut palm tree with a slim curved trunk and a crown of long green fronds', 200, 300))
-save(recolor(sprite('berry-bush'), (0.75, 0.6, 0.42), (40, 25, 10), gray=0.9), os.path.join(OBJ, 'dead-bush.png'),
+save(recolor(sprite('berry-bush'), (0.75, 0.6, 0.42), (40, 25, 10), gray=0.9), obj('dead-bush'),
      object_prompt('a dry leafless desert bush of tangled pale-brown twigs', 150, 104))
 
 # ---- sprites drawn from simple shapes ------------------------------------------------------
@@ -99,7 +105,7 @@ OUT = 3  # outline width
 cactus = blank(110, 170); d = ImageDraw.Draw(cactus)
 for box in ((40, 12, 70, 164), (12, 60, 34, 112), (76, 44, 98, 100), (24, 96, 52, 114), (58, 84, 88, 102)):
     d.rounded_rectangle(box, 12, fill=(86, 140, 84), outline=(50, 84, 58), width=OUT)
-save(cactus, os.path.join(OBJ, 'cactus.png'),
+save(cactus, obj('cactus'),
      object_prompt('one tall green saguaro cactus with two upturned arms', 110, 170))
 
 ruin = blank(280, 220); d = ImageDraw.Draw(ruin)
@@ -107,20 +113,20 @@ for box in ((24, 60, 72, 212), (116, 20, 164, 212), (208, 96, 256, 212)):
     d.rectangle(box, fill=(214, 178, 120), outline=(150, 112, 70), width=OUT)
 d.rectangle((14, 44, 176, 68), fill=(226, 192, 136), outline=(150, 112, 70), width=OUT)
 d.rectangle((10, 200, 270, 216), fill=(196, 160, 104), outline=(150, 112, 70), width=OUT)
-save(ruin, os.path.join(OBJ, 'sandstone-ruin.png'),
+save(ruin, obj('sandstone-ruin'),
      object_prompt('a small ruin of three weathered sandstone columns on a cracked stone base, one still carrying a '
                    'broken lintel', 280, 220))
 
 bridge = blank(420, 300); d = ImageDraw.Draw(bridge)
 d.rounded_rectangle((6, 6, 414, 294), 14, fill=(140, 98, 60), outline=(88, 58, 34), width=OUT)
 for x in range(40, 414, 34): d.line((x, 8, x, 292), fill=(104, 70, 42), width=2)
-save(bridge, os.path.join(OBJ, 'bridge.png'),
+save(bridge, obj('bridge'),
      object_prompt('a flat wooden plank bridge deck seen from directly above, weathered boards side by side with '
                    'rope-bound edges, no railings, no water', 420, 300))
 
 sign = blank(90, 130); d = ImageDraw.Draw(sign)
 d.rectangle((40, 30, 50, 126), fill=(120, 84, 52), outline=(72, 48, 28), width=2)
 d.polygon(((8, 14), (70, 14), (84, 30), (70, 46), (8, 46)), fill=(190, 150, 96), outline=(72, 48, 28))
-save(sign, os.path.join(OBJ, 'signpost.png'),
+save(sign, obj('signpost'),
      object_prompt('a wooden trail signpost: one upright post carrying a single arrow-shaped plank pointing right',
                    90, 130))
