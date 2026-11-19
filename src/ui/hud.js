@@ -9,7 +9,7 @@ import { nearbyNode, hasGathered } from '../actions/gather.js';
 import { $ } from './layout.js';
 
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
-const DOING = { Chop: 'Chopping', Pick: 'Picking', Gather: 'Gathering' };
+const DOING = { Chop: 'Chopping', Pick: 'Picking', 'Pick up': 'Picking up', Gather: 'Gathering' };
 
 // How long the controls strip stays up when nobody moves, and how long its fade-out takes.
 const KEY_STRIP_MS = 8000,

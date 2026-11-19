@@ -1,11 +1,11 @@
 // Every spot in the world the player can gather from (a "node"): the hand-placed supplies plus
-// each wild flower patch the map scattered. Also works out which supplies are still solid.
+// each wild patch (flowers, driftwood) the map scattered. Also works out which supplies are still solid.
 
 import { SUPPLIES, WILD } from '../data/supplies.js';
 import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
 
 // The fixed supplies plus every wild patch the map scattered; a patch's map position is its id
-// (`flowers-<x>-<y>`). Wild patches copy their fields from WILD and their size from objects.json.
+// (`flowers-<x>-<y>`, `driftwood-<x>-<y>`). Wild patches copy their fields from WILD and their size from objects.json.
 export const NODES = [
   ...SUPPLIES,
   ...MAP_OBJECTS.filter((o) => WILD[o.name]).map((o) => ({

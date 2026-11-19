@@ -15,7 +15,7 @@ import { createGame } from '../../src/game/state.js';
 import { gatherTime, finishGather } from '../../src/actions/gather.js';
 import { CLIPS } from '../../src/animation/clips.js';
 
-/** The one-time supplies (they never grow back), and the wild flower patches (they do). */
+/** The one-time supplies (they never grow back), and the wild patches: flowers and driftwood (they do). */
 const supplies = NODES.filter((n) => !n.regrow),
   wild = NODES.filter((n) => n.regrow);
 
@@ -46,14 +46,12 @@ test('every supply is a known, solid, action-backed sprite that takes the full g
   assert.equal(GATHER_SECONDS, 6);
 });
 
-// Guards the flower patches: there are plenty of them, each has its own id, they give herbs,
-// you can walk through them, they grow back, and they are drawn smaller than the player.
-test('wild flower patches are walk-through herb sources drawn smaller than a character', () => {
-  assert.ok(wild.length >= 30);
+// Guards the wild patches: each has its own id, you can walk through them, they are gathered with
+// an action clip, they grow back, and they are drawn smaller than the player.
+test('wild patches are walk-through, regrowing and drawn smaller than a character', () => {
   assert.equal(new Set(NODES.map((n) => n.id)).size, NODES.length);
 
   for (const node of wild) {
-    assert.equal(node.type, 'herbs');
     assert.ok(RESOURCES.includes(node.type));
     assert.equal(OBJECT_SPECS[node.sprite].footprint, undefined, node.id);
     assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
@@ -63,6 +61,19 @@ test('wild flower patches are walk-through herb sources drawn smaller than a cha
       node.id,
     ); // 112 = PLAYER_HEIGHT in src/render/renderer.js
   }
+});
+
+// Guards what each wild patch gives: flowers are the only source of herbs, and driftwood on the
+// beaches gives the wood an old boat's repair needs.
+test('flower patches give herbs and beach driftwood gives wood', () => {
+  const flowers = wild.filter((n) => n.sprite === 'flowers'),
+    driftwood = wild.filter((n) => n.sprite === 'driftwood');
+  assert.ok(flowers.length >= 30);
+  assert.ok(driftwood.length >= 20);
+  assert.equal(flowers.length + driftwood.length, wild.length);
+  for (const n of flowers) assert.equal(n.type, 'herbs', n.id);
+  for (const n of driftwood)
+    assert.deepEqual([n.type, n.amount, n.verb, n.regrow], ['wood', 1, 'Pick up', 180], n.id);
 });
 
 // Guards against a supply, a flower patch or a start spot being cut off by water, trees or

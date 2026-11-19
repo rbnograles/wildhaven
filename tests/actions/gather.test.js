@@ -16,8 +16,8 @@ import {
 } from '../../src/actions/gather.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
-/** The wild flower patches: the only nodes that grow back after being picked. */
-const wild = NODES.filter((n) => n.regrow);
+/** The wild flower patches: herb nodes that grow back after being picked. */
+const wild = NODES.filter((n) => n.sprite === 'flowers');
 
 // Guards against gathering from across the map, and against taking the same pine tree twice.
 test('gathering is proximity based and a node can be collected only once', () => {

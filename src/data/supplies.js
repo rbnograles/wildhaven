@@ -117,8 +117,17 @@ export const SUPPLIES = [
 
 // Wild scenery the map scatters (tools/build-map.py) that can be harvested where it stands and grows back `regrow`
 // game-seconds later. world/nodes.js turns each map patch into a node; the renderer draws it from NODES instead of from the map.
-// The key is the sprite name in the map; the fields mean the same as in SUPPLIES.
+// The key is the sprite name in the map; the fields mean the same as in SUPPLIES. Flowers grow inland; driftwood
+// washes up on the sea beaches, so there is always wood for mending a boat.
 export const WILD = {
+  driftwood: {
+    type: 'wood',
+    amount: 1,
+    label: 'Driftwood',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
   flowers: {
     type: 'herbs',
     amount: 2,

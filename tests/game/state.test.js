@@ -10,7 +10,7 @@ import { NODES, nodeBases } from '../../src/world/nodes.js';
 import { createGame, serializeGame, restoreGame } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
 
-/** The wild flower patches: the only nodes that grow back after being picked. */
+/** The wild patches (flowers and driftwood): the only nodes that grow back after being picked. */
 const wild = NODES.filter((n) => n.regrow);
 
 // Guards against two characters sharing a start spot, a start spot inside water, a tree or a
