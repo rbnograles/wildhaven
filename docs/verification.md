@@ -184,3 +184,14 @@ Browser at `http://127.0.0.1:5179` (1024×768, hidden pane), test survivor save 
 - No console errors.
 
 Not checked by hand: walking into a palm with the keyboard (the hidden pane ran at a low frame rate), and the 390 px layout (no layout changed).
+
+## Hills, cliffs, soil and grass detail from the Nano Banana art — 2026-11-19
+
+`python tools/prepare-generated-art.py` then `python tools/build-map.py`: 17 hills (8 meadow, 6 canyon, 3 snow), 25 flights of stairs, 132 cliff tiles, 6,728 objects (was 3,633; the new ones are the stairs, grass tufts and dirt patches), 3.0 MB map file. Automated: `npm test` 70 passing (6 new in `tests/world/cliffs.test.js`, 1 new in `tests/actions/move.test.js`), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5173` (another chat's dev server on this folder; 1024×768, hidden pane). A test builder save was written there (no saves existed at that origin) and removed afterwards.
+- Hollowstead, two-level meadow hill: from the foot of the lower stairs, walking north climbed onto level 1 and stopped at the level-2 wall; walking east then north climbed the second flight onto level 2 and stopped at its north edge; running west (Shift) stopped at the edge beside the wall below. The walls, stairs, lips, level highlight, soil patches, tufts and dirt patches drew as in the offline renders.
+- Frostpeak, three-level snow mountain: walking north into the bottom wall stopped at its foot. Snow walls and stairs drew correctly.
+- No console errors.
+
+Not checked by hand: the canyon kit in game (checked in an offline full-resolution render only), frame rate (the hidden pane is throttled; about 160 sprites are on screen at once), and the 390 px layout (no layout changed).

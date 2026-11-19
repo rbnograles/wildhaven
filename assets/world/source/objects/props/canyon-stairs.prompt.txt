@@ -1,0 +1,4 @@
+Prepared by tools/prepare-generated-art.py from source/originals/cliffs/canyon.jpg
+Tool: Nano Banana (Gemini image generation), 2026-11-19, as an edit of cliffs/meadow.jpg with ground/rock.png attached. The source of the canyon cliff kit.
+
+Edit the attached cliff image. Keep EXACTLY the same shape, outline, size, camera angle, tile layout and magenta background. Only change the materials: the flat top becomes weathered grey-brown canyon bedrock with fine cracks, matching the attached rock texture; the lip becomes a thin pale ochre stone rim with a few dry grass tufts; the front wall becomes layered grey-brown and ochre sandstone strata with cracks and small ledges. Stone steps (if any) become the same sandstone. Same warm hand-painted style, outlines and upper-left light.

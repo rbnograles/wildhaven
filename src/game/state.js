@@ -62,12 +62,14 @@ export function restoreGame(json) {
     const s = JSON.parse(json);
 
     // The right save version, a known character, and a player standing somewhere they're allowed to be.
+    // Cliffs are left out of that check: a save made before a hill was built on the spot still loads,
+    // and movePlayer lets the player walk off the cliff.
     if (
       !s ||
       s.version !== 3 ||
       !CHARACTERS.some((c) => c.id === s.character) ||
       !s.player ||
-      !isWalkable(s.player.x, s.player.y) ||
+      !isWalkable(s.player.x, s.player.y, [], false) ||
       ![0, 1, 2, 3].includes(s.player.direction)
     )
       return null;

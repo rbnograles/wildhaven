@@ -1,0 +1,7 @@
+Prepared by tools/prepare-generated-art.py from source/originals/plants/dry-grass.jpg
+Tool: Nano Banana (Gemini image generation), 2026-11-19. References attached: assets/characters/originals/starting-characters-idle-v1.png plus objects/plants/dead-bush.png and ground/sand.png.
+
+Asset for a top-down 2D game called Wildhaven. The attached images are STYLE REFERENCES ONLY; do not draw them or the characters.
+Single isolated game sprite: a sparse clump of dry, straw-coloured desert grass with thin wiry blades and pale ochre tips, ankle high next to a person; no soil, no rocks.
+Centered on a perfectly flat, solid pure magenta (#FF00FF) background with no gradient, texture, checkerboard, no ground patch, or cast shadow. The whole object is visible with wide magenta margins; nothing touches the image edge. One object only. It will be shrunk to about 80 x 55 pixels in game, so keep a bold, readable silhouette.
+Warm hand-painted 2D indie RPG style with clean soft outlines, matching the attached references: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.

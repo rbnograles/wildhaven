@@ -1,0 +1,7 @@
+Prepared by tools/prepare-generated-art.py from source/originals/plants/snow-grass.jpg
+Tool: Nano Banana (Gemini image generation), 2026-11-19. References attached: assets/characters/originals/starting-characters-idle-v1.png plus objects/trees/snowy-pine.png.
+
+Asset for a top-down 2D game called Wildhaven. The attached images are STYLE REFERENCES ONLY; do not draw them or the characters.
+Single isolated game sprite: a few frosted blue-grey grass blades poking out of a small, soft snow drift, ankle high next to a person; white snow with cool lavender-blue shading. The small snow drift is part of the object.
+Centered on a perfectly flat, solid pure magenta (#FF00FF) background with no gradient, texture, checkerboard, or cast shadow. The whole object is visible with wide magenta margins; nothing touches the image edge. One object only. It will be shrunk to about 85 x 55 pixels in game, so keep a bold, readable silhouette.
+Warm hand-painted 2D indie RPG style with clean soft outlines, matching the attached references: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.
