@@ -17,7 +17,8 @@ export const WORLD = {
   margin: 42,
 };
 
-// Collision comes from the sprite map (tools/build-map.py): water tiles and the solid base of each placed object.
+// Collision comes from the sprite map (tools/build-map.py): water tiles, the elevation grid of the
+// hills, and the solid base of each placed object.
 
 /** Finds one layer of the map (such as 'water' or 'objects') by its name. */
 const layer = (name) => MAP.layers.find((l) => l.name === name);
@@ -158,6 +159,66 @@ export function hitsObstacle(x, y) {
   return near ? blocks(near, x, y) : false;
 }
 
+// Hills (tools/build-map.py, "hills and cliffs"): one letter per tile, row by row. '0' to '3' says how
+// many levels up the ground is, 'w' is a cliff wall and 's' is a tile of stairs.
+const ELEVATION = mapProperty('elevation'),
+  WALL = 'w'.charCodeAt(0),
+  STAIRS = 's'.charCodeAt(0),
+  GROUND = '0'.charCodeAt(0);
+
+// How close the player's feet may come to a cliff edge or wall, in world units. The strip blocked
+// around an edge is this wide on each side, so it must stay wider than the longest single step
+// (running at 245 units/s for the longest 0.1 s step is 24.5 units), or a running player could
+// hop over an edge in one frame. tests/actions/move.test.js checks this.
+export const CLIFF_GAP = 20;
+
+/**
+ * Reads the elevation letter of the tile under a spot, as a character code (a number).
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {number} The letter's code; spots off the map count as ground level.
+ */
+function elevationCode(x, y) {
+  const tx = Math.floor(x / TILE),
+    ty = Math.floor(y / TILE);
+  if (tx < 0 || ty < 0 || tx >= MAP.width || ty >= MAP.height) return GROUND;
+  return ELEVATION.charCodeAt(ty * MAP.width + tx);
+}
+
+/**
+ * Gives the elevation letter of the tile under a spot.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {string} '0' to '3' for how many levels up the ground is, 'w' for a wall, 's' for stairs.
+ */
+export const elevationAt = (x, y) => String.fromCharCode(elevationCode(x, y));
+
+/**
+ * Says whether a cliff keeps the player off a spot.
+ *
+ * Think of each level of a hill as a table top. You can't stand inside a wall, and you can't step
+ * straight from the floor onto the table: near any edge between two levels the spot is blocked.
+ * Stairs are the one way up, so a stairs tile never counts as an edge. We look at the spot and at
+ * eight spots CLIFF_GAP units around it, so the feet stop a little before the edge.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True if a wall or the edge of a level is too close.
+ */
+export function hitsCliff(x, y) {
+  const here = elevationCode(x, y);
+  if (here === WALL) return true;
+  for (const dx of [-CLIFF_GAP, 0, CLIFF_GAP])
+    for (const dy of [-CLIFF_GAP, 0, CLIFF_GAP]) {
+      const near = elevationCode(x + dx, y + dy);
+      if (near === WALL) return true;
+      if (near !== here && near !== STAIRS && here !== STAIRS) return true;
+    }
+  return false;
+}
+
 /**
  * Says whether a spot is a real position inside the world's border.
  *
@@ -178,16 +239,24 @@ const insideWorld = (x, y) =>
 /**
  * Says whether the player is allowed to stand on a spot.
  *
- * A spot is fine when it's inside the world's border, mostly dry, and not inside a solid object.
+ * A spot is fine when it's inside the world's border, mostly dry, not inside a solid object, and
+ * not on a cliff wall or edge.
  *
  * @param {number} x - World x position.
  * @param {number} y - World y position.
  * @param {number[][]} [extra=[]] - More solid boxes to avoid, such as supplies not yet gathered.
+ * @param {boolean} [cliffs=true] - False to ignore cliffs, so a player who loads a save made
+ *   before a hill stood where they are can still load and walk off it.
  * @returns {boolean} True if the player may stand there.
  */
-export function isWalkable(x, y, extra = []) {
+export function isWalkable(x, y, extra = [], cliffs = true) {
   if (!insideWorld(x, y)) return false;
-  return waterAt(x, y) < 0.35 && !hitsObstacle(x, y) && !blocks(extra, x, y);
+  return (
+    waterAt(x, y) < 0.35 &&
+    !hitsObstacle(x, y) &&
+    !blocks(extra, x, y) &&
+    !(cliffs && hitsCliff(x, y))
+  );
 }
 
 /**

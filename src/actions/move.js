@@ -2,7 +2,7 @@
 // trees, buildings, old boats or supplies that haven't been gathered yet, and rowing the boat
 // across shallow sea.
 
-import { isWalkable, isSailable, blocks } from '../world/map.js';
+import { isWalkable, isSailable, blocks, hitsCliff } from '../world/map.js';
 import { solidBases } from '../world/nodes.js';
 import {
   WALK_SPEED,
@@ -55,10 +55,12 @@ export function movePlayer(state, dx, dy, dt, running = false) {
   state.player.direction = facing(dx, dy);
 
   // A save made before a supply or old boat moved may stand inside its base; let the player walk out instead of trapping them.
+  // The same goes for a save made before a hill was built where the player stands: cliffs are ignored until they're off it.
   const bases = solidBases(state).filter((base) => !blocks([base], x, y));
+  const cliffs = !hitsCliff(x, y);
 
   /** True if the player may move onto the spot: shallow sea in the boat, dry open ground on foot. */
-  const free = (px, py) => (state.aboard ? isSailable(px, py) : isWalkable(px, py, bases));
+  const free = (px, py) => (state.aboard ? isSailable(px, py) : isWalkable(px, py, bases, cliffs));
 
   // Try the x and y parts separately, so a wall in one direction still lets the player slide along it.
   if (free(x + dx, y)) state.player.x += dx;

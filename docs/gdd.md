@@ -288,6 +288,7 @@ A second camp can be founded "a meaningful walk from the first". Settlements app
 
 ### 6.13 World layout
 - [Built] Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1. The forest campsite, the abandoned village with its workshop, and the shipwreck beach are the three starting places. The new biomes use stand-in art.
+- [Built] Hills: terraced plateaus with cliff walls in the meadows, Pinefall, the canyons, the desert and Frostpeak (one to three levels; Frostpeak's are the tallest). Each level is climbed by one flight of stairs; walls and level edges block movement. Grass tufts, tall grass, dry grass, snow grass, bare dirt patches and dark forest soil break up open ground. Height has no gameplay effect yet.
 - [Planned] "Traversable forest and meadow connect resource sites, a river crossing, ruins, and at least two viable settlement locations."
 - [Built] The seven-region map is now an island home in a sea border, and slice A1 is built (see "Archipelago Direction").
 - [Planned] It is the home continent of an archipelago of about nine continents. The others are reached by boat (see "Archipelago Direction").

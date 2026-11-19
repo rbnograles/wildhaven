@@ -32,8 +32,9 @@ export const objectUrls = Object.fromEntries(
   ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
 );
 
-// The map's ground layers, bottom to top: each one is painted over the one before.
-const TERRAIN_LAYERS = ['ground', 'dirt', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep'];
+// The map's tile layers, bottom to top: the ground terrains, then the cliffs (lips, walls and their
+// shadows) over them. Each one is painted over the one before. tools/build-map.py decides the order.
+const TILE_LAYERS = mapData.layers.filter((l) => l.type === 'tilelayer').map((l) => l.name);
 
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;
@@ -139,7 +140,7 @@ export async function createRenderer(container, miniCanvas) {
         });
         const map = this.make.tilemap({ key: 'world' });
         const tiles = map.addTilesetImage('terrain', 'terrain');
-        TERRAIN_LAYERS.forEach((name, i) => map.createLayer(name, tiles, 0, 0).setDepth(i - 20));
+        TILE_LAYERS.forEach((name, i) => map.createLayer(name, tiles, 0, 0).setDepth(i - 20));
 
         // Standing objects sort by their ground line, so the character can walk behind a tree or in front of it.
         // Harvestable wild scenery is skipped here; it is drawn with the supplies below.

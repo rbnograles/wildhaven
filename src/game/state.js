@@ -66,7 +66,8 @@ const shiftId = (id) =>
  *
  * The map grew by SEA_BORDER units of sea on every side, so every old position moves out by that
  * much, like re-pinning a poster on a bigger board. A player who stood where the new coast now
- * cuts in goes back to their character's start instead. Wild patch ids hold their position, so
+ * cuts in goes back to their character's start instead (a hill there doesn't count: cliffs are
+ * ignored, as in restoreGame, so the player can walk off it). Wild patch ids hold their position, so
  * their regrow timers move too. Old saves have no boat yet. Anything odd is left alone, for the
  * checks in restoreGame to refuse.
  *
@@ -80,7 +81,7 @@ function fromVersion3(s) {
     Number.isFinite(player.x) &&
     Number.isFinite(player.y) &&
     spawn &&
-    !isWalkable(player.x, player.y)
+    !isWalkable(player.x, player.y, [], false)
   )
     Object.assign(player, spawn);
 
@@ -163,11 +164,13 @@ export function restoreGame(json) {
       return null;
 
     // On foot the player must stand somewhere walkable. Aboard, any real position will do here:
-    // placeBoat brings them ashore if the map no longer has sea there.
+    // placeBoat brings them ashore if the map no longer has sea there. Cliffs are left out of the
+    // on-foot check: a save made before a hill was built on the spot still loads, and movePlayer
+    // lets the player walk off the cliff.
     if (
       s.aboard
         ? !Number.isFinite(s.player.x) || !Number.isFinite(s.player.y)
-        : !isWalkable(s.player.x, s.player.y)
+        : !isWalkable(s.player.x, s.player.y, [], false)
     )
       return null;
 

@@ -173,8 +173,42 @@ Browser at `http://127.0.0.1:5178` (1280×720), Builder in Hollowstead: all 29 s
 
 Not checked by hand: the field journal's keepsake pictures (they use the same `objectUrls` names, which did not change).
 
+## SpriteCook palm replaces the palm stand-in — 2026-11-19
+
+The palm stand-in (a narrowed oak) was replaced with one image from the SpriteCook Claude plugin (`gemini-nano-banana-2.1`, HD, transparent background, with `starting-characters-idle-v1.png` uploaded as the style guide; 12 credits). The cutout came back clean: alpha is 0 outside the tree. The sprite was cropped to its alpha > 40 bounds and fitted into 200×300 with 4 px padding. Its trunk base sits at x 153 of 200, so `objects.json` now gives the palm `origin` `[0.765, 0.982]` and `footprint` `[15, 12]`. `python tools/build-map.py` rebuilt the map: only `overview.webp` changed, because palm positions and names did not. Automated: `npm test` 63 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5179` (1024×768, hidden pane), test survivor save (the old version-2 survivor save there was backed up and restored afterwards):
+- Driftwood Lagoon, next to the two palms west of the Driftwood Signpost: both palms draw with the trunk base on their map point and the crown leaning left, sized like the other trees.
+- Emerald Jungle, after signpost travel to Jungle Gate (the travel button's own click handler): the palm west of the signpost draws the same way.
+- `isWalkable` around the palm at (20485, 9518): blocked from x −20 to +20 and y −20 to +5 around the trunk base (footprint plus the player's body); open ground under the crown, where the old centred origin would have put the base.
+- No console errors.
+
+Not checked by hand: walking into a palm with the keyboard (the hidden pane ran at a low frame rate), and the 390 px layout (no layout changed).
+
+## Hills, cliffs, soil and grass detail from the Nano Banana art — 2026-11-19
+
+`python tools/prepare-generated-art.py` then `python tools/build-map.py`: 17 hills (8 meadow, 6 canyon, 3 snow), 25 flights of stairs, 132 cliff tiles, 6,728 objects (was 3,633; the new ones are the stairs, grass tufts and dirt patches), 3.0 MB map file. Automated: `npm test` 70 passing (6 new in `tests/world/cliffs.test.js`, 1 new in `tests/actions/move.test.js`), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5173` (another chat's dev server on this folder; 1024×768, hidden pane). A test builder save was written there (no saves existed at that origin) and removed afterwards.
+- Hollowstead, two-level meadow hill: from the foot of the lower stairs, walking north climbed onto level 1 and stopped at the level-2 wall; walking east then north climbed the second flight onto level 2 and stopped at its north edge; running west (Shift) stopped at the edge beside the wall below. The walls, stairs, lips, level highlight, soil patches, tufts and dirt patches drew as in the offline renders.
+- Frostpeak, three-level snow mountain: walking north into the bottom wall stopped at its foot. Snow walls and stairs drew correctly.
+- No console errors.
+
+Not checked by hand: the canyon kit in game (checked in an offline full-resolution render only), frame rate (the hidden pane is throttled; about 160 sprites are on screen at once), and the 390 px layout (no layout changed).
+
 ## Archipelago A1 (2026-11-19)
 
 Browser check (Task 10) at 127.0.0.1:5188, because other sessions held 5173 and 5179. Survivor repaired the Lagoon Rowboat (glow and E cap, progress bar, old boat faded, brown rowboat in the water pointing east), boarded (character shows from the waist up, boat rocks), rowed to Gull Isle ("Found Gull Isle"), hit "Too rough for a small boat." at the deep water, landed on the islet and the mainland, and the boat turned for north and south. Reloading aboard and ashore restored player and boat. Scout found the Pinefall Shore Rowboat, "Pick up driftwood" on the beach, goal card read Wood 6 / 6. A version 3 Builder save loaded with "Welcome back." Narrow screen (375 px): the button read "Board the boat" and boarded by tap. After landing, `player.setCrop()` with no arguments reset the crop (full body again). No console errors; about 60 fps while rowing (requestAnimationFrame count over 5 s).
 
 Known issue: on the world map the "Driftwood Lagoon" label sits over the shallow sea east of the coast, not on land.
+
+## Main's hills and ground detail merged into archipelago A1 — 2026-11-19
+
+`python tools/build-map.py`: 2068 tiles, 6,838 objects, 4.4 MB map file, 25 flights of stairs, 132 cliff tiles; hills per kit: 6 canyon, 8 meadow, 3 snow. Hills are placed in land units on the old land's grid with main's seeds, so main's elevation grid equals the merged grid cropped to tiles 32–287 (rows) × 32–415 (columns), tile for tile: no hill moved or dropped, and the sea border is all level 0. The cliffs layer matches main's too (its tile numbers move up by 240, the new `deep` layer's tiles), and the 25 stairs objects sit at main's spots plus 2,048. Automated: `npm test` 94 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5188` (this worktree's dev server, 800×600, hidden pane), with the test builder save moved by hand; the origin's saves were backed up and restored afterwards:
+- Stonewater Canyons, the hill nearest the west coast (stairs foot at 4096, 9888): walking north climbed the stairs onto the plateau and stopped at its north edge. Walls, stairs, lips and dry grass drew.
+- West coast by the Canyon Coast Rowboat: sea, sand beach and the old boat drew; the minimap showed shallow and deep sea.
+- No console errors on these loads. (The log's 500s and `"<<<<<<< HE"` JSON errors came from Vite reloading while the merge still had conflict markers.)
+
+Not checked by hand: boating next to a hill (no flight of stairs is within 700 units of water), the meadow and snow kits in game, and the 390 px layout (no layout changed).

@@ -3,7 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD, isWalkable } from '../../src/world/map.js';
+import { WORLD, CLIFF_GAP, isWalkable } from '../../src/world/map.js';
+import { RUN_SPEED, MAX_MOVE_DT } from '../../src/data/balance.js';
 import { NODES, nodeBases, solidBases } from '../../src/world/nodes.js';
 import { WRECKS } from '../../src/data/places.js';
 import { createGame } from '../../src/game/state.js';
@@ -56,4 +57,15 @@ test('old boats block walking, except the one the player repaired', () => {
   const owner = createGame('survivor');
   owner.boat = { from: wreck.id, x: wreck.launch.x, y: wreck.launch.y, dir: 2 };
   assert.ok(isWalkable(wreck.x, wreck.y - 5, solidBases(owner)));
+});
+
+// Guards the cliff edges against a fast runner: even at running speed with the longest step the
+// game allows, one step must never carry the player from one level of a hill onto another. The
+// blocked strip is CLIFF_GAP wide on each side of an edge, so a step must be shorter than both.
+test('running at full speed never jumps an edge between two levels', () => {
+  const step = RUN_SPEED * MAX_MOVE_DT;
+  assert.ok(
+    step < 2 * CLIFF_GAP,
+    `a run step (${step}) must be shorter than the blocked strip (${2 * CLIFF_GAP})`,
+  );
 });

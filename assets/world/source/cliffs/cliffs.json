@@ -1,0 +1,51 @@
+{
+  "_comment": "Where things sit in each cliff picture (<kit>.png, cut from originals/cliffs/<kit>.jpg), in picture pixels. pixelsPerUnit = picture pixels per world unit: the wall, from wallTop to wallBottom, is 128 units (2 tiles) tall. lipTop = where the grassy/stone lip above the wall starts. leftTip/rightTip = the outer tips of the lip on the left and right edges. sides = two stretches of plain wall (left and right of the steps) that the wall tiles are made from. stairs = the columns of the stairs sprite; stairsTop/stairsBottom its rows; notch = the columns of the gap the steps cut into the plateau. tools/prepare-generated-art.py and tools/build-map.py both read this file.",
+  "pixelsPerUnit": 5,
+  "kits": {
+    "meadow": {
+      "wallTop": 205,
+      "wallBottom": 845,
+      "lipTop": 135,
+      "leftTip": 27,
+      "rightTip": 1172,
+      "sides": [
+        [55, 335],
+        [865, 1140]
+      ],
+      "stairs": [280, 920],
+      "stairsTop": 70,
+      "stairsBottom": 865,
+      "notch": [392, 808]
+    },
+    "canyon": {
+      "wallTop": 205,
+      "wallBottom": 845,
+      "lipTop": 135,
+      "leftTip": 35,
+      "rightTip": 1164,
+      "sides": [
+        [55, 335],
+        [865, 1140]
+      ],
+      "stairs": [280, 920],
+      "stairsTop": 70,
+      "stairsBottom": 865,
+      "notch": [392, 808]
+    },
+    "snow": {
+      "wallTop": 205,
+      "wallBottom": 845,
+      "lipTop": 135,
+      "leftTip": 35,
+      "rightTip": 1164,
+      "sides": [
+        [55, 335],
+        [865, 1140]
+      ],
+      "stairs": [280, 920],
+      "stairsTop": 70,
+      "stairsBottom": 865,
+      "notch": [392, 808]
+    }
+  }
+}

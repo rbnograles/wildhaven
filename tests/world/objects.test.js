@@ -59,7 +59,7 @@ test('every sprite file sits in the folder its objects.json entry names, once', 
 // Guards against a ground texture the map builder needs going missing from ground/, or arriving
 // without the prompt that made it.
 test('every ground texture is in ground/ with its prompt', () => {
-  const textures = ['grass', 'dirt', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep'];
+  const textures = ['grass', 'dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep'];
   assert.deepEqual(pngsIn('ground').sort(), [...textures].sort());
   for (const name of textures)
     assert.ok(existsSync(new URL(`ground/${name}.prompt.txt`, SOURCE)), name);
