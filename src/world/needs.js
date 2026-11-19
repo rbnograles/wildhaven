@@ -3,10 +3,13 @@
 // grows the camp's fire; at dawn every met need is swapped for a fresh one.
 
 import { NEED_AMOUNTS, MAX_GROWN } from '../data/balance.js';
-import { RESOURCES } from '../data/supplies.js';
 import { LANDMARKS, WAYPOINTS } from '../data/places.js';
 import { REGIONS, regionOf } from './regions.js';
 import { dayOf } from './clock.js';
+
+// The resources a "bring" need can ask for: the ones NEED_AMOUNTS has an amount for, in the same
+// order as before iron existed, so existing camps keep the same needs. Camps never ask for iron.
+const NEED_RESOURCES = Object.keys(NEED_AMOUNTS);
 
 /**
  * Turns a piece of text into a steady whole number: the same text always gives the same number.
@@ -65,7 +68,7 @@ export function makeNeed(state, camp, slot, day) {
   if (slot === 2 && day % 2 === 1 && WAYPOINTS.some((w) => !state.waypoints.includes(w.id)))
     return { kind: 'signpost', done: false };
 
-  const resource = RESOURCES[hash(`${camp.id}-${day}-${slot}`) % RESOURCES.length];
+  const resource = NEED_RESOURCES[hash(`${camp.id}-${day}-${slot}`) % NEED_RESOURCES.length];
   const amount = NEED_AMOUNTS[resource] + Math.floor(camp.grown / 2);
   return { kind: 'bring', resource, amount, done: false };
 }

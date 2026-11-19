@@ -10,6 +10,7 @@ import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
 import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
 import warmthIconUrl from '../../assets/ui/game/status-icon-warmth.png';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
+import { TOOLS } from '../data/tools.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
 
@@ -37,6 +38,7 @@ const icons = {
   food: '<path d="M12 7c-7-6-13 3-7 11 4 6 7 1 7 1s3 5 7-1c6-8 0-17-7-11Z"/><path d="M12 7c0-4 2-5 5-5"/>',
   herbs:
     '<path d="M12 22V11"/><path d="M12 15c-5 0-8-3-8-8 5 0 8 3 8 8Zm0-4c0-4 3-7 8-7 0 5-3 7-8 7Z"/>',
+  iron: '<path d="M3 18 6 10h12l3 8Z"/><path d="M6 10 8 6h8l2 4M9 14h6"/>',
   save: '<path d="M5 3h13l3 3v15H3V3Zm2 0v6h10V3M7 21v-8h10v8"/>',
   expand: '<path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/>',
   close: '<path d="m6 6 12 12M6 18 18 6"/>',
@@ -48,6 +50,8 @@ const icons = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>',
   hammer: '<path d="m14 3 7 7-3 3-7-7Z"/><path d="M12.5 8.5 3 18l3 3 9.5-9.5"/>',
+  axe: '<path d="m4 20 10-10"/><path d="M12 5c2.5-2.5 6-2.5 8 0l-5 5c-2-.5-3.5-2.5-3-5Z"/>',
+  pickaxe: '<path d="M4 9c5-5 11-5 16 0"/><path d="M12 5.5V21"/>',
 };
 
 /**
@@ -173,7 +177,7 @@ export function mountLayout(app) {
         id="world"
         tabindex="0"
         role="application"
-        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to open the build menu, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
+        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to open the build menu, 2 to 4 in the build menu to craft tools, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
       ></div>
 
       <!-- Top right: the journal, fullscreen and pause buttons. -->
@@ -232,8 +236,9 @@ export function mountLayout(app) {
           </div>
         </div>
 
-        <!-- The item box (one slot per resource) and the Build button, with the build menu that
-             opens above it. Clicking the food slot eats and the herbs slot heals. -->
+        <!-- The item box (one slot per resource) and the Build button, with the build menu (the
+             campfire and the Tools group) that opens above it, and the row of tools owned.
+             Clicking the food slot eats and the herbs slot heals. -->
         <div class="hotbar-area">
           <div id="build-menu" class="build-menu hud-panel" hidden>
             <p class="build-menu-title">BUILD</p>
@@ -244,6 +249,28 @@ export function mountLayout(app) {
                 >${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone</span
               ><kbd>1</kbd>
             </button>
+            <p class="build-menu-title">TOOLS</p>
+            ${TOOLS.map(
+              (t) =>
+                /* HTML */ `<button
+                  id="craft-${t.id}"
+                  class="build-option craft-option"
+                  data-tool="${t.id}"
+                >
+                  ${icon(t.icon)}<span class="build-option-text"
+                    ><b class="craft-name"></b><small>${t.use}</small></span
+                  ><span class="build-cost craft-cost"></span><kbd>${t.key}</kbd>
+                </button>`,
+            ).join('')}
+          </div>
+          <!-- The tools owned: a chip per tool with its tier, and the uses left on a stone one. -->
+          <div class="tool-row" aria-label="Tools">
+            ${TOOLS.map(
+              (t) =>
+                /* HTML */ `<span id="tool-${t.id}" class="tool-chip empty"
+                  >${icon(t.icon)}<span class="tool-state">—</span></span
+                >`,
+            ).join('')}
           </div>
           <div class="hotbar" aria-label="Items">
             <span class="slot" title="Wood"
@@ -252,6 +279,8 @@ export function mountLayout(app) {
             ><span class="slot" title="Stone"
               ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
               ><span class="slot-label">Stone</span></span
+            ><span class="slot" title="Iron"
+              >${icon('iron')}<b id="iron">0</b><span class="slot-label">Iron</span></span
             ><button id="slot-food" class="slot" title="Eat one food (F)">
               <img src="${foodIconUrl}" alt="" /><b id="food">0</b
               ><span class="slot-label">Food</span><kbd>F</kbd></button

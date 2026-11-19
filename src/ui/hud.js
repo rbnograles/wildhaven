@@ -1,10 +1,17 @@
 // The HUD: the on-screen panels shown while playing (the player card with clock and survival
-// meters, the item box, the build menu and build bar, region name and progress, goals card,
-// interact button) and the short pop-up messages called toasts. It only shows the game state; it
-// never changes it.
+// meters, the item box and tools row, the build menu and build bar, region name and progress,
+// goals card, interact button) and the short pop-up messages called toasts. It only shows the game
+// state; it never changes it.
 import { RESOURCES } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
-import { CAMPFIRE_COST, REPAIR_COST, DAY_SECONDS, PHASES } from '../data/balance.js';
+import {
+  CAMPFIRE_COST,
+  REPAIR_COST,
+  DAY_SECONDS,
+  PHASES,
+  TOOL_WEAR_WARNING,
+} from '../data/balance.js';
+import { TOOLS, toolInfo } from '../data/tools.js';
 import { NODES } from '../world/nodes.js';
 import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
@@ -13,11 +20,38 @@ import { nearestCamp, campInReach } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { missingForRepair, listMissing } from '../actions/boat.js';
 import { chooseInteraction } from '../actions/interact.js';
+import { lockedNode } from '../actions/gather.js';
+import { canCraft, nextTier, toolName, CRAFT_PREFIX } from '../actions/craft.js';
 import { meterTrends } from '../actions/survive.js';
 import { $ } from './layout.js';
 
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
-const DOING = { Chop: 'Chopping', Pick: 'Picking', 'Pick up': 'Picking up', Gather: 'Gathering' };
+const DOING = {
+  Chop: 'Chopping',
+  Mine: 'Mining',
+  Pick: 'Picking',
+  'Pick up': 'Picking up',
+  Gather: 'Gathering',
+};
+
+/**
+ * Writes a cost as words for the Build menu.
+ *
+ * @param {object} cost - Such as `{wood: 2, stone: 1, iron: 3}`.
+ * @returns {string} Such as "2 wood · 1 stone · 3 iron".
+ */
+const costWords = (cost) =>
+  Object.entries(cost)
+    .map(([type, n]) => `${n} ${type}`)
+    .join(' · ');
+
+/**
+ * Gives words a capital first letter, such as "Stone axe".
+ *
+ * @param {string} words - The words.
+ * @returns {string} The same words, starting with a capital.
+ */
+const capital = (words) => words[0].toUpperCase() + words.slice(1);
 
 // How long the controls strip stays up when nobody moves, and how long its fade-out takes.
 const KEY_STRIP_MS = 8000,
@@ -51,6 +85,40 @@ export function describeEvent(event) {
 }
 
 /**
+ * Words for a stone tool wearing out: a warning at a few uses left, or that it broke.
+ *
+ * @param {string} tool - The tool's id.
+ * @param {string|null} wear - What wearTool said: 'warn', 'broke' or null.
+ * @returns {string} The words, or '' when there is nothing to say.
+ */
+function wearWords(tool, wear) {
+  if (wear === 'warn') return `Stone ${tool}: ${TOOL_WEAR_WARNING} uses left`;
+  if (wear === 'broke') return `Your stone ${tool} broke`;
+  return '';
+}
+
+/**
+ * Puts a finished timed action into words for a toast: a mended boat, supplies gathered, or a tool
+ * made, plus any news about a tool wearing out.
+ *
+ * @param {object} finished - What finishInteraction returned.
+ * @returns {string} The message.
+ */
+export function describeFinish(finished) {
+  if (finished.kind === 'repair')
+    return 'Boat repaired · Walk to the water’s edge and press E to board';
+  if (finished.kind === 'craft') {
+    if (!finished.ok) return finished.message;
+    const made = `${capital(toolName(finished.tool, finished.tier))} made`;
+    return [made, wearWords('hammer', finished.wear)].filter(Boolean).join(' · ');
+  }
+  const { node, wear } = finished;
+  return [`+${node.amount} ${node.type} · ${node.label}`, wearWords(node.tool, wear)]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/**
  * Words for the interact button when E would do `choice`, e.g. "Board the boat" or "Chop pine tree".
  *
  * @param {object} state - The game being played.
@@ -72,12 +140,17 @@ function actionLabel(state, choice) {
 /**
  * Words for the interact button while a timed action runs, or null when none is running.
  *
+ * @param {object} state - The game being played (to name the tier being crafted).
  * @param {object} animator - The player's animation state.
- * @returns {string|null} E.g. "Repairing the old boat… move to stop".
+ * @returns {string|null} E.g. "Crafting stone axe… move to stop".
  */
-function busyLabel(animator) {
+function busyLabel(state, animator) {
   const target = animator.pending?.target;
   if (!target) return null;
+  if (target.startsWith(CRAFT_PREFIX)) {
+    const tool = target.slice(CRAFT_PREFIX.length);
+    return `Crafting ${toolName(tool, nextTier(state, tool) ?? 'iron')}… move to stop`;
+  }
   if (WRECKS.some((w) => w.id === target)) return 'Repairing the old boat… move to stop';
   const node = NODES.find((n) => n.id === target);
   return node ? `${DOING[node.verb]} ${node.label.toLowerCase()}… move to stop` : null;
@@ -218,36 +291,37 @@ export function createHud(session) {
   /**
    * Shows the interact button and the build bar for what the player can do right now.
    *
-   * The button matches what E would do (see core/input.js): "busy" while gathering or repairing,
-   * "Place campfire" in build mode, then step ashore, board, repair or gather (chooseInteraction),
-   * and "Open <camp>" beside one of the player's fires when none of those is in reach.
+   * The button matches what E would do (see core/input.js): "busy" while gathering, repairing or
+   * crafting, "Place campfire" in build mode, then step ashore, board, repair or gather
+   * (chooseInteraction), "Open <camp>" beside one of the player's fires when none of those is in
+   * reach, and last of all a faded "Chop pine tree — needs an axe" beside a tree or rock whose tool
+   * the player lacks.
    *
    * @param {object} state - The game being played.
    */
   function updateActions(state) {
     const { animator, build } = session;
     const choice = chooseInteraction(state),
-      busy = busyLabel(animator),
+      busy = busyLabel(state, animator),
       camp = !choice && !state.aboard && campInReach(state),
+      locked = !choice && !camp && !state.aboard && lockedNode(state),
       button = $('interact'),
       label = button.querySelector('span');
-    button.hidden = !choice && !busy && !build.active && !camp;
+    // The open build menu covers the button's spot (on phones fully), so the button waits until it closes.
+    button.hidden = build.menu || (!choice && !busy && !build.active && !camp && !locked);
     button.classList.toggle('busy', !!busy);
+    button.classList.toggle('locked', !busy && !build.active && !!locked);
     button.setAttribute('aria-disabled', String(!!busy));
     if (busy) label.textContent = busy;
     else if (build.active) label.textContent = 'Place campfire';
     else if (choice) label.textContent = actionLabel(state, choice);
     else if (camp) label.textContent = `Open ${camp.name}`;
+    else if (locked)
+      label.textContent = `${locked.verb} ${locked.label.toLowerCase()} — needs ${toolInfo(locked.tool).aName}`;
     // The controls strip sits where the action button and build menu appear, so it gives way.
     if (!button.hidden || build.menu) hideKeyStrip();
 
-    // The build menu and its button. A campfire the player can't afford yet is shown faded, but
-    // can still be picked, so the ghost can explain what is missing.
-    const short = Object.entries(CAMPFIRE_COST).some(([type, n]) => state.resources[type] < n);
-    $('build-menu').hidden = !build.menu;
-    $('build-button').setAttribute('aria-expanded', String(build.menu));
-    $('build-button').classList.toggle('active', build.menu || build.active);
-    $('build-campfire').classList.toggle('short', short);
+    updateBuildMenu(state);
 
     // The build bar: what a campfire costs, or why it can't stand where the ghost is.
     const bar = $('build-bar');
@@ -258,6 +332,62 @@ export function createHud(session) {
     bar.textContent = ok
       ? `Campfire · ${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone · Click or E to place · Esc to cancel`
       : `${build.check?.message ?? 'Choose a spot'} · Esc to cancel`;
+  }
+
+  /**
+   * Fills the build menu: the campfire, and one entry per tool showing the next tier the player
+   * can make and its cost.
+   *
+   * A campfire or tool the player can't afford yet shows its cost in red but can still be picked,
+   * so the game can say what is missing. A tool that is blocked for another reason (no hammer, away
+   * from a fire) explains on hover. An iron tool already owned says "Owned" and can't be picked.
+   *
+   * @param {object} state - The game being played.
+   */
+  function updateBuildMenu(state) {
+    const { build } = session;
+    const short = Object.entries(CAMPFIRE_COST).some(([type, n]) => state.resources[type] < n);
+    $('build-menu').hidden = !build.menu;
+    $('build-button').setAttribute('aria-expanded', String(build.menu));
+    $('build-button').classList.toggle('active', build.menu || build.active);
+    $('build-campfire').classList.toggle('short', short);
+    if (!build.menu) return;
+
+    for (const { id } of TOOLS) {
+      const option = $(`craft-${id}`),
+        check = canCraft(state, id);
+      option.querySelector('.craft-name').textContent = capital(toolName(id, check.tier ?? 'iron'));
+      option.querySelector('.craft-cost').textContent = check.cost
+        ? costWords(check.cost)
+        : 'Owned';
+      option.classList.toggle('short', check.reason === 'cost');
+      option.disabled = check.reason === 'owned';
+      option.title = check.ok ? '' : check.message;
+    }
+  }
+
+  /**
+   * Fills the tools row: each tool's tier, and the uses left on a stone one.
+   *
+   * @param {object} state - The game being played.
+   */
+  function updateTools(state) {
+    for (const { id, name } of TOOLS) {
+      const chip = $(`tool-${id}`),
+        owned = state.tools[id];
+      chip.classList.toggle('empty', !owned);
+      chip.classList.toggle('iron', owned?.tier === 'iron');
+      chip.querySelector('.tool-state').textContent = !owned
+        ? '—'
+        : owned.tier === 'iron'
+          ? 'Iron'
+          : String(owned.uses);
+      chip.title = !owned
+        ? `No ${name} yet · Craft one in the Build menu (B)`
+        : owned.tier === 'iron'
+          ? `Iron ${name}`
+          : `Stone ${name} · ${owned.uses} uses left`;
+    }
   }
 
   /**
@@ -274,6 +404,7 @@ export function createHud(session) {
       $(resource).textContent = state.resources[resource];
       $(resource).parentElement.classList.toggle('empty', state.resources[resource] === 0);
     }
+    updateTools(state);
     updateMeters(state);
 
     const region = regionOf(state.player.x, state.player.y),

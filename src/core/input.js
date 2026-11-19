@@ -4,6 +4,8 @@
 
 import { beginInteraction } from '../actions/interact.js';
 import { listMissing } from '../actions/boat.js';
+import { lockedNode } from '../actions/gather.js';
+import { TOOLS, toolInfo } from '../data/tools.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -20,7 +22,7 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
  * Also handles E to step ashore, board, repair, gather or open a camp, B for the build menu (and
- * 1 to pick the campfire in it), F to eat, H to heal, M for the map, J for the journal, Escape to
+ * 1 to pick the campfire in it, 2 to 4 to craft a tool), F to eat, H to heal, M for the map, J for the journal, Escape to
  * pause (or to leave the build menu or build mode), the mouse over the world, and saving when the
  * tab is hidden.
  *
@@ -33,8 +35,8 @@ export function setupInput(session, ui) {
 
   /**
    * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
-   * order. With none of those in reach, E beside one of the player's fires opens that camp;
-   * anywhere else it says why nothing happened.
+   * order. With none of those in reach, E beside one of the player's fires opens that camp; beside a
+   * tree or rock it says which tool to make; anywhere else it says why nothing happened.
    *
    * Landing and boarding happen at once and save straight away. Repairing and gathering start a
    * timed action that core/loop.js finishes. Held movement keys are forgotten so the player
@@ -57,8 +59,17 @@ export function setupInput(session, ui) {
     if (result.reason !== 'none') return;
     // Camps are opened on foot; from the boat, step ashore first.
     const camp = !session.state.aboard && campInReach(session.state);
-    if (camp) ui.camp.openCamp(camp);
-    else ui.hud.notify('Move closer to something you can use.');
+    if (camp) {
+      ui.camp.openCamp(camp);
+      return;
+    }
+    // A tree or rock in reach that needs a tool the player doesn't have yet: say how to get one.
+    const locked = !session.state.aboard && lockedNode(session.state);
+    ui.hud.notify(
+      locked
+        ? `You need ${toolInfo(locked.tool).aName}. Make one in the Build menu (B).`
+        : 'Move closer to something you can use.',
+    );
   }
 
   /** Does what E (or the action button) means right now: place the campfire in build mode, or `use`. */
@@ -109,6 +120,14 @@ export function setupInput(session, ui) {
     if (key === '1' && !event.repeat && session.build.menu) {
       event.preventDefault();
       ui.build.start();
+      return;
+    }
+
+    // With the build menu open, 2, 3 and 4 craft the axe, pickaxe and hammer.
+    const tool = TOOLS.find((t) => t.key === key);
+    if (tool && !event.repeat && session.build.menu) {
+      event.preventDefault();
+      ui.build.craft(tool.id);
       return;
     }
 

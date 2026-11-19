@@ -4,10 +4,17 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GATHER_SECONDS, SUPPLY_REGROW } from '../../src/data/balance.js';
+import { GATHER_SECONDS, SUPPLY_REGROW, TOOL_SECONDS } from '../../src/data/balance.js';
 import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
-import { nearbyNode, isAvailable, beginGather, finishGather } from '../../src/actions/gather.js';
+import {
+  nearbyNode,
+  lockedNode,
+  isAvailable,
+  beginGather,
+  finishGather,
+  gatherTime,
+} from '../../src/actions/gather.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
 /** The wild flower patches: herb nodes that grow back after being picked. */
@@ -77,7 +84,7 @@ test("beginGather starts the node's own timed action without awarding it", () =>
   assert.deepEqual(animator.pending, {
     clip: node.clip,
     target: 'pine-wood',
-    duration: GATHER_SECONDS,
+    duration: TOOL_SECONDS.stone, // the Scout's hatchet is a stone axe
   });
   assert.deepEqual(game.resources, before);
   assert.deepEqual(game.regrowAt, {});
@@ -128,8 +135,50 @@ test('the supply is awarded only when the timed action completes', () => {
   game.player.y = node.y;
   beginGather(game, animator);
 
-  assert.equal(advanceAnimation(animator, GATHER_SECONDS - 0.01, {}), null);
+  assert.equal(advanceAnimation(animator, gatherTime(game, node) - 0.01, {}), null);
   assert.deepEqual(advanceAnimation(animator, 0.02, {}), { clip: node.clip, target: 'pine-wood' });
   assert.equal(finishGather(game, 'pine-wood').id, 'pine-wood');
   assert.equal(game.resources.wood, node.amount);
+});
+
+// Guards the axe rule: a tree in reach can't be chopped without one, and is reported as locked instead.
+test('a tree needs an axe: without one it is locked, with one it can be chopped', () => {
+  const pine = NODES.find((n) => n.id === 'pine-wood');
+  const game = createGame('survivor'); // no tools
+  Object.assign(game.player, { x: pine.x - 60, y: pine.y });
+  assert.equal(nearbyNode(game), null);
+  assert.equal(lockedNode(game)?.id, 'pine-wood');
+  assert.equal(finishGather(game, 'pine-wood'), null);
+
+  game.tools.axe = { tier: 'stone', uses: 5 };
+  assert.equal(nearbyNode(game)?.id, 'pine-wood');
+  assert.notEqual(lockedNode(game)?.id, 'pine-wood'); // a rock nearby may still need a pickaxe
+  assert.equal(finishGather(game, 'pine-wood')?.id, 'pine-wood');
+});
+
+// Guards gather times: bare hands keep the full 6 s, a stone tool takes 5 s and an iron one 3 s.
+test('tools shorten the gathers that need them, and only those', () => {
+  const pine = NODES.find((n) => n.id === 'pine-wood'),
+    berries = NODES.find((n) => n.id === 'forest-food');
+  const game = createGame('survivor');
+  assert.equal(gatherTime(game, berries), GATHER_SECONDS);
+  game.tools.axe = { tier: 'stone', uses: 5 };
+  assert.equal(gatherTime(game, pine), TOOL_SECONDS.stone);
+  game.tools.axe = { tier: 'iron' };
+  assert.equal(gatherTime(game, pine), TOOL_SECONDS.iron);
+  assert.equal(gatherTime(game, berries), GATHER_SECONDS);
+});
+
+// Guards the map's trees and rocks: with the right tool they give their wood, stone or iron.
+test('map trees and iron rocks can be gathered with the right tool', () => {
+  const game = createGame('survivor');
+  game.tools = { axe: { tier: 'iron' }, pickaxe: { tier: 'iron' } };
+  for (const sprite of ['big-oak', 'boulder', 'cliff-rock']) {
+    const node = NODES.find((n) => n.sprite === sprite && n.inScenery);
+    Object.assign(game.player, { x: node.x, y: node.y + 30 });
+    const before = game.resources[node.type];
+    assert.equal(finishGather(game, node.id)?.id, node.id, sprite);
+    assert.equal(game.resources[node.type], before + node.amount, sprite);
+  }
+  assert.ok(game.resources.iron >= 1);
 });

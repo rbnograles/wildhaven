@@ -1,9 +1,11 @@
-// Building: the build menu above the item box, and placing a campfire with the mouse (or in front
-// of the player). While placing, a ghost campfire follows the pointer and shows whether it may
-// stand there; a click or E places it. The rules for where a fire may go live in
-// actions/build.js; this file only drives them.
+// Building: the build menu above the item box, crafting tools from it, and placing a campfire with
+// the mouse (or in front of the player). While placing, a ghost campfire follows the pointer and
+// shows whether it may stand there; a click or E places it. The rules for where a fire may go live
+// in actions/build.js and the crafting rules in actions/craft.js; this file only drives them.
 
 import { checkPlacement, placeCampfire, BUILD_ABOARD } from '../actions/build.js';
+import { beginCraft } from '../actions/craft.js';
+import { TOOLS } from '../data/tools.js';
 import { cancelAction } from '../animation/clips.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -25,8 +27,8 @@ const FACING = [
  * @param {object} session - The shared session; its `build` record and `pointer` are used here.
  * @param {object} ui - The other UI parts (`hud`, `camp`).
  * @returns {{toggleMenu: Function, start: Function, cancel: Function, place: Function,
- *   update: Function}} Ways to open or close the menu, start placing a campfire, leave building,
- *   place the fire, and move the ghost each frame.
+ *   update: Function, craft: Function}} Ways to open or close the menu, start placing a campfire,
+ *   leave building, place the fire, move the ghost each frame, and start crafting a tool.
  */
 export function setupBuild(session, ui) {
   const { build } = session;
@@ -96,6 +98,25 @@ export function setupBuild(session, ui) {
   }
 
   /**
+   * Starts crafting the next tier of a tool (the menu's Tools entries, or 2, 3 and 4 while the
+   * menu is open).
+   *
+   * The menu closes, any gathering in progress stops, and the craft action starts; the game loop
+   * finishes it. A tool that can't be made yet changes nothing, and a toast says why.
+   *
+   * @param {string} tool - Which tool: 'axe', 'pickaxe' or 'hammer'.
+   */
+  function craft(tool) {
+    if (session.screen !== 'game' || !session.state || refuseAboard()) return;
+    build.menu = false;
+    cancelAction(session.animator);
+    const result = beginCraft(session.state, session.animator, tool);
+    if (result.ok) session.keys.clear();
+    else ui.hud.notify(result.message);
+    ui.hud.update();
+  }
+
+  /**
    * Places the campfire at the ghost, if it may stand there, then asks for the camp's name.
    *
    * A refused spot changes nothing and says why. The fire is paid for and placed before the name
@@ -116,9 +137,11 @@ export function setupBuild(session, ui) {
     ui.camp.openNaming(result.camp);
   }
 
-  // The Build button opens the menu; the menu's Campfire option starts placing one.
+  // The Build button opens the menu; the menu's Campfire option starts placing one, and each tool
+  // entry starts crafting it.
   $('build-button').addEventListener('click', toggleMenu);
   $('build-campfire').addEventListener('click', start);
+  for (const { id } of TOOLS) $(`craft-${id}`).addEventListener('click', () => craft(id));
 
-  return { toggleMenu, start, cancel, place, update };
+  return { toggleMenu, start, cancel, place, update, craft };
 }

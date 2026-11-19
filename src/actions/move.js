@@ -1,8 +1,8 @@
 // The "move" action: walking and running around the world without passing through water,
-// trees, buildings, cliff edges, old boats, standing supplies or campfires, and rowing the boat
+// standing trees, buildings, cliff edges, old boats, standing supplies or campfires, and rowing the boat
 // across shallow sea.
 
-import { isWalkable, isSailable, blocks, hitsCliff } from '../world/map.js';
+import { isWalkable, isSailable, blocks, hitsCliff, obstaclesAt } from '../world/map.js';
 import { solidBases } from '../world/nodes.js';
 import {
   WALK_SPEED,
@@ -60,8 +60,15 @@ export function movePlayer(state, dx, dy, dt, running = false) {
   const bases = solidBases(state).filter((base) => !blocks([base], x, y));
   const cliffs = !hitsCliff(x, y);
 
+  // A chopped tree or mined rock isn't solid until it grows back, and one that grew back around
+  // the player (or that a save put them inside) lets them walk out, like the bases above.
+  const inside = obstaclesAt(x, y);
+  /** True for a map object to walk through: chopped and not grown back, or already around the player. */
+  const skip = (id) => state.regrowAt[id] > state.time || inside.includes(id);
+
   /** True if the player may move onto the spot: shallow sea in the boat, dry open ground on foot. */
-  const free = (px, py) => (state.aboard ? isSailable(px, py) : isWalkable(px, py, bases, cliffs));
+  const free = (px, py) =>
+    state.aboard ? isSailable(px, py) : isWalkable(px, py, bases, cliffs, skip);
 
   // Try the x and y parts separately, so a wall in one direction still lets the player slide along it.
   if (free(x + dx, y)) state.player.x += dx;

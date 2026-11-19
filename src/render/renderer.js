@@ -143,6 +143,14 @@ export async function createRenderer(container, miniCanvas) {
     fires = new Map();
   let clock = 0;
 
+  // Trees and rocks a tool can harvest: `sceneryNodes` maps a node id to its node; `harvest` maps
+  // it to its drawn entry ({node, sprite, glow, top}), and `harvestChunks` lists the entries in
+  // each scenery chunk, so draw() only fades the ones on screen. `litTree` is the one glowing now.
+  const sceneryNodes = new Map(NODES.filter((n) => n.inScenery).map((n) => [n.id, n])),
+    harvest = new Map(),
+    harvestChunks = new Map();
+  let litTree = null;
+
   const scene = await new Promise((resolve, reject) => {
     // On timeout, run fail() so the half-built game is destroyed too; a leftover canvas would cover
     // the new one on "Try again". The game always exists by then: 20 s is long after it was made.
@@ -201,7 +209,9 @@ export async function createRenderer(container, miniCanvas) {
         TILE_LAYERS.forEach((name, i) => map.createLayer(name, tiles, 0, 0).setDepth(i - 20));
 
         // Standing objects sort by their ground line, so the character can walk behind a tree or in front of it.
-        // Harvestable wild scenery is skipped here; it is drawn with the supplies below.
+        // Harvestable wild patches (flowers, driftwood) are skipped here; they are drawn with the supplies below.
+        // Trees and rocks stay here, chunk by chunk, but each also gets an entry in `harvest`, so
+        // draw() can fade it out when it is chopped or mined and light it up when E would gather it.
         for (const object of map.getObjectLayer('objects').objects) {
           const spec = objectSpecs[object.name];
           if (!spec || WILD[object.name] || !this.textures.exists(`object-${object.name}`))
@@ -223,7 +233,25 @@ export async function createRenderer(container, miniCanvas) {
             if (!swayers.has(key)) swayers.set(key, []);
             swayers.get(key).push(image);
           }
+
+          // A tree or rock a tool can harvest: the same fields as a supply entry (see below).
+          const node = sceneryNodes.get(`${object.name}-${object.x}-${object.y}`);
+          if (!node) continue;
+          const entry = {
+            node,
+            sprite: image,
+            anim,
+            fx: null,
+            wasGone: false,
+            glow: null,
+            top: Math.max(node.y - image.displayHeight * image.originY, node.y - 150),
+          };
+          harvest.set(node.id, entry);
+          if (!harvestChunks.has(key)) harvestChunks.set(key, []);
+          harvestChunks.get(key).push(entry);
         }
+        // Every tree and rock node should have found its picture; if not, the ids drifted apart.
+        console.assert(harvest.size === sceneryNodes.size, 'tree and rock nodes without a picture');
 
         // Supplies are sprites like the scenery around them; draw() glows the one in reach (WebGL only) and caps it with E.
         // The glow filter is added the first time a supply comes into reach (see glowOf), because the world has
@@ -231,7 +259,7 @@ export async function createRenderer(container, miniCanvas) {
         webgl = this.renderer.type === Phaser.WEBGL;
         // Old boats on the beach are drawn the same way; the one the player repaired fades out.
         supplies = [
-          ...NODES.map((node) => ({
+          ...NODES.filter((node) => !node.inScenery).map((node) => ({
             node,
             /** True while the supply or patch has nothing to give. */
             gone: (state) => !isAvailable(state, node),
@@ -352,7 +380,7 @@ export async function createRenderer(container, miniCanvas) {
   /**
    * Gives a supply its glow outline, creating it the first time it is needed.
    *
-   * @param {object} s - One entry of `supplies`.
+   * @param {object} s - One entry of `supplies` or `harvest`.
    * @returns {object|null} The glow filter, or null on the Canvas renderer, which has no filters.
    */
   function glowOf(s) {
@@ -364,6 +392,47 @@ export async function createRenderer(container, miniCanvas) {
         .setPaddingOverride(null);
     }
     return s.glow;
+  }
+
+  /**
+   * Shows a supply, tree or rock as standing or gone this frame.
+   *
+   * A standing one with a tree sheet sways. One just gathered that has a flip-book sheet falls and
+   * breaks apart (a rock cracks to rubble) and only then fades; anything else simply fades out, and
+   * fades back in when it grows back.
+   *
+   * @param {object} s - A `supplies` or `harvest` entry: its `sprite`, `node`, flip-book `anim`, the
+   *   seconds `fx` of a break playing (or null), and `wasGone` from the last frame.
+   * @param {boolean} gone - True while it has nothing to give.
+   * @param {number} dt - Seconds since the last frame.
+   * @param {number} step - How far its see-through-ness may change this frame (1 jumps straight there).
+   * @param {boolean} quiet - True to skip the break animation (reduced motion, a fresh load, or it
+   *   just came on screen).
+   */
+  function showGone(s, gone, dt, step, quiet) {
+    let breaking = false;
+    if (s.anim) {
+      const act = BREAK[s.anim.rows];
+      if (!gone) {
+        s.fx = null;
+        s.sprite.setFrame(
+          s.anim.rows === 3 && !reducedMotion ? swayFrame(clock, s.node.x, s.node.y) : 0,
+        );
+      } else if (!s.wasGone && !quiet) s.fx = 0;
+      if (gone && s.fx !== null) {
+        s.fx += dt;
+        const at = Math.floor(s.fx * act.fps);
+        s.sprite.setFrame(act.frames[Math.min(at, act.frames.length - 1)]);
+        breaking = s.fx < act.frames.length / act.fps + act.hold;
+      }
+    }
+    s.wasGone = gone;
+
+    if (!breaking)
+      s.sprite.setAlpha(
+        gone ? Math.max(0, s.sprite.alpha - step) : Math.min(1, s.sprite.alpha + step),
+      );
+    s.sprite.setVisible(s.sprite.alpha > 0);
   }
 
   /**
@@ -416,10 +485,11 @@ export async function createRenderer(container, miniCanvas) {
         cx++
       )
         if (chunks.has(`${cx},${cy}`)) next.add(`${cx},${cy}`);
+    // Chunks that just came into view; their trees and rocks jump to how they are now (see below).
+    const appeared = new Set([...next].filter((key) => !shown.has(key)));
     for (const key of shown)
       if (!next.has(key)) for (const image of chunks.get(key)) image.setVisible(false);
-    for (const key of next)
-      if (!shown.has(key)) for (const image of chunks.get(key)) image.setVisible(true);
+    for (const key of appeared) for (const image of chunks.get(key)) image.setVisible(true);
     shown = next;
 
     // Wind in the trees on screen.
@@ -463,32 +533,7 @@ export async function createRenderer(container, miniCanvas) {
     snap = false;
     for (const s of supplies) {
       const gone = s.gone(state);
-
-      // A supply with a flip-book sheet: a standing tree sways; one just gathered falls and
-      // breaks apart (a rock cracks to rubble) and only then fades.
-      let breaking = false;
-      if (s.anim) {
-        const act = BREAK[s.anim.rows];
-        if (!gone) {
-          s.fx = null;
-          s.sprite.setFrame(
-            s.anim.rows === 3 && !reducedMotion ? swayFrame(clock, s.node.x, s.node.y) : 0,
-          );
-        } else if (!s.wasGone && !quiet) s.fx = 0;
-        if (gone && s.fx !== null) {
-          s.fx += dt;
-          const at = Math.floor(s.fx * act.fps);
-          s.sprite.setFrame(act.frames[Math.min(at, act.frames.length - 1)]);
-          breaking = s.fx < act.frames.length / act.fps + act.hold;
-        }
-      }
-      s.wasGone = gone;
-
-      if (!breaking)
-        s.sprite.setAlpha(
-          gone ? Math.max(0, s.sprite.alpha - step) : Math.min(1, s.sprite.alpha + step),
-        );
-      s.sprite.setVisible(s.sprite.alpha > 0);
+      showGone(s, gone, dt, step, quiet);
       // Highlight the supply being worked on, or else the nearest one in reach.
       const target = !gone && (busy ? s.node.id === busy : s.node.id === aimed);
       if (target) {
@@ -499,6 +544,27 @@ export async function createRenderer(container, miniCanvas) {
         if (busy) working = s;
         else capped = s;
       }
+    }
+
+    // Trees and rocks on screen fall, break and fade like supplies when chopped or mined, and fade
+    // back in when they regrow. One in a chunk that just came into view jumps straight to how it is
+    // now instead of animating.
+    for (const key of shown) {
+      const fresh = appeared.has(key);
+      for (const entry of harvestChunks.get(key) ?? [])
+        showGone(entry, !isAvailable(state, entry.node), dt, fresh ? 1 : step, quiet || fresh);
+    }
+
+    // The tree or rock E would chop or mine (or the one being worked on) glows like a supply, with
+    // the E cap over it or the progress bar while the work runs.
+    const tree = harvest.get(busy ?? aimed) ?? null;
+    if (litTree && litTree !== tree && litTree.glow) litTree.glow.active = false;
+    litTree = tree && isAvailable(state, tree.node) ? tree : null;
+    if (litTree) {
+      const glow = glowOf(litTree);
+      if (glow) glow.active = true;
+      if (busy) working = litTree;
+      else capped = litTree;
     }
 
     // The player's boat, pointing the way it last went and rocking gently on the water.

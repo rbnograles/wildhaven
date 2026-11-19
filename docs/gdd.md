@@ -48,7 +48,7 @@ All three share one world and start at different places. Each has its own save.
 | The Wandering Builder | Hollowstead Meadows, at the abandoned village (center). The character card still says "Hollowstead Village" | 5 / 2 / 2 | Hammer · Work gloves | "Where others see ruins, you see a beginning." |
 | The Shipwreck Survivor | Driftwood Lagoon shore, at the shipwreck (east). The character card still says "Driftwood Coast" | 2 / 0 / 4 | Salvaged satchel · Rope | "The sea took your ship. Not your spirit." |
 
-Kit tools are not equip mechanics; they only identify the character visually (README).
+Two kit tools are real since the tools update [Built 2026-11-19]: the Scout's hatchet is a stone axe and the Builder's hammer a stone hammer, each with every use left. The other kit items (field pack, work gloves, satchel, rope) still only identify the character visually.
 
 **Approval history**
 - Spec: "The user has approved the genre and camera direction only."
@@ -69,7 +69,7 @@ Kit tools are not equip mechanics; they only identify the character visually (RE
 4. Keep walking to reach the other starting regions (3 total).
 5. The first objective completes when you have gathered once and discovered three regions. After that the goals card follows the region you are in: places found n / 7 (n / 10 in the lagoon) and signposts found n / 2. Free exploration continues.
 
-The fixed supplies are finite: 9 one-time supply nodes, all near the three starting places. The other four regions (Sunscar Desert, Frostpeak, Stonewater Canyons, Emerald Jungle) have no fixed supplies yet. Wild flower patches (38) are the one renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Resources have no use yet. README: "Resources currently support gathering and exploration objectives, not crafting."
+The fixed supplies are finite: 9 one-time supply nodes, all near the three starting places. The other four regions (Sunscar Desert, Frostpeak, Stonewater Canyons, Emerald Jungle) have no fixed supplies yet. Wild flower patches (38) are the one renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Wood and stone build campfires and mend old boats, food and herbs feed and heal, and wood, stone and iron craft tools. Iron is the fifth resource: it comes only from iron-streaked rocks (Stonewater Canyons' cliff rocks and Frostpeak's ice rocks), mined with a pickaxe [Built 2026-11-19].
 
 **Original spec loop** [Planned, moved from spec "Experience and visual direction"]
 > The character begins at the edge of a forest with a few supplies. Explore woodland, meadow, riverbank, and abandoned ruins; gather resources; choose a camp location; and build a settlement that makes subsequent journeys easier.
@@ -126,7 +126,7 @@ A camp's useful reach should be about half a daylight round trip. **Numbers not 
 | D7 | Fog + hidden finds | 52 landmarks (seven per region, ten in the lagoon with its islets) and 14 signposts to find, with per-region and world totals [Built]. The maps fill in as you walk [Built] | [Built] |
 | D30 | Settlement tiers | Camp → hamlet → village with visible changes and the name you chose ("this is MY town") | [M3] |
 
-Planned gather tools (base gather 6 s, tools shorten it toward 0.5 s, per the code's balance notes) are a competence hook for D7 as well. [M3]
+Gather tools are a competence hook for D7 as well [Built 2026-11-19]: bare hands gather in 6 s, a stone tool in 5 s and an iron tool in 3 s, and only an axe chops trees and only a pickaxe mines rocks. Going below 3 s (toward 0.5 s) is open.
 
 Today there are seven regions. The starting places are 5,100 to 11,500 units apart, 21 to 47 s at a run in a straight line, so seeing all seven regions and 52 landmarks no longer fits in one short session.
 
@@ -236,10 +236,11 @@ Superseded: the spec said "Their broader motivation and preferred art references
 
 ### 6.2 Gathering [Built]
 - The nearest available node within 95 units can be gathered with E or the gather button. In reach, its sprite glows and an E key cap floats over it.
-- Every gather is a timed action of 6 s (`GATHER_SECONDS`); a progress bar replaces the key cap and the clip loops for the whole time. This length is a design decision: planned gathering tools will shorten it toward 0.5 s. [Built]
+- Every gather is a timed action; a progress bar replaces the key cap and the clip loops for the whole time. Bare hands take 6 s (`GATHER_SECONDS`), a stone tool 5 s and an iron tool 3 s (`TOOL_SECONDS`). The 6 s base is a design decision. [Built]
+- **Tools [Built 2026-11-19]** (`docs/superpowers/specs/2026-11-19-tools-crafting-design.md`). Every tree in the map (about 1,640) needs an axe and gives 2 or 3 wood; every rock (about 450) needs a pickaxe and gives 2 or 3 stone, or 1 iron from one of the 96 iron-streaked rocks. A chopped tree or mined rock can be walked through and grows back after three in-game days. Tools are crafted from the Build menu (keys 2 to 4): stone tools from wood and stone, anywhere, with 25 uses (axe, pickaxe) or 10 (hammer); iron tools from wood, stone and iron, beside one of the player's campfires and with a hammer, lasting forever. The ladder is hands, then stone tools, then iron from the canyons or Frostpeak, then iron tools at camp. Bare-hand wood and stone (scrap timber, driftwood, loose stones) always exist, so a broken axe never strands the player.
 - A fresh movement press cancels the action and awards nothing. Pause and a hidden tab freeze it.
 - Resources are awarded once, when the action finishes, and the sprite fades out. Supply nodes then grow back after two in-game days (6.19); flower patches and beach driftwood fade back in 180 game-seconds later.
-- The pine tree is chopped with the overhead `build` swing until an axe animation exists; other supplies use `gather`.
+- Trees are chopped with the `chop` axe swing; rocks are mined with the overhead `build` swing until a mining animation exists; other supplies use `gather`. Crafting plays the `craft` clip. Oaks, pines and `rocks-a` fall or crack apart before fading when gathered.
 
 ### 6.3 Discovery [Built]
 - A region is discovered by standing in it; every spot in the world belongs to exactly one of the seven regions.
@@ -344,7 +345,7 @@ Wood, stone and food nodes regrow after **2 in-game days** (reusing the flower-p
 - **Pass-out screen.** Explains cause and cost: "You got too cold away from a fire. You woke at your camp at midday." Play resumes at camp.
 - **Night at the fire.** Three things are possible: rest, which skips to dawn and saves, with the dawn ritual playing on waking (the natural place to end a session); camp tasks, brewing tea from herbs and handling the needs list at the fire (this is where tea is taught); or waiting it out near the fire's warmth.
 - **Built as:** the goals card reads "Build a campfire" with the wood and stone counts and the B key; toasts at dusk ("Dusk is falling...") and nightfall ("Getting dark, head to a fire."); the camp dialog (E at your fire) holds the needs, tea, eat, heal and "Rest until dawn" (offered from dusk). The dawn update does run during a pass-out.
-- **Still open from the walkthrough:** in-game hints for WASD, Shift and Esc (a newcomer who never learns Shift walks home 58% slower); feedback when moving cancels a gather; ~18 gathers × 6 s in a first session with no speed-up until tools [M3].
+- **Still open from the walkthrough:** in-game hints for WASD, Shift and Esc (a newcomer who never learns Shift walks home 58% slower); feedback when moving cancels a gather; ~18 gathers × 6 s in a first session with no speed-up until tools (tools are now built: a stone axe takes 5 s).
 
 ---
 
@@ -396,7 +397,7 @@ Multiplayer, mobile controls, realistic Earth geography, general world streaming
 9. Slow regrowth for wood, stone and food (moved in from M3 to keep M2's sinks fed)
 
 **M3** [Review]
-Wolves and the repel action; shelter, stockpile and farm; up to three settlers with jobs; farm food production; the 6-step objective chain; settlement tiers; the carried-today tally and dropped haul; the full dawn ritual (settler reports, farm yield); gathering tools.
+Wolves and the repel action; shelter, stockpile and farm; up to three settlers with jobs; farm food production; the 6-step objective chain; settlement tiers; the carried-today tally and dropped haul; the full dawn ritual (settler reports, farm yield). (Gathering tools were pulled forward and are built.)
 
 **M2 acceptance** [Review, adapted from the spec]
 In a running browser the player can: live through day and night; get cold away from a fire at night and warm up beside one; place a campfire that founds a named camp, and a second one farther out; see the needs list change at dawn and point outward; pass out from cold and wake at midday at the nearest fire (or spawn if none); watch the fog lift as they walk; brew and drink tea and heal with herbs; see a gathered node come back days later. Rejected placements spend nothing; pause stops time; save then reload restores the run.

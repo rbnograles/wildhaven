@@ -14,8 +14,9 @@ export const MAX_MOVE_DT = 0.1;
 /** How close the player must stand to a supply to gather it. */
 export const GATHER_RANGE = 95;
 
-// How many seconds every gather takes. Gathering tools will shorten this (towards 0.5 s); until then
-// every supply takes the full time. This is a design decision, so don't shorten it as a "fix".
+// How many seconds a bare-hand gather takes. Tools shorten the gathers that need them (see
+// TOOL_SECONDS); bare-hand gathers always take the full time. This is a design decision, so don't
+// shorten it as a "fix".
 export const GATHER_SECONDS = 6;
 
 /** How close the player must come to a landmark to find it. */
@@ -148,3 +149,31 @@ export const SUPPLY_REGROW = 720;
 // The fog of war's square size, and how far around the player the fog lifts, in world units.
 export const FOG_CELL = 256;
 export const FOG_RADIUS = 1000;
+
+// ---- Tools and crafting ----
+
+/**
+ * What each tool costs to craft, per tier. Stone tools are made anywhere; iron tools also need a
+ * hammer and one of the player's campfires (the fire is the forge).
+ */
+export const TOOL_RECIPES = {
+  axe: { stone: { wood: 3, stone: 2 }, iron: { wood: 2, stone: 1, iron: 3 } },
+  pickaxe: { stone: { wood: 3, stone: 3 }, iron: { wood: 2, stone: 1, iron: 4 } },
+  hammer: { stone: { wood: 2, stone: 3 }, iron: { wood: 2, stone: 1, iron: 3 } },
+};
+
+/** How many uses a new stone tool has. Iron tools never wear out. */
+export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10 };
+
+// Seconds a gather that needs a tool takes with a stone or an iron one. Bare-hand gathers keep
+// GATHER_SECONDS; this is how tools shorten gathering, as GATHER_SECONDS always promised.
+export const TOOL_SECONDS = { stone: 5, iron: 3 };
+
+/** Uses left when the game warns that a stone tool is wearing out. */
+export const TOOL_WEAR_WARNING = 3;
+
+/** Seconds one craft takes. Moving cancels it, and nothing is spent. */
+export const CRAFT_SECONDS = 3;
+
+/** Game seconds before a chopped tree or mined rock grows back: three in-game days. */
+export const HARVEST_REGROW = 1080;
