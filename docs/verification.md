@@ -136,3 +136,31 @@ Browser at `http://127.0.0.1:5199` (a dev server run from the worktree, so saves
 - Terrain looked right at a snow ford, the desert oasis and dry riverbed, and in the jungle. Frame rate while walking through the jungle: 61 fps.
 
 Not checked by hand: walking across a region border on foot (positions were set through the save for speed), travel with reduced motion on, the two bridge crossings, and gathering being cancelled by travel. The unit tests cover the rules behind the first three; the last has no test.
+
+## Pinefall field journal (prototype) — 2026-11-19
+
+A playtest prototype for build 2 (slice plan: `~/.gstack/projects/game 1/ryann-main-slice-plan-20261119-134500.md`). Automated: `npm test` 60 passing (4 new in `tests/world/journal.test.js`: one page per Pinefall place, the trail skipping found places, journal pages only for places that have one, and every "<direction> of the <thing>" in a clue checked against the real map within 60°); `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5177` with the Scout's existing save (camp found):
+
+- The top bar shows a "Journal J" button with an orange dot; the controls strip lists `J Journal`.
+- J opens the journal and pauses the game: "Pinefall Woods", 1 of 7 pages, the Scout's Camp page with the tent keepsake, six dashed empty pages, and the trail clue "A fallen giant lies hollow a short walk north-west of the Scout's camp." The dot clears on opening.
+- Following the clue (north-west, about 8 s at a run) found Hollow Log: the toast read "Found Hollow Log · New page in your journal (J)", the dot came back, and the console log read `found landmark: Hollow Log` then `followed the trail clue to Hollow Log, 10 s after first reading it`.
+- Reopened: 2 of 7 pages, the log keepsake shown, the clue moved on to Grandfather Pine.
+- 375×812: the journal button shrinks to its icon beside pause; the journal stacks pages one per row and scrolls inside itself; no horizontal scroll.
+- No console errors after the reload (earlier 500s in the log came from another session moving character art while the dev server was running).
+
+- Brand-new Scout ("Start a fresh adventure"): the welcome line read "Welcome to Pinefall Woods. Your story begins here. Your journal has its first page (J)." and the log began `start scout (new adventure)`, `found region: Pinefall Woods`, `found landmark: Scout's Camp`. This run found a bug: the dot stayed hidden because the bookmark was kept per character across games. The bookmark is now kept per game.
+
+Not checked by hand: the "every page filled" state, and the other five Pinefall clues on foot (the compass test covers their directions, not whether they read clearly).
+
+## Character sprites split into per-character folders — 2026-11-19
+
+Every sheet the game loads now sits in `assets/characters/<id>/`. The two all-character originals (idle and side-walk) moved to `assets/characters/originals/`, and `tools/split-character-sheets.py` cut them into per-character copies, each pixel-identical to its row of the original. Automated: `npm test` 60 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5178` (1280×720):
+
+- Main menu: each panel shows its own character's south-facing idle pose (scout, builder, survivor).
+- Builder, fresh start (the old version-2 test save took the start-fresh path): the HUD face shows the builder's head and shoulders (`data-portrait="builder"`, `background-size: 400% 133.333%`); the player stands in the builder's idle pose and walks east on the builder's side-walk sheet. No console errors.
+
+Not checked by hand: the scout and survivor in-game (they use the same code path as the builder) and the 390 px layout (no sizes changed).

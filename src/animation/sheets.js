@@ -1,38 +1,58 @@
 // Loads the character sprite sheets (big pictures holding every animation frame) in the browser.
 // It finds where each small picture sits inside a sheet, so the game can cut out the right one,
 // and it offers a simple painter that the animation preview dialog uses.
-import idleUrl from '../../assets/characters/starting-characters-idle-v1.png';
-import sideWalkUrl from '../../assets/characters/animations/side-walk-v2.png';
-import scoutRun from '../../assets/characters/animations/scout-run-v2.png';
-import builderRun from '../../assets/characters/animations/builder-run-v2.png';
-import survivorRun from '../../assets/characters/animations/survivor-run-v2.png';
-import scoutWalk from '../../assets/characters/animations/scout-locomotion.png';
-import builderWalk from '../../assets/characters/animations/builder-locomotion.png';
-import survivorWalk from '../../assets/characters/animations/survivor-locomotion.png';
-import scoutActions from '../../assets/characters/animations/scout-actions.png';
-import builderActions from '../../assets/characters/animations/builder-actions.png';
-import survivorActions from '../../assets/characters/animations/survivor-actions.png';
+// Each character's sheets sit in its own folder: assets/characters/scout/, builder/, survivor/.
+import scoutIdle from '../../assets/characters/scout/scout-idle-v1.png';
+import builderIdle from '../../assets/characters/builder/builder-idle-v1.png';
+import survivorIdle from '../../assets/characters/survivor/survivor-idle-v1.png';
+import scoutSideWalk from '../../assets/characters/scout/scout-side-walk-v2.png';
+import builderSideWalk from '../../assets/characters/builder/builder-side-walk-v2.png';
+import survivorSideWalk from '../../assets/characters/survivor/survivor-side-walk-v2.png';
+import scoutRun from '../../assets/characters/scout/scout-run-v2.png';
+import builderRun from '../../assets/characters/builder/builder-run-v2.png';
+import survivorRun from '../../assets/characters/survivor/survivor-run-v2.png';
+import scoutWalk from '../../assets/characters/scout/scout-locomotion.png';
+import builderWalk from '../../assets/characters/builder/builder-locomotion.png';
+import survivorWalk from '../../assets/characters/survivor/survivor-locomotion.png';
+import scoutActions from '../../assets/characters/scout/scout-actions.png';
+import builderActions from '../../assets/characters/builder/builder-actions.png';
+import survivorActions from '../../assets/characters/survivor/survivor-actions.png';
 import { CHARACTERS } from '../data/characters.js';
 import { sampleAnimation, steadyAnchors } from './clips.js';
 
 /**
- * Each character's walking (`locomotion`) and action sheets.
+ * Every sprite sheet of each character, by sheet name.
+ *
+ * `idle` is standing still (one row, one column per facing). `profile` is walking west or east
+ * (one row). `locomotion` is walking and running, `run` is the newer run (3 rows: south, east,
+ * north), and `actions` is gathering and the other actions.
  *
  * `url` is the image file. `edges` are the y positions where one row of frames ends and the
  * next begins, top to bottom. Measured transparent gutters, rather than assumed equal rows,
- * preserve all generated poses. If a sheet is redrawn, measure its edges again.
+ * preserve all generated poses. If a sheet is redrawn, measure its edges again. `steady` lines
+ * frames up by the head (see `measureFrames`), and `columns` is how many frames sit in a row
+ * when it isn't 4.
  */
 const SOURCES = {
   scout: {
+    idle: { url: scoutIdle, edges: [0, 418] },
+    profile: { url: scoutSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: scoutWalk, edges: [0, 228, 447, 663, 889, 1112, 1331, 1547, 1774] },
+    run: { url: scoutRun, edges: [0, 290, 579, 887], steady: true, columns: 6 },
     actions: { url: scoutActions, edges: [0, 295, 592, 852, 1153, 1402] },
   },
   builder: {
+    idle: { url: builderIdle, edges: [0, 418] },
+    profile: { url: builderSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: builderWalk, edges: [0, 228, 446, 667, 891, 1109, 1332, 1552, 1774] },
+    run: { url: builderRun, edges: [0, 292, 579, 887], steady: true, columns: 6 },
     actions: { url: builderActions, edges: [0, 308, 627, 890, 1190, 1402] },
   },
   survivor: {
+    idle: { url: survivorIdle, edges: [0, 418] },
+    profile: { url: survivorSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: survivorWalk, edges: [0, 241, 456, 675, 902, 1119, 1331, 1554, 1774] },
+    run: { url: survivorRun, edges: [0, 294, 583, 887], steady: true, columns: 6 },
     actions: { url: survivorActions, edges: [0, 298, 602, 883, 1188, 1402] },
   },
 };
@@ -162,42 +182,36 @@ let cached;
  *
  * The first call starts the downloads; later calls get the same answer without loading again.
  * If loading fails, the memory is cleared so the next call (a retry) can try again.
- * Resolves to {idle, profile, atlases:{[characterId]:{locomotion, actions, run}}}; each sheet is
+ * Resolves to {atlases:{[characterId]:{idle, profile, locomotion, run, actions}}}; each sheet is
  * {image, frames[row][col], referenceHeight}.
  *
- * @returns {Promise<{idle: object, profile: object, atlases: object}>} Every measured sheet.
+ * @returns {Promise<{atlases: object}>} Every measured sheet, by character and sheet name.
  */
 export function loadCharacterSheets() {
   if (cached) return cached;
   cached = (async () => {
-    // Sheets every character shares: standing still, and walking sideways.
-    const idle = measureFrames(await loadImage(idleUrl), [0, 418, 836, 1254]);
-    const profile = measureFrames(await loadImage(sideWalkUrl), [0, 418, 836, 1254], true);
-
-    // Each character's own sheets, loaded side by side.
+    // Every character's sheets, all loaded side by side.
     const atlases = {};
     await Promise.all(
       CHARACTERS.map(async (character) => {
-        const source = SOURCES[character.id];
         const sheets = await Promise.all(
-          ['locomotion', 'actions'].map(async (name) => [
+          Object.entries(SOURCES[character.id]).map(async ([name, source]) => [
             name,
-            measureFrames(await loadImage(source[name].url), source[name].edges),
+            measureFrames(await loadImage(source.url), source.edges, source.steady, source.columns),
           ]),
         );
         atlases[character.id] = Object.fromEntries(sheets);
-
-        // Run sheets: [image, row edges]. Each has 3 rows (south, east, north) of 6 frames.
-        const runSheets = {
-          scout: [scoutRun, [0, 290, 579, 887]],
-          builder: [builderRun, [0, 292, 579, 887]],
-          survivor: [survivorRun, [0, 294, 583, 887]],
-        };
-        const [url, edges] = runSheets[character.id];
-        atlases[character.id].run = measureFrames(await loadImage(url), edges, true, 6);
       }),
     );
-    return { idle, atlases, profile };
+
+    // The idle and side-walk art was painted as one picture of all three characters, and the
+    // game has always sized it by the scout's row. Every character keeps that one size, so each
+    // stays as tall next to the others as it was painted.
+    for (const atlas of Object.values(atlases)) {
+      atlas.idle.referenceHeight = atlases.scout.idle.referenceHeight;
+      atlas.profile.referenceHeight = atlases.scout.profile.referenceHeight;
+    }
+    return { atlases };
   })().catch((error) => {
     cached = null;
     throw error;
@@ -209,8 +223,8 @@ export function loadCharacterSheets() {
  * Finds the exact picture to draw for a character's pose.
  *
  * `sampleAnimation` says "walk, frame 2, facing east"; this turns that into the real sheet and
- * the box on it. Walking west or east uses the shared side-walk sheet instead. The 2D-canvas
- * painter below and the Phaser renderer both draw from this.
+ * the box on it. Walking west or east uses the character's side-walk (`profile`) sheet instead.
+ * The 2D-canvas painter below and the Phaser renderer both draw from this.
  *
  * @param {object} sheets - The result of `loadCharacterSheets`.
  * @param {string} characterId - Which character, such as `scout`.
@@ -225,21 +239,17 @@ export function resolvePose(sheets, characterId, clip, time, direction, loop) {
   const sample = sampleAnimation(clip, time, direction, loop);
   const character = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
 
-  // Walking sideways uses the shared side-walk sheet; standing uses the shared idle sheet.
+  // Walking sideways uses the side-walk sheet; everything else uses the clip's own sheet.
   const profile = clip === 'walk' && (direction === 1 || direction === 2);
-  const key = profile
-    ? 'profile'
-    : sample.sheet === 'idle'
-      ? 'idle'
-      : character.id + '-' + sample.sheet;
-  const sheet = sheets[key] ?? sheets.atlases[character.id][sample.sheet];
+  const sheetName = profile ? 'profile' : sample.sheet;
+  const sheet = sheets.atlases[character.id][sheetName];
 
-  // Shared sheets have one row per character; on the idle sheet each column is a direction.
-  const row = profile || sample.sheet === 'idle' ? character.row : sample.row;
+  // The idle and side-walk sheets have a single row; on the idle sheet each column is a direction.
+  const row = profile || sample.sheet === 'idle' ? 0 : sample.row;
   const column = sample.sheet === 'idle' ? sample.direction : sample.frame;
   return {
     sheet,
-    key,
+    key: character.id + '-' + sheetName,
     name: row + '-' + column,
     frame: sheet.frames[row][column],
     flip: sample.flip || (profile && direction === 1),

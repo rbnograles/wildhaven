@@ -1,6 +1,6 @@
-// The pop-up windows shown over the game: pause, world map and "start fresh?".
+// The pop-up windows shown over the game: pause, world map, journal and "start fresh?".
 // Any of them being open counts as paused, so the world stands still behind it.
-// This file also wires up their buttons and the fullscreen button.
+// This file wires up their buttons and the fullscreen button; ui/journal.js fills the journal.
 import { save, start, leave } from '../core/session.js';
 import { worldProgress } from '../world/progress.js';
 import { travelTo } from '../actions/travel.js';
@@ -18,12 +18,12 @@ import { $ } from './layout.js';
  *   Helpers the keyboard code and game loop use.
  */
 export function setupDialogs(session, ui) {
-  const dialogs = [$('pause-dialog'), $('map-dialog'), $('reset-dialog')];
+  const dialogs = [$('pause-dialog'), $('map-dialog'), $('journal-dialog'), $('reset-dialog')];
 
   /**
    * Tells whether the game is paused. Any open dialog pauses the game.
    *
-   * @returns {boolean} True while the pause, map or reset dialog is open.
+   * @returns {boolean} True while the pause, map, journal or reset dialog is open.
    */
   const isPaused = () => dialogs.some((dialog) => dialog.open);
 

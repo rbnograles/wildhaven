@@ -180,9 +180,9 @@ button:active {
   filter: none;
 }
 
-/* The character standing on the path: the front pose from the idle sprite sheet. */
-/* The sheet is 4 poses across and 3 characters down, so it is drawn 400% wide and 300% tall; */
-/* --row (0, 1 or 2) times 50% picks this character's row. */
+/* The character standing on the path: the front pose from its idle sprite sheet. */
+/* The sheet is 4 poses across in one row, so it is drawn 400% wide; the first pose faces south. */
+/* "Character idle sheets" below picks each character's sheet. */
 .realm-sprite {
   position: absolute;
   left: 50%;
@@ -190,13 +190,30 @@ button:active {
   height: 45%;
   aspect-ratio: 3 / 4;
   transform: translateX(-50%);
-  background-image: url('../assets/characters/starting-characters-idle-v1.png');
-  background-size: 400% 300%;
-  background-position: 0 calc(var(--row) * 50%);
+  background-size: 400% 100%;
+  background-position: 0 0;
   filter: drop-shadow(0 10px 6px #0b130e80);
   pointer-events: none;
   z-index: 1;
   transition: bottom 0.45s ease;
+}
+
+/* ---- Character idle sheets ---- */
+/* Each character's own idle sheet, for its figure on the menu panel and its HUD face picture. */
+/* The menu panel carries data-realm; core/session.js sets data-portrait on the HUD face. */
+[data-realm='scout'] .realm-sprite,
+.hud-portrait[data-portrait='scout'] {
+  background-image: url('../assets/characters/scout/scout-idle-v1.png');
+}
+
+[data-realm='builder'] .realm-sprite,
+.hud-portrait[data-portrait='builder'] {
+  background-image: url('../assets/characters/builder/builder-idle-v1.png');
+}
+
+[data-realm='survivor'] .realm-sprite,
+.hud-portrait[data-portrait='survivor'] {
+  background-image: url('../assets/characters/survivor/survivor-idle-v1.png');
 }
 
 /* In the chosen panel the character stands just above the details. ui/selection.js keeps */
@@ -684,8 +701,8 @@ kbd {
 }
 
 /* The round face picture, cut from the same idle sprite sheet as the selection cards. */
-/* It is zoomed in further (400% tall instead of 300%) so the circle shows the top of the sprite. */
-/* At that zoom, each character's row is about 44.5% further down, so --row times 44.5% finds it. */
+/* The sheet's one row is drawn 4/3 as tall as the circle, so the circle shows the top three */
+/* quarters of the south-facing pose: head and shoulders. "Character idle sheets" picks the sheet. */
 .hud-portrait {
   display: block;
   width: 48px;
@@ -693,9 +710,8 @@ kbd {
   overflow: hidden;
   background-color: #d8ddcb;
   border-radius: 50%;
-  background-image: url('../assets/characters/starting-characters-idle-v1.png');
-  background-size: 400% 400%;
-  background-position: 0 calc(var(--row) * 44.5%);
+  background-size: 400% calc(400% / 3);
+  background-position: 0 0;
 }
 
 .hud-name {
@@ -776,6 +792,48 @@ kbd {
 .icon-button svg {
   width: 19px;
   height: 19px;
+}
+
+/* The journal button: a book icon, its name and the J key. */
+/* position: relative lets the "new page" dot sit on its top-right corner. */
+.journal-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.journal-button:hover {
+  background: #fffdf4;
+}
+
+.journal-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.journal-button kbd {
+  font-size: 9px;
+}
+
+/* The "new page" dot: a small orange circle with a cream ring so it shows on any background. */
+.journal-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e0793c;
+  border: 2px solid #f8f5e9;
+}
+
+/* hidden must win over display rules, or the dot would show with no new page. */
+.journal-dot[hidden] {
+  display: none;
 }
 
 /* ---- In-game HUD: the region name in the middle of the screen ---- */
@@ -1145,6 +1203,112 @@ dialog::backdrop {
   color: var(--muted);
 }
 
+/* ---- Dialogs: the field journal ---- */
+/* Like the map, it scrolls inside itself when the screen is too short for every page. */
+.journal-dialog {
+  padding: 23px;
+  width: min(820px, calc(100vw - 34px));
+  max-height: 94svh;
+  overflow: auto;
+}
+
+.journal-intro {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* The trail clue: a green-edged note saying where to look next. Gold once every page is found. */
+.journal-trail {
+  border-left: 3px solid var(--moss);
+  background: #e8ecde;
+  border-radius: 6px;
+  padding: 11px 15px;
+  margin-bottom: 16px;
+}
+
+.journal-trail.complete {
+  border-left-color: #c79a2e;
+}
+
+.journal-trail .dialog-kicker {
+  display: block;
+  margin-top: 0 !important;
+}
+
+.journal-trail p {
+  margin: 5px 0 0;
+  font: 400 18px/1.35 var(--serif);
+}
+
+/* Pages sit two to a row on wide screens; the phone layout below makes it one. */
+.journal-pages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.journal-page {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbf9f1;
+}
+
+.journal-page h3 {
+  margin: 0 0 4px;
+  font: 400 18px var(--serif);
+}
+
+.journal-page p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.journal-page .keepsake-name {
+  margin-top: 6px;
+  color: var(--moss);
+  font-weight: 600;
+}
+
+/* The keepsake's picture in a small square frame. The stand-in sprites come in all shapes, */
+/* so object-fit: contain keeps each one whole inside the square. */
+.keepsake-frame {
+  flex: none;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #e8ecde;
+  border: 1px solid #cfd6bf;
+  font: 400 26px var(--serif);
+  color: var(--muted);
+}
+
+.keepsake-frame img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* A page not found yet is dashed and grey, so the empty ones read as "still to find". */
+.journal-page.blank {
+  background: transparent;
+  border-style: dashed;
+}
+
+.journal-page.blank h3,
+.journal-page.blank p {
+  color: var(--muted);
+}
+
 /* ---- Touch controls ---- */
 /* The on-screen arrow buttons. Hidden on big screens; the phone layout below turns them on. */
 .touch-controls {
@@ -1315,6 +1479,24 @@ dialog::backdrop {
   }
   .map-footer > span:last-child {
     display: none;
+  }
+
+  /* Journal: the button shrinks to its icon, and pages stack one per row. */
+  .journal-button {
+    padding: 10px;
+  }
+  .journal-label,
+  .journal-button kbd {
+    display: none;
+  }
+  .journal-dialog {
+    padding: 15px;
+  }
+  .journal-pages {
+    grid-template-columns: 1fr;
+  }
+  .journal-trail p {
+    font-size: 15px;
   }
 }
 

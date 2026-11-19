@@ -16,7 +16,7 @@ Shared style line (append to every prompt):
 > sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated
 > near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.
 
-Attach `assets/characters/starting-characters-idle-v1.png` as the style reference each time.
+Attach `assets/characters/originals/starting-characters-idle-v1.png` as the style reference each time.
 
 ## 1. Ground textures
 

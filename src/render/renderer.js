@@ -17,7 +17,8 @@ import tilesetUrl from '../../assets/world/map/tileset.png';
 import overviewUrl from '../../assets/world/map/overview.webp';
 
 // Object sprite name (the PNG file name without `.png`) → the URL Vite serves it from.
-const objectUrls = Object.fromEntries(
+// The field journal (ui/journal.js) borrows these for its stand-in keepsake pictures.
+export const objectUrls = Object.fromEntries(
   Object.entries(
     import.meta.glob('../../assets/world/source/objects/*.png', {
       eager: true,
@@ -198,7 +199,7 @@ export async function createRenderer(container, miniCanvas) {
          *
          * Each character frame is the full sheet column, trimmed vertically, so feet sit on the frame's bottom centre.
          *
-         * @param {string} key - The texture name, e.g. 'idle' or 'scout-actions'.
+         * @param {string} key - The texture name, e.g. 'scout-idle' or 'scout-actions'.
          * @param {object} sheet - A measured sheet: its `image` and `frames[row][col]` boxes.
          */
         const addFrames = (key, sheet) => {
@@ -208,14 +209,13 @@ export async function createRenderer(container, miniCanvas) {
             row.forEach((f, c) => texture.add(`${r}-${c}`, 0, f.x, f.y, f.width, f.height)),
           );
         };
-        addFrames('idle', sheets.idle);
-        addFrames('profile', sheets.profile);
         for (const [id, atlas] of Object.entries(sheets.atlases))
           for (const [name, sheet] of Object.entries(atlas)) addFrames(`${id}-${name}`, sheet);
 
-        // The player and the soft shadow under their feet.
+        // The player and the soft shadow under their feet. Drawing switches the player to the
+        // chosen character's pose; the scout facing south is only the starting picture.
         shadow = this.add.ellipse(0, 0, 38, 14, 0x172e34, 0.22);
-        player = this.add.image(0, 0, 'idle', '0-0').setOrigin(0.5, 1);
+        player = this.add.image(0, 0, 'scout-idle', '0-0').setOrigin(0.5, 1);
         this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height).setRoundPixels(true);
 
         clearTimeout(timer);

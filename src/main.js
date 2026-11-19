@@ -6,6 +6,7 @@ import './style.css';
 import { mountLayout } from './ui/layout.js';
 import { createHud } from './ui/hud.js';
 import { setupDialogs } from './ui/dialogs.js';
+import { setupJournal } from './ui/journal.js';
 import { setupSelection } from './ui/selection.js';
 import { createSession, start, tabStorage } from './core/session.js';
 import { setupInput } from './core/input.js';
@@ -22,6 +23,7 @@ const session = createSession();
 const ui = {};
 ui.hud = createHud(session);
 ui.dialogs = setupDialogs(session, ui);
+ui.journal = setupJournal(session, ui);
 ui.selection = setupSelection(session, ui);
 ui.input = setupInput(session, ui);
 

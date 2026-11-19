@@ -6,7 +6,9 @@ import { movePlayer } from '../actions/move.js';
 import { finishGather } from '../actions/gather.js';
 import { discover } from '../actions/discover.js';
 import { advanceAnimation, cancelAction } from '../animation/clips.js';
+import { hasJournalPage } from '../world/journal.js';
 import { save } from './session.js';
+import { logFinds } from './playtest.js';
 
 // Engine timings, not game balance (that lives in data/balance.js).
 // MAX_FRAME_DT: the longest step (seconds) one frame may simulate, so a slow frame can't jump ahead.
@@ -16,14 +18,16 @@ const MAX_FRAME_DT = 0.05,
   AUTOSAVE_EVERY = 10,
   HUD_EVERY = 0.12;
 
-// The words for each kind of find, used in the pop-up message.
+// The words for each kind of find, used in the pop-up message. Each takes the find
+// (`{kind, id, name}`) from discover().
 const FOUND = {
   // Entering a region for the first time.
-  region: (name) => `Discovered ${name}`,
-  // Coming close to a named place.
-  landmark: (name) => `Found ${name}`,
+  region: ({ name }) => `Discovered ${name}`,
+  // Coming close to a named place. Places with a journal page say so, to send the player to J.
+  landmark: ({ id, name }) =>
+    hasJournalPage(id) ? `Found ${name} · New page in your journal (J)` : `Found ${name}`,
   // Walking up to a signpost.
-  waypoint: (name) => `Signpost found: ${name}`,
+  waypoint: ({ name }) => `Signpost found: ${name}`,
 };
 
 /**
@@ -34,7 +38,7 @@ const FOUND = {
  * Nothing in the game moves while a dialog is open or the tab is hidden.
  *
  * @param {object} session - The shared session (game state, animator, renderer, clock, keys).
- * @param {object} ui - The UI helpers (`hud`, `dialogs`, `input`) the loop talks to.
+ * @param {object} ui - The UI helpers (`hud`, `dialogs`, `input`, `journal`) the loop talks to.
  */
 export function startLoop(session, ui) {
   const { clock } = session;
@@ -83,8 +87,10 @@ export function startLoop(session, ui) {
 
         const found = discover(state);
         if (found.length) {
-          ui.hud.notify(found.map((f) => FOUND[f.kind](f.name)).join(' · '));
+          ui.hud.notify(found.map((f) => FOUND[f.kind](f)).join(' · '));
           ui.hud.update();
+          ui.journal.refreshDot();
+          logFinds(session, found);
           save(session, ui, true);
         }
 

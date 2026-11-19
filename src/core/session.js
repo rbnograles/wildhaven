@@ -7,7 +7,9 @@ import { createGame } from '../game/state.js';
 import { createSaveSession, setActive } from '../game/saves.js';
 import { createAnimator } from '../animation/clips.js';
 import { discover } from '../actions/discover.js';
+import { hasJournalPage } from '../world/journal.js';
 import { createRenderer } from '../render/renderer.js';
+import { logStart, logFinds } from './playtest.js';
 import { $ } from '../ui/layout.js';
 
 // The character this tab is playing lives in sessionStorage; null when the browser blocks it.
@@ -103,7 +105,7 @@ export function save(session, ui, silent = false) {
  * call quietly gives up, like a ticket number that is no longer being served.
  *
  * @param {object} session - The shared session; gets the new game state, save session and animator.
- * @param {object} ui - The UI helpers (`selection`, `hud`).
+ * @param {object} ui - The UI helpers (`selection`, `hud`, `journal`).
  * @param {boolean} [fresh=false] - True to ignore any existing save and start a new adventure.
  * @returns {Promise<void>} Resolves once the game is showing, or loading stopped or failed.
  */
@@ -145,20 +147,29 @@ export async function start(session, ui, fresh = false) {
     // Fill in the HUD and switch to the game screen.
     const c = CHARACTERS.find((c) => c.id === state.character);
     $('hud-name').textContent = c.shortName;
-    $('hud-portrait').style.setProperty('--row', c.row);
-    discover(state);
+    $('hud-portrait').dataset.portrait = c.id; // style.css picks this character's idle sheet
+    // Places found just by arriving (the Scout starts at their camp) count straight away.
+    const arrived = discover(state);
     session.renderer.resetCamera();
     changeScreen(session, 'game');
     ui.hud.showKeyStrip();
     setActive(tabStorage, state.character);
     Object.assign(session.clock, { last: performance.now(), sinceSave: 0, sinceHud: 0 });
     ui.hud.update();
+    ui.journal.refreshDot();
     save(session, ui, true);
     $('world').focus();
+    logStart(session, !(slot.value && !fresh));
+    logFinds(session, arrived);
+
+    // The welcome line. A journal page found on arrival is mentioned, so the player learns about J.
+    const page = arrived.some((f) => f.kind === 'landmark' && hasJournalPage(f.id))
+      ? ' Your journal has its first page (J).'
+      : '';
     ui.hud.notify(
       slot.value && !fresh
         ? 'Welcome back. Your journey continues.'
-        : `Welcome to ${c.location}. Your story begins here.`,
+        : `Welcome to ${c.location}. Your story begins here.${page}`,
     );
   } catch (error) {
     // Loading failed: show the reason and a "Try again" button.

@@ -7,7 +7,7 @@ The first screen uses parchment, forest-green ink, large serif typography, and t
 | File | Purpose |
 | --- | --- |
 | `docs/design/character-selection-concept.png` | Initial full-screen composition reference |
-| `assets/characters/starting-characters-idle-v1.png` | Approved three-character, four-direction sprite atlas |
+| `assets/characters/originals/starting-characters-idle-v1.png` | Approved three-character, four-direction sprite atlas |
 | `assets/world/starting-regions.png` | Three portrait backgrounds, sliced at render time with CSS |
 | `assets/world/wildhaven.png` | Archived original world painting; no longer the playable map |
 | `assets/world/source/{grass,dirt,sand,water}.png` | Four independently generated repeating ground textures |
@@ -17,9 +17,9 @@ The first screen uses parchment, forest-green ink, large serif typography, and t
 
 All generated imagery was produced with the built-in image-generation tool. The current world uses 96 by 64 tiles at 64 pixels each (6144 by 4096 world units). Ground textures repeat at 256 pixels after the map build resizes them. Objects render separately and sort by their ground-contact position. Character sprites are read as a four-column, three-row atlas with a consistent foot anchor.
 
-The 2026-11-19 world replacement used `assets/characters/starting-characters-idle-v1.png` as the style reference for every generation. Exact prompts sit beside each source PNG; `source/generation-manifest.json` records generation and revision prompts. Selected full-resolution generated PNGs are preserved in `source/originals/`. Object delivery files are proportionally fitted to the requested canvas dimensions, with four pixels of transparent padding, using alpha-visible bounds. No painted scenery is cut out of the old world painting. Run `python tools/build-map.py` after source changes; never rerun `tools/make-standin-art.py`, which overwrites these assets.
+The 2026-11-19 world replacement used `assets/characters/originals/starting-characters-idle-v1.png` as the style reference for every generation. Exact prompts sit beside each source PNG; `source/generation-manifest.json` records generation and revision prompts. Selected full-resolution generated PNGs are preserved in `source/originals/`. Object delivery files are proportionally fitted to the requested canvas dimensions, with four pixels of transparent padding, using alpha-visible bounds. No painted scenery is cut out of the old world painting. Run `python tools/build-map.py` after source changes; never rerun `tools/make-standin-art.py`, which overwrites these assets.
 
-Exact prompts are in `docs/design/character-selection.prompt.txt`, `docs/design/world.prompt.txt`, `docs/design/starting-regions.prompt.txt`, and `assets/characters/starting-characters-idle-v1.prompt.txt`.
+Exact prompts are in `docs/design/character-selection.prompt.txt`, `docs/design/world.prompt.txt`, `docs/design/starting-regions.prompt.txt`, and `assets/characters/originals/starting-characters-idle-v1.prompt.txt`.
 
 ## Concept comparison
 

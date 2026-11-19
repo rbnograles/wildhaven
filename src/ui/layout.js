@@ -1,6 +1,6 @@
 // Builds the page the player sees: the character selection screen, the loading screen, the
-// in-game HUD, and the pause, map and reset dialogs. Think of it as the stage set. It is built
-// once when the page loads; after that, other modules only show, hide or relabel its parts.
+// in-game HUD, and the pause, map, journal and reset dialogs. Think of it as the stage set. It is
+// built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
@@ -32,6 +32,8 @@ const icons = {
   save: '<path d="M5 3h13l3 3v15H3V3Zm2 0v6h10V3M7 21v-8h10v8"/>',
   expand: '<path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/>',
   close: '<path d="m6 6 12 12M6 18 18 6"/>',
+  journal:
+    '<path d="M3 5.5C5.7 4 9 4 12 6.2 15 4 18.3 4 21 5.5V19c-2.7-1.5-6-1.5-9 .7-3-2.2-6.3-2.2-9-.7Z"/><path d="M12 6.2v13.5"/>',
 };
 
 /**
@@ -51,7 +53,7 @@ export const icon = (name) =>
  * Builds every screen and dialog once; other modules look elements up by id.
  *
  * Like setting up all the rooms of a dollhouse before anyone plays: the main menu, the
- * loading screen, the game screen and the three dialogs are all made now. Only one screen shows
+ * loading screen, the game screen and the dialogs are all made now. Only one screen shows
  * at a time. The others wait with `hidden` until `changeScreen` in core/session.js swaps them.
  *
  * The small HTML marker comment in front of each string tells Prettier to format the HTML inside
@@ -69,11 +71,11 @@ export function mountLayout(app) {
       >
       <div class="realms" role="group" aria-label="Choose your character">
         ${CHARACTERS.map(
-          (c) =>
+          (c, index) =>
             /* HTML */ `<div
               class="realm${c.id === 'scout' ? ' is-selected' : ''}"
               data-realm="${c.id}"
-              style="--row:${c.row};--index:${c.row}"
+              style="--index:${index}"
             >
               <span class="realm-scene" aria-hidden="true"></span>
               <span class="realm-sprite" aria-hidden="true"></span>
@@ -135,7 +137,7 @@ export function mountLayout(app) {
         id="world"
         tabindex="0"
         role="application"
-        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather, M for map, Escape to pause."
+        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather, M for map, J for journal, Escape to pause."
       ></div>
 
       <!-- Top bar: who you are, your resources, and the fullscreen and pause buttons. -->
@@ -154,7 +156,15 @@ export function mountLayout(app) {
           ><span>${icon('herbs')}<b id="herbs">0</b><span class="resource-label">Herbs</span></span>
         </div>
         <div class="game-actions">
-          <button id="fullscreen" class="icon-button hud-panel" aria-label="Toggle fullscreen">
+          <!-- The journal button. Its dot shows while a new page hasn't been read yet (ui/journal.js). -->
+          <button
+            id="open-journal"
+            class="journal-button hud-panel"
+            aria-label="Open field journal"
+          >
+            ${icon('journal')}<span class="journal-label">Journal</span><kbd>J</kbd
+            ><span id="journal-dot" class="journal-dot" hidden></span></button
+          ><button id="fullscreen" class="icon-button hud-panel" aria-label="Toggle fullscreen">
             ${icon('expand')}</button
           ><button id="pause" class="icon-button hud-panel" aria-label="Pause game">
             ${icon('pause')}
@@ -193,7 +203,7 @@ export function mountLayout(app) {
       <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
         <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
         ><span><kbd>E</kbd> Gather</span><span><kbd>M</kbd> Map</span
-        ><span><kbd>Esc</kbd> Pause</span>
+        ><span><kbd>J</kbd> Journal</span><span><kbd>Esc</kbd> Pause</span>
       </div>
 
       <!-- Arrow buttons for touch screens. CSS only shows them on narrow screens. -->
@@ -254,6 +264,28 @@ export function mountLayout(app) {
       <div class="map-footer">
         <span>● You · ◆ Signpost: click to travel</span><span id="map-discovered"></span
         ><span><kbd>M</kbd> Close map</span>
+      </div>
+    </dialog>
+
+    <!-- The field journal: a page per place found, and a clue to the next one. ui/journal.js fills it. -->
+    <dialog id="journal-dialog" class="journal-dialog" aria-labelledby="journal-title">
+      <div class="map-heading">
+        <div>
+          <p class="dialog-kicker">FIELD JOURNAL</p>
+          <h2 id="journal-title"></h2>
+        </div>
+        <button id="close-journal" class="icon-button" aria-label="Close journal">
+          ${icon('close')}
+        </button>
+      </div>
+      <p id="journal-intro" class="journal-intro"></p>
+      <div id="journal-trail" class="journal-trail">
+        <span class="dialog-kicker">ON THE TRAIL</span>
+        <p id="journal-trail-text"></p>
+      </div>
+      <ol id="journal-pages" class="journal-pages"></ol>
+      <div class="map-footer">
+        <span id="journal-count"></span><span><kbd>J</kbd> Close journal</span>
       </div>
     </dialog>
 

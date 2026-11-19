@@ -17,10 +17,11 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  *
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
- * Also handles E to gather, M for the map, Escape to pause, and saving when the tab is hidden.
+ * Also handles E to gather, M for the map, J for the journal, Escape to pause, and saving when
+ * the tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
- * @param {object} ui - The UI helpers (`hud`, `dialogs`) that key presses open or update.
+ * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
  * @returns {{moveIntent: Function}} An object whose `moveIntent()` reports the current direction.
  */
 export function setupInput(session, ui) {
@@ -43,7 +44,7 @@ export function setupInput(session, ui) {
 
   $('interact').addEventListener('click', gather);
 
-  // Keyboard: Escape pauses, M toggles the map, E gathers, and movement keys are remembered.
+  // Keyboard: Escape pauses, M toggles the map, J the journal, E gathers, and movement keys are remembered.
   window.addEventListener('keydown', (event) => {
     if (session.screen !== 'game') return;
     const key = event.key.toLowerCase();
@@ -59,6 +60,12 @@ export function setupInput(session, ui) {
     if (key === 'm' && !event.repeat) {
       event.preventDefault();
       ui.dialogs.toggleMap();
+      return;
+    }
+
+    if (key === 'j' && !event.repeat) {
+      event.preventDefault();
+      ui.journal.toggleJournal();
       return;
     }
 

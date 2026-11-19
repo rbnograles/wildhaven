@@ -6,15 +6,14 @@ import { SPAWNS } from './places.js';
 /**
  * Every playable character.
  *
- * Fields: `id` is the save and lookup key; `row` is the character's row in the sprite sheets;
- * `name`/`shortName` are display names; `location` names the starting region; `tagline`,
+ * Fields: `id` is the save and lookup key, and also names the character's sprite folder
+ * (assets/characters/<id>/); `name`/`shortName` are display names; `location` names the starting region; `tagline`,
  * `description` and `kit` are selection-screen text; `spawn` is the world position where play
  * begins; `resources` is what is in the backpack at the start.
  */
 export const CHARACTERS = [
   {
     id: 'scout',
-    row: 0,
     name: 'The Frontier Scout',
     shortName: 'Frontier Scout',
     location: 'Pinefall Woods',
@@ -27,7 +26,6 @@ export const CHARACTERS = [
   },
   {
     id: 'builder',
-    row: 1,
     name: 'The Wandering Builder',
     shortName: 'Wandering Builder',
     location: 'Hollowstead Village',
@@ -40,7 +38,6 @@ export const CHARACTERS = [
   },
   {
     id: 'survivor',
-    row: 2,
     name: 'The Shipwreck Survivor',
     shortName: 'Shipwreck Survivor',
     location: 'Driftwood Coast',
