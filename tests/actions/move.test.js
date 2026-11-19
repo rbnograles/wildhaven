@@ -3,7 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD, isWalkable } from '../../src/world/map.js';
+import { WORLD, CLIFF_GAP, isWalkable } from '../../src/world/map.js';
+import { RUN_SPEED, MAX_MOVE_DT } from '../../src/data/balance.js';
 import { NODES, nodeBases } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
@@ -43,4 +44,15 @@ test('supply bases block movement until gathered, and never trap a player alread
   game.player.x = node.x;
   game.player.y = node.y - 5;
   assert.ok(movePlayer(game, -1, 0, 0.1)); // e.g. a save made before the tree stood here
+});
+
+// Guards the cliff edges against a fast runner: even at running speed with the longest step the
+// game allows, one step must never carry the player from one level of a hill onto another. The
+// blocked strip is CLIFF_GAP wide on each side of an edge, so a step must be shorter than both.
+test('running at full speed never jumps an edge between two levels', () => {
+  const step = RUN_SPEED * MAX_MOVE_DT;
+  assert.ok(
+    step < 2 * CLIFF_GAP,
+    `a run step (${step}) must be shorter than the blocked strip (${2 * CLIFF_GAP})`,
+  );
 });

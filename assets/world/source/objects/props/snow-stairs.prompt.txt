@@ -1,0 +1,4 @@
+Prepared by tools/prepare-generated-art.py from source/originals/cliffs/snow.jpg
+Tool: Nano Banana (Gemini image generation), 2026-11-19, as an edit of cliffs/meadow.jpg with objects/trees/snowy-pine.png attached. The source of the snow cliff kit.
+
+Edit the attached cliff image. Keep EXACTLY the same shape, outline, size, camera angle, tile layout and magenta background. Only change the materials: the flat top becomes smooth soft snow, white with cool lavender-blue shading; the lip becomes a rounded snow overhang; the front wall becomes dark grey rock with snow caught on small ledges. Stone steps (if any) are dusted with snow. Same warm hand-painted style, outlines and upper-left light.
