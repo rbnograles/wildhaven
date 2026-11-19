@@ -8,8 +8,7 @@ import { finishInteraction } from '../actions/interact.js';
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
-import { passOut } from '../actions/camp.js';
-import { advanceAnimation, cancelAction, startSleep, diagonalOf } from '../animation/clips.js';
+import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
 import { REPAIR_COST, HUNGRY_BELOW } from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
@@ -67,29 +66,44 @@ function hurtClip(state) {
 }
 
 /**
+ * Brings up the pass-out screen over the spot where the player fell.
+ *
+ * It runs when the collapse has played (or at once in the boat). Nothing else changes yet: the
+ * character stays lying where they fell behind the screen, and only its "Get up" button moves
+ * them to a fire at midday (see `ui/camp.js`), so the scene never changes under the player's eyes.
+ *
+ * @param {object} ui - The UI helpers (`hud`, `build`, `camp`).
+ */
+function showPassOut(ui) {
+  ui.build.cancel();
+  ui.camp.showPassOut();
+  ui.hud.update();
+}
+
+/**
  * Handles one frame's survival news.
  *
- * Passing out ends the night at once and shows its own screen, with the character lying asleep
- * behind it until the screen is closed. Anything else becomes a toast,
- * and a new day saves the game.
+ * With no health left the character first collapses where they stand; the loop shows the
+ * pass-out screen when that fall has played. It checks the health itself, not only the `passout`
+ * event, because the game may be saved and reloaded mid-fall, and a player loaded with no health
+ * must still pass out. Seated in the boat there is no room to fall, so the screen comes at once.
+ * Anything else becomes a toast, and a new day saves the game.
  *
  * @param {object} session - The shared session.
  * @param {object} ui - The UI helpers (`hud`, `build`, `camp`).
  * @param {object[]} events - What tickSurvival reported this frame.
  */
 function handleSurvival(session, ui, events) {
-  if (!events.length) return;
-  if (events.some((e) => e.kind === 'passout')) {
-    cancelAction(session.animator);
-    ui.build.cancel();
-    const result = passOut(session.state);
-    startSleep(session.animator);
-    session.renderer.resetCamera();
-    ui.camp.showPassOut(result);
-    ui.hud.update();
-    save(session, ui, true);
+  const { state, animator } = session;
+  if (state.meters.health <= 0) {
+    if (state.aboard) showPassOut(ui);
+    else if (startCollapse(animator)) {
+      ui.build.cancel();
+      ui.hud.update();
+    }
     return;
   }
+  if (!events.length) return;
 
   const words = events.map(describeEvent).filter(Boolean);
   if (words.length) ui.hud.notify(words.join(' · '));
@@ -136,11 +150,8 @@ export function startLoop(session, ui) {
       if (!ui.dialogs.isPaused() && !document.hidden) {
         const { dx, dy, running } = ui.input.moveIntent();
 
-        // Moving cancels an action in progress; nothing is awarded.
-        if (animator.pending && (dx || dy)) {
-          cancelAction(animator);
-          ui.hud.update();
-        }
+        // Moving cancels an action in progress; nothing is awarded. A collapse can't be cancelled.
+        if (animator.pending && (dx || dy) && cancelAction(animator)) ui.hud.update();
 
         // Nobody walks while busy with an action or lying asleep.
         const free = !animator.pending && !(animator.asleep > 0);
@@ -171,6 +182,8 @@ export function startLoop(session, ui) {
           hurt: hurtClip(state),
         });
         const finished = done?.target ? finishInteraction(state, done.target) : null;
+        // The fall has played: the pass-out screen comes up over the fallen character.
+        if (done?.clip === 'collapse') showPassOut(ui);
         if (finished) {
           ui.hud.notify(describeFinish(finished));
           ui.hud.update();

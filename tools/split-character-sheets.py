@@ -17,7 +17,8 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'characters')
 CHARACTERS = ['scout', 'builder', 'survivor']
 
 # Folder under assets/characters/ -> {original sheet file name: the end of each copy's name}
-# (the copy is '<id>-' + this). `dying.png` is left out: the game does not use it yet.
+# (the copy is '<id>-' + this). `dying.png` is left out: the game uses the
+# six-frame dying-v2 sheets instead, which were packed by hand (see states/dying-v2.manifest.json).
 SHEETS = {
     'originals': {
         'starting-characters-idle-v1.png': 'idle-v1.png',

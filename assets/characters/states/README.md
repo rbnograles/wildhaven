@@ -18,13 +18,13 @@ The adjacent `manifest.json` records measured image dimensions and nominal cell 
 
 `python tools/split-character-sheets.py` cuts every sheet except `dying.png` into one row per character (`<id>/<id>-sleeping.png` and so on), which is what the game loads. They are registered in `src/animation/clips.js` as `sleep`, `wake`, `hungry`, `hurtHunger`, `hurtCold` and `hurtAttack`:
 
-- `sleep` and `wake`: after passing out the character lies asleep behind the pass-out screen and gets up when it closes; resting at a camp shows a 2 s nap, then getting up.
+- `sleep` and `wake`: closing the pass-out screen moves the character to a fire, where they get up (`wake`); resting at a camp shows a 2 s nap (`sleep`), then getting up.
 - `hungry`: the standing pose while hunger is below 25.
 - `hurtCold`: a shiver every 3 s while freezing drains health.
 - `hurtHunger`: a cramp every 10 s while starving, which slowly drains health down to a floor of 25.
 - `hurtAttack`: preview dialog only. Nothing attacks the player yet.
 
-`dying.png` is not used.
+`dying.png` is not used; the game plays `dying-v2` (below).
 
 ## Dying v2 — six-frame collapse
 
@@ -32,4 +32,4 @@ The adjacent `manifest.json` records measured image dimensions and nominal cell 
 
 Prepared character sheets are `../scout/scout-dying-v2.png`, `../builder/builder-dying-v2.png` and `../survivor/survivor-dying-v2.png`. Each is **2016×320**, containing **six 336×320 cells**. Source pixels were copied without resizing, centered horizontally and aligned to a shared ground baseline at y=304. Suggested playback: **6 fps, once, hold the last frame**. Use a nominal origin of `(0.5, 0.95)` for the prepared cells and check the transition against other animations in-engine.
 
-`dying-v2.manifest.json` records exact master source rectangles, packed cell rectangles and offsets. The generated master's spacing is not uniform, so use those rectangles or the prepared character sheets rather than dividing the master into six equal columns. Exact generation prompts sit next to the master and each prepared sheet. All 18 prepared frames were checked for visible artwork, transparency and clear margins. This v2 art is not yet registered in gameplay.
+`dying-v2.manifest.json` records exact master source rectangles, packed cell rectangles and offsets. The generated master's spacing is not uniform, so use those rectangles or the prepared character sheets rather than dividing the master into six equal columns. Exact generation prompts sit next to the master and each prepared sheet. All 18 prepared frames were checked for visible artwork, transparency and clear margins. The game loads the prepared character sheets as the `dying` sheet in `src/animation/sheets.js` and plays them as the `collapse` clip (6 fps, once, last frame held): when health reaches 0 the character falls where they stand for 1.8 s, then the pass-out screen comes up over them; only its "Get up" button moves them to a fire, where `wake` plays.

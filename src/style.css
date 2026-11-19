@@ -1722,12 +1722,42 @@ button.slot:hover {
   filter: drop-shadow(0 2px 4px #1f311b55);
 }
 
+/* Every tool has a painted picture (cut by tools/prepare-sprite-art.py), drawn in place of its */
+/* line icon: the stone one, or the iron one once the tool is iron. A tool not owned yet shows */
+/* its stone picture, faded. */
 .tool-chip svg {
-  color: #e6c98f;
+  display: none;
 }
 
-.tool-chip.iron svg {
-  color: #b9cbd9;
+.tool-chip::before {
+  content: '';
+  width: 26px;
+  height: 26px;
+  background: center / contain no-repeat;
+}
+
+#tool-axe::before {
+  background-image: url('../assets/ui/game/tool-axe-stone.png');
+}
+
+#tool-axe.iron::before {
+  background-image: url('../assets/ui/game/tool-axe-iron.png');
+}
+
+#tool-pickaxe::before {
+  background-image: url('../assets/ui/game/tool-pickaxe-stone.png');
+}
+
+#tool-pickaxe.iron::before {
+  background-image: url('../assets/ui/game/tool-pickaxe-iron.png');
+}
+
+#tool-hammer::before {
+  background-image: url('../assets/ui/game/tool-hammer-stone.png');
+}
+
+#tool-hammer.iron::before {
+  background-image: url('../assets/ui/game/tool-hammer-iron.png');
 }
 
 /* ---- In-game: build mode ---- */

@@ -6,9 +6,9 @@
 
 ## Survival states
 
-The newer `states/dying-v2.png` adds a six-frame collapse ending flat on the back. Individual `<id>/<id>-dying-v2.png` sheets have six uniform 336×320 cells; `states/dying-v2.manifest.json` records their frame layout. This version is new art only and is not registered in gameplay.
+The newer `states/dying-v2.png` adds a six-frame collapse ending flat on the back. Individual `<id>/<id>-dying-v2.png` sheets have six uniform 336×320 cells; `states/dying-v2.manifest.json` records their frame layout. The game plays it as the `collapse` clip when health runs out, just before passing out.
 
-`states/` contains seven additional four-frame animation sheets for all three characters: dying, sleeping, waking up, hungry, hunger damage, cold damage, and attack damage. Each sheet has Scout, Builder, and Survivor in rows from top to bottom. See `states/README.md` for playback notes and `states/manifest.json` for measured sheet and cell dimensions. All but dying are used in the game; `states/README.md` says when each one plays.
+`states/` contains seven additional four-frame animation sheets for all three characters: dying, sleeping, waking up, hungry, hunger damage, cold damage, and attack damage. Each sheet has Scout, Builder, and Survivor in rows from top to bottom. See `states/README.md` for playback notes and `states/manifest.json` for measured sheet and cell dimensions. All but the four-frame dying are used in the game; `states/README.md` says when each one plays.
 
 ## Folder layout
 

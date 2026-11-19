@@ -8,12 +8,14 @@ Inputs : source/animations/<name>.png              tree, rock, fire and water-ri
          assets/ui/normal/status-inventory-components.png   the player card and item box pieces
          assets/ui/character-portraits-normal-winter.png    the three characters' round portraits
          assets/ui/item-box-10-slots.png           the item box with ten painted slots
+         assets/items/tools-stone-iron.png, axes-stone-iron.png   the painted hammer, pickaxe and axe, stone and iron
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
          source/objects/props/bridge.png           the bridge at game size
          assets/ui/game/status-*.png, item-*.png, portrait-<id>.png   the player card and item box pieces
          assets/ui/game/item-box.png               the ten-slot item box, trimmed and shrunk
+         assets/ui/game/tool-<id>-<tier>.png       the tool pictures for the tools row above the item box
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
@@ -256,3 +258,19 @@ pct = lambda v, whole: round(100 * v / whole, 2)
 print('item box', box.shape[1], 'x', box.shape[0],
       'slot columns %', [(pct(a, box.shape[1]), pct(b, box.shape[1])) for a, b in cols],
       'slot rows %', [(pct(a, box.shape[0]), pct(b, box.shape[0])) for a, b in rows])
+
+# ---- the tool pictures: two sheets of equal cells, one tool in each cell ---------------------------
+# Sheet name -> its rows of tools, top to bottom. Every sheet has two columns: the stone tool, then the iron
+# one. Each tool is trimmed and shrunk so its longest side is 64 px, twice the size the tools row draws it,
+# so it stays sharp on dense screens.
+TOOL_SHEETS = {'tools-stone-iron': ['hammer', 'pickaxe'], 'axes-stone-iron': ['axe']}
+TOOL_COLS = ['stone', 'iron']
+
+for sheet_name, tool_rows in TOOL_SHEETS.items():
+    source = os.path.join(ROOT, 'items', sheet_name + '.png')
+    tool_sheet = load(source)
+    cell_h, cell_w = tool_sheet.shape[0] // len(tool_rows), tool_sheet.shape[1] // len(TOOL_COLS)
+    for r, tool in enumerate(tool_rows):
+        for c, tier in enumerate(TOOL_COLS):
+            art = trimmed(tool_sheet[r * cell_h:(r + 1) * cell_h, c * cell_w:(c + 1) * cell_w])
+            save(shrink(art, 64 / max(art.shape[:2])), os.path.join(UI, f'tool-{tool}-{tier}.png'), source)

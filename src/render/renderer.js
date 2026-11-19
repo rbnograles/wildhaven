@@ -15,7 +15,7 @@ import { isAvailable } from '../actions/gather.js';
 import { toolTier } from '../world/tools.js';
 import { chooseInteraction } from '../actions/interact.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
-import { actionProgress } from '../animation/clips.js';
+import { actionProgress, CLIPS } from '../animation/clips.js';
 import { waterBlend } from '../animation/water.js';
 import mapData from '../../assets/world/map/wildhaven.json';
 import objectSpecs from '../../assets/world/source/objects.json';
@@ -746,6 +746,7 @@ export async function createRenderer(container, miniCanvas) {
     boat.setVisible(!!state.boat);
     if (state.boat) {
       const { x, y, dir } = state.boat;
+      // A `once` action (the collapse) holds its last picture instead: nobody falls down twice.
       boat
         .setPosition(x, y + bob)
         .setFlipX(dir === 1)
@@ -805,7 +806,7 @@ export async function createRenderer(container, miniCanvas) {
       state.aboard ? 'idle' : animator.clip,
       state.aboard ? 0 : animator.time,
       state.player.direction,
-      animator.pending ? true : undefined,
+      animator.pending && !CLIPS[animator.clip]?.once ? true : undefined,
       animator.diagonal,
     );
     // Pin the sprite at its anchor (mirrored when the pose is flipped), with feet on the ground.

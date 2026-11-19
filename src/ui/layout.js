@@ -461,7 +461,7 @@ export function mountLayout(app) {
       </div>
     </dialog>
 
-    <!-- Shown after passing out from the cold. ui/camp.js says where the player woke. -->
+    <!-- Shown after passing out from the cold. ui/camp.js says where the player will wake. -->
     <dialog id="passout-dialog" class="pause-dialog" aria-labelledby="passout-title">
       <span class="modal-mark">${icon('moon')}</span>
       <p class="dialog-kicker">YOU PASSED OUT</p>
