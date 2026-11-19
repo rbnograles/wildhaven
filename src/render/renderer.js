@@ -27,7 +27,7 @@ const objectUrls = Object.fromEntries(
 );
 
 // The map's ground layers, bottom to top: each one is painted over the one before.
-const TERRAIN_LAYERS = ['ground', 'dirt', 'sand', 'water'];
+const TERRAIN_LAYERS = ['ground', 'dirt', 'jungle', 'rock', 'snow', 'sand', 'water'];
 
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;

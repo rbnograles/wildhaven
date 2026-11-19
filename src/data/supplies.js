@@ -1,13 +1,13 @@
 // Everything the player can gather: the fixed supplies placed by hand, the wild plants that
 // grow back, and the list of resource types the backpack can hold.
 
-import { at } from './characters.js';
+import { SUPPLY_SPOTS } from './places.js';
 
 /**
  * The fixed supplies. Each one can be gathered once per character and is then gone for good.
  *
  * Each supply is drawn as its own sprite (an objects.json key at `scale`) and stands solid until gathered.
- * tools/build-map.py keeps scenery off these spots (KEEP_CLEAR), so move them there too.
+ * Positions live in assets/world/source/places.json; tools/build-map.py keeps scenery off them.
  *
  * Fields: `id` is the save key; `x`/`y` is the world position; `type` and `amount` say what goes
  * into the backpack; `label` and `verb` are the words on the interact button; `clip` is the
@@ -16,7 +16,7 @@ import { at } from './characters.js';
 export const SUPPLIES = [
   {
     id: 'pine-wood',
-    ...at('forest', 870, 650),
+    ...SUPPLY_SPOTS['pine-wood'],
     type: 'wood',
     amount: 3,
     label: 'Pine tree',
@@ -27,7 +27,7 @@ export const SUPPLIES = [
   },
   {
     id: 'camp-stone',
-    ...at('forest', 480, 570),
+    ...SUPPLY_SPOTS['camp-stone'],
     type: 'stone',
     amount: 2,
     label: 'Loose stones',
@@ -38,7 +38,7 @@ export const SUPPLIES = [
   },
   {
     id: 'forest-food',
-    ...at('forest', 480, 705),
+    ...SUPPLY_SPOTS['forest-food'],
     type: 'food',
     amount: 2,
     label: 'Wild berries',
@@ -49,7 +49,7 @@ export const SUPPLIES = [
   },
   {
     id: 'village-wood',
-    ...at('village', 1558, 1012),
+    ...SUPPLY_SPOTS['village-wood'],
     type: 'wood',
     amount: 3,
     label: 'Scrap timber',
@@ -60,7 +60,7 @@ export const SUPPLIES = [
   },
   {
     id: 'village-stone',
-    ...at('village', 1368, 1022),
+    ...SUPPLY_SPOTS['village-stone'],
     type: 'stone',
     amount: 3,
     label: 'Loose stones',
@@ -71,7 +71,7 @@ export const SUPPLIES = [
   },
   {
     id: 'village-food',
-    ...at('village', 1580, 1190),
+    ...SUPPLY_SPOTS['village-food'],
     type: 'food',
     amount: 2,
     label: 'Wild berries',
@@ -82,7 +82,7 @@ export const SUPPLIES = [
   },
   {
     id: 'coast-wood',
-    ...at('coast', 2558, 1692),
+    ...SUPPLY_SPOTS['coast-wood'],
     type: 'wood',
     amount: 4,
     label: 'Driftwood',
@@ -93,7 +93,7 @@ export const SUPPLIES = [
   },
   {
     id: 'coast-stone',
-    ...at('coast', 2250, 1730),
+    ...SUPPLY_SPOTS['coast-stone'],
     type: 'stone',
     amount: 2,
     label: 'Beach stones',
@@ -104,7 +104,7 @@ export const SUPPLIES = [
   },
   {
     id: 'meadow-food',
-    ...at('village', 1678, 1422),
+    ...SUPPLY_SPOTS['meadow-food'],
     type: 'food',
     amount: 3,
     label: 'Wild berries',

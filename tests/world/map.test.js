@@ -56,3 +56,9 @@ test('the collision grid agrees with a scan of every obstacle', () => {
 test('mapProperty reads a named value from the map file', () => {
   assert.ok(Number.isInteger(mapProperty('firstWaterGid')));
 });
+
+// Guards the world's size: the renderer, the minimap and the region grid all assume it.
+test('the world is 384 by 256 tiles of 64 units', () => {
+  assert.equal(WORLD.width, 24576);
+  assert.equal(WORLD.height, 16384);
+});
