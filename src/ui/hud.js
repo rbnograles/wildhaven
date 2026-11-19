@@ -119,7 +119,7 @@ export function createHud(session) {
 
     // The day dial: its face turns so the present moment sits under the pin at the top.
     const dial = $('day-dial');
-    dial.style.setProperty('--turn', `${(-timeOfDay(state.time) / DAY_SECONDS) * 360}deg`);
+    dial.style.setProperty('--turn', `${dialTurn(state.time)}deg`);
     dial.title = dial.ariaLabel = clockLabel(state.time);
 
     const trends = meterTrends(state);
@@ -136,24 +136,24 @@ export function createHud(session) {
   }
 
   /**
-   * Paints the day dial's face once: a round clock of one whole day, coloured by its four parts.
+   * Says how far to turn the day dial so the present moment sits under the pin at its top.
    *
-   * Like a pie cut by the hours in `PHASES`: a thin peach slice for dawn, a wide sky-blue one for
-   * day, an orange one for dusk and a dark blue one for night. The slices come from the balance
-   * numbers, so changing the length of the night changes the dial too.
+   * The painted dial is half day (the suns, on top) and half night (the moon, below), but the
+   * game's day is longer than its night. So the daylight hours are spread over the top half and
+   * the night hours over the bottom half, like a clock whose two halves tick at different speeds:
+   * dawn is at the left, midday at the top, nightfall at the right and midnight at the bottom.
+   *
+   * @param {number} time - The world clock, in game seconds.
+   * @returns {number} Degrees to turn the dial's face (negative turns it anticlockwise).
    */
-  function paintDayDial() {
-    /** Turns a moment of the day (in game seconds) into how far round the dial it is. */
-    const at = (seconds) => `${(seconds / DAY_SECONDS) * 360}deg`;
-    $('day-dial-face').style.background =
-      `conic-gradient(#f6c98a 0 ${at(PHASES.day)}, #8fd0ee ${at(PHASES.day)}, #5fb2e6 ${at(PHASES.dusk)}, ` +
-      `#e58a4a ${at(PHASES.dusk)} ${at(PHASES.night)}, #1c2a57 ${at(PHASES.night)}, #2a3c7a 360deg)`;
-
-    // The sun sits in the middle of the day's slice and the moon in the middle of the night's.
-    $('day-dial').style.setProperty('--noon', at((PHASES.day + PHASES.dusk) / 2));
-    $('day-dial').style.setProperty('--midnight', at((PHASES.night + DAY_SECONDS) / 2));
+  function dialTurn(time) {
+    const now = timeOfDay(time);
+    const spot =
+      now < PHASES.night
+        ? -90 + (now / PHASES.night) * 180
+        : 90 + ((now - PHASES.night) / (DAY_SECONDS - PHASES.night)) * 180;
+    return -spot;
   }
-  paintDayDial();
 
   /**
    * Fills the goals card's list: one line per goal with its count, ticked off when complete.

@@ -2,11 +2,13 @@
 // in-game HUD, and the pause, map, journal, reset and camp dialogs. Think of it as the stage set. It
 // is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
-import buildHammerUrl from '../../assets/ui/game/build-hammer.png';
-import woodIconUrl from '../../assets/ui/game/icon-wood.png';
-import stoneIconUrl from '../../assets/ui/game/icon-stone.png';
-import foodIconUrl from '../../assets/ui/game/icon-food.png';
-import herbsIconUrl from '../../assets/ui/game/icon-herbs.png';
+import woodIconUrl from '../../assets/ui/game/item-wood.png';
+import stoneIconUrl from '../../assets/ui/game/item-stone.png';
+import foodIconUrl from '../../assets/ui/game/item-food.png';
+import herbsIconUrl from '../../assets/ui/game/item-herbs.png';
+import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
+import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
+import warmthIconUrl from '../../assets/ui/game/status-icon-warmth.png';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
@@ -62,15 +64,15 @@ export const icon = (name) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.compass}</svg>`;
 
 /**
- * Makes the HTML for one survival meter: its icon, a bar that ui/hud.js fills through the
- * `--fill` style, and a small word for why it is changing.
+ * Makes the HTML for one survival meter: its painted icon, a bar that ui/hud.js fills through
+ * the `--fill` style, and a small word for why it is changing.
  *
  * @param {string} id - 'health', 'hunger' or 'warmth'.
  * @param {string} label - The meter's name, read out by screen readers.
- * @param {string} iconName - Which icon to show.
+ * @param {string} iconUrl - The picture shown before the bar.
  * @returns {string} The meter as an HTML string.
  */
-const meter = (id, label, iconName) =>
+const meter = (id, label, iconUrl) =>
   /* HTML */ `<div
     id="meter-${id}"
     class="meter"
@@ -80,7 +82,7 @@ const meter = (id, label, iconName) =>
     aria-valuemax="100"
     aria-valuenow="100"
   >
-    ${icon(iconName)}<span class="meter-bar"></span><span class="meter-tag"></span>
+    <img src="${iconUrl}" alt="" /><span class="meter-bar"></span><span class="meter-tag"></span>
   </div>`;
 
 /**
@@ -216,9 +218,7 @@ export function mountLayout(app) {
         <div class="identity hud-panel">
           <span id="hud-portrait" class="hud-portrait"></span>
           <span id="day-dial" class="day-dial" role="img"
-            ><span id="day-dial-face" class="day-dial-face"
-              ><i class="day-dial-sun"></i><i class="day-dial-moon"></i></span
-            ><i class="day-dial-pin"></i
+            ><i class="day-dial-face"></i><i class="day-dial-rim"></i><i class="day-dial-pin"></i
           ></span>
           <div class="identity-text">
             <span id="hud-name" class="hud-name"></span
@@ -227,11 +227,7 @@ export function mountLayout(app) {
               ><span id="clock"></span
             ></span>
             <div class="meters">
-              ${meter('health', 'Health', 'heart')}${meter('hunger', 'Hunger', 'food')}${meter(
-                'warmth',
-                'Warmth',
-                'flame',
-              )}
+              ${meter('health', 'Health', healthIconUrl)}${meter('hunger', 'Hunger', hungerIconUrl)}${meter('warmth', 'Warmth', warmthIconUrl)}
             </div>
           </div>
         </div>
@@ -270,8 +266,7 @@ export function mountLayout(app) {
               aria-controls="build-menu"
               aria-expanded="false"
             >
-              <img src="${buildHammerUrl}" alt="" /><span class="slot-label">Build</span
-              ><kbd>B</kbd>
+              <span class="slot-label">Build</span><kbd>B</kbd>
             </button>
           </div>
         </div>

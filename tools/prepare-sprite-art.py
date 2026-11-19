@@ -5,14 +5,13 @@ script cuts every frame out, lines the frames up on one ground point, shrinks th
 tidy sheets the renderer can play like a flip-book.
 Inputs : source/animations/<name>.png              tree, rock and fire animation sheets (4 columns)
          source/originals/props/bridge-painted.png the painted bridge
-         assets/ui/item-box-10-slots.png           the ten-slot item box panel
-         assets/items/tools-stone-iron.png         the hammers and pickaxes
+         assets/ui/normal/status-inventory-components.png   the player card and item box pieces
+         assets/ui/character-portraits-normal-winter.png    the three characters' round portraits
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
          source/objects/props/bridge.png           the bridge at game size
-         assets/ui/game/item-box.png, build-hammer.png   the item box (one row of five slots) and Build icon
-         assets/ui/game/icon-<resource>.png        the item box's pictures, made from sprites already in the world
+         assets/ui/game/status-*.png, item-*.png, portrait-<id>.png   the player card and item box pieces
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
@@ -135,34 +134,12 @@ source = os.path.join(SRC, 'originals', 'props', 'bridge-painted.png')
 bridge = trimmed(load(source))
 save(shrink(bridge, 460 / bridge.shape[1]), os.path.join(SRC, 'objects', 'props', 'bridge.png'), source)
 
-# ---- the item box: the top row of five slots, closed off with the panel's own bottom edge --------
-source = os.path.join(ROOT, 'ui', 'item-box-10-slots.png')
-panel = trimmed(load(source))
-dark = (panel[:, :, :3].astype(int).sum(axis=2) < 200) & (panel[:, :, 3] > 200)   # the dark insides of the slots
-slot_rows = [r for r in runs(dark.sum(axis=1) > 400, 1) if r[1] - r[0] > 40]
-slot_cols = [c for c in runs(dark.sum(axis=0) > 200, 1) if c[1] - c[0] > 40]
-cut = (slot_rows[0][1] + slot_rows[1][0]) // 2          # halfway between the two rows of slots
-resume = slot_rows[1][1] + (cut - slot_rows[0][1])      # the same distance below the second row
-strip = np.concatenate([panel[:cut], panel[resume:]])
-save(shrink(strip, 880 / strip.shape[1]), os.path.join(UI, 'item-box.png'), source)
-h, w = strip.shape[:2]
-print('item box', (w, h), 'slots as % of the box: left', [round(100 * c[0] / w, 2) for c in slot_cols],
-      'width', round(100 * (slot_cols[0][1] - slot_cols[0][0]) / w, 2),
-      'top', round(100 * slot_rows[0][0] / h, 2), 'height', round(100 * (slot_rows[0][1] - slot_rows[0][0]) / h, 2))
-
-# ---- the Build icon: the iron hammer, top right of the tools sheet -------------------------------
-source = os.path.join(ROOT, 'items', 'tools-stone-iron.png')
-tools = load(source)
-hammer = trimmed(tools[:tools.shape[0] // 2, tools.shape[1] // 2:])
-save(shrink(hammer, 96 / hammer.shape[0]), os.path.join(UI, 'build-hammer.png'), source)
-
 # ---- the HUD panels: eight pieces painted on flat magenta (assets/ui/normal/) -------------------
-# Where each panel sits on the 1536 x 1024 sheet: name -> (left, top, right, bottom). The item box on the
-# sheet is not cut: the game uses the wooden five-slot box above instead.
+# Where each panel sits on the 1536 x 1024 sheet: name -> (left, top, right, bottom). The sheet's player card and
+# item box are not cut: the game uses the pieces of the status and inventory sheet (further down) for those.
 HUD = {
     'goals': (101, 122, 450, 337),      # cream card: the goals list
     'banner': (561, 163, 966, 265),     # green strip between two pines: the region's name
-    'player': (1066, 157, 1439, 284),   # green card: the player's name, clock and meters
     'minimap': (630, 394, 905, 679),    # the round wooden ring around the minimap
     'popup': (1041, 459, 1427, 659),    # cream card with a pointer: the build menu
     'toast': (121, 799, 499, 903),      # cream strip: short messages
@@ -196,15 +173,44 @@ for name, (x0, y0, x1, y1) in HUD.items():
         print('minimap ring', piece.shape[1], 'x', piece.shape[0], 'hole x', hole_x.min(), hole_x.max(), 'y', hole_y.min(), hole_y.max())
     save(Image.fromarray(piece), os.path.join(UI, f'hud-{name}.png'), source)
 
-# ---- the item box's pictures: one per resource, from art the world already shows ----------------
-# Wood is the firewood a felled oak ends as, stone is the loose-stones rock, food is the berry bush and herbs are
-# the wildflowers they are picked from. Each is trimmed and fitted inside a 96-pixel square.
-ICONS = {
-    'wood': os.path.join(SRC, 'animations', 'oak-wind-fall-break.png'),
-    'stone': os.path.join(SRC, 'objects', 'rocks', 'rocks-b.png'),
-    'food': os.path.join(SRC, 'objects', 'plants', 'berry-bush.png'),
-    'herbs': os.path.join(SRC, 'objects', 'plants', 'flowers.png'),
+# ---- the player card and item box: eighteen loose pieces on one see-through sheet ----------------
+# Where each piece sits on assets/ui/normal/status-inventory-components.png: file name -> (left, top, right,
+# bottom, longest side in the saved file). The sheet's own portrait is not cut: the three characters' portraits
+# come from the portraits sheet below.
+STATUS = {
+    'status-card': (47, 32, 746, 253, 700),        # the player card's frame: wood around dark leather
+    'item-card': (783, 39, 1489, 251, 707),        # the item box's frame: wood around green felt
+    'status-dial': (366, 288, 641, 565, 160),      # the day and night dial
+    'status-trough': (720, 293, 1449, 355, 365),   # the empty groove a meter's bar sits in
+    'status-health': (722, 373, 1447, 418, 365),   # the three bars: red, ochre, and blue running to orange
+    'status-hunger': (720, 441, 1448, 486, 365),
+    'status-warmth': (720, 508, 1448, 553, 365),
+    'status-icon-health': (97, 620, 231, 733, 64),
+    'status-icon-hunger': (300, 608, 393, 734, 64),
+    'status-icon-warmth': (479, 596, 586, 736, 64),
+    'item-wood': (649, 598, 823, 740, 96),
+    'item-stone': (867, 601, 1035, 729, 96),
+    'item-food': (1088, 593, 1250, 736, 96),
+    'item-herbs': (1305, 590, 1452, 745, 96),
+    'item-slot': (304, 791, 504, 992, 120),        # one empty dark slot
+    'item-badge': (685, 852, 826, 930, 72),        # the little plate a count is written on
+    'item-build': (993, 769, 1245, 1005, 150),     # the green Build button, hammer above, room for its name below
 }
-for name, source in ICONS.items():
-    art = frames_of(load(source), 2, 3)[3]['pixels'] if name == 'wood' else trimmed(load(source))
-    save(shrink(art, 96 / max(art.shape[:2])), os.path.join(UI, f'icon-{name}.png'), source)
+# The top row of the portraits sheet (the bottom row is the same three with snow, for winter later).
+PORTRAITS = {'scout': (90, 31, 501, 454), 'builder': (558, 31, 970, 454), 'survivor': (1028, 32, 1440, 454)}
+
+# Cuts one piece out of a sheet, with a little clear room around it, and shrinks it so its longest side is `size`.
+def piece_of(sheet, box, size):
+    x0, y0, x1, y1 = box
+    cut = sheet[y0 - 2:y1 + 3, x0 - 2:x1 + 3]
+    return shrink(cut, size / max(cut.shape[:2]))
+
+source = os.path.join(ROOT, 'ui', 'normal', 'status-inventory-components.png')
+status_sheet = load(source)
+for name, (x0, y0, x1, y1, size) in STATUS.items():
+    save(piece_of(status_sheet, (x0, y0, x1, y1), size), os.path.join(UI, name + '.png'), source)
+
+source = os.path.join(ROOT, 'ui', 'character-portraits-normal-winter.png')
+portrait_sheet = load(source)
+for name, box in PORTRAITS.items():
+    save(piece_of(portrait_sheet, box, 160), os.path.join(UI, f'portrait-{name}.png'), source)
