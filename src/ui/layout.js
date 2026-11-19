@@ -30,6 +30,7 @@ const icons = {
   food: '<path d="M12 7c-7-6-13 3-7 11 4 6 7 1 7 1s3 5 7-1c6-8 0-17-7-11Z"/><path d="M12 7c0-4 2-5 5-5"/>',
   herbs:
     '<path d="M12 22V11"/><path d="M12 15c-5 0-8-3-8-8 5 0 8 3 8 8Zm0-4c0-4 3-7 8-7 0 5-3 7-8 7Z"/>',
+  iron: '<path d="M3 18 6 10h12l3 8Z"/><path d="M6 10 8 6h8l2 4M9 14h6"/>',
   save: '<path d="M5 3h13l3 3v15H3V3Zm2 0v6h10V3M7 21v-8h10v8"/>',
   expand: '<path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/>',
   close: '<path d="m6 6 12 12M6 18 18 6"/>',
@@ -244,6 +245,8 @@ export function mountLayout(app) {
               >${icon('wood')}<b id="wood">0</b><span class="slot-label">Wood</span></span
             ><span class="slot" title="Stone"
               >${icon('stone')}<b id="stone">0</b><span class="slot-label">Stone</span></span
+            ><span class="slot" title="Iron"
+              >${icon('iron')}<b id="iron">0</b><span class="slot-label">Iron</span></span
             ><button id="slot-food" class="slot" title="Eat one food (F)">
               ${icon('food')}<b id="food">0</b><span class="slot-label">Food</span
               ><kbd>F</kbd></button

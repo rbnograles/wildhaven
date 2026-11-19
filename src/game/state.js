@@ -14,17 +14,20 @@ import {
   CAMP_NAME_MAX,
   MAX_CAMPS,
   FOG_CELL,
+  TOOL_USES,
 } from '../data/balance.js';
+import { TOOL_IDS } from '../data/tools.js';
 import { isWalkable, isSailable, SEA_BORDER } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
 import { REGIONS } from '../world/regions.js';
 import { emptyFog, isFogString, revealAround, revealRegions, growFog } from '../world/fog.js';
+import { startingTools } from '../world/tools.js';
 
 /**
- * The save format this code writes. Version 5 is the survival update's version 4 plus the boat.
- * Version 3 and version 4 saves are upgraded when loaded (see `upgradeV3` and `addSeaBorder`).
+ * The save format this code writes. Version 6 is the archipelago's version 5 plus iron and tools.
+ * Version 3, 4 and 5 saves are upgraded when loaded (see `upgrade`).
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 /** The three survival meters. Each is a number from 0 to 100. */
 const METERS = ['health', 'hunger', 'warmth'];
@@ -46,7 +49,8 @@ export const BORDER_SQUARES = SEA_BORDER / FOG_CELL;
  *   null, and `aboard` is true while the player sits in it; `elapsed` is game seconds played and
  *   `distance` is world units travelled; `time` is the world clock (game seconds since the dawn
  *   of day 1); `meters` holds health, hunger and warmth; `tea` is the seconds of tea warmth left;
- *   `camps` lists the camps built; `fog` records the squares of the world seen so far.
+ *   `camps` lists the camps built; `fog` records the squares of the world seen so far; `tools`
+ *   holds the tools owned (see world/tools.js).
  * @throws {Error} If the character id isn't one of the known characters.
  */
 export function createGame(characterId) {
@@ -57,6 +61,7 @@ export function createGame(characterId) {
     character: character.id,
     player: { ...character.spawn, direction: 0 },
     resources: { ...Object.fromEntries(RESOURCES.map((r) => [r, 0])), ...character.resources },
+    tools: startingTools(character.id),
     regrowAt: {},
     discovered: [],
     landmarks: [],
@@ -159,6 +164,40 @@ const copyCamp = (c) => ({
 const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 
 /**
+ * Checks the saved tools: only known tools, each either iron or stone with a sensible number of
+ * uses left.
+ *
+ * @param {*} tools - The `tools` read from a save.
+ * @returns {boolean} True if the game can use them.
+ */
+const isTools = (tools) =>
+  isPlainObject(tools) &&
+  Object.entries(tools).every(
+    ([id, t]) =>
+      TOOL_IDS.includes(id) &&
+      isPlainObject(t) &&
+      (t.tier === 'iron' ||
+        (t.tier === 'stone' &&
+          Number.isSafeInteger(t.uses) &&
+          t.uses >= 1 &&
+          t.uses <= TOOL_USES[id])),
+  );
+
+/**
+ * Copies checked tools field by field: iron ones as `{tier}`, stone ones with their uses left.
+ *
+ * @param {object} tools - Tools that passed `isTools`.
+ * @returns {object} A fresh tools object.
+ */
+const copyTools = (tools) =>
+  Object.fromEntries(
+    Object.entries(tools).map(([id, t]) => [
+      id,
+      t.tier === 'iron' ? { tier: 'iron' } : { tier: 'stone', uses: t.uses },
+    ]),
+  );
+
+/**
  * Moves the x-y position at the end of a node id out by the sea border.
  * For example `flowers-10-20` becomes `flowers-2058-2068`. Other ids (like `pine-wood`) are left as they are.
  */
@@ -254,7 +293,7 @@ function upgradeV3(s) {
 
   return {
     ...s,
-    version: SAVE_VERSION,
+    version: 5,
     player,
     regrowAt,
     time: START_TIME,
@@ -294,12 +333,31 @@ function addSeaBorder(s) {
 
   return {
     ...s,
-    version: SAVE_VERSION,
+    version: 5,
     player: shiftPlayer(s),
     regrowAt,
     camps,
     fog: growFog(s.fog, BORDER_SQUARES),
     ...NO_BOAT(),
+  };
+}
+
+/**
+ * Brings a version 5 save (the archipelago, before tools) up to version 6.
+ *
+ * Version 5 had no iron and no tools. The backpack gets an empty iron slot, and the character
+ * gets the kit their selection card always promised (the Scout's hatchet, the Builder's hammer),
+ * as if they had carried it all along. Anything odd is left alone, for restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 5 save.
+ * @returns {object} The same adventure in the version 6 shape.
+ */
+function addTools(s) {
+  return {
+    ...s,
+    version: SAVE_VERSION,
+    resources: isPlainObject(s.resources) ? { ...s.resources, iron: 0 } : s.resources,
+    tools: startingTools(s.character),
   };
 }
 
@@ -331,15 +389,19 @@ function placeBoat(s) {
 }
 
 /**
- * Picks the upgrade an older save needs, if any.
+ * Picks the upgrades an older save needs, if any, and runs them in order.
+ *
+ * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
+ * and every version 5 save then gains its tools.
  *
  * @param {*} parsed - The parsed save.
- * @returns {*} The save in the version 5 shape (still to be checked), or the save unchanged.
+ * @returns {*} The save in the version 6 shape (still to be checked), or the save unchanged.
  */
 function upgrade(parsed) {
-  if (parsed?.version === 3) return upgradeV3(parsed);
-  if (parsed?.version === 4) return addSeaBorder(parsed);
-  return parsed;
+  let s = parsed;
+  if (s?.version === 3) s = upgradeV3(s);
+  else if (s?.version === 4) s = addSeaBorder(s);
+  return s?.version === 5 ? addTools(s) : s;
 }
 
 /**
@@ -349,7 +411,7 @@ function upgrade(parsed) {
  * it, like a librarian checking a returned book page by page. Then we build a brand-new object
  * field by field instead of using the loaded one, so stray extra fields never sneak into the game.
  * A new field added to the game state must be checked and copied here too, or it is lost on load.
- * Version 3 and 4 saves are first upgraded and moved onto the bigger map (see `upgrade`).
+ * Version 3, 4 and 5 saves are first upgraded (see `upgrade`).
  *
  * @param {string} json - The saved text.
  * @returns {object|null} A safe game state, or null if the save can't be used.
@@ -406,6 +468,9 @@ export function restoreGame(json) {
     )
       return null;
 
+    // Tools: only known tools, each iron or a stone one with uses left.
+    if (!isTools(s.tools)) return null;
+
     // The discovered and found lists may only hold real ids, each listed once.
     for (const [list, allowed] of [
       [s.discovered, REGIONS],
@@ -455,11 +520,11 @@ export function restoreGame(json) {
     if (!isFogString(s.fog)) return null;
 
     // Node ids are map positions, so a rebuilt map can retire one; dropping its timer only lets it regrow early.
-    // Each kept timer is also capped at one regrow ahead, so a node can't stay gone forever.
-    const timers = NODES.filter((n) => n.regrow && Object.hasOwn(regrowAt, n.id)).map((n) => [
-      n.id,
-      Math.min(regrowAt[n.id], s.time + n.regrow),
-    ]);
+    // A timer that has already run out is dropped too (that node is back), so a save that chopped
+    // hundreds of trees stays small. Each kept timer is capped at one regrow ahead, so a node can't stay gone forever.
+    const timers = NODES.filter(
+      (n) => n.regrow && Object.hasOwn(regrowAt, n.id) && regrowAt[n.id] > s.time,
+    ).map((n) => [n.id, Math.min(regrowAt[n.id], s.time + n.regrow)]);
 
     // Build the result fresh, copying only the fields we checked.
     const placed = placeBoat(s);
@@ -468,6 +533,7 @@ export function restoreGame(json) {
       character: s.character,
       player: placed.player,
       resources: Object.fromEntries(RESOURCES.map((r) => [r, resources[r]])),
+      tools: copyTools(s.tools),
       regrowAt: Object.fromEntries(timers),
       discovered: [...s.discovered],
       landmarks: [...s.landmarks],

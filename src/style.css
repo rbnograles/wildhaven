@@ -735,8 +735,8 @@ kbd {
   padding: 7px;
 }
 
-/* A slot: an icon, the count and a small name. Food, herbs and Build are buttons; wood and */
-/* stone are plain. The small key in the corner (F, H, B) says which key does the same. */
+/* A slot: an icon, the count and a small name. Food, herbs and Build are buttons; wood, stone */
+/* and iron are plain. The small key in the corner (F, H, B) says which key does the same. */
 .slot {
   position: relative;
   display: grid;

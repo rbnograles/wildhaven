@@ -64,6 +64,7 @@ test('a placed campfire founds a named camp and charges the cost once', () => {
     stone: 2 - CAMPFIRE_COST.stone,
     food: 2,
     herbs: 0,
+    iron: 0,
   });
   assert.equal(game.camps.length, 1);
   assert.equal(result.camp.id, 'camp-1');

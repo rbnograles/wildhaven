@@ -142,5 +142,8 @@ export const WILD = {
   },
 };
 
-/** Every kind of resource the backpack can hold. Saves must have a whole number for each one. */
-export const RESOURCES = ['wood', 'stone', 'food', 'herbs'];
+/**
+ * Every kind of resource the backpack can hold. Saves must have a whole number for each one.
+ * Iron is only mined from iron-streaked rocks, with a pickaxe.
+ */
+export const RESOURCES = ['wood', 'stone', 'food', 'herbs', 'iron'];
