@@ -1,9 +1,11 @@
 // Every spot in the world the player can gather from (a "node"): the hand-placed supplies plus
-// each wild patch (flowers, driftwood) the map scattered. Also works out which supplies and old boats are still solid.
+// each wild patch (flowers, driftwood) the map scattered. Also says which nodes can be gathered now
+// and works out what is solid: standing supplies, old boats on the beach and campfires.
 
 import { SUPPLIES, WILD } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
 import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
+import { campBases } from './camps.js';
 
 // The fixed supplies plus every wild patch the map scattered; a patch's map position is its id
 // (`flowers-<x>-<y>`, `driftwood-<x>-<y>`). Wild patches copy their fields from WILD and their size from objects.json.
@@ -20,16 +22,38 @@ export const NODES = [
 ];
 
 /**
- * Lists the solid base of every supply that hasn't been gathered yet.
+ * Says whether a node has something to gather right now.
  *
- * A tree you haven't chopped is a wall you walk around; once it's chopped, the wall is gone.
- * Only one-time supplies are solid; wild patches are walk-through.
+ * A gathered supply or picked patch is gone until the world clock reaches its regrowAt time,
+ * like a gardener's calendar that says when the plants will be back. The clock stops while the
+ * game is paused, so nothing regrows behind a menu.
  *
- * @param {string[]} collected - Ids of the supplies this character already gathered.
+ * @param {object} state - The game being played.
+ * @param {object} n - The node to check.
+ * @returns {boolean} True if the node can be gathered.
+ */
+export const isAvailable = (state, n) => !(state.regrowAt[n.id] > state.time);
+
+/**
+ * Lists the fixed supplies that were gathered and have not grown back yet.
+ *
+ * @param {object} state - The game being played.
+ * @returns {string[]} Their ids. These supplies are not solid right now.
+ */
+export const goneSupplies = (state) =>
+  SUPPLIES.filter((n) => !isAvailable(state, n)).map((n) => n.id);
+
+/**
+ * Lists the solid base of every supply that is standing right now.
+ *
+ * A tree you haven't chopped is a wall you walk around; once it's chopped, the wall is gone until
+ * it grows back. Only the fixed supplies are solid; wild patches are walk-through.
+ *
+ * @param {string[]} gone - Ids of the supplies that are not standing right now (see goneSupplies).
  * @returns {number[][]} Boxes as [left, top, right, bottom], ready for `isWalkable`.
  */
-export function nodeBases(collected) {
-  return SUPPLIES.filter((n) => !collected.includes(n.id)).map((n) => {
+export function nodeBases(gone) {
+  return SUPPLIES.filter((n) => !gone.includes(n.id)).map((n) => {
     const [halfWidth, depth] = OBJECT_SPECS[n.sprite].footprint;
     return [n.x - halfWidth * n.scale, n.y - depth * n.scale, n.x + halfWidth * n.scale, n.y];
   });
@@ -55,10 +79,17 @@ export function wreckBases(boat) {
 }
 
 /**
- * Lists everything solid that isn't part of the map itself: supplies not yet gathered and old
- * boats still on the beach.
+ * Lists everything solid that isn't part of the map itself: supplies standing right now, old
+ * boats still on the beach and the player's campfires.
+ *
+ * Walking, landing from the boat, placing a fire and waking up all use this one list, so they
+ * agree on what is in the way.
  *
  * @param {object} state - The game being played.
  * @returns {number[][]} Boxes as [left, top, right, bottom], ready for `isWalkable`.
  */
-export const solidBases = (state) => [...nodeBases(state.collected), ...wreckBases(state.boat)];
+export const solidBases = (state) => [
+  ...nodeBases(goneSupplies(state)),
+  ...wreckBases(state.boat),
+  ...campBases(state),
+];

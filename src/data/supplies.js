@@ -2,16 +2,19 @@
 // grow back, and the list of resource types the backpack can hold.
 
 import { SUPPLY_SPOTS } from './places.js';
+import { SUPPLY_REGROW } from './balance.js';
 
 /**
- * The fixed supplies. Each one can be gathered once per character and is then gone for good.
+ * The fixed supplies. Each one can be gathered, and grows back SUPPLY_REGROW game-seconds (two
+ * in-game days) later.
  *
- * Each supply is drawn as its own sprite (an objects.json key at `scale`) and stands solid until gathered.
+ * Each supply is drawn as its own sprite (an objects.json key at `scale`) and stands solid while it stands.
  * Positions live in assets/world/source/places.json; tools/build-map.py keeps scenery off them.
  *
  * Fields: `id` is the save key; `x`/`y` is the world position; `type` and `amount` say what goes
  * into the backpack; `label` and `verb` are the words on the interact button; `clip` is the
- * animation played while gathering; `sprite` and `scale` choose the picture and its size.
+ * animation played while gathering; `sprite` and `scale` choose the picture and its size;
+ * `regrow` is the seconds it takes to grow back.
  */
 export const SUPPLIES = [
   {
@@ -113,7 +116,8 @@ export const SUPPLIES = [
     sprite: 'berry-bush',
     scale: 1,
   },
-];
+  // Every fixed supply grows back on the same slow timer.
+].map((supply) => ({ ...supply, regrow: SUPPLY_REGROW }));
 
 // Wild scenery the map scatters (tools/build-map.py) that can be harvested where it stands and grows back `regrow`
 // game-seconds later. world/nodes.js turns each map patch into a node; the renderer draws it from NODES instead of from the map.

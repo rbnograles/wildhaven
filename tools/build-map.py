@@ -142,7 +142,8 @@ corner[(corner == WATER) & ~near_land] = DEEP
 
 # Hand-placed objects, in LAND units: the three starting places, each landmark's feature, the signposts and the bridges.
 (sx, sy), (bx, by), (vx, vy) = SPAWN['scout'], SPAWN['builder'], SPAWN['survivor']
-fixed = [('tent', sx + 137, sy - 160), ('log', sx - 156, sy - 154), ('campfire', sx - 44, sy - 66),
+# The Scout's camp has no campfire: the only fires in the world are the ones the player builds.
+fixed = [('tent', sx + 137, sy - 160), ('log', sx - 156, sy - 154),
          ('house-a', bx - 305, by - 120), ('house-b', bx + 295, by - 110), ('house-c', bx - 372, by + 310),
          ('workshop', bx + 458, by + 225), ('ship', vx + 325, vy - 20)]
 fixed += [(l['object'], l['x'], l['y'] - 60) for l in LANDMARKS if 'object' in l]   # the feature stands just north of the spot

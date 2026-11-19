@@ -173,6 +173,44 @@ Browser at `http://127.0.0.1:5178` (1280×720), Builder in Hollowstead: all 29 s
 
 Not checked by hand: the field journal's keepsake pictures (they use the same `objectUrls` names, which did not change).
 
+## M2 loop proof — 2026-11-19
+
+Day/night, meters, campfires and camps, needs list, passing out, walked-area fog, tea and healing, regrowing supplies, save version 4 (spec `docs/superpowers/specs/2026-11-19-m2-loop-proof-design.md`). Automated: `npm test` 117 passing (54 new: clock, fog, camps, needs, build, survive, camp actions, version 4 and the version 3 upgrade, regrowth), `npm run build` and `npm run format:check` pass. The pure rules were also run in Node for a whole night away from a fire: the pass-out comes 90 s after dark, as designed.
+
+**Moving the clock for checks.** Saves on `127.0.0.1` can be edited in the console; the stale-tab guard stops the open tab overwriting the edit. For example, just before nightfall:
+`const k='wildhaven.adventure.v1.builder', s=JSON.parse(localStorage[k]); s.time=238; localStorage[k]=JSON.stringify(s); location.reload()`
+
+Browser at `http://127.0.0.1:5180` (800×600), checked:
+- Scout, existing version 3 save: loads as version 4 (`time` 20, full meters, 1,536-letter fog); no console errors.
+- Fog: the world map is solid fog except around the spawn, and only "Pinefall Woods" is labelled; the minimap clears as you walk. (First pass let the land's shape show through faintly; the fog is now fully solid.)
+- Builder, B: the ghost follows the mouse, red with "Something is in the way · Esc to cancel" over the player, green with the cost line on open ground, with the warmth ring. A click placed it: the name box opened with "Hollowstead Camp"; wood 5→2, stone 2→0; the camp shows on the map. Real key presses typed into the name box (m, b, e, w, space) went into the text and did not open the map or move the player.
+- Night (time set to 300 and frames stepped by hand): the world goes deep blue; the fire lights a soft circle as wide as its warmth, with a warm glow, and the player has a small light.
+- HUD at night beside the fire: "Day 1 · Night" with the moon icon; three meters with "By the fire"; the goals card shows the camp's three needs ("Bring 3 stone 0 / 3", "Find a place in Pinefall Woods 0 / 1", "Find a new signpost 0 / 1"); "1 / 7 places · 0 / 2 signposts" under the region name; the controls strip lists E Gather / camp, B, F and H.
+
+Second pass, with the Browser pane visible (a hidden pane runs no animation frames, so the game cannot even finish loading there):
+- Scout with no camp, clock 230 and warmth 4: the goals card read "Build a campfire" (Wood 0 / 3, Stone 0 / 2); at nightfall the toasts "Getting dark, head to a fire." then "You're freezing. Your health is dropping."; the meter words "Cold" and "Freezing". With health 12 the pass-out screen read "You got too cold away from a fire. You woke where you started, at midday. Build a campfire..."; the save then held time 480 (day 2, midday), health 50, warmth 100, hunger lower by the skipped time, and the player at the spawn.
+- Builder beside its camp at night, E: the camp dialog showed the name, "CAMP · DAY 1 · NIGHT", the fire size and the three needs. Give 3 stone met the need (fire 260 → 300 units, "1 of 10 needs met"); tea (−5 herbs, 20 s), eat (−1 food, +25 hunger) and heal (−3 herbs, +30 health) each worked, and their buttons then said why they were off ("Still warming you (20 s)", "Needs 3 herbs"). Rest until dawn closed the dialog: "You rest by the fire. Dawn, day 2. New needs at Ember Ho.", time 360, health and warmth 100, and only the met need was replaced (by "Bring 4 wood").
+- F then F then H away from a fire: "You eat. +25 hunger", "No food in your pack.", "You are already at full health."
+- A pine tree set to regrow 8 s after load was missing, then stood again.
+- Survivor: a first camp on the beach (placed with E, renamed "Saltwind Hollow"), then a second one in Pinefall 9,000+ units away (placed with a mouse click, renamed "North Hearth"). Both show on the world map with their names. The ghost turned red with "Something is in the way" next to the driftwood (the 80-unit clearance).
+- 375×812: the identity panel with clock and meters fills the first row, the journal, pause and resources wrap below, no horizontal scroll; the camp dialog stacks its four tasks in one column. No console errors.
+
+Bugs found and fixed in these passes: a duplicate `halfW` in `renderer.draw` (blank page); land shapes faintly visible through the fog (fog made fully solid); a mouse click that placed a fire also moved keyboard focus out of the name box, so typing and Enter went nowhere (the click's default is now prevented and the box focuses its input); camp names on the world map sat under region labels (now drawn below the dot).
+
+Not checked by hand: the dusk toast itself (the runs started at dusk; the unit tests cover it), a starving player, and the Canvas-renderer fallback for the night layer.
+
+## HUD rearranged after playtest feedback — 2026-11-19
+
+Feedback: two campfires at the Scout's start; no item box; no build icon; the top resource bar looked poor; the player card should be lower left; the minimap should be round. Changes: the decorative campfire is gone from `tools/build-map.py` (map rebuilt; only that object changed, and the journal's camp page no longer mentions a fire ring); a bottom bar with the player card (left), an item box of resource slots plus a Build button whose menu lists the campfire (centre), and a round minimap (right). Automated: `npm test` 117 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5180`:
+- Fresh Scout: the camp shows the tent, log and rocks, and no campfire.
+- 1020×845: card, item box and round map sit in one bottom row without overlapping; the controls strip sits above the card; the goals card is top left and the region name top centre.
+- Build button (and B) opens the menu above the item box: "Campfire · Warms the night and founds a camp · 3 wood · 2 stone · 1", with the cost in red when short. 1 starts placing (the bar read "Needs 3 wood and 2 stone · Esc to cancel"); Escape closes the menu or leaves placing; B again closes the menu.
+- Food slot: "You eat. +25 hunger"; herbs slot at full health: "You are already at full health."; empty slots are faded.
+- 768×1024: card 24–241 px, item box 282–575 px, map 616–744 px; no horizontal scroll.
+- 375×812: card top left, journal and pause top right, item box above the touch arrows, round map bottom right, the build menu opens above the item box; key hints are hidden; no horizontal scroll.
+
 ## SpriteCook palm replaces the palm stand-in — 2026-11-19
 
 The palm stand-in (a narrowed oak) was replaced with one image from the SpriteCook Claude plugin (`gemini-nano-banana-2.1`, HD, transparent background, with `starting-characters-idle-v1.png` uploaded as the style guide; 12 credits). The cutout came back clean: alpha is 0 outside the tree. The sprite was cropped to its alpha > 40 bounds and fitted into 200×300 with 4 px padding. Its trunk base sits at x 153 of 200, so `objects.json` now gives the palm `origin` `[0.765, 0.982]` and `footprint` `[15, 12]`. `python tools/build-map.py` rebuilt the map: only `overview.webp` changed, because palm positions and names did not. Automated: `npm test` 63 passing, `npm run build` and `npm run format:check` pass.
@@ -212,3 +250,18 @@ Browser at `http://127.0.0.1:5188` (this worktree's dev server, 800×600, hidden
 - No console errors on these loads. (The log's 500s and `"<<<<<<< HE"` JSON errors came from Vite reloading while the merge still had conflict markers.)
 
 Not checked by hand: boating next to a hill (no flight of stairs is within 700 units of water), the meadow and snow kits in game, and the 390 px layout (no layout changed).
+
+## Main's M2 survival loop merged into archipelago A1 — 2026-11-19
+
+`python tools/build-map.py`: 2068 tiles, 6837 objects, 4.4 MB map file, 25 flights of stairs, 132 cliff tiles; hills per kit: 6 canyon, 8 meadow, 3 snow (one object fewer than before: M2 took the Scout's fixed campfire out of the map). Automated: `npm test` 159 passing (new: version 5 round trip, version 3 → 5 and version 4 → 5 upgrades with a camp and fog squares landing at +2,048, rejections including the never-released archipelago version 4, `growFog`, the region-reveal margin, `solidBases`, `sendBoatHome`, passing out aboard, no building aboard), `npm run build` and `npm run format:check` pass. An offline check of main's map against the merged one: of the old map's standable spots (100-unit grid), 0.28% are no longer standable after the 2,048 shift, nearly all within 600 units of the old map's edge where the new coast cuts in; a version 4 player there goes to their spawn and a camp there is dropped.
+
+Browser at `http://127.0.0.1:5188` (this worktree's dev server; 1280×800 and the pane's own narrow size). The origin's three saves were backed up, replaced by test saves, and restored afterwards:
+- An M2 version 4 Survivor save (old map positions, old-size fog, one camp) loaded: player and camp both 2,048 further in, fog 2,240 letters, saved back as version 5.
+- The goals card read "AN OLD BOAT · Mend a boat" with Wood 6 / 6 and Stone 2 / 2 while the old boat was found and unmended, then the camp's needs. The key strip read "E Gather · Boat", the big map canvas is 1120×800, and the bottom bar showed the player card, item box with Build and the round minimap.
+- E repaired the old boat (8 s, cost paid once), boarded it ("Board the boat"), B in the boat said "Step ashore to build" and kept the menu shut, rowing east at dusk drew the night layer and the light around the boat over the whole view out to the deep sea, E stepped ashore, and beside the camp the button read "Open Lagoon Camp" and E opened its dialog.
+- Passing out aboard (test save at night, warmth 0, health 2): the pass-out screen said "Your boat drifted back to where you mended it."; the player woke on foot 90 units south of the fire and the boat sat at its launch spot pointing east.
+- World map: the whole 7:5 world under fog, the camp named, the moored boat's brown oval drawn.
+- A fresh Scout began on day 1 morning with "Build a campfire" and no campfire at the Scout's camp. An archipelago-only version 4 save showed "could not be read. Start fresh to play.", as decided.
+- No console errors.
+
+Not checked by hand: the 390 px layout beyond a first look (no layout rule changed), signpost travel while aboard (left for the final fixes), and the far corners of the sea border at night (the camera stops at the world edge and the night layer follows the camera, as in M2).

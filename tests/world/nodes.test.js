@@ -7,17 +7,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import OBJECT_SPECS from '../../assets/world/source/objects.json' with { type: 'json' };
 import { CHARACTERS } from '../../src/data/characters.js';
-import { RESOURCES } from '../../src/data/supplies.js';
-import { GATHER_SECONDS } from '../../src/data/balance.js';
+import { WRECKS } from '../../src/data/places.js';
+import { RESOURCES, SUPPLIES } from '../../src/data/supplies.js';
+import { GATHER_SECONDS, SUPPLY_REGROW } from '../../src/data/balance.js';
 import { WORLD, isWalkable } from '../../src/world/map.js';
-import { NODES, nodeBases, wreckBases } from '../../src/world/nodes.js';
+import { NODES, nodeBases, wreckBases, goneSupplies, solidBases } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { gatherTime, finishGather } from '../../src/actions/gather.js';
 import { CLIPS } from '../../src/animation/clips.js';
 
-/** The one-time supplies (they never grow back), and the wild patches: flowers and driftwood (they do). */
-const supplies = NODES.filter((n) => !n.regrow),
-  wild = NODES.filter((n) => n.regrow);
+/**
+ * The hand-placed supplies (they grow back after two days), and the wild patches: flowers and
+ * driftwood (they grow back sooner).
+ */
+const supplies = NODES.filter((n) => SUPPLIES.includes(n)),
+  wild = NODES.filter((n) => !SUPPLIES.includes(n));
 
 /**
  * Reads a sprite's width and height straight from its PNG file, without a browser.
@@ -145,4 +149,45 @@ test('every supply and wild patch can be walked to and gathered from each spawn'
     game.player.y = Math.floor(i / cols) * G;
     assert.equal(finishGather(game, node.id)?.id, node.id);
   }
+});
+
+// Guards the M2 regrowth rule: fixed supplies come back after two in-game days, flowers sooner.
+test('fixed supplies grow back after two days and flower patches after three minutes', () => {
+  assert.equal(SUPPLY_REGROW, 720);
+  for (const node of supplies) assert.equal(node.regrow, SUPPLY_REGROW, node.id);
+  for (const node of wild) assert.equal(node.regrow, 180, node.id);
+});
+
+// Guards solid bases following availability: a chopped tree stops blocking, a regrown one blocks again.
+test('a gathered supply stops being solid until it grows back', () => {
+  const game = createGame('scout');
+  assert.deepEqual(goneSupplies(game), []);
+  game.regrowAt['pine-wood'] = game.time + 10;
+  assert.deepEqual(goneSupplies(game), ['pine-wood']);
+  game.time += 10;
+  assert.deepEqual(goneSupplies(game), []);
+});
+
+// Guards the one list of solid things walking, landing, building and waking all share: standing
+// supplies, old boats still on the beach and campfires, and nothing that has gone.
+test('solidBases holds standing supplies, beached old boats and campfires', () => {
+  const game = createGame('scout');
+  /** Counts the solid boxes the game has right now. */
+  const count = () => solidBases(game).length;
+  const all = nodeBases([]).length + wreckBases(null).length;
+  assert.equal(count(), all);
+
+  game.regrowAt['pine-wood'] = game.time + 10; // chopped: no longer solid
+  assert.equal(count(), all - 1);
+
+  game.boat = { from: WRECKS[0].id, x: 0, y: 0, dir: 0 }; // mended: it left the beach
+  assert.equal(count(), all - 2);
+
+  game.camps.push({ id: 'camp-1', name: 'Test Camp', x: 5000, y: 5000, grown: 0, needs: [] });
+  assert.equal(count(), all - 1);
+  assert.ok(
+    solidBases(game).some(
+      ([left, , right, bottom]) => left < 5000 && right > 5000 && bottom === 5000,
+    ),
+  );
 });

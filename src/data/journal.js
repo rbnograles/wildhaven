@@ -18,7 +18,7 @@ export const JOURNALS = {
     trail: ['p-camp', 'p-hollow', 'p-grandfather', 'p-stones', 'p-clearing', 'p-ledge', 'p-pond'],
     pages: {
       'p-camp': {
-        text: 'A canvas tent, a cold fire ring and a pack of trail notes. Whoever camped here wrote down every place worth finding nearby.',
+        text: 'A canvas tent, a fallen log to sit on and a pack of trail notes. Whoever camped here wrote down every place worth finding nearby.',
         keepsake: 'Trail notebook',
         sprite: 'tent',
         hint: 'The trail begins at the Scout’s camp, a canvas tent in the north of Pinefall Woods.',

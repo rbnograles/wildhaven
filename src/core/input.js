@@ -4,6 +4,7 @@
 
 import { beginInteraction } from '../actions/interact.js';
 import { listMissing } from '../actions/boat.js';
+import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -18,8 +19,10 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  *
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
- * Also handles E to gather, repair or board, M for the map, J for the journal, Escape to pause, and saving when
- * the tab is hidden.
+ * Also handles E to step ashore, board, repair, gather or open a camp, B for the build menu (and
+ * 1 to pick the campfire in it), F to eat, H to heal, M for the map, J for the journal, Escape to
+ * pause (or to leave the build menu or build mode), the mouse over the world, and saving when the
+ * tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
  * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
@@ -29,14 +32,15 @@ export function setupInput(session, ui) {
   const { keys } = session;
 
   /**
-   * Does what E means right now (step ashore, board, repair or gather), or says why nothing happened.
+   * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
+   * order. With none of those in reach, E beside one of the player's fires opens that camp;
+   * anywhere else it says why nothing happened.
    *
    * Landing and boarding happen at once and save straight away. Repairing and gathering start a
    * timed action that core/loop.js finishes. Held movement keys are forgotten so the player
    * doesn't walk off and cancel straight away.
    */
-  function interact() {
-    if (session.screen !== 'game' || ui.dialogs.isPaused()) return;
+  function use() {
     const result = beginInteraction(session.state, session.animator);
     if (result.ok) {
       keys.clear();
@@ -44,9 +48,24 @@ export function setupInput(session, ui) {
         ui.hud.notify('In the boat · Row with WASD, and press E by the shore to step ashore');
       if (result.kind === 'board' || result.kind === 'land') save(session, ui, true);
       ui.hud.update();
-    } else if (result.reason === 'missing')
+      return;
+    }
+    if (result.reason === 'missing') {
       ui.hud.notify(`The old boat needs ${listMissing(result.missing)} more.`);
-    else if (result.reason === 'none') ui.hud.notify('Move closer to something you can use.');
+      return;
+    }
+    if (result.reason !== 'none') return;
+    // Camps are opened on foot; from the boat, step ashore first.
+    const camp = !session.state.aboard && campInReach(session.state);
+    if (camp) ui.camp.openCamp(camp);
+    else ui.hud.notify('Move closer to something you can use.');
+  }
+
+  /** Does what E (or the action button) means right now: place the campfire in build mode, or `use`. */
+  function interact() {
+    if (session.screen !== 'game' || ui.dialogs.isPaused()) return;
+    if (session.build.active) ui.build.place();
+    else use();
   }
 
   $('interact').addEventListener('click', interact);
@@ -54,13 +73,15 @@ export function setupInput(session, ui) {
   // Keyboard: Escape pauses, M toggles the map, J the journal, E interacts, and movement keys are remembered.
   window.addEventListener('keydown', (event) => {
     if (session.screen !== 'game') return;
+    // Typing in a text box (such as naming a camp) is not a game key.
+    if (event.target instanceof HTMLInputElement) return;
     const key = event.key.toLowerCase();
 
     if (key === 'escape') {
-      if (!ui.dialogs.isPaused()) {
-        event.preventDefault();
-        ui.dialogs.openPause();
-      }
+      if (ui.dialogs.isPaused()) return;
+      event.preventDefault();
+      if (session.build.active || session.build.menu) ui.build.cancel();
+      else ui.dialogs.openPause();
       return;
     }
 
@@ -77,6 +98,31 @@ export function setupInput(session, ui) {
     }
 
     if (ui.dialogs.isPaused()) return;
+
+    if (key === 'b' && !event.repeat) {
+      event.preventDefault();
+      ui.build.toggleMenu();
+      return;
+    }
+
+    // With the build menu open, 1 picks its first building (the campfire).
+    if (key === '1' && !event.repeat && session.build.menu) {
+      event.preventDefault();
+      ui.build.start();
+      return;
+    }
+
+    if (key === 'f' && !event.repeat) {
+      event.preventDefault();
+      ui.camp.eatFood();
+      return;
+    }
+
+    if (key === 'h' && !event.repeat) {
+      event.preventDefault();
+      ui.camp.useHerbs();
+      return;
+    }
 
     // Mid-action, key-repeat from a key held since before E is ignored; only a fresh press moves (and so cancels).
     if (MOVE_KEYS.includes(key)) {
@@ -106,6 +152,22 @@ export function setupInput(session, ui) {
   });
 
   window.addEventListener('pagehide', () => save(session, ui, true));
+
+  // The mouse over the world is remembered so the build ghost can follow it. In build mode a
+  // click (or a tap) on the world places the campfire there.
+  const world = $('world');
+  world.addEventListener('pointermove', (event) => {
+    session.pointer = { x: event.clientX, y: event.clientY };
+  });
+  world.addEventListener('pointerleave', () => (session.pointer = null));
+  world.addEventListener('pointerdown', (event) => {
+    session.pointer = { x: event.clientX, y: event.clientY };
+    if (!session.build.active || event.button !== 0) return;
+    // Stop the click from also focusing the world afterwards, which would pull the keyboard out
+    // of the camp name box that placing the fire opens.
+    event.preventDefault();
+    interact();
+  });
 
   // Touch buttons: holding one "presses" its key; lifting the finger (or losing it) releases it.
   document.querySelectorAll('[data-move]').forEach((button) => {

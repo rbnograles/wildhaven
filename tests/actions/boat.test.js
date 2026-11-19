@@ -28,6 +28,7 @@ import {
   landingSpot,
   disembark,
   deepAhead,
+  sendBoatHome,
 } from '../../src/actions/boat.js';
 
 /** The old boat on the lagoon shore, near the survivor's start. */
@@ -192,4 +193,26 @@ test('far from land there is nowhere to step ashore', () => {
   assert.equal(landingSpot(game), null);
   assert.equal(disembark(game), false);
   assert.equal(game.aboard, true);
+});
+
+// Guards the drift home (used after passing out at sea): the boat goes back to its old boat's
+// launch spot pointing out to sea, the player is put out of it, and a missing or already-home
+// boat reports that nothing moved.
+test('sending the boat home floats it at its launch spot and takes the player out', () => {
+  const game = afloat(east);
+  for (let i = 0; i < 20; i++) movePlayer(game, 1, 0, 0.1);
+  assert.notEqual(game.boat.x, east.launch.x);
+
+  assert.equal(sendBoatHome(game), true);
+  assert.equal(game.aboard, false);
+  assert.deepEqual(game.boat, { from: east.id, x: east.launch.x, y: east.launch.y, dir: 2 });
+  assert.equal(sendBoatHome(game), false); // already home
+
+  const repaired = besideWreck();
+  finishRepair(repaired, east.id);
+  assert.deepEqual(repaired.boat, game.boat); // the same mooring a fresh repair uses
+
+  const none = createGame('survivor');
+  assert.equal(sendBoatHome(none), false);
+  assert.equal(none.boat, null);
 });

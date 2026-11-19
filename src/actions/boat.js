@@ -106,14 +106,48 @@ export function finishRepair(state, id) {
   if (Object.keys(missingForRepair(state)).length) return null;
 
   for (const [type, cost] of Object.entries(REPAIR_COST)) state.resources[type] -= cost;
+  state.boat = homeMooring(wreck);
+  return wreck;
+}
+
+/**
+ * Gives the spot where a boat mended from an old boat floats when it is "home".
+ *
+ * Home is the old boat's `launch` spot in the water, with the boat pointing away from the beach,
+ * out to sea.
+ *
+ * @param {object} wreck - The old boat (from WRECKS) the boat was repaired from.
+ * @returns {{from: string, x: number, y: number, dir: number}} A fresh boat record for that spot.
+ */
+function homeMooring(wreck) {
   const { launch } = wreck;
-  state.boat = {
+  return {
     from: wreck.id,
     x: launch.x,
     y: launch.y,
     dir: facing(launch.x - wreck.x, launch.y - wreck.y),
   };
-  return wreck;
+}
+
+/**
+ * Sends the player's boat back to its home mooring, by the old boat it was repaired from.
+ *
+ * Used when the player is taken away from the boat (for example passing out at sea and waking
+ * by a fire): nobody is rowing, so the boat drifts home, like a stray dinghy washing back to its
+ * own beach. A player who was aboard is put out of it; the caller then moves them somewhere on land.
+ *
+ * @param {object} state - The game being played. `boat` and `aboard` may change.
+ * @returns {boolean} True when the boat moved; false when there is no boat or it was already home.
+ */
+export function sendBoatHome(state) {
+  state.aboard = false;
+  if (!state.boat) return false;
+
+  const home = homeMooring(WRECKS.find((w) => w.id === state.boat.from));
+  const { x, y, dir } = state.boat;
+  if (x === home.x && y === home.y && dir === home.dir) return false;
+  state.boat = home;
+  return true;
 }
 
 /**
