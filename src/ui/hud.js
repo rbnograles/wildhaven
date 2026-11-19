@@ -297,7 +297,7 @@ export function createHud(session) {
    * crafting, "Place campfire" in build mode, then step ashore, board, repair or gather
    * (chooseInteraction), "Open <camp>" beside one of the player's fires when none of those is in
    * reach, and last of all a faded "Chop pine tree — needs an axe" beside a tree or rock whose tool
-   * the player lacks.
+   * the player lacks, with that tool's painted picture crossed out where the E was.
    *
    * @param {object} state - The game being played.
    */
@@ -313,6 +313,8 @@ export function createHud(session) {
     button.hidden = build.menu || (!choice && !busy && !build.active && !camp && !locked);
     button.classList.toggle('busy', !!busy);
     button.classList.toggle('locked', !busy && !build.active && !!locked);
+    // A locked button shows the missing tool's painted picture in place of the E (see style.css).
+    button.dataset.tool = !busy && !build.active && locked ? locked.tool : '';
     button.setAttribute('aria-disabled', String(!!busy));
     if (busy) label.textContent = busy;
     else if (build.active) label.textContent = 'Place campfire';

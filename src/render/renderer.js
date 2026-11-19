@@ -12,6 +12,7 @@ import { drawMap } from './maps.js';
 import { createLighting } from './lighting.js';
 import { createSnow } from './snow.js';
 import { isAvailable } from '../actions/gather.js';
+import { toolTier } from '../world/tools.js';
 import { chooseInteraction } from '../actions/interact.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress, CLIPS } from '../animation/clips.js';
@@ -21,6 +22,7 @@ import objectSpecs from '../../assets/world/source/objects.json';
 import animSpecs from '../../assets/world/animations/animations.json';
 import tilesetUrl from '../../assets/world/map/tileset.png';
 import overviewUrl from '../../assets/world/map/overview.webp';
+import slotUrl from '../../assets/ui/game/item-slot.png';
 
 // Object sprite name (the PNG file name without `.png`) → the URL Vite serves it from.
 // Sprites sit in kind folders (objects/trees/, objects/rocks/, ...), but only the file name is kept,
@@ -48,6 +50,34 @@ const animUrls = Object.fromEntries(
     }),
   ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
 );
+
+// Tool picture name ("axe-stone", "pickaxe-iron", ...) → its URL, for the badge over a tree or rock
+// under the mouse. They are the HUD's own painted tools (assets/ui/game/, cut by
+// tools/prepare-sprite-art.py).
+const toolUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/ui/game/tool-*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/tool-([\w-]+)\.png$/)[1], url]),
+);
+
+// Moving water: a see-through copy of each of these tile layers drifts in a small circle over the
+// real one, so the painted waves seem to swell. WATER_DRIFT is how far the copy strays, in world
+// units: small enough that the painted bank (56 units wide) always hides its edge on the shore.
+// WATER_SWELL_SECONDS is the time for one trip round the circle.
+const WATER_LAYERS = ['water', 'deep'];
+const WATER_DRIFT = 9;
+const WATER_SWELL_SECONDS = 7;
+
+// The tool badge over a tree or rock under the mouse: how many screen-sized units wide its dark
+// slot is drawn, and how see-through the badge is in each aim state (see aimState in
+// actions/gather.js). A tree too far to work on is faint; one whose tool is missing stays clear,
+// because its crossed-out tool is the message.
+const BADGE_SIZE = 46;
+const BADGE_ALPHA = { ready: 1, far: 0.7, locked: 1 };
 
 // What a gathered supply plays before it fades, by how many rows its sheet has: a tree (3 rows)
 // falls and breaks into firewood (frames 4-11), a rock (1 row) cracks into rubble (frames 0-3).
@@ -99,7 +129,8 @@ const CULL_MARGIN = 640;
  * @param {HTMLCanvasElement} miniCanvas - The small canvas for the minimap in the corner.
  * @returns {Promise<object>} The renderer: `draw(state, dt, animator, build)` for each frame,
  *   `drawMap(canvas, state)` for the big map, `screenToWorld(clientX, clientY)` for the build
- *   ghost, and `resetCamera()` after switching characters.
+ *   ghost, `nodesAt(clientX, clientY, state)` for the trees and rocks under the mouse, and
+ *   `resetCamera()` after switching characters.
  */
 export async function createRenderer(container, miniCanvas) {
   const mini = miniCanvas.getContext('2d');
@@ -126,6 +157,7 @@ export async function createRenderer(container, miniCanvas) {
     boat,
     cue,
     bar,
+    badge,
     ghost,
     ring,
     lighting,
@@ -140,6 +172,8 @@ export async function createRenderer(container, miniCanvas) {
     loopers = new Map(),
     fires = new Map();
   let clock = 0;
+  // The drifting copies of the water layers (see WATER_LAYERS); empty with reduced motion.
+  const swells = [];
 
   // Trees and rocks a tool can harvest: `sceneryNodes` maps a node id to its node; `harvest` maps
   // it to its drawn entry ({node, sprite, glow, top}), and `harvestChunks` lists the entries in
@@ -180,6 +214,8 @@ export async function createRenderer(container, miniCanvas) {
           fail('We could not load the world artwork. Check the connection and try again.'),
         );
         this.load.image('terrain', tilesetUrl);
+        this.load.image('ui-slot', slotUrl);
+        for (const [name, url] of Object.entries(toolUrls)) this.load.image(`tool-${name}`, url);
         for (const [name, url] of Object.entries(objectUrls))
           this.load.image(`object-${name}`, url);
         for (const [name, url] of Object.entries(animUrls))
@@ -205,6 +241,19 @@ export async function createRenderer(container, miniCanvas) {
         const map = this.make.tilemap({ key: 'world' });
         const tiles = map.addTilesetImage('terrain', 'terrain');
         TILE_LAYERS.forEach((name, i) => map.createLayer(name, tiles, 0, 0).setDepth(i - 20));
+
+        // Moving water: each water layer gets a see-through twin just above it, which draw() slides
+        // round in a small circle. Two copies of the same painted waves, one always a little out of
+        // step, read as a slow swell. With reduced motion the water stays still.
+        if (!reducedMotion)
+          for (const name of WATER_LAYERS) {
+            const at = TILE_LAYERS.indexOf(name);
+            if (at < 0) continue;
+            const rows = map.getLayer(name).data.map((row) => row.map((tile) => tile.index));
+            const twin = map.createBlankLayer(`${name}-swell`, tiles, 0, 0);
+            twin.putTilesAt(rows, 0, 0, false);
+            swells.push(twin.setDepth(at - 20 + 0.5).setAlpha(0));
+          }
 
         // Standing objects sort by their ground line, so the character can walk behind a tree or in front of it.
         // Harvestable wild patches (flowers, driftwood) are skipped here; they are drawn with the supplies below.
@@ -335,6 +384,25 @@ export async function createRenderer(container, miniCanvas) {
           .setVisible(false);
         bar = this.add.graphics().setDepth(WORLD.height + 1);
 
+        // The tool badge over a tree or rock under the mouse: the item box's dark slot with the
+        // painted axe or pickaxe on it, and a red bar across it when the player has no such tool.
+        const slot = this.add.image(0, 0, 'ui-slot');
+        slot.setScale(BADGE_SIZE / slot.width);
+        const tool = this.add.image(0, 0, 'tool-axe-stone');
+        tool.setScale((BADGE_SIZE * 0.8) / Math.max(tool.width, tool.height));
+        const strike = this.add
+          .graphics()
+          .lineStyle(5, 0x3a1410, 0.9)
+          .lineBetween(-13, -13, 13, 13)
+          .lineStyle(3, 0xd9503f, 1)
+          .lineBetween(-13, -13, 13, 13);
+        badge = this.add
+          .container(0, 0, [slot, tool, strike])
+          .setDepth(WORLD.height + 1)
+          .setVisible(false);
+        badge.tool = tool;
+        badge.strike = strike;
+
         /**
          * Registers a character sheet with Phaser and names each frame "row-column".
          *
@@ -409,6 +477,51 @@ export async function createRenderer(container, miniCanvas) {
   }
 
   /**
+   * Finds the drawn entry of a node that needs a tool: a map tree or rock, or a supply.
+   *
+   * @param {object} node - The node to look up.
+   * @returns {object|null} Its `harvest` or `supplies` entry, or null if it has none.
+   */
+  const entryOf = (node) =>
+    harvest.get(node.id) ?? supplies.find((s) => s.node.id === node.id) ?? null;
+
+  /**
+   * Lists the trees and rocks whose pictures are under a spot on the screen.
+   *
+   * Only things a tool works on count (trees, rocks, the pine supply), and only while they stand.
+   * A picture has empty room round its edges, so a strip at each side is ignored. Pictures can
+   * overlap, like a far palm's leaves over a near one's trunk, so every one under the spot is
+   * listed, the one drawn in front (lowest on screen) first; the caller picks among them.
+   *
+   * @param {number} clientX - Pixels from the left edge of the page.
+   * @param {number} clientY - Pixels from the top edge of the page.
+   * @param {object} state - The game being played.
+   * @returns {object[]} The nodes under that spot, front first (an empty list if none).
+   */
+  function nodesAt(clientX, clientY, state) {
+    const box = scene.game.canvas.getBoundingClientRect();
+    const { x, y } = scene.cameras.main.getWorldPoint(clientX - box.left, clientY - box.top);
+
+    /** True when the spot is on this entry's picture and the entry still stands. */
+    const under = ({ sprite, node }) => {
+      if (!node.tool || !isAvailable(state, node)) return false;
+      const left = sprite.x - sprite.displayWidth * sprite.originX,
+        top = sprite.y - sprite.displayHeight * sprite.originY,
+        edge = sprite.displayWidth * 0.14;
+      return (
+        x >= left + edge &&
+        x <= left + sprite.displayWidth - edge &&
+        y >= top + sprite.displayHeight * 0.08 &&
+        y <= top + sprite.displayHeight
+      );
+    };
+
+    const found = supplies.filter(under);
+    for (const key of shown) found.push(...(harvestChunks.get(key) ?? []).filter(under));
+    return found.map((entry) => entry.node).sort((a, b) => b.y - a.y);
+  }
+
+  /**
    * Shows a supply, tree or rock as standing or gone this frame.
    *
    * A standing one shows its still picture. One just gathered that has a flip-book sheet falls and
@@ -454,16 +567,19 @@ export async function createRenderer(container, miniCanvas) {
    * Campfires flicker, and a chopped tree falls and breaks apart before it fades.
    * Supplies fade out when gathered, the one in reach glows with an E above it, and while an
    * action runs a progress bar fills up instead. Camp fires are drawn, the player sprite gets this
-   * frame's pose, the build ghost follows the pointer, snow falls in the snowy regions, and the
-   * night layer goes over everything.
+   * frame's pose, the build ghost follows the pointer, the tree or rock under the mouse gets its
+   * tool badge, the water swells, snow falls in the snowy regions, and the night layer goes over
+   * everything.
    *
    * @param {object} state - The game being played.
    * @param {number} dt - Seconds since the last frame.
    * @param {object} animator - The player's animation state (current clip, time, pending action).
    * @param {object|null} [build=null] - Build mode from the session: when `active`, the ghost is
    *   drawn at `x`/`y`, coloured by `check.ok`.
+   * @param {{node: object, state: string}|null} [hover=null] - The tree or rock under the mouse
+   *   and its aim state ('ready', 'far' or 'locked'), from core/input.js.
    */
-  function draw(state, dt, animator, build = null) {
+  function draw(state, dt, animator, build = null, hover = null) {
     // The game boots while its container is still hidden, so the canvas is sized here once it is on screen.
     const w = container.clientWidth,
       h = container.clientHeight;
@@ -507,6 +623,15 @@ export async function createRenderer(container, miniCanvas) {
 
     // The clock that the water glints and the camp fires play by.
     clock += dt;
+
+    // The water swells: each twin layer circles its real layer and fades in and out as it goes.
+    // The deep sea's twin runs a little behind the shallows', so the two never move as one sheet.
+    swells.forEach((twin, n) => {
+      const turn = (clock / WATER_SWELL_SECONDS) * Math.PI * 2 + n * 1.3;
+      twin
+        .setPosition(Math.cos(turn) * WATER_DRIFT, Math.sin(turn) * WATER_DRIFT * 0.6)
+        .setAlpha(0.42 + 0.14 * Math.sin(turn * 2));
+    });
 
     // Water glints fade between neighboring pictures, each patch starting at a different phase.
     for (const key of shown)
@@ -608,6 +733,29 @@ export async function createRenderer(container, miniCanvas) {
         capped.top - 18 + (reducedMotion ? 0 : Math.sin(performance.now() / 260) * 2.5),
       );
 
+    // The tool badge over the tree or rock under the mouse: the tool it needs, in the tier the
+    // player owns (stone when they own none), crossed out while they lack it. It sits above the E
+    // cap, and gives way to the progress bar on the one being worked on.
+    const pointed = hover && hover.node.id !== busy ? entryOf(hover.node) : null;
+    badge.setVisible(!!pointed);
+    if (pointed) {
+      const locked = hover.state === 'locked',
+        tier = toolTier(state, hover.node.tool) ?? 'stone';
+      badge.tool.setTexture(`tool-${hover.node.tool}-${tier}`).setAlpha(locked ? 0.75 : 1);
+      badge.strike.setVisible(locked);
+      badge
+        .setAlpha(BADGE_ALPHA[hover.state])
+        .setScale(1 / zoom)
+        .setPosition(
+          pointed.node.x,
+          pointed.top -
+            (capped === pointed ? 62 : 30) / zoom +
+            (reducedMotion || hover.state !== 'ready'
+              ? 0
+              : Math.sin(performance.now() / 260) * 2.5),
+        );
+    }
+
     // The progress bar fills up while a timed action runs.
     bar.clear();
     if (working) {
@@ -707,6 +855,8 @@ export async function createRenderer(container, miniCanvas) {
       const point = scene.cameras.main.getWorldPoint(clientX - box.left, clientY - box.top);
       return { x: point.x, y: point.y };
     },
+
+    nodesAt,
 
     /**
      * Makes the next frame jump straight to the player instead of gliding there.

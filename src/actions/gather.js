@@ -76,6 +76,24 @@ export function lockedNode(state) {
 }
 
 /**
+ * Says what clicking a tree or rock under the mouse would do right now.
+ *
+ * The mouse can point at any tree on screen, but the player can only work on one they stand
+ * beside and have the tool for. The badge over the tree shows which of the three it is.
+ *
+ * @param {object} state - The game being played.
+ * @param {object} node - The node under the mouse.
+ * @returns {'ready'|'far'|'locked'|null} 'ready' when a click would start the work, 'locked' when
+ *   the player lacks its tool, 'far' when they must walk closer first, and null when there is
+ *   nothing to aim at (the node is gone until it grows back, or the player is in the boat).
+ */
+export function aimState(state, node) {
+  if (state.aboard || !isAvailable(state, node)) return null;
+  if (!hasToolFor(state, node)) return 'locked';
+  return inReach(state, node) ? 'ready' : 'far';
+}
+
+/**
  * Starts gathering from the nearest node: what pressing E does.
  *
  * E starts the node's timed action (its clip, for gatherTime seconds); finishGather awards it
@@ -84,12 +102,16 @@ export function lockedNode(state) {
  *
  * @param {object} state - The game being played. The player turns to face the node.
  * @param {object} animator - The player's animation state, which runs the timed action.
+ * @param {string} [id] - Id of one node to gather, for a click on it. It must be in reach, have
+ *   something to give and need no tool the player lacks. Without an id the nearest node is used.
  * @returns {{ok: boolean, reason?: string, node?: object}} `ok` with the node when it started;
  *   otherwise `reason` is 'busy' (already doing something) or 'none' (nothing in reach).
  */
-export function beginGather(state, animator) {
+export function beginGather(state, animator, id) {
   if (animator.pending) return { ok: false, reason: 'busy' };
-  const node = nearbyNode(state);
+  const node = id
+    ? nodesInReach(state).find((n) => n.id === id && hasToolFor(state, n))
+    : nearbyNode(state);
   if (!node) return { ok: false, reason: 'none' };
 
   // Face the node, unless it's almost straight above or below the player.

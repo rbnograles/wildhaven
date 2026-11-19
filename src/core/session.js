@@ -32,8 +32,9 @@ export const tabStorage = (() => {
  * @returns {object} The new session: selected character, game state, animator, renderer, save
  *   session, last save failure, current screen, load counter, held keys, frame clock, building
  *   (`build`: whether a fire is being placed, whether the build menu is open, the ghost's spot
- *   and its placement check; never saved) and the mouse
- *   position over the world (`pointer`, or null).
+ *   and its placement check; never saved), the mouse
+ *   position over the world (`pointer`, or null) and the tree or rock under the mouse (`hover`:
+ *   `{node, state}` with the state from aimState, or null; worked out every frame, never saved).
  */
 export function createSession() {
   return {
@@ -49,6 +50,7 @@ export function createSession() {
     clock: { last: 0, sinceSave: 0, sinceHud: 0 },
     build: { active: false, menu: false, x: 0, y: 0, check: null },
     pointer: null,
+    hover: null,
   };
 }
 

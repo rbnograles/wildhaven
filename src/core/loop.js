@@ -227,7 +227,9 @@ export function startLoop(session, ui) {
       }
 
       // Drawing still happens while paused, so the world stays on screen behind the dialog.
-      renderer.draw(state, dt, animator, session.build);
+      // The tree or rock under the mouse gets a tool badge; the camera moves, so ask every frame.
+      session.hover = ui.input.hover();
+      renderer.draw(state, dt, animator, session.build, session.hover);
       clock.sinceHud += dt;
       if (clock.sinceHud > HUD_EVERY) {
         ui.hud.update();
