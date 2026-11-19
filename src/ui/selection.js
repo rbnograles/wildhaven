@@ -81,7 +81,25 @@ export function setupSelection(session, ui) {
       : slot.invalid
         ? 'This save could not be read. Start fresh to play.'
         : 'Your own path through a shared world.';
+
+    // Measured last, once the new text is in, so the character stands just above the details.
+    measureDeparture();
   }
+
+  /**
+   * Tells the panel holding the details how tall they are, as the CSS variable `--departure-h`.
+   *
+   * The stylesheet uses it to stand the chosen character just above the details. A long name
+   * or tagline then lifts the character instead of hiding its feet behind the text.
+   */
+  function measureDeparture() {
+    const departure = $('departure');
+    departure.parentElement.style.setProperty('--departure-h', `${departure.offsetHeight}px`);
+  }
+
+  // The details change height when the window resizes, when text wraps differently, and while
+  // the chosen panel widens, so measure again whenever their size changes.
+  new ResizeObserver(measureDeparture).observe($('departure'));
 
   // Character panels: click to pick, or use the left and right arrow keys to move between them.
   document.querySelectorAll('[data-character]').forEach((button) => {

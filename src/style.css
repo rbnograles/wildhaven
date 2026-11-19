@@ -127,9 +127,12 @@ button:active {
 }
 
 /* The three panels side by side. The chosen one is twice as wide as each of the others. */
+/* touch-action: pan-y keeps sideways finger moves for the swipe code in ui/selection.js. */
+/* Without it the browser takes a sideways drag as its own pan and cancels the touch midway. */
 .realms {
   display: flex;
   height: 100%;
+  touch-action: pan-y;
 }
 
 /* One character's panel. container-type lets the picture inside size itself from this panel. */
@@ -195,9 +198,12 @@ button:active {
   transition: bottom 0.45s ease;
 }
 
-/* In the chosen panel the character stands higher, above the details. */
+/* In the chosen panel the character stands just above the details. ui/selection.js keeps */
+/* --departure-h equal to the details' height, so longer text lifts the character instead of */
+/* covering it. The height leaves 64px at the top, so the head never reaches the logo. */
 .realm.is-selected .realm-sprite {
-  bottom: 38%;
+  bottom: calc(var(--departure-h, 38%) - 12px);
+  height: min(45%, calc(100% - var(--departure-h, 38%) - 64px));
 }
 
 /* The whole panel is one big button that picks this character. */
@@ -300,10 +306,20 @@ button:active {
   flex-basis: 100%;
 }
 
+/* Start fresh and Preview animations: light text on the dark fade, and at least 44px tall */
+/* so they are easy to tap. */
 .departure .text-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: #fbf8ec;
   font-size: 13px;
   text-decoration-color: #fbf8ec80;
+}
+
+/* On hover they turn gold. The shared dark-green hover colour would vanish on the dark fade. */
+.departure .text-button:hover {
+  color: #e2b85c;
 }
 
 .save-hint {
@@ -326,24 +342,6 @@ button:active {
   display: none;
 }
 
-/* Short screens: smaller character and tighter details so everything still fits. */
-@media (max-height: 560px) {
-  .realm-sprite {
-    height: 36%;
-  }
-  .departure {
-    padding-top: 50px;
-    padding-bottom: 16px;
-  }
-  .departure h2 {
-    font-size: 26px;
-  }
-  .tagline {
-    margin-bottom: 10px;
-    font-size: 14px;
-  }
-}
-
 /* Phones: one panel fills the screen; arrows, swipe and dots move between characters. */
 @media (max-width: 699px) {
   .realm {
@@ -358,9 +356,6 @@ button:active {
   }
   .realm-sprite {
     height: 38%;
-  }
-  .realm.is-selected .realm-sprite {
-    bottom: 40%;
   }
   .departure {
     padding: 70px 18px 56px;
@@ -413,6 +408,42 @@ button:active {
   }
   .realm-dot[aria-current='true']::after {
     background: #fbf8ec;
+  }
+}
+
+/* Short screens, phones turned sideways included: a smaller character and tighter details, so */
+/* the character still has room. It comes after the phone block so its tighter spacing wins on */
+/* short phones too. Text keeps its minimum sizes; the space comes from padding and the button. */
+@media (max-height: 560px) {
+  .realm-sprite {
+    height: 36%;
+  }
+  .departure {
+    padding-top: 36px;
+    padding-bottom: 14px;
+  }
+  .departure h2 {
+    margin: 2px 0 4px;
+    font-size: 28px;
+  }
+  .tagline {
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+  .departure-actions {
+    row-gap: 2px;
+  }
+  .departure-actions .primary {
+    min-height: 46px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+/* Short phones still keep room at the bottom of the details for the dots. */
+@media (max-height: 560px) and (max-width: 699px) {
+  .departure {
+    padding-bottom: 52px;
   }
 }
 
