@@ -45,7 +45,7 @@ Game rules are pure modules. Rendering and the DOM are thin layers around them. 
 | `src/game/` | `state.js` (create, serialize, validate saves), `saves.js` (per-character localStorage session, active character) | yes |
 | `src/animation/` | `clips.js` (clip table, animator, timed actions; pure), `sheets.js` (sprite loading and frame measuring), `preview.js` (preview dialog) | `clips.js` only |
 | `src/render/` | `renderer.js`: Phaser scene, supply sprites (glow, E cap, progress bar, fade-out), camera, minimap and world map | no |
-| `src/ui/` | `layout.js` (HTML template, icons), `selection.js`, `hud.js` (HUD, interact button, toast), `dialogs.js` (pause, map, reset, fullscreen) | no |
+| `src/ui/` | `layout.js` (HTML template, icons), `selection.js` (main menu: three painted character panels, the chosen one widens; arrows, swipe and dots on phones), `hud.js` (HUD, interact button, toast, in-game controls strip), `dialogs.js` (pause, map, reset, fullscreen) | no |
 | `src/core/` | `session.js` (shared session; start, leave, save), `input.js` (keys, touch), `loop.js` (frame loop) | no |
 
 **Keep the pure modules runnable in Node.** `data/`, `world/`, `actions/`, `game/` and `animation/clips.js` must not import `ui/`, `core/`, `render/`, `sheets.js`, `preview.js`, PNG or CSS files, and must not use `import.meta`, `document` or `window`. `tests/boundaries.test.js` enforces this. JSON is imported with `import ... with { type: 'json' }` so Node can read it.
@@ -145,6 +145,7 @@ Example of the expected tone and shape (`src/actions/move.js`):
 - Any failure while loading assets must end on the loading screen's retry state, never an endless loader. Image loads have timeouts (`loadImage`, plus the 20 s Phaser scene timeout).
 - Keep `prefers-reduced-motion` support. It turns off camera smoothing, CSS transitions, and preview autoplay.
 - Desktop keyboard and mouse is the primary target. Layouts must still work at about 390 px wide, where on-screen touch movement buttons appear.
+- The main menu (`#selection`) must stay exactly `100svh` with no scrolling at any size from 320×480 up. Under 700 px wide it shows one character panel at a time.
 - Feature plans go in `docs/superpowers/plans/`, and browser verification notes go in `docs/verification.md`.
 
 ## Verifying a Change

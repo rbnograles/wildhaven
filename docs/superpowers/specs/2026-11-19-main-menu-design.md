@@ -1,6 +1,6 @@
 # Main menu: painted triptych — design
 
-Status: decided in `/game-ux-review` on 2026-11-19. The full review is saved under `~/.gstack/projects/game 1/`.
+Status: built 2026-11-19 (see docs/superpowers/plans/2026-11-19-main-menu.md).
 
 ## Goal
 

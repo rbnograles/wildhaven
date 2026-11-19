@@ -110,3 +110,14 @@ Added Prettier 3 (`npm run format`, `npm run format:check`) and a plain-language
 - `layout.js` and `preview.js` also had their HTML template strings formatted (`/* HTML */`), which changes whitespace inside the HTML. The old and new templates were both mounted in the browser at 1366×850 and 390×844. All three screens, all three dialogs and the animation preview were measured: 215 elements in all, with every bounding box identical.
 - Browser (127.0.0.1:5178): the Builder started fresh, walked at 155 units/s, and gathered scrap timber in 6 s for +3 wood with the busy label. The quest ticked. The map, pause and animation preview all opened. No console errors.
 - `npm test`: 38 passing (the new comment-rule test included). `npm run build` and `npm run format:check` pass.
+
+## Main menu (painted triptych) — 2026-11-19
+
+Built from `docs/superpowers/plans/2026-11-19-main-menu.md` (commits 1a4a97b..e7ff0a4). Checked in the browser on the dev server (port 5177).
+
+- No vertical or horizontal scroll at 1920×1080, 1366×768, 1280×720, 768×1024, 390×844, 360×640 and 320×480 (also 667×375 and 844×390).
+- Desktop and tablet: the chosen panel takes about half the width (639/321/321 px at 1280×720), each panel shows its own third of the painting without stretching, text is 12 px or larger, and Start fresh and Preview animations are 44 px tall.
+- The chosen character stands just above the details at every size, because its position follows the details panel's height: 486 px tall at 1920×1080, 293 px at 1280×720, 380 px at 390×844. Landscape phones leave little room (about 28 px at 667×375); that is a known limitation.
+- Phone: one panel at a time; the ‹ › arrows, the dots and a touch swipe change character; mouse drags are ignored; `touch-action: pan-y` lets real swipes through. Swipe was tested with simulated touch pointer events, not on a real device.
+- Arrow keys move the selection and focus, wrapping round. Continue, Start a fresh adventure and Preview animations work. No console errors.
+- In-game controls strip: shows when the game opens, fades on the first real step or after about 8 s, shows again on Continue, and is hidden on phones. Clicks pass through to the E button, and below 1000 px it moves bottom-left to clear the minimap.
