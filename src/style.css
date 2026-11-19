@@ -1299,10 +1299,20 @@ dialog::backdrop {
   font-size: 12px;
   color: var(--ink);
   transition: opacity 0.6s ease;
+  /* Decorative, so clicks pass through to the E button and minimap underneath. */
+  pointer-events: none;
 }
 
 .key-strip.fading {
   opacity: 0;
+}
+
+/* On narrower screens the strip moves to the bottom-left so it clears the minimap. */
+@media (max-width: 999px) {
+  .key-strip {
+    left: 24px;
+    transform: none;
+  }
 }
 
 /* Phones show the touch arrows instead. */
