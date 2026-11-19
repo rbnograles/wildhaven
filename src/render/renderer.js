@@ -6,9 +6,10 @@ import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
 import { REGIONS, REGION_GRID, regionIndexAt } from '../world/regions.js';
 import { NODES } from '../world/nodes.js';
-import { LANDMARKS, WAYPOINTS } from '../data/places.js';
+import { LANDMARKS, WAYPOINTS, WRECKS } from '../data/places.js';
 import { WILD } from '../data/supplies.js';
-import { nearbyNode, isAvailable } from '../actions/gather.js';
+import { isAvailable } from '../actions/gather.js';
+import { chooseInteraction } from '../actions/interact.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress } from '../animation/clips.js';
 import mapData from '../../assets/world/map/wildhaven.json';
@@ -32,10 +33,13 @@ export const objectUrls = Object.fromEntries(
 );
 
 // The map's ground layers, bottom to top: each one is painted over the one before.
-const TERRAIN_LAYERS = ['ground', 'dirt', 'jungle', 'rock', 'snow', 'sand', 'water'];
+const TERRAIN_LAYERS = ['ground', 'dirt', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep'];
 
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;
+
+// How much of the character shows above the hull while sitting in the boat, from the top down.
+const SEATED = 0.6;
 
 // Scenery is grouped into squares this many world units wide; only squares near the camera are shown.
 const CHUNK = 1024;
@@ -79,6 +83,7 @@ export async function createRenderer(container, miniCanvas) {
   let player,
     shadow,
     supplies,
+    boat,
     cue,
     bar,
     webgl = false,
@@ -157,7 +162,19 @@ export async function createRenderer(container, miniCanvas) {
         // The glow filter is added the first time a supply comes into reach (see glowOf), because the world has
         // hundreds of flower patches and a filter on every one would be slow.
         webgl = this.renderer.type === Phaser.WEBGL;
-        supplies = NODES.map((node) => {
+        // Old boats on the beach are drawn the same way; the one the player repaired fades out.
+        supplies = [
+          ...NODES.map((node) => ({
+            node,
+            /** True while the supply or patch has nothing to give. */
+            gone: (state) => !isAvailable(state, node),
+          })),
+          ...WRECKS.map((w) => ({
+            node: { ...w, sprite: 'old-boat', scale: 1 },
+            /** True once this old boat has been repaired and is at sea. */
+            gone: (state) => state.boat?.from === w.id,
+          })),
+        ].map(({ node, gone }) => {
           const spec = objectSpecs[node.sprite];
           const sprite = this.add
             .image(node.x, node.y, `object-${node.sprite}`)
@@ -167,11 +184,18 @@ export async function createRenderer(container, miniCanvas) {
           // Cue height: the sprite's top, but on a tall tree's canopy rather than its tip, where it would crowd the HUD.
           return {
             node,
+            gone,
             sprite,
             glow: null,
             top: Math.max(node.y - sprite.displayHeight * sprite.originY, node.y - 150),
           };
         });
+
+        // The player's own boat, hidden until they have one.
+        boat = this.add
+          .image(0, 0, 'object-rowboat')
+          .setOrigin(...objectSpecs.rowboat.origin)
+          .setVisible(false);
 
         // The floating "E" key cap over the supply in reach, and the progress bar that replaces it.
         const cap = this.add
@@ -261,7 +285,8 @@ export async function createRenderer(container, miniCanvas) {
    *
    * World positions are shrunk to fit the canvas, like tracing a big map onto a postcard. On the
    * whole-world map, regions the player hasn't entered are dimmed. Found places are cream dots,
-   * found signposts are gold diamonds, and the player is the white dot.
+   * found signposts are gold diamonds, found old boats are brown squares, a moored boat is a brown
+   * oval, and the player is the white dot.
    *
    * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
    * @param {object} state - The game being played.
@@ -323,6 +348,22 @@ export async function createRenderer(container, miniCanvas) {
       ctx.lineTo(x, y + 5);
       ctx.lineTo(x - 5, y);
       ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Old boats found on the beach (not the one already mended): small brown squares.
+    ctx.fillStyle = '#9a6b3f';
+    for (const w of WRECKS) {
+      if (!state.wrecks.includes(w.id) || state.boat?.from === w.id) continue;
+      ctx.fillRect(px(w.x) - 3.5, py(w.y) - 3.5, 7, 7);
+      ctx.strokeRect(px(w.x) - 3.5, py(w.y) - 3.5, 7, 7);
+    }
+
+    // The player's boat while they are ashore: a brown oval where it is moored.
+    if (state.boat && !state.aboard) {
+      ctx.beginPath();
+      ctx.ellipse(px(state.boat.x), py(state.boat.y), 7, 3.5, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
@@ -389,20 +430,22 @@ export async function createRenderer(container, miniCanvas) {
     shown = next;
 
     // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
-    const nearest = nearbyNode(state),
+    // What E would do now: a supply or old boat it targets glows with an E cap over it.
+    const choice = chooseInteraction(state),
+      aimed = choice?.kind === 'gather' || choice?.kind === 'repair' ? choice.target.id : null,
       busy = animator.pending?.target,
       step = reducedMotion || snap ? 1 : dt * 4;
     let capped = null,
       working = null;
     snap = false;
     for (const s of supplies) {
-      const gone = !isAvailable(state, s.node);
+      const gone = s.gone(state);
       s.sprite.setAlpha(
         gone ? Math.max(0, s.sprite.alpha - step) : Math.min(1, s.sprite.alpha + step),
       );
       s.sprite.setVisible(s.sprite.alpha > 0);
       // Highlight the supply being worked on, or else the nearest one in reach.
-      const target = !gone && (busy ? s.node.id === busy : s.node.id === nearest?.id);
+      const target = !gone && (busy ? s.node.id === busy : s.node.id === aimed);
       if (target) {
         const glow = glowOf(s);
         if (glow) glow.active = true;
@@ -411,6 +454,20 @@ export async function createRenderer(container, miniCanvas) {
         if (busy) working = s;
         else capped = s;
       }
+    }
+
+    // The player's boat, pointing the way it last went and rocking gently on the water.
+    // The art's bow points east: it is mirrored for west and turned a quarter for north and south.
+    const bob = reducedMotion ? 0 : Math.sin(performance.now() / 500) * 2;
+    boat.setVisible(!!state.boat);
+    if (state.boat) {
+      const { x, y, dir } = state.boat;
+      boat
+        .setPosition(x, y + bob)
+        .setFlipX(dir === 1)
+        .setAngle(dir === 0 ? 90 : dir === 3 ? -90 : 0)
+        .setDepth(y - 1);
+      if (choice?.kind === 'board') capped = { node: { x, y }, top: y - 40 };
     }
 
     // The E key cap bobs gently over the supply in reach.
@@ -434,11 +491,12 @@ export async function createRenderer(container, miniCanvas) {
     }
 
     // A timed action is longer than one pass of its clip, so it loops until the action ends.
+    // In the boat the player sits still, so the idle pose is used.
     const pose = resolvePose(
       sheets,
       state.character,
-      animator.clip,
-      animator.time,
+      state.aboard ? 'idle' : animator.clip,
+      state.aboard ? 0 : animator.time,
       state.player.direction,
       animator.pending ? true : undefined,
     );
@@ -449,9 +507,21 @@ export async function createRenderer(container, miniCanvas) {
       .setOrigin(pose.flip ? 1 - pivot : pivot, 1)
       .setFlipX(pose.flip)
       .setScale(PLAYER_HEIGHT / pose.sheet.referenceHeight)
-      .setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift)
       .setDepth(state.player.y);
-    shadow.setPosition(state.player.x, state.player.y - 1).setDepth(state.player.y - 0.5);
+    if (state.aboard) {
+      // Show only the top of the character and sink the cut line into the hull, so they sit in the boat.
+      player
+        .setCrop(0, 0, pose.frame.width, pose.frame.height * SEATED)
+        .setPosition(
+          state.player.x,
+          state.player.y + bob + 10 + player.displayHeight * (1 - SEATED),
+        );
+    } else
+      player.setCrop().setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift);
+    shadow
+      .setVisible(!state.aboard)
+      .setPosition(state.player.x, state.player.y - 1)
+      .setDepth(state.player.y - 0.5);
 
     drawMap(mini, state, miniCanvas.width, miniCanvas.height, true);
   }
