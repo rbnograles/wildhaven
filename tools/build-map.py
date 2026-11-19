@@ -4,10 +4,11 @@ Inputs : source/ground/{grass,dirt,soil,jungle,rock,snow,sand,water,deep}.png  s
          source/objects/<kind>/<name>.png + source/objects.json                 one sprite per world object; its
                                                                                 objects.json entry names the kind folder
          source/cliffs/<kit>.png + source/cliffs/cliffs.json                    the cliff pictures the hill tiles are cut from
+         source/shorelines/<kind>-bank.png + shorelines.json                    the painted banks drawn along the water's edge
          source/places.json                                                     regions, spawns, supplies, landmarks,
                                                                                 waypoints, wrecks (old boats)
 Outputs: map/tileset.png    terrain and cliff tiles incl. generated soft transitions (64px, 1px extruded)
-         map/wildhaven.json Tiled-format map: nine terrain layers, a "cliffs" layer, an "objects" layer, and
+         map/wildhaven.json Tiled-format map: nine terrain layers, a "banks" and a "cliffs" layer, an "objects" layer, and
                             properties for the region grid, the elevation grid and the sea
          map/overview.webp  small render of the whole map for the minimap and world map
 The home continent sits inside a sea border; water far from any land becomes the "deep" layer.
@@ -552,7 +553,104 @@ for y, x in np.argwhere(kit_of >= 0):
         tiles.append(cliff_tile(*key)); cliff_gid[key] = len(tiles)
     cliff_layer[y * COLS + x] = cliff_gid[key]
 
-TS_COLS = 48; ts_rows = math.ceil(len(tiles) / TS_COLS); cell = TILE + 2
+# ---- bank tiles --------------------------------------------------------------------------
+# A painted bank runs along every waterline: sand and sea foam round the sea, rooty earth along the rivers, and
+# loam with moss round the pools. Each kind comes from one picture in source/shorelines/ (shorelines.json says where
+# to cut). Only the picture's straight piece is used: it becomes a strip that repeats every BANK_LOOP units, and
+# each tile bends that strip along its own bit of shore, like laying a ribbon along the water's edge.
+SHORE = json.load(open(os.path.join(SRC, 'shorelines', 'shorelines.json'), encoding='utf-8'))
+BANK_KINDS = ['ocean', 'river', 'lake']   # a corner's kind is its index here; where two kinds meet, the later one wins
+BANK_LAND = 56     # how far the bank reaches onto the land, in units
+BANK_WET = 7       # how far its wet edge reaches past the waterline
+BANK_LOOP = 256    # the strip repeats after this many units: four tiles, like the ground textures
+
+# Cuts one kind's strip: BANK_LAND + BANK_WET rows (far land side first, the wet edge last) by BANK_LOOP columns.
+# The colours are kept "premultiplied" (already multiplied by how solid the pixel is), so blending two samples
+# never drags in the colour of a see-through pixel.
+def bank_strip(name):
+    g = SHORE['kinds'][name]
+    a = np.asarray(Image.open(os.path.join(SRC, 'shorelines', f'{name}-bank.png')).convert('RGBA')).astype(float)
+    a[..., 3] = np.clip((a[..., 3] - 48) / 160, 0, 1) * 255   # the generated pictures have a faint glow round each piece: drop it
+    pic = Image.fromarray(a.astype('uint8')).convert('RGBa')
+
+    # Cuts the rows y0..y1 of the straight piece and shrinks them to `rows` game rows, a little longer than one loop.
+    def piece(y0, y1, rows): return np.asarray(pic.crop((g['left'], y0, g['right'], y1)).resize((BANK_LOOP + 16, rows), Image.LANCZOS)).astype(float)
+    strip = np.concatenate([piece(g['top'], g['water'], BANK_LAND), piece(g['water'], g['bottom'], BANK_WET)])
+    strip = loop_rows(strip.swapaxes(0, 1), BANK_LOOP, 16).swapaxes(0, 1)   # joined end to start, so it repeats
+    strip[:g['fade']] *= ((np.arange(g['fade']) + 0.5) / g['fade'])[:, None, None]   # the land side melts into the ground
+    return strip
+
+BANKS = [bank_strip(k) for k in BANK_KINDS]
+
+# Says which kind of water a wet LAND point is: 2 a pool, 0 the sea (round the island or in the lagoon), 1 a river.
+def water_kind(x, y):
+    if any(math.hypot(x - px, y - py) < r for px, py, r in POOLS): return 2
+    if inland(x, y) < 0 or (region_key(x, y) == 'L' and x > coast(y) + 16): return 0
+    return 1
+
+# How far each tile corner is from water, counted in corners (a diagonal step counts as one): 0 is water, 1 touches
+# water, 2 is anything farther. Inside a tile these are blended like the terrain masks, and where the blend passes
+# 0.5 is exactly where the water tile draws its edge, so the bank always sits on the waterline.
+wet = corner >= WATER
+shore_dist = np.where(wet, 0, np.where(grow_box(wet, 1, 1, 1, 1), 1, 2))
+# The kind of the nearest water, for every corner within two corners of some: water corners know their own kind,
+# and it is then spread outwards twice.
+shore_kind = np.full(corner.shape, -1)
+for y, x in np.argwhere(wet): shore_kind[y, x] = 0 if corner[y, x] == DEEP else water_kind(x * TILE - PAD, y * TILE - PAD)
+for _ in range(2):
+    spread = np.max([shifted(shore_kind + 1, dy, dx) for dy in (-1, 0, 1) for dx in (-1, 0, 1)], axis=0) - 1
+    shore_kind = np.where(shore_kind < 0, spread, shore_kind)
+
+# Paints one bank tile. `dist` holds the four corners' distances from water (TL, TR, BL, BR) and `kinds` their
+# bank kinds; px, py say which square of the 4x4 noise block the tile is, as for the terrain tiles.
+def bank_tile(dist, kinds, px, py):
+    tl, tr, bl, br = dist
+    share = [(1 - U) * (1 - V), U * (1 - V), (1 - U) * V, U * V]   # how much each corner counts at each pixel
+    away = tl * share[0] + tr * share[1] + bl * share[2] + br * share[3]
+    wobble = cut(noise, px, py) * 0.5 * TILE
+    inland_by = (away - 0.5) * TILE - wobble                       # units from the waterline: the same wobble as the water tile
+    # Only the wet edge follows every little wobble of the waterline. Farther in, the wobble fades away, so the
+    # painted roots and pebbles are not smeared into zigzags.
+    inland_by += wobble * np.clip(inland_by / BANK_LAND, 0, 1)
+    row = BANK_LAND - inland_by                                    # which row of the strip each pixel shows
+    r0 = np.clip(np.floor(row), 0, BANK_LAND + BANK_WET - 2).astype(int); part = np.clip(row - r0, 0, 1)[..., None]
+
+    # The strip must run along the shore. A shore can run any way, so the strip is laid four ways (along x, along
+    # y and along both diagonals) and each pixel takes mostly the one that best matches the slope of the shore.
+    slope_x, slope_y = (1 - V) * (tr - tl) + V * (br - bl), (1 - U) * (bl - tl) + U * (br - tr)
+    wx, wy = px * TILE + X, py * TILE + Y
+    ways = [(slope_y ** 2, wx), (slope_x ** 2, wy), ((slope_x + slope_y) ** 2 / 2, wx - wy), ((slope_x - slope_y) ** 2 / 2, wx + wy)]
+    weight = np.stack([w ** 4 for w, _ in ways]); weight[0] += 1e-9   # on flat ground (no slope) the strip just runs along x
+    weight /= weight.sum(axis=0)
+
+    tile = np.zeros((TILE, TILE, 4))
+    for k in set(kinds):
+        mix = sum(s for s, kind in zip(share, kinds) if kind == k)   # kinds blend where a river meets the sea
+        for w, (_, along) in zip(weight, ways):
+            col = np.floor(along).astype(int) % BANK_LOOP
+            tile += (BANKS[k][r0, col] * (1 - part) + BANKS[k][r0 + 1, col] * part) * (w * mix)[..., None]
+    tile[(row < 0) | (row > BANK_LAND + BANK_WET - 1)] = 0
+    # A flat pocket (a little spit of land with water all round) has no shore direction, and one row of the strip
+    # would be smeared right across it. The bank fades out there and the plain ground shows instead.
+    tile *= np.clip(np.hypot(slope_x, slope_y) * 3, 0, 1)[..., None]
+    tile[..., :3] *= 255 / np.maximum(tile[..., 3:], 1e-6)   # back from premultiplied colour to plain colour
+    return np.clip(tile, 0, 255)
+
+# Works out which bank tile each map square needs and adds every different one to the tileset once. A square needs
+# one unless its corners are all water or all far from water.
+bank_gid = {}
+bank_layer = [0] * (ROWS * COLS)
+for ty in range(ROWS):
+    for tx in range(COLS):
+        dist = tuple(int(v) for v in (shore_dist[ty, tx], shore_dist[ty, tx + 1], shore_dist[ty + 1, tx], shore_dist[ty + 1, tx + 1]))
+        if max(dist) == 0 or min(dist) == 2: continue
+        kinds = tuple(int(v) for v in (shore_kind[ty, tx], shore_kind[ty, tx + 1], shore_kind[ty + 1, tx], shore_kind[ty + 1, tx + 1]))
+        key = (dist, kinds, tx % 4, ty % 4)
+        if key not in bank_gid:
+            tiles.append(bank_tile(*key)); bank_gid[key] = len(tiles)
+        bank_layer[ty * COLS + tx] = bank_gid[key]
+
+TS_COLS = 62; ts_rows = math.ceil(len(tiles) / TS_COLS); cell = TILE + 2   # 62 across keeps the sheet under 4096 px wide
 sheet = np.zeros((ts_rows * cell, TS_COLS * cell, 4), dtype='uint8')
 for i, t in enumerate(tiles):
     y, x = (i // TS_COLS) * cell, (i % TS_COLS) * cell
@@ -574,8 +672,9 @@ for rank, name in enumerate(OVERLAYS, start=1):
             mask = sum(int(v >= rank) << i for i, v in enumerate(c)) if paints else 0
             data.append(gid(name, mask, tx, ty))
     layers[name] = data
+layers['banks'] = bank_layer     # drawn over the water's edge: the painted shoreline (see "bank tiles")
 layers['cliffs'] = cliff_layer   # drawn over the ground: lips, walls and their shadows (see "cliff tiles")
-TILE_LAYERS = ['ground'] + OVERLAYS + ['cliffs']
+TILE_LAYERS = ['ground'] + OVERLAYS + ['banks', 'cliffs']
 
 # ---- region grid -------------------------------------------------------------------------
 # One digit per 256-unit square, row by row: the index of that square's region in places.json.
@@ -675,8 +774,38 @@ for gy in range(DETAIL_STEP // 2 - 14 * DETAIL_STEP, LAND_H + PAD, DETAIL_STEP):
                 or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
                 or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)): continue
         details.append((name, x, y))
+
+# Water ripples: small looping animations on open water, so rivers, pools and the sea are never perfectly still.
+# The renderer plays each one from its sheet in assets/world/animations/ (made by tools/prepare-sprite-art.py).
+# Another separate pass with its own seeds. Per kind of water (see water_kind): the sprite, how far it reaches
+# left/right and up/down from its middle, and the chance a grid square of that water gets one. The sea is huge,
+# so its chance is low, and lower still far out in the deep.
+RIPPLES = [('sea-wave', 80, 40, 0.12), ('river-ripple', 50, 26, 0.7), ('lake-ripple', 75, 45, 0.3)]
+DEEP_RIPPLE_CHANCE = 0.03
+RIPPLE_STEP = 120   # a fine grid, or hardly any square would land inside a narrow river
+ripples = []
+
+# Says whether any tile corner around the box reaching rx left/right and ry up/down of the LAND point (x, y) is dry.
+# The shore is painted from the tile corners, so this keeps a ripple off the painted bank as well.
+def dry_near(x, y, rx, ry):
+    c0, c1 = int((x + PAD - rx) // TILE), int((x + PAD + rx) // TILE) + 1
+    r0, r1 = int((y + PAD - ry) // TILE), int((y + PAD + ry) // TILE) + 1
+    return not wet[r0:r1 + 1, c0:c1 + 1].all()
+
+for gy in range(RIPPLE_STEP // 2 - PAD, LAND_H + PAD, RIPPLE_STEP):
+    for gx in range(RIPPLE_STEP // 2 - PAD, LAND_W + PAD, RIPPLE_STEP):
+        rng = random.Random(gx * 40503 ^ gy * 92821 ^ 0x71de)
+        x, y = gx + rng.randint(-40, 40), gy + rng.randint(-40, 40)
+        if not (100 - PAD < x < LAND_W + PAD - 100 and 100 - PAD < y < LAND_H + PAD - 100) or terrain(x, y) != WATER: continue
+        kind = water_kind(x, y); name, rx, ry, chance = RIPPLES[kind]
+        if corner[int(round((y + PAD) / TILE)), int(round((x + PAD) / TILE))] == DEEP: chance = DEEP_RIPPLE_CHANCE
+        # The whole ripple must lie on water: its four ends are checked too, and nothing floats under a bridge.
+        # A river is too narrow for the stricter corner check, which would leave it almost bare.
+        if (rng.random() >= chance or any(terrain(x + dx, y + dy) != WATER for dx, dy in ((-rx, 0), (rx, 0), (0, -ry), (0, ry)))
+                or (kind != 1 and dry_near(x, y, rx, ry)) or any(math.hypot(x - bx_, y - by_) < 300 for bx_, by_ in BRIDGES)): continue
+        ripples.append((name, x, y))
 # Everything above is in LAND units; the map file is in WORLD units.
-objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details]
+objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + ripples]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
