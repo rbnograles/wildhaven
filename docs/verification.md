@@ -172,3 +172,19 @@ Ground textures moved to `assets/world/source/ground/`; object sprites to `objec
 Browser at `http://127.0.0.1:5178` (1280×720), Builder in Hollowstead: all 29 sprites loaded from their kind folders (buildings 7, plants 5, props 4, rocks 6, trees 7); houses, workshop, boulder, log and berry bush drew as before; no console errors.
 
 Not checked by hand: the field journal's keepsake pictures (they use the same `objectUrls` names, which did not change).
+
+## M2 loop proof — 2026-11-19
+
+Day/night, meters, campfires and camps, needs list, passing out, walked-area fog, tea and healing, regrowing supplies, save version 4 (spec `docs/superpowers/specs/2026-11-19-m2-loop-proof-design.md`). Automated: `npm test` 117 passing (54 new: clock, fog, camps, needs, build, survive, camp actions, version 4 and the version 3 upgrade, regrowth), `npm run build` and `npm run format:check` pass. The pure rules were also run in Node for a whole night away from a fire: the pass-out comes 90 s after dark, as designed.
+
+**Moving the clock for checks.** Saves on `127.0.0.1` can be edited in the console; the stale-tab guard stops the open tab overwriting the edit. For example, just before nightfall:
+`const k='wildhaven.adventure.v1.builder', s=JSON.parse(localStorage[k]); s.time=238; localStorage[k]=JSON.stringify(s); location.reload()`
+
+Browser at `http://127.0.0.1:5180` (800×600), checked:
+- Scout, existing version 3 save: loads as version 4 (`time` 20, full meters, 1,536-letter fog); no console errors.
+- Fog: the world map is solid fog except around the spawn, and only "Pinefall Woods" is labelled; the minimap clears as you walk. (First pass let the land's shape show through faintly; the fog is now fully solid.)
+- Builder, B: the ghost follows the mouse, red with "Something is in the way · Esc to cancel" over the player, green with the cost line on open ground, with the warmth ring. A click placed it: the name box opened with "Hollowstead Camp"; wood 5→2, stone 2→0; the camp shows on the map. Real key presses typed into the name box (m, b, e, w, space) went into the text and did not open the map or move the player.
+- Night (time set to 300 and frames stepped by hand): the world goes deep blue; the fire lights a soft circle as wide as its warmth, with a warm glow, and the player has a small light.
+- HUD at night beside the fire: "Day 1 · Night" with the moon icon; three meters with "By the fire"; the goals card shows the camp's three needs ("Bring 3 stone 0 / 3", "Find a place in Pinefall Woods 0 / 1", "Find a new signpost 0 / 1"); "1 / 7 places · 0 / 2 signposts" under the region name; the controls strip lists E Gather / camp, B, F and H.
+
+**Not yet checked by hand** (the Browser pane was hidden and then frozen; the page cannot run frames while hidden): walking into the cold and the "Cold"/"Freezing" tags, the dusk and nightfall toasts, a full pass-out and its screen, the camp dialog (give, tea, eat, heal, rest), F/H refusals, a regrown supply in play, a second camp 3,000+ units away, and the 390 px layout of the meters and camp dialog. Each of these rules is covered by the unit tests above.
