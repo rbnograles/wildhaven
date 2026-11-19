@@ -174,7 +174,7 @@ export async function start(session, ui, fresh = false) {
     ui.hud.notify(
       slot.value && !fresh
         ? 'Welcome back. Your journey continues.'
-        : `Welcome to ${c.location}. Your story begins here.${page}`,
+        : `Welcome to ${c.location}. Build a campfire before dark (B).${page}`,
     );
   } catch (error) {
     // Loading failed: show the reason and a "Try again" button.

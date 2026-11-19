@@ -37,6 +37,9 @@ const icons = {
     '<path d="M3 5.5C5.7 4 9 4 12 6.2 15 4 18.3 4 21 5.5V19c-2.7-1.5-6-1.5-9 .7-3-2.2-6.3-2.2-9-.7Z"/><path d="M12 6.2v13.5"/>',
   flame:
     '<path d="M12 21c-3.9 0-6-2.6-6-5.6C6 11 11 9 10 3c3 1.8 5 4.4 5 7.2 1-.6 1.6-1.7 1.8-2.9C18 9 18 11 18 15.4 18 18.4 15.9 21 12 21Z"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>',
 };
 
 /**
@@ -51,6 +54,28 @@ const icons = {
  */
 export const icon = (name) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.compass}</svg>`;
+
+/**
+ * Makes the HTML for one survival meter: its icon, a bar that ui/hud.js fills through the
+ * `--fill` style, and a small word for why it is changing.
+ *
+ * @param {string} id - 'health', 'hunger' or 'warmth'.
+ * @param {string} label - The meter's name, read out by screen readers.
+ * @param {string} iconName - Which icon to show.
+ * @returns {string} The meter as an HTML string.
+ */
+const meter = (id, label, iconName) =>
+  /* HTML */ `<div
+    id="meter-${id}"
+    class="meter"
+    role="meter"
+    aria-label="${label}"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow="100"
+  >
+    ${icon(iconName)}<span class="meter-bar"></span><span class="meter-tag"></span>
+  </div>`;
 
 /**
  * Builds every screen and dialog once; other modules look elements up by id.
@@ -140,16 +165,27 @@ export function mountLayout(app) {
         id="world"
         tabindex="0"
         role="application"
-        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather, B to place a campfire, M for map, J for journal, Escape to pause."
+        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to place a campfire, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
       ></div>
 
-      <!-- Top bar: who you are, your resources, and the fullscreen and pause buttons. -->
+      <!-- Top bar: who you are, the day clock and your survival meters, your resources, and the
+           fullscreen and pause buttons. -->
       <div class="game-top">
         <div class="identity hud-panel">
           <span id="hud-portrait" class="hud-portrait"></span>
           <div>
             <span id="hud-name" class="hud-name"></span
-            ><span class="identity-status"><span></span> Exploring the wilds</span>
+            ><span id="identity-status" class="identity-status" data-phase="day"
+              ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
+              ><span id="clock"></span
+            ></span>
+          </div>
+          <div class="meters">
+            ${meter('health', 'Health', 'heart')}${meter('hunger', 'Hunger', 'food')}${meter(
+              'warmth',
+              'Warmth',
+              'flame',
+            )}
           </div>
         </div>
         <div class="resources hud-panel" aria-label="Resources">
@@ -180,6 +216,7 @@ export function mountLayout(app) {
         <span>THE WILDS OF WILDHAVEN</span>
         <h1 id="region-name"></h1>
         <span class="region-rule"></span>
+        <p id="region-progress" class="region-progress"></p>
       </div>
 
       <!-- The goals card. ui/hud.js fills it: the starting goals first, then the current region's progress. -->
@@ -187,10 +224,7 @@ export function mountLayout(app) {
         <span class="quest-label" id="quest-label"></span>
         <h2 id="quest-title"></h2>
         <p id="quest-text"></p>
-        <ul>
-          <li id="quest-first"></li>
-          <li id="quest-second"></li>
-        </ul>
+        <ul id="quest-lines"></ul>
       </aside>
 
       <!-- The small map in the corner. Clicking it opens the big map. -->
@@ -208,9 +242,9 @@ export function mountLayout(app) {
       <!-- The controls, shown for a few seconds each time the game opens. ui/hud.js shows and hides it. -->
       <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
         <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
-        ><span><kbd>E</kbd> Gather</span><span><kbd>B</kbd> Campfire</span
-        ><span><kbd>M</kbd> Map</span><span><kbd>J</kbd> Journal</span
-        ><span><kbd>Esc</kbd> Pause</span>
+        ><span><kbd>E</kbd> Gather / camp</span><span><kbd>B</kbd> Campfire</span
+        ><span><kbd>F</kbd> Eat</span><span><kbd>H</kbd> Heal</span><span><kbd>M</kbd> Map</span
+        ><span><kbd>J</kbd> Journal</span><span><kbd>Esc</kbd> Pause</span>
       </div>
 
       <!-- Arrow buttons for touch screens. CSS only shows them on narrow screens. -->
@@ -321,5 +355,37 @@ export function mountLayout(app) {
         <input id="camp-name-input" maxlength="${CAMP_NAME_MAX}" autocomplete="off" required />
         <button class="primary" value="found">Found camp ${icon('arrow')}</button>
       </form>
+    </dialog>
+
+    <!-- A camp: its needs and what to do at the fire. ui/camp.js fills it. -->
+    <dialog id="camp-dialog" class="camp-dialog" aria-labelledby="camp-title">
+      <div class="map-heading">
+        <div>
+          <p id="camp-kicker" class="dialog-kicker"></p>
+          <h2 id="camp-title"></h2>
+        </div>
+        <button id="close-camp" class="icon-button" aria-label="Close camp">
+          ${icon('close')}
+        </button>
+      </div>
+      <p id="camp-fire" class="camp-fire"></p>
+      <h3 class="camp-heading">What the camp needs</h3>
+      <ol id="camp-needs" class="camp-needs"></ol>
+      <h3 class="camp-heading">At the fire</h3>
+      <div class="camp-tasks">
+        <button id="camp-tea" class="secondary">Brew tea<small></small></button
+        ><button id="camp-eat" class="secondary">Eat<small></small></button
+        ><button id="camp-heal" class="secondary">Heal<small></small></button
+        ><button id="camp-rest" class="secondary">Rest until dawn<small></small></button>
+      </div>
+    </dialog>
+
+    <!-- Shown after passing out from the cold. ui/camp.js says where the player woke. -->
+    <dialog id="passout-dialog" class="pause-dialog" aria-labelledby="passout-title">
+      <span class="modal-mark">${icon('moon')}</span>
+      <p class="dialog-kicker">YOU PASSED OUT</p>
+      <h2 id="passout-title">The cold caught you.</h2>
+      <p id="passout-text"></p>
+      <button id="passout-close" class="primary">Get up ${icon('arrow')}</button>
     </dialog>`;
 }

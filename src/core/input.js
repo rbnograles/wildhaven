@@ -3,6 +3,7 @@
 // This file remembers which keys are held down and turns them into "which way to walk".
 
 import { beginGather } from '../actions/gather.js';
+import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -17,8 +18,9 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  *
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
- * Also handles E to gather, B for build mode, M for the map, J for the journal, Escape to pause
- * (or to leave build mode), the mouse over the world, and saving when the tab is hidden.
+ * Also handles E to gather or open a camp, B for build mode, F to eat, H to heal, M for the map,
+ * J for the journal, Escape to pause (or to leave build mode), the mouse over the world, and
+ * saving when the tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
  * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
@@ -28,7 +30,8 @@ export function setupInput(session, ui) {
   const { keys } = session;
 
   /**
-   * Starts gathering the closest supply, or says to move closer if nothing is in reach.
+   * Starts gathering the closest supply. With nothing to gather, E beside one of the player's
+   * fires opens that camp instead; anywhere else it says to move closer.
    *
    * E starts the node's timed action; the supply is awarded when the action runs out (see core/loop.js).
    * Held movement keys are forgotten so the player doesn't walk off and cancel straight away.
@@ -38,7 +41,12 @@ export function setupInput(session, ui) {
     if (result.ok) {
       keys.clear();
       ui.hud.update();
-    } else if (result.reason === 'none') ui.hud.notify('Move closer to something you can gather.');
+      return;
+    }
+    if (result.reason !== 'none') return;
+    const camp = campInReach(session.state);
+    if (camp) ui.camp.openCamp(camp);
+    else ui.hud.notify('Move closer to something you can gather.');
   }
 
   /** Does what E (or the action button) means right now: place the campfire in build mode, or gather. */
@@ -82,6 +90,18 @@ export function setupInput(session, ui) {
     if (key === 'b' && !event.repeat) {
       event.preventDefault();
       ui.build.toggle();
+      return;
+    }
+
+    if (key === 'f' && !event.repeat) {
+      event.preventDefault();
+      ui.camp.eatFood();
+      return;
+    }
+
+    if (key === 'h' && !event.repeat) {
+      event.preventDefault();
+      ui.camp.useHerbs();
       return;
     }
 

@@ -24,12 +24,15 @@ export function setupDialogs(session, ui) {
     $('journal-dialog'),
     $('reset-dialog'),
     $('camp-name-dialog'),
+    $('camp-dialog'),
+    $('passout-dialog'),
   ];
 
   /**
    * Tells whether the game is paused. Any open dialog pauses the game.
    *
-   * @returns {boolean} True while the pause, map, journal, reset or camp name dialog is open.
+   * @returns {boolean} True while the pause, map, journal, reset, camp name, camp or pass-out
+   *   dialog is open.
    */
   const isPaused = () => dialogs.some((dialog) => dialog.open);
 

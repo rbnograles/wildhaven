@@ -729,12 +729,81 @@ kbd {
   color: var(--muted);
 }
 
-/* The small green dot before "Exploring the wilds". */
-.identity-status > span {
-  width: 5px;
+/* The sun or moon before the clock. ui/hud.js sets data-phase to the part of the day. */
+.identity-status svg {
+  width: 11px;
+  height: 11px;
+  display: block;
+}
+
+.identity-status .moon,
+.identity-status[data-phase='dusk'] .sun,
+.identity-status[data-phase='night'] .sun {
+  display: none;
+}
+
+.identity-status[data-phase='dusk'] .moon,
+.identity-status[data-phase='night'] .moon {
+  display: block;
+}
+
+/* ---- In-game HUD: survival meters ---- */
+/* Three thin bars beside the name: health, hunger and warmth. ui/hud.js sets --fill (0-100%). */
+.meters {
+  display: grid;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 12px;
+  border-left: 1px solid #d3d8c7;
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: 13px 72px 58px;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.meter svg {
+  width: 13px;
+  height: 13px;
+}
+
+.meter-bar {
+  position: relative;
   height: 5px;
-  border-radius: 50%;
-  background: #72864d;
+  border-radius: 3px;
+  background: #dfe2d4;
+  overflow: hidden;
+}
+
+.meter-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--fill, 100%);
+  border-radius: inherit;
+  background: var(--meter-color);
+}
+
+#meter-health {
+  --meter-color: #c0533f;
+}
+
+#meter-hunger {
+  --meter-color: #c99a3b;
+}
+
+#meter-warmth {
+  --meter-color: #e07a35;
+}
+
+/* A meter at a quarter or less says so in bold red words, not only with its short bar. */
+.meter.low .meter-tag {
+  color: #a43c2c;
+  font-weight: 600;
 }
 
 /* The wood, stone, food and herb counters. */
@@ -837,6 +906,13 @@ kbd {
 }
 
 /* ---- In-game HUD: the region name in the middle of the screen ---- */
+/* The "3 / 7 places · 1 / 2 signposts" line under the region name. */
+.region-progress {
+  margin: 8px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+
 /* Centred with left: 50% plus translateX(-50%). It ignores clicks because it is only a label. */
 .region {
   position: absolute;
@@ -1168,6 +1244,80 @@ dialog::backdrop {
   color: var(--ink);
 }
 
+/* ---- Dialogs: a camp (its needs and the things to do at the fire) ---- */
+.camp-dialog {
+  padding: 23px;
+  width: min(560px, calc(100vw - 34px));
+  max-height: 94svh;
+  overflow: auto;
+}
+
+.camp-fire {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.camp-heading {
+  font: 400 19px var(--serif);
+  margin: 20px 0 8px;
+}
+
+.camp-needs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.camp-needs li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.camp-needs li.done {
+  color: #668653;
+}
+
+.camp-needs .secondary {
+  min-height: 0;
+  padding: 8px 12px;
+}
+
+.camp-note {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* The four tasks in a two-by-two grid; each button shows its cost (or why not) underneath. */
+.camp-tasks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.camp-tasks .secondary {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+}
+
+.camp-tasks small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.camp-dialog button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* ---- Dialogs: the big world map ---- */
 /* Scrolls inside itself if the screen is too short to show the whole map. */
 .map-dialog {
@@ -1494,6 +1644,16 @@ dialog::backdrop {
   .build-bar {
     top: 215px;
     font-size: 11px;
+  }
+  .meter {
+    grid-template-columns: 11px 46px 44px;
+    font-size: 8px;
+  }
+  .camp-tasks {
+    grid-template-columns: 1fr;
+  }
+  .camp-dialog {
+    padding: 15px;
   }
 
   /* Touch arrows: up on top, then left, down and right in a row, in the bottom-left corner. */

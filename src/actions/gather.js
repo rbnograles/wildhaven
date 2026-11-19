@@ -29,14 +29,6 @@ const inReach = (state, n) => Math.hypot(n.x - state.player.x, n.y - state.playe
 export { isAvailable };
 
 /**
- * True once the player has gathered anything at all.
- *
- * @param {object} state - The game being played.
- * @returns {boolean} True if any supply or wild patch has a regrow timer.
- */
-export const hasGathered = (state) => Object.keys(state.regrowAt).length > 0;
-
-/**
  * Finds the closest node the player could gather from right now.
  *
  * @param {object} state - The game being played.

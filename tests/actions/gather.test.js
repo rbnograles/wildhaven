@@ -7,13 +7,7 @@ import assert from 'node:assert/strict';
 import { GATHER_SECONDS, SUPPLY_REGROW } from '../../src/data/balance.js';
 import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
-import {
-  nearbyNode,
-  isAvailable,
-  hasGathered,
-  beginGather,
-  finishGather,
-} from '../../src/actions/gather.js';
+import { nearbyNode, isAvailable, beginGather, finishGather } from '../../src/actions/gather.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
 /** The wild flower patches: map scenery that can be picked and grows back quickly. */
@@ -50,10 +44,8 @@ test('a picked flower patch gives herbs, then grows back on the game clock', () 
   game.player.x = node.x;
   game.player.y = node.y;
 
-  assert.equal(hasGathered(game), false);
   assert.equal(finishGather(game, node.id)?.id, node.id);
   assert.equal(game.resources.herbs, node.amount);
-  assert.ok(hasGathered(game));
 
   // While it regrows, the patch can't be picked and isn't offered as the nearest thing to gather.
   assert.equal(finishGather(game, node.id), null);

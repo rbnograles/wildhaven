@@ -1,12 +1,16 @@
-// The HUD: the on-screen panels shown while playing (resources, region name, quest, interact
-// button) and the short pop-up messages called toasts. It only shows the game state; it never
-// changes it.
+// The HUD: the on-screen panels shown while playing (resources, clock, survival meters, region
+// name and progress, goals card, interact button, build bar) and the short pop-up messages called
+// toasts. It only shows the game state; it never changes it.
 import { RESOURCES } from '../data/supplies.js';
 import { CAMPFIRE_COST } from '../data/balance.js';
 import { NODES } from '../world/nodes.js';
-import { regionAt, regionOf } from '../world/regions.js';
+import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
-import { nearbyNode, hasGathered } from '../actions/gather.js';
+import { clockLabel, phaseOf } from '../world/clock.js';
+import { nearestCamp, campInReach } from '../world/camps.js';
+import { describeNeed, needProgress } from '../world/needs.js';
+import { nearbyNode } from '../actions/gather.js';
+import { meterTrends } from '../actions/survive.js';
 import { $ } from './layout.js';
 
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
@@ -16,10 +20,37 @@ const DOING = { Chop: 'Chopping', Pick: 'Picking', Gather: 'Gathering' };
 const KEY_STRIP_MS = 8000,
   KEY_STRIP_FADE_MS = 600;
 
+// The word shown beside a meter for each cause meterTrends gives (tea also shows its seconds left).
+const TREND_WORDS = {
+  warming: 'By the fire',
+  tea: 'Tea',
+  cold: 'Cold',
+  freezing: 'Freezing',
+  starving: 'Starving',
+};
+
+/**
+ * Puts a survival event into words for a toast.
+ *
+ * @param {object} event - An event from tickSurvival or skipTo, such as `{kind: 'dusk'}`.
+ * @returns {string} The message, or '' for an event with no toast (passing out has its own screen).
+ */
+export function describeEvent(event) {
+  if (event.kind === 'dusk') return 'Dusk is falling. Head to a fire before dark.';
+  if (event.kind === 'night') return 'Getting dark, head to a fire.';
+  if (event.kind === 'freezing') return "You're freezing. Your health is dropping.";
+  if (event.kind === 'starving') return "You're starving. Eat something (F).";
+  if (event.kind === 'dawn') {
+    const needs = event.camps.length ? ` New needs at ${event.camps.join(', ')}.` : '';
+    return `Dawn, day ${event.day}.${needs}`;
+  }
+  return '';
+}
+
 /**
  * Builds the HUD helpers for one game session.
  *
- * @param {object} session - The shared session; `update` reads its game state and animator.
+ * @param {object} session - The shared session; `update` reads its game state, animator and build mode.
  * @returns {{notify: Function, update: Function, showKeyStrip: Function, hideKeyStrip: Function}} A way to
  * pop up a message, a way to redraw the HUD, and ways to show and hide the controls strip.
  */
@@ -42,58 +73,93 @@ export function createHud(session) {
   }
 
   /**
-   * Refreshes every HUD panel so it matches the current game.
+   * Shows the clock and the three survival meters, each with a word saying why it is changing.
    *
-   * Like updating a scoreboard: it copies the resource counts, the region name and the goals card
-   * (the starting goals, then the current region's progress) onto the screen, and shows the interact button when a supply is in reach.
+   * @param {object} state - The game being played.
    */
-  function update() {
-    const { state, animator } = session;
-
-    // Resources, region and quest progress.
-    for (const resource of RESOURCES) $(resource).textContent = state.resources[resource];
-    $('region-name').textContent = regionAt(state.player);
-    /**
-     * Fills one line of the goals card: its words, its count, and whether it is ticked off.
-     * The count is a number we made ourselves, so putting it in with innerHTML is safe.
-     */
-    const line = (id, text, found, total) => {
-      $(id).innerHTML = `${text} <b>${found} / ${total}</b>`;
-      $(id).classList.toggle('complete', found >= total);
-    };
-
-    // The starting goals come first. Once both are done, the card follows the region the player is in.
-    const regions = Math.min(state.discovered.length, 3),
-      started = hasGathered(state) && regions === 3;
-    if (!started) {
-      $('quest-label').textContent = 'YOUR FIRST FOOTSTEPS';
-      $('quest-title').textContent = 'A place to begin';
-      $('quest-text').textContent = 'Gather supplies and set out to discover the world.';
-      line('quest-first', 'Gather your first supplies', hasGathered(state) ? 1 : 0, 1);
-      line('quest-second', 'Discover three regions', regions, 3);
-    } else {
-      const region = regionOf(state.player.x, state.player.y),
-        progress = regionProgress(state, region.id);
-      $('quest-label').textContent = 'EXPLORING';
-      $('quest-title').textContent = region.name;
-      $('quest-text').textContent = 'Find every place and signpost in this region.';
-      line('quest-first', 'Places found', progress.places.found, progress.places.total);
-      line('quest-second', 'Signposts found', progress.signposts.found, progress.signposts.total);
+  function updateMeters(state) {
+    $('identity-status').dataset.phase = phaseOf(state.time);
+    $('clock').textContent = clockLabel(state.time);
+    const trends = meterTrends(state);
+    for (const name of ['health', 'hunger', 'warmth']) {
+      const value = Math.round(state.meters[name]),
+        meter = $(`meter-${name}`),
+        trend = trends[name];
+      meter.style.setProperty('--fill', `${value}%`);
+      meter.setAttribute('aria-valuenow', String(value));
+      meter.classList.toggle('low', value <= 25);
+      meter.querySelector('.meter-tag').textContent =
+        trend === 'tea' ? `Tea ${Math.ceil(state.tea)}s` : (TREND_WORDS[trend] ?? '');
     }
+  }
 
-    // The interact button: hidden when there's nothing to do, "busy" while an action runs, and
-    // "Place campfire" in build mode.
+  /**
+   * Fills the goals card's list: one line per goal with its count, ticked off when complete.
+   *
+   * @param {{text: string, have: number, want: number}[]} goals - The goals to show.
+   */
+  function showGoals(goals) {
+    $('quest-lines').replaceChildren(
+      ...goals.map(({ text, have, want }) => {
+        const item = document.createElement('li'),
+          count = document.createElement('b');
+        count.textContent = `${have} / ${want}`;
+        item.append(text, count);
+        item.classList.toggle('complete', have >= want);
+        return item;
+      }),
+    );
+  }
+
+  /**
+   * Fills the goals card: building the first campfire, then the nearest camp's needs.
+   *
+   * @param {object} state - The game being played.
+   */
+  function updateGoals(state) {
+    const camp = nearestCamp(state);
+    if (!camp) {
+      const { wood, stone } = CAMPFIRE_COST;
+      $('quest-label').textContent = 'BEFORE NIGHTFALL';
+      $('quest-title').textContent = 'Build a campfire';
+      $('quest-text').textContent =
+        `Night is cold away from a fire. Gather ${wood} wood and ${stone} stone, then press B to place it.`;
+      showGoals([
+        { text: 'Wood', have: Math.min(state.resources.wood, wood), want: wood },
+        { text: 'Stone', have: Math.min(state.resources.stone, stone), want: stone },
+      ]);
+      return;
+    }
+    $('quest-label').textContent = 'CAMP NEEDS';
+    $('quest-title').textContent = camp.name;
+    $('quest-text').textContent = 'Meet needs to grow the fire. New needs arrive at dawn.';
+    showGoals(
+      camp.needs.map((need) => ({ text: describeNeed(need), ...needProgress(state, need) })),
+    );
+  }
+
+  /**
+   * Shows the interact button and the build bar for what the player can do right now.
+   *
+   * The button is "busy" while gathering, "Place campfire" in build mode, the gather verb when a
+   * supply is in reach, and "Open <camp>" beside one of the player's fires.
+   *
+   * @param {object} state - The game being played.
+   */
+  function updateActions(state) {
+    const { animator, build } = session;
     const node = nearbyNode(state),
       busy = NODES.find((n) => n.id === animator.pending?.target),
-      { build } = session,
+      camp = !node && campInReach(state),
       button = $('interact'),
       label = button.querySelector('span');
-    button.hidden = !node && !busy && !build.active;
+    button.hidden = !node && !busy && !build.active && !camp;
     button.classList.toggle('busy', !!busy);
     button.setAttribute('aria-disabled', String(!!busy));
     if (busy) label.textContent = `${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
     else if (build.active) label.textContent = 'Place campfire';
     else if (node) label.textContent = `${node.verb} ${node.label.toLowerCase()}`;
+    else if (camp) label.textContent = `Open ${camp.name}`;
 
     // The build bar: what a campfire costs, or why it can't stand where the ghost is.
     const bar = $('build-bar');
@@ -104,6 +170,28 @@ export function createHud(session) {
     bar.textContent = ok
       ? `Campfire · ${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone · Click or E to place · Esc to cancel`
       : `${build.check?.message ?? 'Choose a spot'} · Esc to cancel`;
+  }
+
+  /**
+   * Refreshes every HUD panel so it matches the current game.
+   *
+   * Like updating a scoreboard: resources, the clock and meters, the region's name and progress,
+   * the goals card, and the action button.
+   */
+  function update() {
+    const { state } = session;
+    if (!state) return;
+    for (const resource of RESOURCES) $(resource).textContent = state.resources[resource];
+    updateMeters(state);
+
+    const region = regionOf(state.player.x, state.player.y),
+      { places, signposts } = regionProgress(state, region.id);
+    $('region-name').textContent = region.name;
+    $('region-progress').textContent =
+      `${places.found} / ${places.total} places · ${signposts.found} / ${signposts.total} signposts`;
+
+    updateGoals(state);
+    updateActions(state);
   }
 
   /**
