@@ -5,6 +5,22 @@ import { CHARACTERS } from '../data/characters.js';
 import { CLIPS } from './clips.js';
 import { loadCharacterPainter } from './sheets.js';
 
+// The words for each choice in the "Facing" dropdown: the four straight facings by number, and
+// the four diagonals that walking and running also have.
+const FACINGS = {
+  0: 'South',
+  1: 'West',
+  2: 'East',
+  3: 'North',
+  ne: 'North-east',
+  nw: 'North-west',
+  se: 'South-east',
+  sw: 'South-west',
+};
+
+// The straight facing that goes with each diagonal (north or south, as in play).
+const DIAGONAL_FACING = { ne: 3, nw: 3, se: 0, sw: 0 };
+
 /**
  * Builds the animation preview dialog and adds a "Preview animations" button to the selection
  * screen and the pause menu.
@@ -80,17 +96,21 @@ export function setupPreview(getCharacter) {
   /**
    * Fills the "Facing" dropdown with the directions the chosen animation has, and restarts it.
    *
-   * Action clips (gather, build, chop, ...) are only drawn facing east, and mirrored for west, so
-   * they offer just those two. Standing, walking and running offer all four.
+   * Action clips (gather, build, chop, ...) and the survival poses are only drawn facing east,
+   * and mirrored for west, so they offer just those two. Standing offers all four, and walking
+   * and running also offer the four diagonals.
    */
   function updateDirections() {
     const facing = field('direction');
     const current = facing.value || '2';
-    const choices = CLIPS[field('clip').value].action ? [1, 2] : [0, 1, 2, 3];
+    const clip = CLIPS[field('clip').value];
+    const name = field('clip').value;
+    const choices = clip.action || clip.east ? ['1', '2'] : ['0', '1', '2', '3'];
+    if (name === 'walk' || name === 'run') choices.push('ne', 'nw', 'se', 'sw');
     facing.innerHTML = choices
-      .map((i) => `<option value="${i}">${['South', 'West', 'East', 'North'][i]}</option>`)
+      .map((value) => `<option value="${value}">${FACINGS[value]}</option>`)
       .join('');
-    facing.value = choices.includes(Number(current)) ? current : '2';
+    facing.value = choices.includes(current) ? current : '2';
     time = 0;
   }
 
@@ -111,16 +131,20 @@ export function setupPreview(getCharacter) {
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // A diagonal choice is a word ('ne'); a straight one is a number (0 to 3).
+    const facing = field('direction').value;
+    const diagonal = facing in DIAGONAL_FACING ? facing : null;
     painter.draw(
       ctx,
       field('character').value,
       field('clip').value,
       time,
-      Number(field('direction').value),
+      diagonal ? DIAGONAL_FACING[diagonal] : Number(facing),
       320,
       339,
       290,
       true,
+      diagonal,
     );
     request = requestAnimationFrame(draw);
   }

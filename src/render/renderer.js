@@ -332,7 +332,6 @@ export async function createRenderer(container, miniCanvas) {
          */
         const addFrames = (key, sheet) => {
           const texture = this.textures.addImage(key, sheet.image);
-          const cell = sheet.image.width / 4; // sheets are four columns wide
           sheet.frames.forEach((row, r) =>
             row.forEach((f, c) => texture.add(`${r}-${c}`, 0, f.x, f.y, f.width, f.height)),
           );
@@ -610,6 +609,7 @@ export async function createRenderer(container, miniCanvas) {
       state.aboard ? 0 : animator.time,
       state.player.direction,
       animator.pending ? true : undefined,
+      animator.diagonal,
     );
     // Pin the sprite at its anchor (mirrored when the pose is flipped), with feet on the ground.
     const pivot = (pose.frame.anchorX - pose.frame.x) / pose.frame.width;

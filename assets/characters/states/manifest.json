@@ -1,0 +1,954 @@
+{
+  "version": 1,
+  "generator": "built-in image_gen",
+  "date": "2026-11-19",
+  "reference": "../originals/starting-characters-idle-v1.png",
+  "facing": "east",
+  "characters": [
+    "scout",
+    "builder",
+    "survivor"
+  ],
+  "frameRectFormat": "x,y,width,height; nominal grid, rounded at each boundary",
+  "playbackStatus": "Suggested timings; not integrated or playtested",
+  "sheets": [
+    {
+      "id": "damage-attack",
+      "file": "damage-attack.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 8,
+      "loop": false,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            362,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            724,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            1086,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            362,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            724,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            1086,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            362,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            724,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            1086,
+            724,
+            362,
+            362
+          ]
+        }
+      ]
+    },
+    {
+      "id": "damage-cold",
+      "file": "damage-cold.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 6,
+      "loop": false,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            314,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            627,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            940,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            314,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            627,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            940,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            836,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            314,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            627,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            940,
+            836,
+            314,
+            418
+          ]
+        }
+      ]
+    },
+    {
+      "id": "damage-hunger",
+      "file": "damage-hunger.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 6,
+      "loop": false,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            314,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            627,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            940,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            314,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            627,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            940,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            836,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            314,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            627,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            940,
+            836,
+            314,
+            418
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dying",
+      "file": "dying.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 4,
+      "loop": false,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            362,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            724,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            1086,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            362,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            724,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            1086,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            362,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            724,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            1086,
+            724,
+            362,
+            362
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hungry",
+      "file": "hungry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 3,
+      "loop": true,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            314,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            627,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            940,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            314,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            627,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            940,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            836,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            314,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            627,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            940,
+            836,
+            314,
+            418
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sleeping",
+      "file": "sleeping.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 2,
+      "loop": true,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            362,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            724,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            1086,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            362,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            724,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            1086,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            362,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            724,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            1086,
+            724,
+            362,
+            362
+          ]
+        }
+      ]
+    },
+    {
+      "id": "waking-up",
+      "file": "waking-up.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 4,
+      "loop": false,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            362,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            724,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            1086,
+            0,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            362,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            724,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            1086,
+            362,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            362,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            724,
+            724,
+            362,
+            362
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            1086,
+            724,
+            362,
+            362
+          ]
+        }
+      ]
+    }
+  ]
+}

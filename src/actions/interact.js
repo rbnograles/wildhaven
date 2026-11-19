@@ -48,10 +48,11 @@ export function chooseInteraction(state) {
  * @param {object} state - The game being played.
  * @param {object} animator - The player's animation state.
  * @returns {{ok: boolean, kind?: string, reason?: string, missing?: object, node?: object, wreck?: object}}
- *   `ok` with the `kind` done or started; otherwise `reason` is 'busy', 'none' or 'missing'.
+ *   `ok` with the `kind` done or started; otherwise `reason` is 'busy' (an action is running, or
+ *   the character is asleep), 'none' or 'missing'.
  */
 export function beginInteraction(state, animator) {
-  if (animator.pending) return { ok: false, reason: 'busy' };
+  if (animator.pending || animator.asleep > 0) return { ok: false, reason: 'busy' };
   const choice = chooseInteraction(state);
   if (!choice) return { ok: false, reason: 'none' };
 

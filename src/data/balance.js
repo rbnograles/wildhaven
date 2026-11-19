@@ -85,6 +85,18 @@ export const WARM_BY_DAY = 4;
 /** Seconds of freezing (no warmth left, at night, away from a fire) it takes to drain full health. */
 export const FREEZE_SECONDS = 30;
 
+/**
+ * Seconds of starving (an empty stomach) it would take to drain full health. Much slower than
+ * freezing: hunger is a nag to go and eat, not an emergency.
+ */
+export const STARVE_SECONDS = 240;
+
+/**
+ * Starving never takes health below this. Hunger alone can't make the player pass out, because
+ * they would wake still starving and pass out again; it only leaves them weak against the cold.
+ */
+export const STARVE_FLOOR = 25;
+
 /** Health healed per second beside a fire while not starving. */
 export const HEAL_BY_FIRE = 2;
 
@@ -177,3 +189,8 @@ export const CRAFT_SECONDS = 3;
 
 /** Game seconds before a chopped tree or mined rock grows back: three in-game days. */
 export const HARVEST_REGROW = 1080;
+
+// ---- How the character looks ----
+
+/** Below this much hunger (out of 100) the character stands with a hand on their belly. */
+export const HUNGRY_BELOW = 25;
