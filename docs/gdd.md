@@ -432,7 +432,7 @@ Retention hook 2 ("new places to find") now has content: the three starts are no
 
 ## Archipelago Direction (2026-11-19)
 
-Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/specs/2026-11-19-archipelago-design.md`. Nothing here is built.
+Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/specs/2026-11-19-archipelago-design.md`. Slice A1 is built; everything else here is planned.
 
 - **[Planned] The full world.** An archipelago of about nine continents and many small islands, with open sea between them. The seven-region map is the home continent; the others are locked. The user's reference map (snowy, volcanic, forest, castle and desert islands around a large south-east continent) is a mood board only; all art stays our own.
 - **[Planned] Unlocking.** Other continents are reached by building or repairing boats. Sailing is free: the player steers the boat on the open sea.
