@@ -288,8 +288,12 @@ export async function createRenderer(container, miniCanvas) {
       ctx.fillStyle = 'rgba(24, 38, 30, 0.55)';
       for (let cy = 0; cy < REGION_GRID.rows; cy++)
         for (let cx = 0; cx < REGION_GRID.cols; cx++)
-          if (!state.discovered.includes(REGIONS[regionIndexAt(cx, cy)].id))
-            ctx.fillRect(cx * cw, cy * ch, cw + 0.5, ch + 0.5); // the extra half pixel hides hairline gaps
+          if (!state.discovered.includes(REGIONS[regionIndexAt(cx, cy)].id)) {
+            // Whole-pixel edges, so neighbouring squares neither overlap (dark lines) nor leave gaps.
+            const x0 = Math.round(cx * cw),
+              y0 = Math.round(cy * ch);
+            ctx.fillRect(x0, y0, Math.round((cx + 1) * cw) - x0, Math.round((cy + 1) * ch) - y0);
+          }
     }
 
     // Found places: small cream dots.

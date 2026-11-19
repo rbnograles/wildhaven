@@ -3,6 +3,10 @@
 // This file also wires up their buttons and the fullscreen button.
 import { save, start, leave } from '../core/session.js';
 import { worldProgress } from '../world/progress.js';
+import { travelTo } from '../actions/travel.js';
+import { cancelAction } from '../animation/clips.js';
+import { WAYPOINTS } from '../data/places.js';
+import { WORLD } from '../world/map.js';
 import { $ } from './layout.js';
 
 /**
@@ -43,6 +47,41 @@ export function setupDialogs(session, ui) {
   }
 
   /**
+   * Travels to a found signpost and closes the map.
+   *
+   * Any gathering in progress is dropped, the camera jumps instead of flying across the world,
+   * and the game saves at once so a refresh keeps the player where they arrived.
+   *
+   * @param {string} id - The signpost's id.
+   */
+  function travel(id) {
+    const post = travelTo(session.state, id);
+    if (!post) return;
+    cancelAction(session.animator);
+    session.renderer.resetCamera();
+    $('map-dialog').close();
+    save(session, ui, true);
+    ui.hud.notify(`Travelled to ${post.name}`);
+    ui.hud.update();
+  }
+
+  /** Puts one button on the map for each signpost the player has found. */
+  function showWaypoints() {
+    $('map-waypoints').replaceChildren(
+      ...WAYPOINTS.filter((post) => session.state.waypoints.includes(post.id)).map((post) => {
+        const button = document.createElement('button');
+        button.className = 'map-waypoint';
+        button.style.left = `${(post.x / WORLD.width) * 100}%`;
+        button.style.top = `${(post.y / WORLD.height) * 100}%`;
+        button.title = `Travel to ${post.name}`;
+        button.setAttribute('aria-label', `Travel to ${post.name}`);
+        button.addEventListener('click', () => travel(post.id));
+        return button;
+      }),
+    );
+  }
+
+  /**
    * Opens the world map, or closes it if it is already open.
    *
    * The map is drawn fresh each time it opens, so it shows where the player is right now.
@@ -59,6 +98,7 @@ export function setupDialogs(session, ui) {
 
     session.keys.clear();
     session.renderer.drawMap($('large-map'), session.state);
+    showWaypoints();
     const { regions, places, signposts } = worldProgress(session.state);
     $('map-discovered').textContent =
       `${regions.found} of ${regions.total} regions · ${places.found} of ${places.total} places · ` +

@@ -248,9 +248,11 @@ export function mountLayout(app) {
               >${l.name}</span
             >`,
         ).join('')}
+        <!-- One button per found signpost; ui/dialogs.js fills this each time the map opens. -->
+        <div id="map-waypoints"></div>
       </div>
       <div class="map-footer">
-        <span>● Your position</span><span id="map-discovered"></span
+        <span>● You · ◆ Signpost: click to travel</span><span id="map-discovered"></span
         ><span><kbd>M</kbd> Close map</span>
       </div>
     </dialog>

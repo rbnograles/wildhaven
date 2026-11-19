@@ -167,6 +167,7 @@ fixed += [('bridge', x, y) for x, y in BRIDGES]
 # and not on, behind or just in front of a hand-placed object, where it would cover it up.
 def scatter_ok(x, y):
     return (all(math.hypot(x - cx, y - cy) > 150 for cx, cy in POINTS)
+            and all(abs(x - cx) > 170 or not (0 < y - cy < 330) for cx, cy in POINTS)   # nothing tall just south, where its canopy would hide the player
             and all(math.hypot(x - fx, y - fy) > 260 for fx, fy in FORDS)
             and all(abs(x - ox) > 330 or not (-150 < oy - y < 420) for _, ox, oy in fixed))
 
