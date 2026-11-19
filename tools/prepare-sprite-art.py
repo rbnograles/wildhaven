@@ -126,12 +126,11 @@ for name, (sheet_name, kind, rows, (side, size), anchors) in ANIMATED.items():
 # cropped to the one box that holds all four frames, and shrunk. `loop` in the manifest is how many frames a
 # second the renderer plays, round and round.
 # name -> (row of the sheet, how wide the patch is drawn in world units, frames a second)
-WATER = {'river-ripple': (0, 130, 5), 'lake-ripple': (1, 150, 3), 'sea-wave': (2, 160, 4)}
-source = os.path.join(SRC, 'animations', 'water-ripples-loop.png')
-sheet = load(source).astype(float)
-# The generated sheet has faint stray colour all over its clear parts: anything less than a third solid is dropped.
-sheet[:, :, 3] = np.clip((sheet[:, :, 3] - 90) / 100, 0, 1) * 255
-sheet = sheet.astype('uint8')
+WATER = {'river-ripple': (0, 76, 1.5), 'lake-ripple': (1, 96, 1), 'sea-wave': (2, 110, 1.25)}
+source = os.path.join(SRC, 'animations', 'water-ripples-flat-v2.png')
+sheet = load(source).copy()
+# Drop only faint background noise; amplifying the remaining alpha turns reflections into opaque foam.
+sheet[sheet[:, :, 3] < 24, 3] = 0
 cell_h, cell_w = sheet.shape[0] // 3, sheet.shape[1] // COLS
 for name, (row, width, fps) in WATER.items():
     cells = [sheet[row * cell_h:(row + 1) * cell_h, c * cell_w:(c + 1) * cell_w] for c in range(COLS)]

@@ -15,6 +15,7 @@ import { isAvailable } from '../actions/gather.js';
 import { chooseInteraction } from '../actions/interact.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress } from '../animation/clips.js';
+import { waterBlend } from '../animation/water.js';
 import mapData from '../../assets/world/map/wildhaven.json';
 import objectSpecs from '../../assets/world/source/objects.json';
 import animSpecs from '../../assets/world/animations/animations.json';
@@ -253,12 +254,21 @@ export async function createRenderer(container, miniCanvas) {
           // Water ripples (sheets with a `loop` speed) play round and round while they are on screen.
           // With reduced motion they are left out: a frozen ripple is just a smudge on the water.
           if (anim?.loop) {
-            if (reducedMotion) image.setAlpha(0);
-            else {
+            image.setAlpha(0);
+            if (!reducedMotion) {
+              // Two faint frames overlap so the surface glints change without a hard cut.
+              const nextImage = this.add
+                .image(object.x, object.y, `anim-${object.name}`, 1)
+                .setOrigin(...anim.origin)
+                .setScale(spec.scale ?? 1)
+                .setDepth(image.depth)
+                .setAlpha(0)
+                .setVisible(false);
+              chunks.get(key).push(nextImage);
               if (!loopers.has(key)) loopers.set(key, []);
               loopers
                 .get(key)
-                .push({ image, fps: anim.loop, start: rippleStart(object.x, object.y) });
+                .push({ image, nextImage, fps: anim.loop, start: rippleStart(object.x, object.y) });
             }
           }
 
@@ -526,10 +536,14 @@ export async function createRenderer(container, miniCanvas) {
     clock += dt;
     for (const key of shown)
       for (const tree of swayers.get(key) ?? []) tree.setFrame(swayFrame(clock, tree.x, tree.y));
-    // Ripples on the water on screen: each loops through its four pictures from its own start time.
+
+    // Water glints fade between neighboring pictures, each patch starting at a different phase.
     for (const key of shown)
-      for (const ripple of loopers.get(key) ?? [])
-        ripple.image.setFrame(Math.floor(Math.abs(clock) * ripple.fps + ripple.start) % 4);
+      for (const ripple of loopers.get(key) ?? []) {
+        const blend = waterBlend(clock, ripple.fps, ripple.start);
+        ripple.image.setFrame(blend.frame).setAlpha(blend.alpha);
+        ripple.nextImage.setFrame(blend.next).setAlpha(blend.nextAlpha);
+      }
 
     // Campfires: one sprite per camp, made when the camp is founded. Keys include the character,
     // so switching characters never reuses another character's fire.
