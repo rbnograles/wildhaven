@@ -1,8 +1,9 @@
 // The "move" action: walking and running around the world without passing through water,
-// trees, buildings or supplies that haven't been gathered yet.
+// trees, buildings, cliff edges, supplies that are standing, or campfires.
 
 import { isWalkable, blocks, hitsCliff } from '../world/map.js';
-import { nodeBases } from '../world/nodes.js';
+import { nodeBases, goneSupplies } from '../world/nodes.js';
+import { campBases } from '../world/camps.js';
 import { WALK_SPEED, RUN_SPEED, MAX_MOVE_DT } from '../data/balance.js';
 
 /**
@@ -32,9 +33,12 @@ export function movePlayer(state, dx, dy, dt, running = false) {
   // Face the way the player is mostly moving (0 south, 1 west, 2 east, 3 north).
   state.player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : dy < 0 ? 3 : 0;
 
-  // A save made before a supply moved may stand inside its base; let the player walk out instead of trapping them.
+  // Standing supplies and camp fires are solid. A save made before one stood here may put the
+  // player inside its base; let them walk out instead of trapping them.
   // The same goes for a save made before a hill was built where the player stands: cliffs are ignored until they're off it.
-  const bases = nodeBases(state.collected).filter((base) => !blocks([base], x, y));
+  const bases = [...nodeBases(goneSupplies(state)), ...campBases(state)].filter(
+    (base) => !blocks([base], x, y),
+  );
   const cliffs = !hitsCliff(x, y);
 
   // Try the x and y parts separately, so a wall in one direction still lets the player slide along it.

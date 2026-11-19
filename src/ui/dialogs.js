@@ -18,12 +18,21 @@ import { $ } from './layout.js';
  *   Helpers the keyboard code and game loop use.
  */
 export function setupDialogs(session, ui) {
-  const dialogs = [$('pause-dialog'), $('map-dialog'), $('journal-dialog'), $('reset-dialog')];
+  const dialogs = [
+    $('pause-dialog'),
+    $('map-dialog'),
+    $('journal-dialog'),
+    $('reset-dialog'),
+    $('camp-name-dialog'),
+    $('camp-dialog'),
+    $('passout-dialog'),
+  ];
 
   /**
    * Tells whether the game is paused. Any open dialog pauses the game.
    *
-   * @returns {boolean} True while the pause, map, journal or reset dialog is open.
+   * @returns {boolean} True while the pause, map, journal, reset, camp name, camp or pass-out
+   *   dialog is open.
    */
   const isPaused = () => dialogs.some((dialog) => dialog.open);
 
@@ -99,6 +108,9 @@ export function setupDialogs(session, ui) {
     session.keys.clear();
     session.renderer.drawMap($('large-map'), session.state);
     showWaypoints();
+    // Region names show on the map only once the player has been there.
+    for (const label of document.querySelectorAll('.map-label'))
+      label.hidden = !session.state.discovered.includes(label.dataset.region);
     const { regions, places, signposts } = worldProgress(session.state);
     $('map-discovered').textContent =
       `${regions.found} of ${regions.total} regions · ${places.found} of ${places.total} places · ` +

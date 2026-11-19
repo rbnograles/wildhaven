@@ -1,5 +1,6 @@
 // Every spot in the world the player can gather from (a "node"): the hand-placed supplies plus
-// each wild flower patch the map scattered. Also works out which supplies are still solid.
+// each wild flower patch the map scattered. Also says which nodes can be gathered now and which
+// supplies are still solid.
 
 import { SUPPLIES, WILD } from '../data/supplies.js';
 import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
@@ -19,16 +20,38 @@ export const NODES = [
 ];
 
 /**
- * Lists the solid base of every supply that hasn't been gathered yet.
+ * Says whether a node has something to gather right now.
  *
- * A tree you haven't chopped is a wall you walk around; once it's chopped, the wall is gone.
- * Only one-time supplies are solid; wild patches are walk-through.
+ * A gathered supply or picked patch is gone until the world clock reaches its regrowAt time,
+ * like a gardener's calendar that says when the plants will be back. The clock stops while the
+ * game is paused, so nothing regrows behind a menu.
  *
- * @param {string[]} collected - Ids of the supplies this character already gathered.
+ * @param {object} state - The game being played.
+ * @param {object} n - The node to check.
+ * @returns {boolean} True if the node can be gathered.
+ */
+export const isAvailable = (state, n) => !(state.regrowAt[n.id] > state.time);
+
+/**
+ * Lists the fixed supplies that were gathered and have not grown back yet.
+ *
+ * @param {object} state - The game being played.
+ * @returns {string[]} Their ids. These supplies are not solid right now.
+ */
+export const goneSupplies = (state) =>
+  SUPPLIES.filter((n) => !isAvailable(state, n)).map((n) => n.id);
+
+/**
+ * Lists the solid base of every supply that is standing right now.
+ *
+ * A tree you haven't chopped is a wall you walk around; once it's chopped, the wall is gone until
+ * it grows back. Only the fixed supplies are solid; wild patches are walk-through.
+ *
+ * @param {string[]} gone - Ids of the supplies that are not standing right now (see goneSupplies).
  * @returns {number[][]} Boxes as [left, top, right, bottom], ready for `isWalkable`.
  */
-export function nodeBases(collected) {
-  return SUPPLIES.filter((n) => !collected.includes(n.id)).map((n) => {
+export function nodeBases(gone) {
+  return SUPPLIES.filter((n) => !gone.includes(n.id)).map((n) => {
     const [halfWidth, depth] = OBJECT_SPECS[n.sprite].footprint;
     return [n.x - halfWidth * n.scale, n.y - depth * n.scale, n.x + halfWidth * n.scale, n.y];
   });

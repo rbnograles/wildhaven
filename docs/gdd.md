@@ -84,13 +84,15 @@ Two halves, both needed:
 **Distance costs** [Review, design rule]
 A camp's useful reach should be about half a daylight round trip. **Numbers not set.** The world is 24,576×16,384 units (diagonal about 29,500, about 100 s to run across). The starting places are 5,100 units apart (Scout to Builder), 9,200 (Builder to Survivor) and 11,500 (Scout to Survivor) in a straight line; rivers and fords make real routes longer. With the planned 240 s of daylight, half a daylight round trip is 60 s each way, or 9,300 units walking and 14,700 running, which is roughly one starting place to the next. Daylight length, any off-path slowdown and warmth duration must be derived from measured walking routes on this map. The 2026-11-19 balance review chose 150 s, 50% and 40 s on the old 6,144×4,096 map; those are **not adopted**. [M2]
 
-**Fast travel vs the tether** [open]: any found signpost can be travelled to from the world map (14 signposts, two per region) [Built]. If that works at dusk, the walk home that the tether depends on disappears. No rule is written for it.
+**Numbers in the build** [Built 2026-11-19, tunable in `src/data/balance.js`]: a 360 s day (dawn 20 s, day 190 s, dusk 30 s, night 120 s). Away from a fire at night, warmth lasts 60 s and then health 30 s, so a player out all night passes out 90 s after dark. There is no off-path slowdown. These are first values, not yet derived from measured routes.
+
+**Fast travel vs the tether** [Decided 2026-11-19]: any found signpost can be travelled to from the world map (14 signposts, two per region) [Built]. **No rule:** travel stays free at any hour. The designer accepts that this weakens the walk home the tether depends on.
 
 | Layer | Loop | Status |
 | --- | --- | --- |
-| Moment to moment | Move, gather (E), place a campfire (mouse) | Move/gather [Built]; campfire [M2] |
-| Session (one ~6 min in-game day) | Plan at dawn → push into the fog by day → race back to a fire at dusk → night at the fire | [M2] |
-| Meta | Needs list points outward → new camp → settlement tiers; "towns and cities are later stages" | Needs list [M2]; tiers [M3]; towns unscoped |
+| Moment to moment | Move, gather (E), place a campfire (B, then mouse or E) | [Built] |
+| Session (one ~6 min in-game day) | Plan at dawn → push into the fog by day → race back to a fire at dusk → night at the fire | [Built] |
+| Meta | Needs list points outward → new camp → settlement tiers; "towns and cities are later stages" | Needs list [Built]; tiers [M3]; towns unscoped |
 
 ---
 
@@ -119,9 +121,9 @@ A camp's useful reach should be about half a daylight round trip. **Numbers not 
 
 | Tier | Hook | Mechanism | Milestone |
 | --- | --- | --- | --- |
-| D1 | Unfinished business | The camp still has an open need, a fire isn't built yet, the next camp isn't started. Saved per character | [M2] |
-| D1 (daily) | Dawn ritual | Each in-game morning at camp: the needs list updates (later also settlers report and the farm yields). Runs on in-game days only, so it respects "no offline progression" and replaces the old "daily rituals" answer | Needs update [M2]; settlers/farm [M3] |
-| D7 | Fog + hidden finds | 49 landmarks (seven per region) and 14 signposts to find, with per-region and world totals [Built]. The world map dims unexplored regions [Built]; a map that fills in as you walk is still [M2] | Finds [Built]; walked-area fog [M2] |
+| D1 | Unfinished business | The camp still has an open need, a fire isn't built yet, the next camp isn't started. Saved per character | [Built] |
+| D1 (daily) | Dawn ritual | Each in-game morning at camp: the needs list updates (later also settlers report and the farm yields). Runs on in-game days only, so it respects "no offline progression" and replaces the old "daily rituals" answer | Needs update [Built]; settlers/farm [M3] |
+| D7 | Fog + hidden finds | 49 landmarks (seven per region) and 14 signposts to find, with per-region and world totals [Built]. The maps fill in as you walk [Built] | [Built] |
 | D30 | Settlement tiers | Camp → hamlet → village with visible changes and the name you chose ("this is MY town") | [M3] |
 
 Planned gather tools (base gather 6 s, tools shorten it toward 0.5 s, per the code's balance notes) are a competence hook for D7 as well. [M3]
@@ -131,7 +133,7 @@ Today there are seven regions. The starting places are 5,100 to 11,500 units apa
 **Replay** [inferred: three characters with separate saves and spawns let a player restart from a different corner of the same world]
 
 **Failure** [Review, replaces the spec's "death screen with a restart option"]
-- [M2] When health reaches zero (from cold), the player passes out and **loses the morning**: they wake at midday at the nearest campfire. With no campfire built yet, they wake at their spawn point. Settlement and stored resources are never touched (pillar 2). Daylight is the scarce thing in the tether loop, so losing it teaches range.
+- [Built] When health reaches zero (from cold), the player passes out and **loses the morning**: they wake at midday at the nearest campfire. With no campfire built yet, they wake at their spawn point. Settlement and stored resources are never touched (pillar 2). Daylight is the scarce thing in the tether loop, so losing it teaches range.
 - [M3] With a "carried today" tally, a share of that trip's haul drops where the player fell and shows on the map, so getting it back is a trip rather than a loss.
 - Restarting a run still happens only through "Start a fresh adventure", after confirmation [Built].
 
@@ -153,16 +155,16 @@ None. Hobby project. The spec also requires no external accounts or paid service
 `wood`, `stone`, `food`, `herbs` (herbs added 2026-11-19). Always non-negative integers; saves with any other value are rejected [Built]. Inventory is "shared globally in this prototype; local storage and trade logistics are deferred" [Planned]. No resource converts into another.
 
 **Renewal** [Review]
-Wood, stone and food nodes **regrow slowly**, over several in-game days, using the same regrow mechanism the flower patches already have [M2]. Camps thin out but never die, so founding a new camp is a choice, not forced. The needs list and "distance costs" carry the outward pull. Herbs stay the fast-renewing resource (180 game-seconds).
+Wood, stone and food nodes **regrow slowly**, over several in-game days, using the same regrow mechanism the flower patches already have [Built: 720 game-seconds, two in-game days]. Camps thin out but never die, so founding a new camp is a choice, not forced. The needs list and "distance costs" carry the outward pull. Herbs stay the fast-renewing resource (180 game-seconds).
 
 **Faucets**
 
 | Source | Status | Detail |
 | --- | --- | --- |
 | Starting kit | [Built] | See the character table in section 1 |
-| 9 supply nodes | [Built] one-time; slow regrowth [M2] | Totals per full harvest: 10 wood, 7 stone, 7 food. Each stands solid as its own sprite until gathered |
+| 9 supply nodes | [Built], regrowing after 2 in-game days | Totals per full harvest: 10 wood, 7 stone, 7 food. Each stands solid as its own sprite while it stands |
 | 38 wild flower patches, regrowing | [Built] | 2 herbs each, back 180 game-seconds after picking (the game clock pauses with the game) |
-| Spec supply rule | [Planned] | "initial supplies and resource distribution must allow at least two camps and sustained food production." Met by slow regrowth [M2] |
+| Spec supply rule | [Planned] | "initial supplies and resource distribution must allow at least two camps and sustained food production." Met by slow regrowth [Built] |
 | Settler work | [M3] | Settlers assigned to wood, stone, or farming |
 | Farm | [M3] | "produces food over time when assigned a settler" |
 
@@ -181,12 +183,11 @@ Wood, stone and food nodes **regrow slowly**, over several in-game days, using t
 | Beach stones | Driftwood Lagoon | stone | 2 |
 
 **Sinks**
-- [Built] None. Nothing spends resources.
-- [M2] Campfire cost: **3 wood + 2 stone** (each fire founds a camp). This is the ceiling the Scout sets: they start with 0 wood and 0 stone and their home supplies hold exactly 3 wood and 2 stone. [Balance review 2026-11-19] Shelter, stockpile and farm costs [M3]. Placement "only charges on successful placement".
-- [M2] Needs list: the camp asks for resources (and later finds) to grow.
-- [M2] Herbs: healing, and a **warming tea** that slows warmth loss at night. Herbs therefore buy extra range on a trip. [Review]
-- [M2] Food eaten to restore hunger. Hunger is M2's **named first cut**: if M2 slips, warmth becomes the only pressure meter and food is spent only on needs and building. [Review]
-- Set in the 2026-11-19 balance review: campfire cost, tea, regrowth (see 6.18, 6.19). Still unset: needs-list amounts, hunger rate, herbs per heal.
+- [Built] Campfire cost: **3 wood + 2 stone** (each fire founds a camp). This is the ceiling the Scout sets: they start with 0 wood and 0 stone and their home supplies hold exactly 3 wood and 2 stone. [Balance review 2026-11-19] Shelter, stockpile and farm costs [M3]. Placement "only charges on successful placement".
+- [Built] Needs list: the camp asks for resources (4 wood, 3 stone, 2 food or 4 herbs, plus 1 for every 2 needs met) and for finds (see 6.17).
+- [Built] Herbs: healing (**3 herbs, +30 health**, anywhere with H) and a **warming tea** (5 herbs, at a camp) that holds off the night's cold. Herbs therefore buy extra range on a trip. [Review]
+- [Built] Food eaten to restore hunger: **1 food, +25 hunger** (F). Hunger was kept in M2, in its gentle form (see 6.7). [Review]
+- Set in the 2026-11-19 balance review: campfire cost, tea, regrowth (see 6.18, 6.19). Set when M2 was built: needs-list amounts, hunger rate (empty after 2 in-game days), herbs per heal (3).
 - **Known surplus (escalated in the balance review):** herbs come in at about 12 per day on a 6-patch route and go out at 5 per night at most, a 2.4× surplus, and resting at a fire skips the night so most nights use no tea. Chosen by the designer; expect herbs to pile up.
 
 ---
@@ -261,21 +262,25 @@ Superseded: the spec said "Their broader motivation and preferred art references
 - In play: idle, walk and run in four directions; gather and build (used for chopping) use east-facing art, mirrored for west.
 - Preview dialog only: craft, fight, swim. These must not imply working mechanics.
 
-### 6.7 Survival meters [Planned, moved from spec "Playable scope"]
-"Health, hunger, and warmth create manageable survival pressure. Hunger falls over time; eating restores it. Night drains warmth away from fire and shelter. Critical hunger or cold reduces health, with visible feedback explaining why." No rates defined. [M2; hunger is the named first cut. Health at zero → pass-out, see section 3 "Failure".]
+### 6.7 Survival meters [Built 2026-11-19]
+"Health, hunger, and warmth create manageable survival pressure. Hunger falls over time; eating restores it. Night drains warmth away from fire and shelter. Critical hunger or cold reduces health, with visible feedback explaining why." [moved from spec "Playable scope"]
+- Each meter runs 0-100 and shows in the HUD with a word saying why it is changing ("By the fire", "Cold", "Tea 12s", "Freezing", "Starving").
+- **Warmth:** +20/s by a fire at any hour; +4/s away from a fire by day; unchanged at dusk; at night away from a fire it drains in 60 s (1.5× faster when starving), unless tea holds it.
+- **Health:** drains in 30 s while freezing (no warmth, night, away from a fire); +2/s by a fire for a fed player. Health at zero → pass-out (section 3 "Failure").
+- **Hunger:** empties over 720 s (two in-game days). At zero it stops healing and makes the cold harsher, but never causes a pass-out by itself (the gentle version chosen for M2).
 
-### 6.8 Day/night [Planned]
-"A roughly six-minute day/night cycle, with daylight lasting about four minutes. Exact balance is tunable. Pause freezes simulation and survival meters."
+### 6.8 Day/night [Built 2026-11-19]
+"A roughly six-minute day/night cycle, with daylight lasting about four minutes. Exact balance is tunable. Pause freezes simulation and survival meters." Built as a 360 s day: dawn 20 s, day 190 s, dusk 30 s, night 120 s; a new game starts on the morning of day 1. The world darkens through dusk; each fire lights a circle as wide as its warmth.
 
 ### 6.9 Wolves [Planned]
 "A simple attack or repel action protects the player from wolves. Wolves stay away from the starting area, warn before attacking, and retreat from lit campfires. No graphic violence." No damage, health or spawn numbers defined.
 
-### 6.10 Building [Planned]
-Placement shows validity and cost, rejects water, obstacles, overlapping footprints or insufficient resources, and only charges on success.
+### 6.10 Building [Campfire built 2026-11-19; the rest Planned]
+Placement shows validity and cost, rejects water, obstacles, overlapping footprints or insufficient resources, and only charges on success. [Built for the campfire: B shows a ghost that follows the mouse (or sits in front of the player), green or red with the reason in words; click or E places it within 300 units; the player names the camp.]
 
 | Building | Function |
 | --- | --- |
-| Campfire | Establishes a named settlement; provides warmth |
+| Campfire | Establishes a named settlement; provides warmth (260 units, +40 per need met, up to 660) [Built] |
 | Shelter | Safe resting location; capacity for settlers |
 | Stockpile | Enables settlement resource collection |
 | Farm | Produces food over time when assigned a settler |
@@ -283,8 +288,8 @@ Placement shows validity and cost, rejects water, obstacles, overlapping footpri
 ### 6.11 Settlers [Planned]
 Discover and recruit up to three settlers. Each belongs to one camp and works nearby on wood, stone or farming. Workers visibly move between work sites and storage. "Unreachable or depleted jobs report their status instead of producing resources invisibly."
 
-### 6.12 Expansion [Planned]
-A second camp can be founded "a meaningful walk from the first". Settlements appear on the minimap and can be revisited on foot.
+### 6.12 Expansion [Built 2026-11-19]
+A second camp can be founded "a meaningful walk from the first" (at least 3,000 units away). Camps appear on both maps (named on the world map) and can be revisited on foot.
 
 ### 6.13 World layout
 - [Built] Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three unreachable islands. The forest campsite, the abandoned village with its workshop, and the shipwreck beach are the three starting places. The new biomes use stand-in art.
@@ -299,12 +304,14 @@ A second camp can be founded "a meaningful walk from the first". Settlements app
 | Move | WASD or arrow keys | [Built] |
 | Run | Hold Shift | [Built] |
 | Gather | E or the gather button | [Built] |
+| Open a camp | E beside one of your fires | [Built] |
+| Eat / heal | F / H | [Built] |
 | World map | M or the minimap | [Built] |
 | Pause | Escape or the pause button | [Built] |
 | Save / return to characters | Pause menu | [Built] |
 | Touch movement | On-screen buttons at narrow widths | [Built] |
-| Select and place buildings | Mouse | [Planned] |
-| Cancel building | Escape | [Planned] |
+| Select and place buildings | B, then the mouse (or E) | [Built for the campfire] |
+| Cancel building | Escape or B | [Built] |
 
 ### 6.15 HUD layout [Planned, moved from spec "Experience and visual direction"]
 ```text
@@ -316,26 +323,27 @@ Health / hunger / warmth       Day and time       Resources
 Current objective        contextual action       minimap
              build toolbar when building
 ```
-[Built today: portrait, resources, region name, objective panel, minimap, contextual gather button, controls bar.]
+[Built 2026-11-19, rearranged after playtest feedback: objective panel top left, region name and progress top centre, journal and pause top right; along the bottom, the player card (portrait, day clock, three meters) on the left, the item box (wood, stone, food and herb slots; clicking food eats and herbs heals) with a Build button and its build menu in the middle, and a round minimap on the right. The contextual action button, controls strip and build bar sit above the item box. The Scout's camp no longer has a decorative campfire, so every fire in the world is one the player built.]
 
-### 6.16 Fog of war [M2, Review]
-Target: the maps fill in as the player walks (the spec's "minimap that reveals explored areas"), and region names appear only once discovered. Partly built: the minimap now shows only the area around the player, and the world map dims regions the player has not entered. What is left for M2 is revealing by walked area rather than by whole region. Fog is per character, since each character has its own save.
+### 6.16 Fog of war [Built 2026-11-19]
+The maps fill in as the player walks (the spec's "minimap that reveals explored areas"), and region names appear on the world map only once discovered. The world is cut into 256-unit squares; walking uncovers every square within 1,000 units. Unseen land is solid fog on both maps, so its shape stays hidden. Fog is per character, since each character has its own save; older saves are uncovered region by region.
 
-### 6.17 Needs list [M2, Review]
-Each camp keeps a short list of things it needs to grow (3-4 at a time in M2). The list updates at dawn and points the player outward. Contents not yet written: with only four interchangeable resources the camp can ask for amounts but not for "something only found far away". Place-bound finds arrive with the hidden points of interest [M3].
+### 6.17 Needs list [Built 2026-11-19]
+Each camp keeps three needs. Slot 1 asks for resources (4 wood, 3 stone, 2 food or 4 herbs, plus 1 for every 2 needs met). Slot 2 asks to find a place in the nearest other region that still has one unfound. Slot 3 asks for a new signpost on odd days and resources on even days. Resources are given at the camp; finds count wherever they happen. Each met need grows the fire's warmth by 40 units (up to 10 needs). At dawn, met needs are replaced and open ones stay. Place-bound finds beyond landmarks arrive with the hidden points of interest [M3].
 
-### 6.18 Herbs: healing and warming tea [M2, Review]
-Herbs restore health and brew a tea that slows warmth loss at night, extending how far a trip can go. **Tea: 5 herbs, +20 s of warmth, one at a time (no stacking).** [Balance review 2026-11-19] Herbs per heal is not set.
+### 6.18 Herbs: healing and warming tea [Built 2026-11-19]
+Herbs restore health and brew a tea that holds off the night's cold, extending how far a trip can go. **Tea: 5 herbs, 20 s in which warmth does not fall, brewed at a camp, one at a time (no stacking).** [Balance review 2026-11-19] **Heal: 3 herbs, +30 health, anywhere (H).**
 
-### 6.19 Regrowth [M2, Review]
+### 6.19 Regrowth [Built 2026-11-19]
 Wood, stone and food nodes regrow after **2 in-game days** (reusing the flower-patch regrow timers). [Balance review 2026-11-19] Consequence recorded with the choice: a camp's home supplies refill within a single session, so supply does not push the player outward; the needs list and the fog carry that job.
 
-### 6.20 First night and night at the fire [M2, decided in /player-experience 2026-11-19]
+### 6.20 First night and night at the fire [Built 2026-11-19, decided in /player-experience 2026-11-19]
 - **First objective.** M2's first goal on the objective panel is "Build a campfire before dark", with the place key and the cost shown. It replaces "Discover the three starting regions" as the opening goal, which pointed a new player away from camp before their first night.
 - **Dusk.** The world dims, the clock shows dusk, and once warmth starts falling one line says "Getting dark, head to a fire."
 - **Pass-out screen.** Explains cause and cost: "You got too cold away from a fire. You woke at your camp at midday." Play resumes at camp.
 - **Night at the fire.** Three things are possible: rest, which skips to dawn and saves, with the dawn ritual playing on waking (the natural place to end a session); camp tasks, brewing tea from herbs and handling the needs list at the fire (this is where tea is taught); or waiting it out near the fire's warmth.
-- **Open from the walkthrough:** whether the dawn update runs during a pass-out; in-game hints for WASD, Shift and Esc (a newcomer who never learns Shift walks home 58% slower); feedback when moving cancels a gather; ~18 gathers × 6 s in a first session with no speed-up until tools [M3].
+- **Built as:** the goals card reads "Build a campfire" with the wood and stone counts and the B key; toasts at dusk ("Dusk is falling...") and nightfall ("Getting dark, head to a fire."); the camp dialog (E at your fire) holds the needs, tea, eat, heal and "Rest until dawn" (offered from dusk). The dawn update does run during a pass-out.
+- **Still open from the walkthrough:** in-game hints for WASD, Shift and Esc (a newcomer who never learns Shift walks home 58% slower); feedback when moving cancels a gather; ~18 gathers × 6 s in a first session with no speed-up until tools [M3].
 
 ---
 
@@ -370,7 +378,7 @@ Multiplayer, mobile controls, realistic Earth geography, general world streaming
 | M1 | Browser first playable: choose character → load and explore one shared world | Done | `plans/2026-11-19-browser-first-playable.md` (all tasks checked) |
 | M1.5 | Character animation: walk/run/gather live, other clips in a preview dialog | Done in code (the plan's checkboxes are not ticked) | `plans/2026-11-19-character-animation.md` |
 | — | Supplies as sprites, 6 s cancelable gather, herbs from regrowing flower patches | Built 2026-11-19 | Code + `CLAUDE.md` |
-| M2 | Loop proof: the 9-item critical path below | Planned [Review] | This document |
+| M2 | Loop proof: the 9-item critical path below | Built 2026-11-19 (branch `worktree-m2-loop-proof`); the numbers are first values, still to be tuned | `specs/2026-11-19-m2-loop-proof-design.md`, `plans/2026-11-19-m2-loop-proof.md` |
 | M3 | The rest of the spec plus review additions (10 items below) | Planned [Review] | This document + spec |
 | Later | Towns and cities | Future, **unscoped**: needs its own content list before work starts (Risk 3) | Spec: "towns and cities are later stages" |
 | A1–A4 | Archipelago: island home and a small boat, the ship and open sea, a second continent, the archipelago world map | Planned; A1 has an approved design. Order against M2/M3 and big-world builds 2–4 is open (Open Question 14) | `specs/2026-11-19-archipelago-design.md` |
@@ -404,7 +412,7 @@ In a running browser the player can explore beyond the starting screen, gather a
 | 1 | Pillar | The world map shows the whole landmass; unexplored regions are only dimmed, so the shape of the world is known from the start | Medium × minor | LOW | Region dimming and a local minimap are built; walked-area fog in M2 (6.16) |
 | 2 | Retention cliff | First night: warmth drops and a new player doesn't know why | High × significant | **HIGH** until numbers are set | Partly: campfire-first objective, dusk line, explained pass-out (6.20). Warmth drain and reach must make night 1 survivable at walking speed (/balance-review) |
 | 3 | Scope | "Later: towns and cities" has no content list | Medium × significant | MEDIUM | M2 cut to 9 items with a named first cut (hunger); M3 listed. "Later" needs a list before work |
-| 4 | Loop | Fast travel to any found signpost can remove the walk home that the tether depends on | High × significant | **HIGH** | **None.** No rule exists for travelling at dusk or at night |
+| 4 | Loop | Fast travel to any found signpost can remove the walk home that the tether depends on | High × significant | **HIGH** | **Accepted** by the designer on 2026-11-19: no rule, travel stays free at any hour |
 | 5 | Pillar | Slow regrowth makes expansion optional, weakening pillar 3 | Medium × minor | LOW | Accepted trade-off for pillar 2; the needs list carries the outward pull |
 | 6 | Market | Cozy survival is a crowded genre (Stardew Valley, Don't Starve, Valheim) | Low × minor | IGNORE | Hobby project, no sales target |
 
@@ -453,13 +461,13 @@ Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/spec
 5. ~~**Daily rituals hook vs "No offline progression".**~~ Resolved in review: the dawn ritual runs on in-game days (section 3).
 6. **Animation plan status.** The plan's checkboxes are unticked while the code and `docs/art-direction.md` show the work is done.
 7. **Churn points.** Not analyzed; the first night has no mitigation (Risk 2).
-8. **Needs list contents.** No needs are written yet, and four interchangeable resources can't express "something only found far away" (6.17).
+8. ~~**Needs list contents.**~~ Resolved when M2 was built: needs mix resource amounts with finds (a place in the nearest unexplored region, a new signpost), which point outward (6.17).
 9. **Character identity.** The three characters play the same apart from spawn and kit (section 5).
 10. **Relatedness.** No system creates a bond with anyone (section 5).
-11. **Fast travel vs the tether.** Signpost travel is built; the tether loop assumes walking home before dark. No rule covers travelling at dusk or night (Risk 4).
+11. ~~**Fast travel vs the tether.**~~ Decided 2026-11-19: no rule; travel stays free at any hour and the designer accepts the weaker tether (Risk 4).
 12. **Two roadmaps.** The review set M2 (loop proof: night, warmth, campfire, needs list) and M3. The big-world spec plans Build 2 (objectives journal, biome supplies, collectibles), Build 3 (cold and heat with gear) and Build 4 (locals with requests). They overlap (warmth vs harsh conditions, needs list vs requests) and no document orders them against each other.
 13. **Character card names.** The cards say "Hollowstead Village" and "Driftwood Coast"; the regions are Hollowstead Meadows and Driftwood Lagoon.
-14. **Three roadmaps.** Archipelago slices A1–A4 join M2/M3 and big-world builds 2–4 (Question 12). No document orders the three against each other. A1 was chosen as the first archipelago step, but not whether it comes before M2 or build 2. The A1 and M2 specs both claim save version 4, and M2's fog grid depends on the map size that A1 grows; whichever is built second must adapt (see the A1 spec, "Saves").
+14. **Three roadmaps.** Archipelago slices A1–A4 join M2/M3 and big-world builds 2–4 (Question 12). No document orders the three against each other. A1 was chosen as the first archipelago step, but not whether it comes before M2 or build 2. The A1 and M2 specs both claimed save version 4, and M2's fog grid depends on the map size that A1 grows; whichever is built second must adapt (see the A1 spec, "Saves"). **M2 was built first and took version 4**, so A1 writes version 5 and upgrades version 4 saves; M2's fog grid is sized from the map, so a bigger map gets a bigger grid, but saved fog strings of the old length must be rebuilt in that upgrade.
 
 ---
 
@@ -468,8 +476,8 @@ Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/spec
 - **Imported from:** survival-settlement spec, README, two implementation plans, the game source, 2026-11-19 feel-pass measurements, and four import-session answers
 - **Import date:** 2026-11-19
 - **Reviewed:** 2026-11-19, /game-review Mode B. GDD Health 4.4 → 6.7/10 (SOLID)
-- **Sections needing work:** churn points (section 3); the distance numbers (daylight length, off-path speed, warmth duration: to be re-derived on the big map), needs amounts, hunger rate, herbs per heal; needs list contents; Open Questions 1, 2, 4 and 6-14
+- **Sections needing work:** churn points (section 3); tuning the M2 numbers now in the build (daylight length, warmth duration, hunger rate, needs amounts) against measured routes on the big map; Open Questions 1, 2, 4, 6, 7, 9, 10 and 12-14
 - **Walked:** 2026-11-19, /player-experience as a Casual Newcomer, 7.1/10 (DONE_WITH_CONCERNS)
 - **Balance review:** 2026-11-19, partial (Difficulty 6/10, Economy 3/10; Progression and cross-checks not run)
 - **Reconciled with the big world:** 2026-11-19. Sections 1-6, 8, the risk register and the open questions now describe the seven-region map
-- **Recommended next skill:** /balance-review again from Section 1, on the new 24,576×16,384 map, once the needs list has amounts
+- **Recommended next skill:** /playtest or /feel-pass on the M2 build (first night, first camp), then /balance-review on the 24,576×16,384 map with the M2 numbers

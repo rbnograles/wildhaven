@@ -4,23 +4,18 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GATHER_SECONDS } from '../../src/data/balance.js';
+import { GATHER_SECONDS, SUPPLY_REGROW } from '../../src/data/balance.js';
 import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
-import {
-  nearbyNode,
-  isAvailable,
-  hasGathered,
-  beginGather,
-  finishGather,
-} from '../../src/actions/gather.js';
+import { nearbyNode, isAvailable, beginGather, finishGather } from '../../src/actions/gather.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
-/** The wild flower patches: the only nodes that grow back after being picked. */
-const wild = NODES.filter((n) => n.regrow);
+/** The wild flower patches: map scenery that can be picked and grows back quickly. */
+const wild = NODES.filter((n) => n.id.startsWith('flowers-'));
 
-// Guards against gathering from across the map, and against taking the same pine tree twice.
-test('gathering is proximity based and a node can be collected only once', () => {
+// Guards against gathering from across the map, against taking the same pine tree twice in a row,
+// and against a chopped tree never coming back (supplies regrow after two in-game days).
+test('gathering is proximity based, and a gathered supply is gone until it grows back', () => {
   const game = createGame('scout'),
     node = NODES.find((n) => n.id === 'pine-wood');
   assert.equal(finishGather(game), null); // nothing is within reach of the camp spawn
@@ -33,6 +28,12 @@ test('gathering is proximity based and a node can be collected only once', () =>
   assert.equal(finishGather(game), null);
   assert.equal(finishGather(game, 'pine-wood'), null);
   assert.equal(finishGather(game, 'camp-stone'), null); // named, but out of reach
+
+  game.time += SUPPLY_REGROW - 1;
+  assert.equal(finishGather(game, 'pine-wood'), null);
+  game.time += 1;
+  assert.equal(finishGather(game, 'pine-wood')?.id, 'pine-wood');
+  assert.equal(game.resources.wood, node.amount * 2);
 });
 
 // Guards the flower life cycle: picking gives herbs, the patch is gone for a while, and it comes
@@ -43,19 +44,16 @@ test('a picked flower patch gives herbs, then grows back on the game clock', () 
   game.player.x = node.x;
   game.player.y = node.y;
 
-  assert.equal(hasGathered(game), false);
   assert.equal(finishGather(game, node.id)?.id, node.id);
   assert.equal(game.resources.herbs, node.amount);
-  assert.deepEqual(game.collected, []);
-  assert.ok(hasGathered(game));
 
   // While it regrows, the patch can't be picked and isn't offered as the nearest thing to gather.
   assert.equal(finishGather(game, node.id), null);
   assert.notEqual(nearbyNode(game)?.id, node.id);
 
-  game.elapsed += node.regrow - 1;
+  game.time += node.regrow - 1;
   assert.equal(isAvailable(game, node), false);
-  game.elapsed += 1;
+  game.time += 1;
   assert.equal(isAvailable(game, node), true);
 
   assert.equal(finishGather(game, node.id)?.id, node.id);
@@ -82,7 +80,7 @@ test("beginGather starts the node's own timed action without awarding it", () =>
     duration: GATHER_SECONDS,
   });
   assert.deepEqual(game.resources, before);
-  assert.deepEqual(game.collected, []);
+  assert.deepEqual(game.regrowAt, {});
 });
 
 // Guards against mashing E to stack actions, and against starting an action with nothing nearby.

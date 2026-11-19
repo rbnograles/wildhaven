@@ -1,8 +1,9 @@
 // The "gather" action: picking up wood, stone, food and herbs from supplies near the player.
 // Gathering takes time. Pressing E starts it (`beginGather`), and the game loop hands out the
-// supplies only when the timer runs out (`finishGather`), so nothing is awarded twice.
+// supplies only when the timer runs out (`finishGather`), so nothing is awarded twice. A gathered
+// node is gone until it grows back.
 
-import { NODES } from '../world/nodes.js';
+import { NODES, isAvailable } from '../world/nodes.js';
 import { GATHER_RANGE, GATHER_SECONDS } from '../data/balance.js';
 import { startAction } from '../animation/clips.js';
 
@@ -23,28 +24,9 @@ export function gatherTime(state, node) {
 /** True when the node is close enough to the player to gather it. */
 const inReach = (state, n) => Math.hypot(n.x - state.player.x, n.y - state.player.y) < GATHER_RANGE;
 
-/**
- * Says whether a node has something to gather right now.
- *
- * A fixed supply is gone for good once collected. A picked wild patch is gone until the game
- * clock (paused with the game) reaches its regrowAt time, like a gardener's calendar that says
- * when the flowers will be back.
- *
- * @param {object} state - The game being played.
- * @param {object} n - The node to check.
- * @returns {boolean} True if the node can be gathered.
- */
-export const isAvailable = (state, n) =>
-  n.regrow ? !(state.regrowAt[n.id] > state.elapsed) : !state.collected.includes(n.id);
-
-/**
- * True once the player has gathered anything at all (used by the first quest's checkmark).
- *
- * @param {object} state - The game being played.
- * @returns {boolean} True if any supply was collected or any wild patch was picked.
- */
-export const hasGathered = (state) =>
-  state.collected.length > 0 || Object.keys(state.regrowAt).length > 0;
+// Whether a node can be gathered now is decided in world/nodes.js; it is passed on from here for
+// the HUD and the renderer, which already import it from this file.
+export { isAvailable };
 
 /**
  * Finds the closest node the player could gather from right now.
@@ -90,7 +72,7 @@ export function beginGather(state, animator) {
  * Hands out a node's supplies when its gathering action finishes.
  *
  * It checks the node is still there and still in reach, puts the supplies in the backpack, and
- * marks the node as used: collected for good, or picked until it grows back.
+ * marks the node as used until it grows back.
  * The loop passes the id the action targeted; without one, the nearest available node is used.
  *
  * @param {object} state - The game being played. Its resources and gathered lists change.
@@ -101,8 +83,7 @@ export function finishGather(state, id = nearbyNode(state)?.id) {
   const node = NODES.find((n) => n.id === id);
   if (!node || !isAvailable(state, node) || !inReach(state, node)) return null;
 
-  if (node.regrow) state.regrowAt[node.id] = state.elapsed + node.regrow;
-  else state.collected.push(node.id);
+  state.regrowAt[node.id] = state.time + node.regrow;
   state.resources[node.type] += node.amount;
   return node;
 }
