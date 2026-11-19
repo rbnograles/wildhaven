@@ -165,6 +165,7 @@ export function setupCamp(session, ui) {
     $('camp-name-dialog').returnValue = '';
     $('camp-name-input').value = camp.name;
     $('camp-name-dialog').showModal();
+    $('camp-name-input').focus();
     $('camp-name-input').select();
   }
 

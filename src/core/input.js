@@ -143,7 +143,11 @@ export function setupInput(session, ui) {
   world.addEventListener('pointerleave', () => (session.pointer = null));
   world.addEventListener('pointerdown', (event) => {
     session.pointer = { x: event.clientX, y: event.clientY };
-    if (session.build.active && event.button === 0) interact();
+    if (!session.build.active || event.button !== 0) return;
+    // Stop the click from also focusing the world afterwards, which would pull the keyboard out
+    // of the camp name box that placing the fire opens.
+    event.preventDefault();
+    interact();
   });
 
   // Touch buttons: holding one "presses" its key; lifting the finger (or losing it) releases it.

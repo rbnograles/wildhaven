@@ -112,7 +112,8 @@ export function drawMap(ctx, overview, state, w, h, local = false) {
     ctx.stroke();
   }
 
-  // Camps: orange dots. The big map also writes each camp's name above its dot.
+  // Camps: orange dots. The big map also writes each camp's name below its dot, where it is less
+  // likely to sit under a region's name label.
   ctx.font = '600 15px system-ui, sans-serif';
   ctx.textAlign = 'center';
   for (const camp of state.camps) {
@@ -128,9 +129,9 @@ export function drawMap(ctx, overview, state, w, h, local = false) {
     if (local) continue;
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#263b31';
-    ctx.strokeText(camp.name, x, y - 12);
+    ctx.strokeText(camp.name, x, y + 24);
     ctx.fillStyle = '#fff6df';
-    ctx.fillText(camp.name, x, y - 12);
+    ctx.fillText(camp.name, x, y + 24);
   }
 
   // The player.
