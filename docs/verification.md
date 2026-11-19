@@ -92,3 +92,12 @@ Checked at http://127.0.0.1:5179 (the `wildhaven-verify` config) as the Builder,
 - With the timer edited to five seconds ahead and the player standing beside the patch, it faded back in after the timer ran out (slower in real time while the pane rendered under 20 fps). It came back with the cream glow, the E cap and the prompt.
 - At 375×812 the resources panel fits all four counters. No console errors.
 - `npm test`: 29 passing. New tests cover herb patches that are walk-through and smaller than a character, a 16-unit flood fill showing every supply and patch can be reached and gathered from the spawns, regrowth on the game clock, old saves loading with no herbs or timers, and timer clamping/dropping. `npm run build` passes.
+
+## src/ restructure — 2026-11-19
+
+Behavior-preserving move to role-based folders (`data/`, `world/`, `actions/`, `game/`, `animation/`, `render/`, `ui/`, `core/`). See `docs/superpowers/specs/2026-11-19-src-restructure-design.md`.
+
+- `npm test`: 37 passing. The old state tests are split by subject. New tests cover `beginGather`, map edges, and `tests/boundaries.test.js`, which keeps the pure modules free of browser-only code. `npm run build` succeeds.
+- Before `state.js` was deleted, the copied data was checked equal to its exports: characters, nodes, supplies, wild kinds, resources, `GATHER_SECONDS`, locations, world size, obstacles and solid bases.
+- Browser (port 5177): Builder played through selection, loading, walk, the 6 s timed gather (busy label, cancel on a fresh movement press, key-repeat ignored, award once), map, pause (movement ignored), save, return, continue, refresh-resume and the animation preview. Scout and Survivor started fresh and gathered (Survivor picked wildflowers for +2 herbs). Console shows no errors. The "Discovered" toast was not reproduced in the browser (the route to Hollowstead was blocked); discovery is covered by tests/actions/discover.test.js and its loop code is unchanged.
+- A Builder save made before the restructure loaded with the same resources.

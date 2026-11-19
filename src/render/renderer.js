@@ -16,7 +16,7 @@ const objectUrls=Object.fromEntries(Object.entries(import.meta.glob('../../asset
 const TERRAIN_LAYERS=['ground','dirt','sand','water'];
 const PLAYER_HEIGHT=112;
 
-// Phaser draws the world (tile layers, object sprites, character); game rules and input stay in state.js / main.js.
+// Phaser draws the world (tile layers, object sprites, character); game rules live in src/actions/ and src/world/, input in src/core/input.js.
 export async function createRenderer(container, miniCanvas) {
   const mini=miniCanvas.getContext('2d');
   if(!mini) throw new Error('This browser does not support the game canvas. Please try a current desktop browser.');

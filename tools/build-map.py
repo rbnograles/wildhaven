@@ -86,7 +86,7 @@ objects = [('tent', 757, 390), ('log', 464, 396), ('campfire', 576, 484),
            ('house-a', 1145 + V_OFF[0], 770 + V_OFF[1]), ('house-b', 1745 + V_OFF[0], 780 + V_OFF[1]),
            ('house-c', 1078 + V_OFF[0], 1200 + V_OFF[1]), ('workshop', 1908 + V_OFF[0], 1115 + V_OFF[1]),
            ('ship', 2725 + C_OFF[0], 1560 + C_OFF[1])]
-# Spawns and supply nodes from src/state.js (absolute positions): scenery within 150 of them is dropped after scattering.
+# Spawns (src/data/characters.js) and supply nodes (src/data/supplies.js), as absolute positions: scenery within 150 of them is dropped after scattering.
 KEEP_CLEAR = [(620, 550), (3072, 2048), (5472, 3628), (870, 650), (480, 570), (480, 705), (3180, 2170), (2990, 2180), (3202, 2348), (5630, 3740), (5322, 3778), (3300, 2580)]
 # FROZEN: the spots the scatter loop has always skipped. Which candidates it skips decides how many random draws follow,
 # so editing this list reshuffles every later tree and rock, and a new solid base under a saved player makes that save

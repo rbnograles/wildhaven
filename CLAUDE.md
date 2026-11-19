@@ -17,8 +17,8 @@ npm test             # node --test: runs tests/*.test.js with Node's built-in ru
 npm run build        # Vite production build → dist/
 npm run preview      # serve dist/
 
-node --test tests/state.test.js                                   # one file
-node --test --test-name-pattern="stale tab" tests/storage.test.js # one test by name
+node --test tests/actions/gather.test.js                              # one file
+node --test --test-name-pattern="stale tab" tests/game/saves.test.js  # one test by name
 
 python tools/build-map.py [preview.png]   # regenerate assets/world/map/* (needs numpy + Pillow)
 ```
@@ -33,23 +33,35 @@ Vanilla JavaScript ES modules, no framework. Vite 7 bundles the code and assets.
 
 ## Architecture
 
-Game rules are pure modules. Rendering and the DOM are thin layers around them.
+Game rules are pure modules. Rendering and the DOM are thin layers around them. `main.js` only wires things together.
 
-| Module | Role | Runs in Node tests? |
+| Folder | Role | Runs in Node tests? |
 | --- | --- | --- |
-| `src/state.js` | World size, characters, spawns, supply nodes (sprite, solid base, verb, clip), regions, collision (`isWalkable`, `nodeBases`), movement, `gatherTime`/gather/discover, save serialize/validate | yes |
-| `src/storage.js` | Per-character localStorage save session with compare-before-write | yes |
-| `src/animation.js` | Clip table (`CLIPS`), the animator state machine, frame sampling | yes |
-| `src/animation-art.js` | Loads sprite sheets and measures each frame's bounds from alpha pixels; `resolvePose` | no (DOM/Vite) |
-| `src/render.js` | Phaser scene: tile layers, depth-sorted objects, supply sprites (glow, E cap, progress bar, fade-out), player sprite, camera, minimap/world-map canvases | no |
-| `src/animation-preview.js` | "Preview animations" debug dialog that never writes game state | no |
-| `src/main.js` | Builds all DOM, switches screens (selection → loading → game), handles input, runs the `requestAnimationFrame` loop, updates the HUD, decides when to save | no |
+| `src/data/` | `characters.js` (characters, spawns, region offsets), `supplies.js` (`SUPPLIES` with sprite, scale, verb, clip; `WILD` regrowing patch kinds; `RESOURCES`), `balance.js` (speeds, reach, `GATHER_SECONDS`, radii) | yes |
+| `src/world/` | `map.js` (world size, collision: `isWalkable`, `blocks`, `OBSTACLES`), `nodes.js` (`NODES` = supplies + wild map patches; `nodeBases` solid bases), `regions.js` (`LOCATIONS`, `regionAt`) | yes |
+| `src/actions/` | One file per player action: `move.js` (`movePlayer`), `gather.js` (`beginGather` starts the timed action, `finishGather` awards by id; `gatherTime`, `isAvailable`, `nearbyNode`), `discover.js` | yes |
+| `src/game/` | `state.js` (create, serialize, validate saves), `saves.js` (per-character localStorage session, active character) | yes |
+| `src/animation/` | `clips.js` (clip table, animator, timed actions; pure), `sheets.js` (sprite loading and frame measuring), `preview.js` (preview dialog) | `clips.js` only |
+| `src/render/` | `renderer.js`: Phaser scene, supply sprites (glow, E cap, progress bar, fade-out), camera, minimap and world map | no |
+| `src/ui/` | `layout.js` (HTML template, icons), `selection.js`, `hud.js` (HUD, interact button, toast), `dialogs.js` (pause, map, reset, fullscreen) | no |
+| `src/core/` | `session.js` (shared session; start, leave, save), `input.js` (keys, touch), `loop.js` (frame loop) | no |
 
-**Keep the tested modules runnable in Node.** `state.js`, `storage.js`, and `animation.js` must not import PNG/CSS files, use `import.meta.glob`, or touch the DOM. `state.js` loads its JSON with `import ... with { type: 'json' }` so that Node can read it. Browser-only modules use Vite's plain imports.
+**Keep the pure modules runnable in Node.** `data/`, `world/`, `actions/`, `game/` and `animation/clips.js` must not import `ui/`, `core/`, `render/`, `sheets.js`, `preview.js`, PNG or CSS files, and must not use `import.meta`, `document` or `window`. `tests/boundaries.test.js` enforces this. JSON is imported with `import ... with { type: 'json' }` so Node can read it.
 
-**Input belongs to `main.js`, not Phaser.** Phaser's keyboard, mouse, and touch input are switched off. `main.js` tracks held keys in a `Set` and feeds them to `movePlayer`. The game counts as paused whenever the pause, map, or reset `<dialog>` is open (`isPaused()`). The simulation also stops while the tab is hidden.
+**Adding an action:** add a file in `src/actions/`, bind its key in `src/core/input.js`, add a clip in `src/animation/clips.js` if it's animated, and add a test in `tests/actions/`.
 
-**Frame loop (`main.js` `frame`).** Each frame: clamp `dt` to 0.05; if an action is running and a movement key is held, `cancelAction` (nothing is awarded); call `movePlayer`, then `advanceAnimation`. When a timed action *finishes*, call `gather(state, target)` with the node id it targeted. Pressing E only starts the action (`startAction(animator, node.clip, node.id, gatherTime(state, node))`), so supplies are granted exactly once. Then run `discover`, autosave every 10 s, call `renderer.draw`, and refresh the HUD about every 0.12 s. Because `dt` is clamped, game time runs slower than real time when the page renders below 20 fps (e.g. a hidden browser pane), and an action takes longer.
+**Shared session.** `core/session.js` `createSession()` holds what the browser layer shares: selected character, game state, animator, renderer, save session, current screen, held keys, and frame clock. `main.js` builds one `ui` object (`hud`, `dialogs`, `selection`, `input`) and passes `(session, ui)` to each module, so modules don't import each other in cycles.
+
+**Input belongs to `core/input.js`, not Phaser.** Phaser's keyboard, mouse, and touch input are switched off. `core/input.js` tracks held keys in `session.keys` and exposes `moveIntent()`. The game counts as paused whenever the pause, map, or reset `<dialog>` is open (`ui.dialogs.isPaused()`). The simulation also stops while the tab is hidden.
+
+**Frame loop (`core/loop.js`).** Each frame:
+1. Clamp `dt` to 0.05.
+2. If an action is running and a movement key is held, `cancelAction` (nothing is awarded).
+3. Call `movePlayer`, then `advanceAnimation`.
+4. When a timed action *finishes*, call `finishGather(state, target)` with the node id it targeted. Pressing E only calls `beginGather`, which starts the node's clip for `gatherTime(state, node)` seconds, so supplies are granted exactly once.
+5. Run `discover`, autosave every 10 s, call `renderer.draw`, and refresh the HUD about every 0.12 s.
+
+Because `dt` is clamped, game time runs slower than real time when the page renders below 20 fps (e.g. a hidden browser pane), and an action takes longer.
 
 **Save model.** Each character has its own key, `wildhaven.adventure.v1.<characterId>`, and the save object is `version: 2`. `restoreGame` validates the data strictly and *rebuilds* the object field by field. Adding a field to game state therefore means updating `createGame`, the checks in `restoreGame`, and the object it returns, or the field is silently dropped on load. If old saves can't be read safely, bump `version`; old saves then show the "could not be read, start fresh" path. `createSaveSession` remembers the last raw value it saw and refuses to write if storage has changed (`reason: 'conflict'`), so a stale tab can't overwrite a newer save. Saves happen on gather, discovery, opening pause, hiding the tab, `pagehide`, and every 10 s. Separately, `readActive`/`setActive` keep the character being played in `sessionStorage` (`wildhaven.active`); on load `main.js` resumes it if that slot has a readable save, so a refresh returns to the game. Only the "Return to characters" and loading-screen "Back to characters" buttons clear it. Animation state is never saved, and a test checks this.
 
@@ -66,11 +78,11 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 ```
 
 - `wildhaven.json` is the single source of truth for both rendering and collision. The map is 96×64 tiles at 64 px each (6144×4096 world units), with tile layers `ground`/`dirt`/`sand`/`water` plus an `objects` point layer.
-- Collision in `state.js` combines two sources. The water layer uses per-tile corner masks: the four corner values are blended, and a point counts as water at ≥0.35 (the corner-mask encoding is shared with `build-map.py`). Each object also has a solid base, its `footprint` in `objects.json`.
+- Collision in `src/world/map.js` combines two sources. The water layer uses per-tile corner masks: the four corner values are blended, and a point counts as water at ≥0.35 (the corner-mask encoding is shared with `build-map.py`). Each object also has a solid base, its `footprint` in `objects.json`.
 - `objects.json` fields: `origin` is the ground contact point as a fraction of the sprite size. `footprint` is `[halfWidth, depth]` of the solid base; leave it out for walk-through objects. `flat` means the object is drawn under characters. `scale` is the draw size wherever the map places that sprite (flowers use 0.4 so a patch is smaller than a character); the footprint scales with it. Every other object is depth-sorted by its y position, so the player can walk in front of or behind it.
-- **`build-map.py` hard-codes coordinates that also live in `state.js`.** `REGION_OFFSETS` must match `V_OFF`/`C_OFF`. `KEEP_CLEAR` lists the absolute positions of the spawns and supply nodes; scattered scenery within 150 of them is removed after scattering. If you move or add a spawn or node, update `KEEP_CLEAR` and re-run the script. **Never edit `SCATTER_CLEAR`.** It is the frozen list the scatter loop has always skipped. Changing it changes the random sequence and reshuffles every later tree and rock, which can put a solid base under a saved player and make that save unreadable. The placement of landmark buildings (tent, houses, workshop, ship) is also defined in `build-map.py`.
-- **Supply nodes are not in the map.** `render.js` draws each one from `NODES` (`sprite` is an `objects.json` key, drawn at `scale`), and `state.js` makes its scaled footprint solid until it is collected (`nodeBases`). `movePlayer` ignores a base the player is already inside, so an old save can't get trapped.
-- **Wild scenery is in the map and also harvestable.** `WILD` in `state.js` names scattered sprites (today only `flowers`) that become `NODES` entries with id `<name>-<x>-<y>` and a `regrow` time. `render.js` skips them in the scenery loop and draws them with the supplies. They are walk-through (no footprint), so `nodeBases` covers only the fixed `SUPPLIES`.
+- **`build-map.py` hard-codes coordinates that also live in `src/data/characters.js` and `src/data/supplies.js`.** `REGION_OFFSETS` must match `V_OFF`/`C_OFF`. `KEEP_CLEAR` lists the absolute positions of the spawns and supply nodes; scattered scenery within 150 of them is removed after scattering. If you move or add a spawn or node, update `KEEP_CLEAR` and re-run the script. **Never edit `SCATTER_CLEAR`.** It is the frozen list the scatter loop has always skipped. Changing it changes the random sequence and reshuffles every later tree and rock, which can put a solid base under a saved player and make that save unreadable. The placement of landmark buildings (tent, houses, workshop, ship) is also defined in `build-map.py`.
+- **Supply nodes are not in the map.** `src/render/renderer.js` draws each one from `NODES` (`src/world/nodes.js`) (`sprite` is an `objects.json` key, drawn at `scale`), and `nodeBases` in `src/world/nodes.js` makes its scaled footprint solid until it is collected. `movePlayer` ignores a base the player is already inside, so an old save can't get trapped.
+- **Wild scenery is in the map and also harvestable.** `WILD` in `src/data/supplies.js` names scattered sprites (today only `flowers`) that become `NODES` entries with id `<name>-<x>-<y>` and a `regrow` time. the renderer skips them in the scenery loop and draws them with the supplies. They are walk-through (no footprint), so `nodeBases` covers only the fixed `SUPPLIES`.
 - `tools/make-standin-art.py` cut placeholder source art out of `assets/world/wildhaven.png`. **Do not re-run it.** It would overwrite any source art that has since been replaced. To change art, replace the file under `source/` and re-run `build-map.py`.
 
 ## Character Sprites
@@ -78,7 +90,7 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 - `assets/characters/starting-characters-idle-v1.png` has 3 rows, one per character (`CHARACTERS[i].row`), and 4 columns, one per direction. It is also used through CSS for the selection-screen portraits and the HUD portrait.
 - `animations/<id>-locomotion.png` has 8 rows (walk S/W/E/N, then run S/W/E/N) with 4 frames each. `animations/<id>-actions.png` has 5 rows (gather, build, craft, fight, swim). The action art faces east and is mirrored for west.
 - `animations/side-walk-v2.png` is a shared horizontal-walk sheet with one row per character. It is used for walking west or east, with each frame anchored on the head to prevent sliding (`steadyAnchors`).
-- The row boundaries are measured **`edges`** arrays in `SOURCES` in `src/animation-art.js`, not equal-height rows. If you regenerate a sheet, re-measure its edges. Columns are equal quarters of the sheet width. Within each cell the frame bounds come from pixels with alpha > 40.
+- The row boundaries are measured **`edges`** arrays in `SOURCES` in `src/animation/sheets.js`, not equal-height rows. If you regenerate a sheet, re-measure its edges. Columns are equal quarters of the sheet width. Within each cell the frame bounds come from pixels with alpha > 40.
 - Idle, walk, run, gather, and build are used in play. `build` (an overhead swing; the art shows a hammer) stands in for chopping the pine tree until an axe animation exists. Craft, fight, and swim exist only in the preview dialog and must not imply working mechanics.
 
 ## Game Rules That Affect Code
@@ -88,7 +100,7 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 - Movement speed is 155 units/s walking and 245 units/s with Shift. Collision is checked separately on the x and y axes so the player slides along obstacles.
 - Every gather is a timed action of `GATHER_SECONDS` = 6 s, read through `gatherTime(state, node)`, and its clip loops for the whole time. This is a design decision: planned gathering tools will lower it towards 0.5 s through `gatherTime`, so don't shorten the base time as a "fix." A fresh movement press cancels the action and awards nothing. Key-repeat from a key that was held when E was pressed does not cancel it. Pause and a hidden tab freeze it.
 - When a node is in reach, its sprite glows (Phaser Glow filter, WebGL only) and an E key cap floats over it. A progress bar replaces the cap while the action runs. Gathered sprites fade out, and regrown patches fade back in; there is no stump or bare-bush art yet.
-- Balance numbers are constants inside `src/state.js`. There is no separate data file.
+- Balance numbers live in `src/data/balance.js` (speeds, reach, `GATHER_SECONDS`, discovery radius). Don't hardcode tuning numbers in actions.
 
 ## Conventions
 
@@ -107,7 +119,7 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 ## Stale Docs
 
 Some docs predate the Phaser renderer, the tilemap pipeline, and the animation work. They are wrong in these places:
-- `README.md` calls `render.js` "Canvas rendering" and lists walking animation as future work.
+- `README.md` lists walking animation as future work.
 - `docs/art-direction.md` describes the world as `wildhaven.png` at 3072×2048.
 - `docs/verification.md` counts nine tests.
 
@@ -127,5 +139,5 @@ Version 0.5.0 of [gstack-game](https://github.com/fagemx/gstack-game) (MIT licen
 [awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) (Apache-2.0) is installed as Claude Code plugins at project scope (declared in `.claude/settings.json`). Unlike gstack-game, these skills write game code. Four bundles are enabled: `router`, `web-engines`, `disciplines` and `genres` (31 skills). The router detects Phaser from `package.json` and loads matching skills; the most useful here are `phaser-core`, `survival-crafting`, `save-systems`, `game-ai`, `create-game-assets`, `camera-systems`, `input-systems`, `game-feel` and `game-ui-ux`.
 
 - The other engine bundles were left out to keep the skill list short. The `workflows` bundle was also left out because its `game-docs` skill shares a name with gstack-game's `/game-docs`.
-- This file overrides those skills. In particular: **don't use Phaser Arcade Physics** (the router pairs it with movement work). Collision and movement stay in `state.js`, and input stays in `main.js`. Keep UI in HTML/DOM, not Phaser HUD scenes. Verify through the `wildhaven` launch config rather than adding Playwright.
+- This file overrides those skills. In particular: **don't use Phaser Arcade Physics** (the router pairs it with movement work). Collision stays in `src/world/map.js`, movement in `src/actions/move.js`, and input in `src/core/input.js`. Keep UI in HTML/DOM, not Phaser HUD scenes. Verify through the `wildhaven` launch config rather than adding Playwright.
 - Update with `claude plugin marketplace update awesome-gamedev-agent-skills`.

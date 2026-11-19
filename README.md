@@ -48,7 +48,7 @@ npm run build
 npm run preview
 ```
 
-State, collision, movement, gathering, and serialization are in `src/state.js`. Save ownership is in `src/storage.js`. Canvas rendering is in `src/render.js`. Screen transitions and DOM controls are in `src/main.js`; styling is in `src/style.css`.
+Game data and tuning live in `src/data/`, collision, supply nodes and regions in `src/world/`, and each player action (move, gather, discover) in its own file in `src/actions/`. Save state and storage are in `src/game/`. Phaser rendering is in `src/render/renderer.js`, animation clips and sprite sheets are in `src/animation/`, and the DOM screens and dialogs are in `src/ui/`. Input, the frame loop and the shared session are in `src/core/`, and `src/main.js` wires them together. Styling is in `src/style.css`.
 
 ## Current milestone
 
