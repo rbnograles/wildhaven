@@ -73,6 +73,8 @@ export function startLoop(session, ui) {
         // The first real step hides the controls strip.
         if (moving) ui.hud.hideKeyStrip();
         state.elapsed += dt;
+        // The world clock: gathered supplies grow back on it, and day and night follow it.
+        state.time += dt;
 
         // When a timed action finishes, award the supply it was aimed at (exactly once).
         const done = advanceAnimation(animator, dt, { moving, running });
