@@ -775,6 +775,51 @@ for gy in range(DETAIL_STEP // 2 - 14 * DETAIL_STEP, LAND_H + PAD, DETAIL_STEP):
                 or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)): continue
         details.append((name, x, y))
 
+# Small stones: little piles the player picks up with bare hands (WILD.pebbles in src/data/supplies.js), so there is
+# always stone for a first campfire and pickaxe before any rock can be mined. One more separate pass with its own
+# seeds, so adding it did not move a tree or a tuft. Per region: the chance a grid square gets a pile; the rocky
+# canyons get the most.
+PEBBLES = {'D': 0.2, 'P': 0.26, 'S': 0.18, 'h': 0.24, 'L': 0.2, 'C': 0.4, 'J': 0.2}
+PEBBLE_STEP = 220
+scenery_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered], float)
+pebbles = []
+for gy in range(PEBBLE_STEP // 2 - 10 * PEBBLE_STEP, LAND_H + PAD, PEBBLE_STEP):
+    for gx in range(PEBBLE_STEP // 2 - 10 * PEBBLE_STEP, LAND_W + PAD, PEBBLE_STEP):
+        rng = random.Random(gx * 2654435761 ^ gy * 40503 ^ 0x57e)
+        x, y = gx + rng.randint(-80, 80), gy + rng.randint(-80, 80)
+        k, ground, roll = region_key(x, y), terrain(x, y), rng.random()
+        # Piles must be reachable on foot and easy to see: on dry flat ground, off the paths, off the lagoon's
+        # islets (the same rule as its driftwood), and 130 units clear of every tree, rock, building and place.
+        if (roll >= PEBBLES[k] or not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30)
+                or ground in (WATER, DIRT) or inland(x, y) < 60 or (k == 'L' and x > coast(y) - 60)
+                or not on_flat(x, y, 60) or near_water(x, y, 60)
+                or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
+                or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
+                or (np.hypot(scenery_xy[:, 0] - x, scenery_xy[:, 1] - y) < 130).any()): continue
+        pebbles.append(('pebbles', x, y))
+
+# Wild berries: small bushes picked with bare hands (WILD['wild-berries']), so food is found while exploring and not
+# only at the three hand-placed berry bushes. The same kind of pass as the small stones, with its own seeds. Only
+# the green regions grow them: the desert, the snow and the bare canyon rock get none, and neither does beach sand.
+BERRIES = {'P': 0.2, 'h': 0.22, 'L': 0.2, 'J': 0.26}
+BERRY_STEP = 260
+taken_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered + pebbles], float)
+berries = []
+for gy in range(BERRY_STEP // 2 - 8 * BERRY_STEP, LAND_H + PAD, BERRY_STEP):
+    for gx in range(BERRY_STEP // 2 - 8 * BERRY_STEP, LAND_W + PAD, BERRY_STEP):
+        rng = random.Random(gx * 97531 ^ gy * 1299709 ^ 0xbe22)
+        x, y = gx + rng.randint(-95, 95), gy + rng.randint(-95, 95)
+        k, ground, roll = region_key(x, y), terrain(x, y), rng.random()
+        if (roll >= BERRIES.get(k, 0) or not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30)
+                or ground in (WATER, DIRT, SAND) or inland(x, y) < BEACH
+                or not on_flat(x, y, 60) or near_water(x, y, 60)
+                or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
+                or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
+                or (np.hypot(taken_xy[:, 0] - x, taken_xy[:, 1] - y) < 130).any()): continue
+        berries.append(('wild-berries', x, y))
+
 # Water ripples: small looping animations on open water, so rivers, pools and the sea are never perfectly still.
 # The renderer plays each one from its sheet in assets/world/animations/ (made by tools/prepare-sprite-art.py).
 # Another separate pass with its own seeds. Per kind of water (see water_kind): the sprite, how far it reaches
@@ -805,7 +850,7 @@ for gy in range(RIPPLE_STEP // 2 - PAD, LAND_H + PAD, RIPPLE_STEP):
                 or (kind != 1 and dry_near(x, y, rx, ry)) or any(math.hypot(x - bx_, y - by_) < 300 for bx_, by_ in BRIDGES)): continue
         ripples.append((name, x, y))
 # Everything above is in LAND units; the map file is in WORLD units.
-objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + ripples]
+objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + ripples]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,

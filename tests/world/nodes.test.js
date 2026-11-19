@@ -1,4 +1,4 @@
-// Checks the things you can gather (supplies and wild flower patches): that each one has art, an
+// Checks the things you can gather (supplies and wild patches: flowers, driftwood, small stones): that each one has art, an
 // animation and sensible numbers, and that every one of them can really be reached on foot.
 // A supply hidden behind water or trees would be a promise the game can't keep.
 
@@ -24,8 +24,8 @@ import { gatherTime, finishGather } from '../../src/actions/gather.js';
 import { CLIPS } from '../../src/animation/clips.js';
 
 /**
- * The hand-placed supplies (they grow back after two days), the wild patches: flowers and
- * driftwood (they grow back sooner), and the map's trees and rocks (they need a tool).
+ * The hand-placed supplies (they grow back after two days), the wild patches: flowers, driftwood
+ * and small stones (they grow back sooner), and the map's trees and rocks (they need a tool).
  */
 const supplies = NODES.filter((n) => SUPPLIES.includes(n)),
   wild = NODES.filter((n) => !SUPPLIES.includes(n) && !n.inScenery),
@@ -75,17 +75,32 @@ test('wild patches are walk-through, regrowing and drawn smaller than a characte
   }
 });
 
-// Guards what each wild patch gives: flowers are the only source of herbs, and driftwood on the
-// beaches gives the wood an old boat's repair needs.
-test('flower patches give herbs and beach driftwood gives wood', () => {
+// Guards what each wild patch gives: flowers are the only source of herbs, driftwood on the
+// beaches gives the wood an old boat's repair needs, and small stones and wild berries give stone
+// and food to bare hands.
+test('flowers give herbs, driftwood gives wood, small stones give stone and wild berries give food', () => {
   const flowers = wild.filter((n) => n.sprite === 'flowers'),
-    driftwood = wild.filter((n) => n.sprite === 'driftwood');
+    driftwood = wild.filter((n) => n.sprite === 'driftwood'),
+    pebbles = wild.filter((n) => n.sprite === 'pebbles'),
+    berries = wild.filter((n) => n.sprite === 'wild-berries');
   assert.ok(flowers.length >= 30);
   assert.ok(driftwood.length >= 20);
-  assert.equal(flowers.length + driftwood.length, wild.length);
+  assert.ok(pebbles.length >= 400);
+  assert.ok(berries.length >= 200);
+  assert.equal(flowers.length + driftwood.length + pebbles.length + berries.length, wild.length);
+  for (const n of berries)
+    assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['food', 1, undefined, 180], n.id);
+  for (const n of pebbles)
+    assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['stone', 1, undefined, 180], n.id);
   for (const n of flowers) assert.equal(n.type, 'herbs', n.id);
   for (const n of driftwood)
     assert.deepEqual([n.type, n.amount, n.verb, n.regrow], ['wood', 1, 'Pick up', 180], n.id);
+
+  // A new player needs 5 stone for a first pickaxe and campfire, so each start has piles in easy reach.
+  for (const c of CHARACTERS) {
+    const close = pebbles.filter((n) => Math.hypot(n.x - c.spawn.x, n.y - c.spawn.y) < 1500);
+    assert.ok(close.length >= 5, `${c.id}: ${close.length}`);
+  }
 });
 
 // Guards against a supply, a flower patch or a start spot being cut off by water, trees or

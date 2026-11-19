@@ -49,11 +49,6 @@ const animUrls = Object.fromEntries(
   ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
 );
 
-// Wind: a tree stands still most of the time, then leans left, back, and right. These are the
-// sheet columns for each step of that, played at SWAY_FPS steps a second.
-const SWAY = [1, 2, 3, 0, 0, 0, 0, 0, 0, 0];
-const SWAY_FPS = 3;
-
 // What a gathered supply plays before it fades, by how many rows its sheet has: a tree (3 rows)
 // falls and breaks into firewood (frames 4-11), a rock (1 row) cracks into rubble (frames 0-3).
 // `hold` is how many seconds the last picture stays before the fade starts.
@@ -64,20 +59,6 @@ const BREAK = {
 
 // How many flame pictures the campfire shows per second.
 const FIRE_FPS = 8;
-
-/**
- * Says which sway picture a tree at (x, y) shows right now.
- *
- * Trees further east and south start a little later, so a gust seems to roll across the forest
- * instead of every tree nodding at once.
- *
- * @param {number} time - Seconds the world has been drawn for.
- * @param {number} x - The tree's world x.
- * @param {number} y - The tree's world y.
- * @returns {number} A column of the tree sheet's first row: 0 or 2 upright, 1 left, 3 right.
- */
-const swayFrame = (time, x, y) =>
-  SWAY[Math.floor(time * SWAY_FPS + x / 260 + y / 410) % SWAY.length];
 
 /**
  * Says how far into its loop a water ripple at (x, y) starts.
@@ -152,10 +133,10 @@ export async function createRenderer(container, miniCanvas) {
     webgl = false,
     snap = true,
     shown = new Set();
-  // `swayers` holds, per chunk key, the trees that sway in the wind, and `loopers` the water ripples
-  // that play round and round. `clock` counts the seconds drawn.
+  // `loopers` holds, per chunk key, the water ripples that play round and round. `clock` counts the
+  // seconds drawn. Standing trees show one still picture: their sheets have sway frames, but the
+  // sway looked odd in play, so it was taken out (the fall and break frames are still used).
   const chunks = new Map(),
-    swayers = new Map(),
     loopers = new Map(),
     fires = new Map();
   let clock = 0;
@@ -244,12 +225,6 @@ export async function createRenderer(container, miniCanvas) {
           const key = `${Math.floor(object.x / CHUNK)},${Math.floor(object.y / CHUNK)}`;
           if (!chunks.has(key)) chunks.set(key, []);
           chunks.get(key).push(image);
-
-          // Trees (three-row sheets) sway in the wind while they are on screen.
-          if (anim?.rows === 3 && !reducedMotion) {
-            if (!swayers.has(key)) swayers.set(key, []);
-            swayers.get(key).push(image);
-          }
 
           // Water ripples (sheets with a `loop` speed) play round and round while they are on screen.
           // With reduced motion they are left out: a frozen ripple is just a smudge on the water.
@@ -436,7 +411,7 @@ export async function createRenderer(container, miniCanvas) {
   /**
    * Shows a supply, tree or rock as standing or gone this frame.
    *
-   * A standing one with a tree sheet sways. One just gathered that has a flip-book sheet falls and
+   * A standing one shows its still picture. One just gathered that has a flip-book sheet falls and
    * breaks apart (a rock cracks to rubble) and only then fades; anything else simply fades out, and
    * fades back in when it grows back.
    *
@@ -454,9 +429,7 @@ export async function createRenderer(container, miniCanvas) {
       const act = BREAK[s.anim.rows];
       if (!gone) {
         s.fx = null;
-        s.sprite.setFrame(
-          s.anim.rows === 3 && !reducedMotion ? swayFrame(clock, s.node.x, s.node.y) : 0,
-        );
+        s.sprite.setFrame(0);
       } else if (!s.wasGone && !quiet) s.fx = 0;
       if (gone && s.fx !== null) {
         s.fx += dt;
@@ -478,7 +451,7 @@ export async function createRenderer(container, miniCanvas) {
    * Draws one frame: moves the camera, updates supply sprites, and poses the player.
    *
    * The camera follows the player smoothly, like someone filming who walks a step behind.
-   * Trees sway, campfires flicker, and a chopped tree falls and breaks apart before it fades.
+   * Campfires flicker, and a chopped tree falls and breaks apart before it fades.
    * Supplies fade out when gathered, the one in reach glows with an E above it, and while an
    * action runs a progress bar fills up instead. Camp fires are drawn, the player sprite gets this
    * frame's pose, the build ghost follows the pointer, snow falls in the snowy regions, and the
@@ -532,10 +505,8 @@ export async function createRenderer(container, miniCanvas) {
     for (const key of appeared) for (const image of chunks.get(key)) image.setVisible(true);
     shown = next;
 
-    // Wind in the trees on screen.
+    // The clock that the water glints and the camp fires play by.
     clock += dt;
-    for (const key of shown)
-      for (const tree of swayers.get(key) ?? []) tree.setFrame(swayFrame(clock, tree.x, tree.y));
 
     // Water glints fade between neighboring pictures, each patch starting at a different phase.
     for (const key of shown)

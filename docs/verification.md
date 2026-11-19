@@ -332,3 +332,13 @@ Browser at `http://127.0.0.1:5173` (Survivor, walked about 170 units west of the
 - No console errors.
 
 Not checked by hand: waking at a named camp, the toast for a drifted boat or new needs, and Escape instead of the button (same `close` handler).
+
+## Small stones, wild berries and still trees (2026-11-19)
+
+Played the Scout at `http://127.0.0.1:5173` in Pinefall Woods.
+
+- A pile of small stones near the tent showed the E cap and "Pick up small stones"; picking it took stone from 3 to 4 and the pile faded.
+- A wild berry bush west of the spawn showed "Pick wild berries"; picking it took food from 2 to 3.
+- Pines on screen stood still (the sway was removed).
+
+Not checked by hand: the other two characters, other regions, regrowth after 180 s, a chopped tree still falling and breaking, and 390 px wide.

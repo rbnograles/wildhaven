@@ -159,3 +159,22 @@ d.rounded_rectangle((30, 14, 120, 30), 8, fill=(206, 194, 172), outline=(118, 10
 d.line((96, 48, 118, 62), fill=(150, 136, 116), width=5)
 save(drift, obj('driftwood'),
      object_prompt('two or three bleached grey driftwood branches lying flat on sand', 150, 70))
+
+# ---- small stones (picked up by hand) ------------------------------------------------------
+# Three little copies of the painted beach rock, greyed a bit, so the stand-in matches the other rocks' style.
+# It is drawn at twice its game size (objects.json scales it by 0.5) so it stays sharp.
+stone = recolor(sprite('beach-rock'), (0.92, 0.92, 0.94), gray=0.5)
+pebbles = blank(170, 96)
+for w, x, y, flip in ((88, 4, 6, False), (70, 96, 30, True), (54, 44, 56, False)):
+    piece = stone.resize((w, w * stone.height // stone.width), Image.LANCZOS)
+    if flip: piece = piece.transpose(Image.FLIP_LEFT_RIGHT)
+    pebbles.alpha_composite(piece, (x, y))
+# ---- wild berries (picked by hand) ---------------------------------------------------------
+# The painted berry bush, a touch brighter, so it can be told from the big solid bushes (objects.json draws it
+# smaller, at 0.65, and gives it no solid base: the player walks through it like a flower patch).
+save(recolor(sprite('berry-bush'), (1.06, 1.1, 0.98), (4, 6, 0)), obj('wild-berries'),
+     object_prompt('a small low wild berry bush with bright green leaves and a few clusters of red berries',
+                   150, 104))
+save(pebbles, obj('pebbles'),
+     object_prompt('three small loose grey stones lying close together on the ground, each about the size of a '
+                   'fist, no moss', 170, 96))
