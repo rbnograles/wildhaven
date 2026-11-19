@@ -4,7 +4,9 @@
 
 import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
+import { REGIONS, REGION_GRID, regionIndexAt } from '../world/regions.js';
 import { NODES } from '../world/nodes.js';
+import { LANDMARKS, WAYPOINTS } from '../data/places.js';
 import { WILD } from '../data/supplies.js';
 import { nearbyNode, isAvailable } from '../actions/gather.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
@@ -36,6 +38,9 @@ const CHUNK = 1024;
 
 // How far past the screen edge scenery is still shown, so a tall tree just off screen doesn't pop in.
 const CULL_MARGIN = 640;
+
+// How many world units wide the corner minimap shows. The whole world would be too small to read.
+const MINI_VIEW = 4096;
 
 /**
  * Loads all the artwork and builds the Phaser scene that draws the world.
@@ -249,27 +254,77 @@ export async function createRenderer(container, miniCanvas) {
   }
 
   /**
-   * Paints a small picture of the whole world with the player's position.
+   * Paints a map: either the whole world, or a window around the player for the corner minimap.
    *
-   * Used for both the corner minimap and the big map dialog. World positions are shrunk to fit
-   * the canvas, like tracing a big map onto a postcard. The player is the white dot.
+   * World positions are shrunk to fit the canvas, like tracing a big map onto a postcard. On the
+   * whole-world map, regions the player hasn't entered are dimmed. Found places are cream dots,
+   * found signposts are gold diamonds, and the player is the white dot.
    *
    * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
-   * @param {object} state - The game being played (player position, discovered regions).
+   * @param {object} state - The game being played.
    * @param {number} w - Canvas width in pixels.
    * @param {number} h - Canvas height in pixels.
+   * @param {boolean} [local=false] - True to show only the area around the player.
    */
-  function drawMap(ctx, state, w, h) {
-    ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(overview, 0, 0, w, h);
+  function drawMap(ctx, state, w, h, local = false) {
+    // The part of the world this map shows, in world units.
+    const vw = local ? MINI_VIEW : WORLD.width,
+      vh = local ? (MINI_VIEW * h) / w : WORLD.height,
+      vx = local ? Math.min(Math.max(state.player.x - vw / 2, 0), WORLD.width - vw) : 0,
+      vy = local ? Math.min(Math.max(state.player.y - vh / 2, 0), WORLD.height - vh) : 0;
+    const sx = overview.width / WORLD.width,
+      sy = overview.height / WORLD.height;
+    /** Turns a world x position into a canvas x position. */
+    const px = (x) => ((x - vx) / vw) * w,
+      py = (y) => ((y - vy) / vh) * h;
 
-    const x = (state.player.x / WORLD.width) * w,
-      y = (state.player.y / WORLD.height) * h;
-    ctx.fillStyle = '#ffffff';
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(overview, vx * sx, vy * sy, vw * sx, vh * sy, 0, 0, w, h);
+
+    // Dim the regions not yet entered, one grid square at a time.
+    if (!local) {
+      const cw = w / REGION_GRID.cols,
+        ch = h / REGION_GRID.rows;
+      ctx.fillStyle = 'rgba(24, 38, 30, 0.55)';
+      for (let cy = 0; cy < REGION_GRID.rows; cy++)
+        for (let cx = 0; cx < REGION_GRID.cols; cx++)
+          if (!state.discovered.includes(REGIONS[regionIndexAt(cx, cy)].id))
+            ctx.fillRect(cx * cw, cy * ch, cw + 0.5, ch + 0.5); // the extra half pixel hides hairline gaps
+    }
+
+    // Found places: small cream dots.
+    ctx.lineWidth = 1.5;
     ctx.strokeStyle = '#294c3b';
+    ctx.fillStyle = '#f7ecc5';
+    for (const place of LANDMARKS) {
+      if (!state.landmarks.includes(place.id)) continue;
+      ctx.beginPath();
+      ctx.arc(px(place.x), py(place.y), 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Found signposts: gold diamonds. On the big map a button sits over each one (ui/dialogs.js).
+    ctx.fillStyle = '#ffd166';
+    for (const post of WAYPOINTS) {
+      if (!state.waypoints.includes(post.id)) continue;
+      const x = px(post.x),
+        y = py(post.y);
+      ctx.beginPath();
+      ctx.moveTo(x, y - 5);
+      ctx.lineTo(x + 5, y);
+      ctx.lineTo(x, y + 5);
+      ctx.lineTo(x - 5, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // The player.
+    ctx.fillStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+    ctx.arc(px(state.player.x), py(state.player.y), 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
@@ -391,7 +446,7 @@ export async function createRenderer(container, miniCanvas) {
       .setDepth(state.player.y);
     shadow.setPosition(state.player.x, state.player.y - 1).setDepth(state.player.y - 0.5);
 
-    drawMap(mini, state, miniCanvas.width, miniCanvas.height);
+    drawMap(mini, state, miniCanvas.width, miniCanvas.height, true);
   }
 
   return {
