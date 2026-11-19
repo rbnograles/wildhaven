@@ -1,0 +1,714 @@
+{
+  "version": 1,
+  "generator": "built-in image_gen",
+  "date": "2026-11-19",
+  "reference": "../originals/starting-characters-idle-v1.png",
+  "characters": [
+    "scout",
+    "builder",
+    "survivor"
+  ],
+  "runModifier": "Shift",
+  "frameRectFormat": "x,y,width,height; nominal grid with rounded boundaries",
+  "playbackStatus": "Draft cycles; pivots, gait and timings need in-engine review; not integrated",
+  "directions": [
+    {
+      "id": "ne",
+      "keys": [
+        "W",
+        "D"
+      ],
+      "walk": "walk-ne",
+      "run": "run-ne",
+      "flipX": false
+    },
+    {
+      "id": "nw",
+      "keys": [
+        "W",
+        "A"
+      ],
+      "walk": "walk-ne",
+      "run": "run-ne",
+      "flipX": true
+    },
+    {
+      "id": "se",
+      "keys": [
+        "S",
+        "D"
+      ],
+      "walk": "walk-se",
+      "run": "run-se",
+      "flipX": false
+    },
+    {
+      "id": "sw",
+      "keys": [
+        "S",
+        "A"
+      ],
+      "walk": "walk-se",
+      "run": "run-se",
+      "flipX": true
+    }
+  ],
+  "sheets": [
+    {
+      "id": "run-ne",
+      "file": "run-ne.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 6,
+      "rows": 3,
+      "fps": 15,
+      "loop": true,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            256,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            512,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            768,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 4,
+          "rect": [
+            1024,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 5,
+          "rect": [
+            1280,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            256,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            512,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            768,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 4,
+          "rect": [
+            1024,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 5,
+          "rect": [
+            1280,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            256,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            512,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            768,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 4,
+          "rect": [
+            1024,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 5,
+          "rect": [
+            1280,
+            683,
+            256,
+            341
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run-se",
+      "file": "run-se.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 6,
+      "rows": 3,
+      "fps": 15,
+      "loop": true,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            256,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            512,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            768,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 4,
+          "rect": [
+            1024,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 5,
+          "rect": [
+            1280,
+            0,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            256,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            512,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            768,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 4,
+          "rect": [
+            1024,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 5,
+          "rect": [
+            1280,
+            341,
+            256,
+            342
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            256,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            512,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            768,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 4,
+          "rect": [
+            1024,
+            683,
+            256,
+            341
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 5,
+          "rect": [
+            1280,
+            683,
+            256,
+            341
+          ]
+        }
+      ]
+    },
+    {
+      "id": "walk-ne",
+      "file": "walk-ne.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 7,
+      "loop": true,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            314,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            627,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            940,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            314,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            627,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            940,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            836,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            314,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            627,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            940,
+            836,
+            314,
+            418
+          ]
+        }
+      ]
+    },
+    {
+      "id": "walk-se",
+      "file": "walk-se.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "columns": 4,
+      "rows": 3,
+      "fps": 7,
+      "loop": true,
+      "frames": [
+        {
+          "character": "scout",
+          "frame": 0,
+          "rect": [
+            0,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 1,
+          "rect": [
+            314,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 2,
+          "rect": [
+            627,
+            0,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "scout",
+          "frame": 3,
+          "rect": [
+            940,
+            0,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 0,
+          "rect": [
+            0,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 1,
+          "rect": [
+            314,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 2,
+          "rect": [
+            627,
+            418,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "builder",
+          "frame": 3,
+          "rect": [
+            940,
+            418,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 0,
+          "rect": [
+            0,
+            836,
+            314,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 1,
+          "rect": [
+            314,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 2,
+          "rect": [
+            627,
+            836,
+            313,
+            418
+          ]
+        },
+        {
+          "character": "survivor",
+          "frame": 3,
+          "rect": [
+            940,
+            836,
+            314,
+            418
+          ]
+        }
+      ]
+    }
+  ]
+}

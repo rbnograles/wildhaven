@@ -14,6 +14,8 @@ import {
   HEAL_BY_FIRE,
   STARVING_COLD,
   TEA_SECONDS,
+  STARVE_SECONDS,
+  STARVE_FLOOR,
 } from '../../src/data/balance.js';
 import { createGame } from '../../src/game/state.js';
 import { tickSurvival, skipTo, meterTrends } from '../../src/actions/survive.js';
@@ -103,7 +105,8 @@ test('hunger falls steadily; when empty, the cold is harsher and the fire stops 
   const resting = gameAt(250, { hunger: 0, health: 40 });
   lightFire(resting);
   tickSurvival(resting, 1);
-  assert.equal(resting.meters.health, 40);
+  // No healing by the fire on an empty stomach; starving wears health down instead.
+  assert.ok(near(resting.meters.health, 40 - 100 / STARVE_SECONDS));
 });
 
 // Guards tea: it holds off the cold while it lasts, and only runs down while it protects.
@@ -221,4 +224,24 @@ test('meter trends name the cause of each changing meter', () => {
   const warm = gameAt(250);
   lightFire(warm);
   assert.equal(meterTrends(warm).warmth, 'warming');
+});
+
+// Guards hunger damage: an empty stomach must wear health down slowly, stop at the floor so
+// hunger alone never knocks the player out, and leave a fed player alone.
+test('starving drains health slowly, only down to the floor, and never causes passing out', () => {
+  const game = gameAt(100, { hunger: 0, health: 100 });
+  assert.deepEqual(tickSurvival(game, 12), []);
+  assert.ok(near(game.meters.health, 100 - (100 / STARVE_SECONDS) * 12));
+  assert.equal(meterTrends(game).health, 'starving');
+
+  // Close to the floor, a long step stops exactly on it instead of going under.
+  game.meters.health = STARVE_FLOOR + 1;
+  const events = tickSurvival(game, 30);
+  assert.equal(game.meters.health, STARVE_FLOOR);
+  assert.ok(!events.some((e) => e.kind === 'passout'));
+  assert.equal(meterTrends(game).health, '');
+
+  const fed = gameAt(100, { hunger: 50, health: 80 });
+  tickSurvival(fed, 12);
+  assert.equal(fed.meters.health, 80);
 });

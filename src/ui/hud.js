@@ -76,7 +76,8 @@ export function describeEvent(event) {
   if (event.kind === 'dusk') return 'Dusk is falling. Head to a fire before dark.';
   if (event.kind === 'night') return 'Getting dark, head to a fire.';
   if (event.kind === 'freezing') return "You're freezing. Your health is dropping.";
-  if (event.kind === 'starving') return "You're starving. Eat something (F).";
+  if (event.kind === 'starving')
+    return "You're starving. Your health is dropping. Eat something (F).";
   if (event.kind === 'dawn') {
     const needs = event.camps.length ? ` New needs at ${event.camps.join(', ')}.` : '';
     return `Dawn, day ${event.day}.${needs}`;
