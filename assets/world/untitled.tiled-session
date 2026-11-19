@@ -1,0 +1,27 @@
+{
+    "activeFile": "map/wildhaven.json",
+    "expandedProjectPaths": [
+        "map",
+        "."
+    ],
+    "fileStates": {
+        "map/wildhaven.json": {
+            "scale": 0.75,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 15080,
+                "y": 5073.333333333333
+            }
+        },
+        "map/wildhaven.json#terrain": {
+            "scaleInDock": 1
+        }
+    },
+    "openFiles": [
+        "map/wildhaven.json"
+    ],
+    "project": "untitled.tiled-project",
+    "recentFiles": [
+        "map/wildhaven.json"
+    ]
+}

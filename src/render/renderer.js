@@ -592,7 +592,6 @@ export async function createRenderer(container, miniCanvas) {
     boat.setVisible(!!state.boat);
     if (state.boat) {
       const { x, y, dir } = state.boat;
-    // A `once` action (the collapse) holds its last picture instead: nobody falls down twice.
       boat
         .setPosition(x, y + bob)
         .setFlipX(dir === 1)
@@ -622,6 +621,7 @@ export async function createRenderer(container, miniCanvas) {
     }
 
     // A timed action is longer than one pass of its clip, so it loops until the action ends.
+    // A `once` action (the collapse) holds its last picture instead: nobody falls down twice.
     // In the boat the player sits still, so the idle pose is used.
     const pose = resolvePose(
       sheets,
