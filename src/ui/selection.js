@@ -1,6 +1,6 @@
 // The character selection screen, the first screen the player sees.
 // It shows each character's story and save status, and starts the game when "Begin" is pressed.
-import { CHARACTERS } from '../data/characters.js';
+import { CHARACTERS, nextCharacterId } from '../data/characters.js';
 import { restoreGame } from '../game/state.js';
 import { storageKey } from '../game/saves.js';
 import { start, cancelLoading } from '../core/session.js';
@@ -77,12 +77,8 @@ export function setupSelection(session, ui) {
     button.addEventListener('keydown', (event) => {
       if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
       event.preventDefault();
-      // Step one card right (+1) or left (+2, which wraps around the three cards), then focus it.
-      const next =
-        (CHARACTERS.findIndex((c) => c.id === button.dataset.character) +
-          (event.key === 'ArrowRight' ? 1 : 2)) %
-        3;
-      select(CHARACTERS[next].id);
+      // Step one card right or left (wrapping round), then focus that card.
+      select(nextCharacterId(button.dataset.character, event.key === 'ArrowRight' ? 1 : -1));
       document.querySelector(`[data-character="${session.selected}"]`).focus();
     });
   });

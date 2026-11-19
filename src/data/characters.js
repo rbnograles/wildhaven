@@ -71,3 +71,17 @@ export const CHARACTERS = [
     resources: { wood: 2, stone: 0, food: 4 },
   },
 ];
+
+/**
+ * Finds the character a number of places along from another one, in menu order, wrapping
+ * around at both ends. The menu's arrow keys, phone arrows and swipes all use it.
+ *
+ * @param {string} id - The current character's id, such as `scout`.
+ * @param {number} step - How far to move: 1 for the next character, -1 for the previous one.
+ * @returns {string} The id of the character `step` places along.
+ */
+export function nextCharacterId(id, step) {
+  const count = CHARACTERS.length;
+  const index = CHARACTERS.findIndex((c) => c.id === id);
+  return CHARACTERS[(((index + step) % count) + count) % count].id;
+}
