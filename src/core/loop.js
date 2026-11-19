@@ -31,7 +31,7 @@ const FOUND = {
   waypoint: ({ name }) => `Signpost found: ${name}`,
   // Coming close to an old boat on the beach, and what mending it costs.
   wreck: ({ name }) =>
-    `Found ${name} · Repair it with ${REPAIR_COST.wood} wood and ${REPAIR_COST.stone} stone`,
+    `Found ${name} Â· Repair it with ${REPAIR_COST.wood} wood and ${REPAIR_COST.stone} stone`,
 };
 
 /**
