@@ -531,7 +531,6 @@ export async function createRenderer(container, miniCanvas) {
       for (const ripple of loopers.get(key) ?? [])
         ripple.image.setFrame(Math.floor(Math.abs(clock) * ripple.fps + ripple.start) % 4);
 
-
     // Campfires: one sprite per camp, made when the camp is founded. Keys include the character,
     // so switching characters never reuses another character's fire.
     const fireKeys = new Set(state.camps.map((camp) => `${state.character}:${camp.id}`));
