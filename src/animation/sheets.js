@@ -1,16 +1,16 @@
-import idleUrl from '../assets/characters/starting-characters-idle-v1.png';
-import sideWalkUrl from '../assets/characters/animations/side-walk-v2.png';
-import scoutRun from '../assets/characters/animations/scout-run-v2.png';
-import builderRun from '../assets/characters/animations/builder-run-v2.png';
-import survivorRun from '../assets/characters/animations/survivor-run-v2.png';
-import scoutWalk from '../assets/characters/animations/scout-locomotion.png';
-import builderWalk from '../assets/characters/animations/builder-locomotion.png';
-import survivorWalk from '../assets/characters/animations/survivor-locomotion.png';
-import scoutActions from '../assets/characters/animations/scout-actions.png';
-import builderActions from '../assets/characters/animations/builder-actions.png';
-import survivorActions from '../assets/characters/animations/survivor-actions.png';
-import {CHARACTERS} from './state.js';
-import {sampleAnimation,steadyAnchors} from './animation.js';
+import idleUrl from '../../assets/characters/starting-characters-idle-v1.png';
+import sideWalkUrl from '../../assets/characters/animations/side-walk-v2.png';
+import scoutRun from '../../assets/characters/animations/scout-run-v2.png';
+import builderRun from '../../assets/characters/animations/builder-run-v2.png';
+import survivorRun from '../../assets/characters/animations/survivor-run-v2.png';
+import scoutWalk from '../../assets/characters/animations/scout-locomotion.png';
+import builderWalk from '../../assets/characters/animations/builder-locomotion.png';
+import survivorWalk from '../../assets/characters/animations/survivor-locomotion.png';
+import scoutActions from '../../assets/characters/animations/scout-actions.png';
+import builderActions from '../../assets/characters/animations/builder-actions.png';
+import survivorActions from '../../assets/characters/animations/survivor-actions.png';
+import {CHARACTERS} from '../state.js';
+import {sampleAnimation,steadyAnchors} from './clips.js';
 
 // Measured transparent gutters, rather than assumed equal rows, preserve all generated poses.
 const SOURCES={

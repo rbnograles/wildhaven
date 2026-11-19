@@ -1,4 +1,4 @@
-import { serializeGame, CHARACTERS } from './state.js';
+import { serializeGame, CHARACTERS } from '../state.js';
 
 export const storageKey = id => `wildhaven.adventure.v1.${id}`;
 

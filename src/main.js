@@ -1,9 +1,9 @@
 import './style.css';
 import { WORLD, CHARACTERS, LOCATIONS, NODES, RESOURCES, createGame, movePlayer, restoreGame, gather, gatherTime, discover, nearbyNode, regionAt, hasGathered } from './state.js';
-import { createRenderer } from './render.js';
-import { createSaveSession, storageKey, readActive, setActive } from './storage.js';
-import { createAnimator, startAction, cancelAction, advanceAnimation } from './animation.js';
-import { setupPreview } from './animation-preview.js';
+import { createRenderer } from './render/renderer.js';
+import { createSaveSession, storageKey, readActive, setActive } from './game/saves.js';
+import { createAnimator, startAction, cancelAction, advanceAnimation } from './animation/clips.js';
+import { setupPreview } from './animation/preview.js';
 
 const icons={
   compass:'<circle cx="12" cy="12" r="8"/><path d="m12 1 2.5 8.5L23 12l-8.5 2.5L12 23l-2.5-8.5L1 12l8.5-2.5Z"/><path d="m12 5 0 7 7 0"/>',

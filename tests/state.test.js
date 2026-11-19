@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CHARACTERS, NODES, RESOURCES, GATHER_SECONDS, createGame, movePlayer, serializeGame, restoreGame, gather, gatherTime, discover, WORLD, isWalkable, nodeBases, nearbyNode, isAvailable, hasGathered } from '../src/state.js';
-import { CLIPS } from '../src/animation.js';
+import { CLIPS } from '../src/animation/clips.js';
 import OBJECT_SPECS from '../assets/world/source/objects.json' with { type: 'json' };
 
 const supplies = NODES.filter(n => !n.regrow), wild = NODES.filter(n => n.regrow);

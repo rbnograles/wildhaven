@@ -1,13 +1,13 @@
 import * as Phaser from 'phaser';
-import { WORLD, CHARACTERS, LOCATIONS, NODES, WILD, nearbyNode, isAvailable } from './state.js';
-import { loadCharacterSheets, loadImage, resolvePose } from './animation-art.js';
-import { actionProgress } from './animation.js';
-import mapData from '../assets/world/map/wildhaven.json';
-import objectSpecs from '../assets/world/source/objects.json';
-import tilesetUrl from '../assets/world/map/tileset.png';
-import overviewUrl from '../assets/world/map/overview.webp';
+import { WORLD, CHARACTERS, LOCATIONS, NODES, WILD, nearbyNode, isAvailable } from '../state.js';
+import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
+import { actionProgress } from '../animation/clips.js';
+import mapData from '../../assets/world/map/wildhaven.json';
+import objectSpecs from '../../assets/world/source/objects.json';
+import tilesetUrl from '../../assets/world/map/tileset.png';
+import overviewUrl from '../../assets/world/map/overview.webp';
 
-const objectUrls=Object.fromEntries(Object.entries(import.meta.glob('../assets/world/source/objects/*.png',{eager:true,query:'?url',import:'default'}))
+const objectUrls=Object.fromEntries(Object.entries(import.meta.glob('../../assets/world/source/objects/*.png',{eager:true,query:'?url',import:'default'}))
   .map(([path,url])=>[path.match(/([\w-]+)\.png$/)[1],url]));
 const TERRAIN_LAYERS=['ground','dirt','sand','water'];
 const PLAYER_HEIGHT=112;
