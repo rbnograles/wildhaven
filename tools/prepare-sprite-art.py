@@ -12,6 +12,7 @@ Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
          source/objects/props/bridge.png           the bridge at game size
          assets/ui/game/item-box.png, build-hammer.png   the item box (one row of five slots) and Build icon
+         assets/ui/game/icon-<resource>.png        the item box's pictures, made from sprites already in the world
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
@@ -194,3 +195,16 @@ for name, (x0, y0, x1, y1) in HUD.items():
         hole_y = np.flatnonzero(~col); hole_y = hole_y[(hole_y > 40) & (hole_y < len(col) - 20)]
         print('minimap ring', piece.shape[1], 'x', piece.shape[0], 'hole x', hole_x.min(), hole_x.max(), 'y', hole_y.min(), hole_y.max())
     save(Image.fromarray(piece), os.path.join(UI, f'hud-{name}.png'), source)
+
+# ---- the item box's pictures: one per resource, from art the world already shows ----------------
+# Wood is the firewood a felled oak ends as, stone is the loose-stones rock, food is the berry bush and herbs are
+# the wildflowers they are picked from. Each is trimmed and fitted inside a 96-pixel square.
+ICONS = {
+    'wood': os.path.join(SRC, 'animations', 'oak-wind-fall-break.png'),
+    'stone': os.path.join(SRC, 'objects', 'rocks', 'rocks-b.png'),
+    'food': os.path.join(SRC, 'objects', 'plants', 'berry-bush.png'),
+    'herbs': os.path.join(SRC, 'objects', 'plants', 'flowers.png'),
+}
+for name, source in ICONS.items():
+    art = frames_of(load(source), 2, 3)[3]['pixels'] if name == 'wood' else trimmed(load(source))
+    save(shrink(art, 96 / max(art.shape[:2])), os.path.join(UI, f'icon-{name}.png'), source)

@@ -4,11 +4,11 @@
 // never changes it.
 import { RESOURCES } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
-import { CAMPFIRE_COST, REPAIR_COST } from '../data/balance.js';
+import { CAMPFIRE_COST, REPAIR_COST, DAY_SECONDS, PHASES } from '../data/balance.js';
 import { NODES } from '../world/nodes.js';
 import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
-import { clockLabel, phaseOf } from '../world/clock.js';
+import { clockLabel, phaseOf, timeOfDay } from '../world/clock.js';
 import { nearestCamp, campInReach } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { missingForRepair, listMissing } from '../actions/boat.js';
@@ -116,6 +116,12 @@ export function createHud(session) {
   function updateMeters(state) {
     $('identity-status').dataset.phase = phaseOf(state.time);
     $('clock').textContent = clockLabel(state.time);
+
+    // The day dial: its face turns so the present moment sits under the pin at the top.
+    const dial = $('day-dial');
+    dial.style.setProperty('--turn', `${(-timeOfDay(state.time) / DAY_SECONDS) * 360}deg`);
+    dial.title = dial.ariaLabel = clockLabel(state.time);
+
     const trends = meterTrends(state);
     for (const name of ['health', 'hunger', 'warmth']) {
       const value = Math.round(state.meters[name]),
@@ -128,6 +134,26 @@ export function createHud(session) {
         trend === 'tea' ? `Tea ${Math.ceil(state.tea)}s` : (TREND_WORDS[trend] ?? '');
     }
   }
+
+  /**
+   * Paints the day dial's face once: a round clock of one whole day, coloured by its four parts.
+   *
+   * Like a pie cut by the hours in `PHASES`: a thin peach slice for dawn, a wide sky-blue one for
+   * day, an orange one for dusk and a dark blue one for night. The slices come from the balance
+   * numbers, so changing the length of the night changes the dial too.
+   */
+  function paintDayDial() {
+    /** Turns a moment of the day (in game seconds) into how far round the dial it is. */
+    const at = (seconds) => `${(seconds / DAY_SECONDS) * 360}deg`;
+    $('day-dial-face').style.background =
+      `conic-gradient(#f6c98a 0 ${at(PHASES.day)}, #8fd0ee ${at(PHASES.day)}, #5fb2e6 ${at(PHASES.dusk)}, ` +
+      `#e58a4a ${at(PHASES.dusk)} ${at(PHASES.night)}, #1c2a57 ${at(PHASES.night)}, #2a3c7a 360deg)`;
+
+    // The sun sits in the middle of the day's slice and the moon in the middle of the night's.
+    $('day-dial').style.setProperty('--noon', at((PHASES.day + PHASES.dusk) / 2));
+    $('day-dial').style.setProperty('--midnight', at((PHASES.night + DAY_SECONDS) / 2));
+  }
+  paintDayDial();
 
   /**
    * Fills the goals card's list: one line per goal with its count, ticked off when complete.

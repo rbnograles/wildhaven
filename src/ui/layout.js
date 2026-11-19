@@ -3,6 +3,10 @@
 // is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
 import buildHammerUrl from '../../assets/ui/game/build-hammer.png';
+import woodIconUrl from '../../assets/ui/game/icon-wood.png';
+import stoneIconUrl from '../../assets/ui/game/icon-stone.png';
+import foodIconUrl from '../../assets/ui/game/icon-food.png';
+import herbsIconUrl from '../../assets/ui/game/icon-herbs.png';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
@@ -211,6 +215,11 @@ export function mountLayout(app) {
         <!-- Who you are, the day clock and your survival meters. -->
         <div class="identity hud-panel">
           <span id="hud-portrait" class="hud-portrait"></span>
+          <span id="day-dial" class="day-dial" role="img"
+            ><span id="day-dial-face" class="day-dial-face"
+              ><i class="day-dial-sun"></i><i class="day-dial-moon"></i></span
+            ><i class="day-dial-pin"></i
+          ></span>
           <div class="identity-text">
             <span id="hud-name" class="hud-name"></span
             ><span id="identity-status" class="identity-status" data-phase="day"
@@ -242,15 +251,17 @@ export function mountLayout(app) {
           </div>
           <div class="hotbar" aria-label="Items">
             <span class="slot" title="Wood"
-              >${icon('wood')}<b id="wood">0</b><span class="slot-label">Wood</span></span
+              ><img src="${woodIconUrl}" alt="" /><b id="wood">0</b
+              ><span class="slot-label">Wood</span></span
             ><span class="slot" title="Stone"
-              >${icon('stone')}<b id="stone">0</b><span class="slot-label">Stone</span></span
+              ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
+              ><span class="slot-label">Stone</span></span
             ><button id="slot-food" class="slot" title="Eat one food (F)">
-              ${icon('food')}<b id="food">0</b><span class="slot-label">Food</span
-              ><kbd>F</kbd></button
+              <img src="${foodIconUrl}" alt="" /><b id="food">0</b
+              ><span class="slot-label">Food</span><kbd>F</kbd></button
             ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
-              ${icon('herbs')}<b id="herbs">0</b><span class="slot-label">Herbs</span
-              ><kbd>H</kbd></button
+              <img src="${herbsIconUrl}" alt="" /><b id="herbs">0</b
+              ><span class="slot-label">Herbs</span><kbd>H</kbd></button
             ><span class="hotbar-rule" aria-hidden="true"></span
             ><button
               id="build-button"
