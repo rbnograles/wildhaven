@@ -1,6 +1,6 @@
-import { CHARACTERS } from './state.js';
-import { CLIPS } from './animation.js';
-import { loadCharacterPainter } from './animation-art.js';
+import { CHARACTERS } from '../data/characters.js';
+import { CLIPS } from './clips.js';
+import { loadCharacterPainter } from './sheets.js';
 
 export function setupPreview(getCharacter) {
   const dialog = document.createElement('dialog');

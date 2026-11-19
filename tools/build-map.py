@@ -86,11 +86,15 @@ objects = [('tent', 757, 390), ('log', 464, 396), ('campfire', 576, 484),
            ('house-a', 1145 + V_OFF[0], 770 + V_OFF[1]), ('house-b', 1745 + V_OFF[0], 780 + V_OFF[1]),
            ('house-c', 1078 + V_OFF[0], 1200 + V_OFF[1]), ('workshop', 1908 + V_OFF[0], 1115 + V_OFF[1]),
            ('ship', 2725 + C_OFF[0], 1560 + C_OFF[1])]
-# Spawns and supply nodes from src/state.js: nothing is scattered on top of them.
-KEEP_CLEAR = [(620, 550), (3072, 2048), (5472, 3628), (657, 567), (490, 540), (480, 705), (3108, 2072), (2992, 2158), (3202, 2348), (5507, 3648), (5322, 3778), (3542, 2578)]
+# Spawns (src/data/characters.js) and supply nodes (src/data/supplies.js), as absolute positions: scenery within 150 of them is dropped after scattering.
+KEEP_CLEAR = [(620, 550), (3072, 2048), (5472, 3628), (870, 650), (480, 570), (480, 705), (3180, 2170), (2990, 2180), (3202, 2348), (5630, 3740), (5322, 3778), (3300, 2580)]
+# FROZEN: the spots the scatter loop has always skipped. Which candidates it skips decides how many random draws follow,
+# so editing this list reshuffles every later tree and rock, and a new solid base under a saved player makes that save
+# unreadable. Never edit it; move nodes in KEEP_CLEAR instead, which only removes scenery.
+SCATTER_CLEAR = [(620, 550), (3072, 2048), (5472, 3628), (657, 567), (490, 540), (480, 705), (3108, 2072), (2992, 2158), (3202, 2348), (5507, 3648), (5322, 3778), (3542, 2578)]
 fixed = list(objects)
 def scatter_ok(x, y):
-    return (all(math.hypot(x - cx, y - cy) > 150 for cx, cy in KEEP_CLEAR)
+    return (all(math.hypot(x - cx, y - cy) > 150 for cx, cy in SCATTER_CLEAR)
             and all(abs(x - ox) > 330 or not (-150 < oy - y < 420) for _, ox, oy in fixed))
 STEP = 210
 for gy in range(STEP // 2, H, STEP):
@@ -107,6 +111,7 @@ for gy in range(STEP // 2, H, STEP):
             elif grove: name = rng.choice(['oak', 'big-oak', 'pine', 'pines', 'flowers']) if roll < 0.8 else None
             else: name = rng.choice(['oak', 'big-oak', 'pine', 'rocks-a', 'rocks-b', 'flowers', 'flowers']) if roll < 0.3 else None
         if name: objects.append((name, x, y))
+objects = fixed + [o for o in objects[len(fixed):] if all(math.hypot(o[1] - cx, o[2] - cy) > 150 for cx, cy in KEEP_CLEAR)]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
@@ -129,7 +134,8 @@ for n in ('ground', 'dirt', 'sand', 'water'):
     for i, g in enumerate(layers[n]):
         if g: full.alpha_composite(small[g - 1], ((i % COLS) * TILE // S, (i // COLS) * TILE // S))
 sprites = {n: Image.open(os.path.join(SRC, 'objects', f'{n}.png')).convert('RGBA') for n in spec}
-sprites = {n: im.resize((max(1, im.width // S), max(1, im.height // S)), Image.LANCZOS) for n, im in sprites.items()}
+def shrink(n, im): sc = spec[n].get('scale', 1); return im.resize((max(1, int(im.width * sc) // S), max(1, int(im.height * sc) // S)), Image.LANCZOS)
+sprites = {n: shrink(n, im) for n, im in sprites.items()}
 for n, x, y in sorted(objects, key=lambda o: (not spec[o[0]].get('flat', False), o[2])):
     im = sprites[n]; ox, oy = spec[n]['origin']
     px, py = round(x / S - im.width * ox), round(y / S - im.height * oy)

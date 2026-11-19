@@ -33,18 +33,26 @@ export function steadyAnchors(cellCenters,headCenters){
 
 export function createAnimator(){return {clip:'idle',time:0,pending:null};}
 
-export function startAction(animator,clip,target=null){
+// An action runs for `duration` seconds (default: one pass of its clip); longer actions loop the clip.
+export function startAction(animator,clip,target=null,duration=null){
   if(animator.pending || CLIPS[clip]?.sheet!=='actions')return false;
-  animator.clip=clip;animator.time=0;animator.pending={clip,target};return true;
+  const length=CLIPS[clip].frames/CLIPS[clip].fps;
+  animator.clip=clip;animator.time=0;animator.pending={clip,target,duration:Number.isFinite(duration)&&duration>0?duration:length};return true;
 }
+
+export function cancelAction(animator){
+  if(!animator.pending)return false;
+  animator.pending=null;animator.clip='idle';animator.time=0;return true;
+}
+
+export const actionProgress=animator=>animator.pending?Math.min(1,animator.time/animator.pending.duration):0;
 
 export function advanceAnimation(animator,dt,{moving=false,running=false,paused=false}={}){
   if(paused || !Number.isFinite(dt) || dt<=0)return null;
   if(animator.pending){
     animator.time+=dt;
-    const clip=CLIPS[animator.clip];
-    if(animator.time+1e-8>=clip.frames/clip.fps){
-      const completed=animator.pending;animator.pending=null;animator.clip='idle';animator.time=0;return completed;
+    if(animator.time+1e-8>=animator.pending.duration){
+      const {clip,target}=animator.pending;animator.pending=null;animator.clip='idle';animator.time=0;return {clip,target};
     }
     return null;
   }

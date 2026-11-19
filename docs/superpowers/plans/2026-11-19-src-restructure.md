@@ -4,30 +4,37 @@
 
 **Goal:** Reorganize Wildhaven's flat `src/` into role-based folders (`data/`, `world/`, `actions/`, `game/`, `animation/`, `render/`, `ui/`, `core/`), with one file per gameplay action. Behavior does not change.
 
-**Architecture:** Pure game logic (data, collision, actions, save state, animation clips) stays runnable in Node and is covered by `node:test`. The browser layer (UI, input, frame loop, Phaser renderer, sprite loading) wraps it. `main.js` shrinks to a bootstrap that wires one shared `session` object and one `ui` object together. Spec: `docs/superpowers/specs/2026-11-19-src-restructure-design.md`.
+**Architecture:** Pure game logic (data, collision, supply nodes, actions, save state, animation clips) stays runnable in Node and is covered by `node:test`. The browser layer (UI, input, frame loop, Phaser renderer, sprite loading) wraps it. `main.js` shrinks to a bootstrap that wires one shared `session` object and one `ui` object together. Spec: `docs/superpowers/specs/2026-11-19-src-restructure-design.md`.
 
 **Tech Stack:** Vanilla JavaScript ES modules, Vite 7, Phaser 4 (renderer only), Node 24 `node:test`.
 
+**Revision (2026-11-19, 11:40):** This plan was rewritten against commit `4c689c1`, which added harvestable supply sprites, solid supply bases, a 6 s cancelable timed gather, a fourth resource (herbs) and regrowing wild flower patches.
+
 ## Global Constraints
 
-- No behavior change. Same DOM ids, classes and text, so `src/style.css` is untouched.
-- `index.html` keeps loading `/src/main.js`.
-- Save keys stay `wildhaven.adventure.v1.<id>` and `wildhaven.active`, and the save object stays `version: 2`. A save made before this work must still load.
-- Gathering locks movement for the full 0.8 s `gather` clip (4 frames at 5 fps) and awards exactly once, when the clip ends.
-- Timings stay the same: walk 155 and run 245 units/s, movement dt cap 0.1, frame dt clamp 0.05, autosave every 10 s, HUD refresh every 0.12 s, toast 3.2 s.
+- No behavior change. Same DOM ids, classes and text, so `src/style.css` is untouched. `index.html` keeps loading `/src/main.js`.
+- Save keys stay `wildhaven.adventure.v1.<id>` and `wildhaven.active`, and the save object stays `version: 2`. Saves without `herbs`/`regrowAt` still load. A save made before this work must still load.
+- Gathering:
+  - E (or the interact button) starts the nearest node's timed action: its `clip`, for `gatherTime(state, node)` seconds (`GATHER_SECONDS` = 6).
+  - A fresh movement press cancels the action and awards nothing. Key-repeat from a key held since before E does not cancel.
+  - When the action completes, the node is awarded exactly once, by the id the action targeted.
+  - Fixed supplies are solid until collected; wild patches are walk-through and regrow 180 game-seconds after picking.
+- Timings stay the same: walk 155 and run 245 units/s, movement dt cap 0.1, reach 95, discovery radius 230, region label range +130, frame dt clamp 0.05, autosave every 10 s, HUD refresh every 0.12 s, toast 3.2 s.
 - Phaser input stays disabled. All input goes through `src/core/input.js`.
-- `src/data/`, `src/world/`, `src/actions/`, `src/game/` and `src/animation/clips.js` are pure. They never import `ui/`, `core/`, `render/`, `animation/sheets.js`, `animation/preview.js`, PNG/WEBP/CSS files, and never use `import.meta`, `document` or `window`. JSON is imported with `with { type: 'json' }`.
+- `src/data/`, `src/world/`, `src/actions/`, `src/game/` and `src/animation/clips.js` are pure:
+  - They never import `ui/`, `core/`, `render/`, `animation/sheets.js` or `animation/preview.js`.
+  - They never import PNG/WEBP/CSS files, and never use `import.meta`, `document` or `window`.
+  - JSON is imported with `with { type: 'json' }`.
 - Match the existing compact JS style (dense one-line statements, short helpers). Comments explain *why*.
-- Work on branch `restructure-src` (it already exists and holds the spec commit). Use `git mv` when a file moves whole. Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- Work on branch `restructure-src`. Use `git mv` when a file moves whole. Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Commit only the files this task touches.
 - After every task, `npm test` and `npm run build` must both pass.
-
-**Order note:** the spec lists the `state.js` split first. This plan moves whole files first (Task 1) so that Task 2's import edits land on files that are already in their final place. The end state is the same.
+- Steps marked **(controller)** are browser checks done by the coordinating session, not by the implementer.
 
 ---
 
 ### Task 1: Move whole files into their folders
 
-Five source files and two test files move without logic changes. `src/state.js` stays where it is until Task 2.
+Five source files and two test files move without logic changes. `src/state.js` and `tests/state.test.js` stay where they are until Task 2.
 
 **Files:**
 - Move: `src/storage.js` → `src/game/saves.js`
@@ -37,15 +44,24 @@ Five source files and two test files move without logic changes. `src/state.js` 
 - Move: `src/render.js` → `src/render/renderer.js`
 - Move: `tests/storage.test.js` → `tests/game/saves.test.js`
 - Move: `tests/animation.test.js` → `tests/animation/clips.test.js`
-- Modify: `src/main.js:3-6` (import paths)
+- Modify: `src/main.js` (import paths only)
+- Modify: `tests/state.test.js` (the `../src/animation.js` import path only)
 
 **Interfaces:**
 - Consumes: nothing new.
-- Produces: the same exports as before at new paths. `src/game/saves.js` exports `storageKey, readActive, setActive, createSaveSession`. `src/animation/clips.js` exports `CLIPS, sampleAnimation, steadyAnchors, createAnimator, startAction, advanceAnimation`. `src/animation/sheets.js` exports `loadImage, loadCharacterSheets, resolvePose, loadCharacterPainter`. `src/animation/preview.js` exports `setupPreview`. `src/render/renderer.js` exports `createRenderer`.
+- Produces: the same exports as before, at new paths.
+  - `src/game/saves.js`: `storageKey, readActive, setActive, createSaveSession`.
+  - `src/animation/clips.js`: `CLIPS, sampleAnimation, steadyAnchors, createAnimator, startAction, cancelAction, actionProgress, advanceAnimation`.
+  - `src/animation/sheets.js`: `loadImage, loadCharacterSheets, resolvePose, loadCharacterPainter`.
+  - `src/animation/preview.js`: `setupPreview`.
+  - `src/render/renderer.js`: `createRenderer`.
 
-- [ ] **Step 1: Record a baseline save for the final check**
+- [ ] **Step 1 (controller): Record a baseline save for the final check**
 
-Run `npm run dev` and open the `127.0.0.1` URL it prints. Write down the full origin including the port (for example `http://127.0.0.1:5173`): saves are stored per origin, so Task 4 must use the same one. Choose the Wandering Builder and press **Begin your journey**. Press E on the marked supply next to the spawn, wait for the toast, then press Esc and choose **Save adventure**. Write down the Wood/Stone/Food numbers shown in the HUD. Stop the dev server. Task 4 checks that this save still loads.
+On the dev server, open a `127.0.0.1` origin and write the origin down, including the port. Saves are stored per origin, so Task 4 must use the same one. Then:
+1. Choose the Wandering Builder and start. Walk to a supply and gather it with E, waiting the full 6 s.
+2. Press Esc and choose **Save adventure**.
+3. Write down the HUD's Wood/Stone/Food/Herbs numbers.
 
 - [ ] **Step 2: Move the tests first and point them at the new paths**
 
@@ -55,12 +71,13 @@ git mv tests/storage.test.js tests/game/saves.test.js
 git mv tests/animation.test.js tests/animation/clips.test.js
 sed -i "s#'../src/storage.js'#'../../src/game/saves.js'#; s#'../src/state.js'#'../../src/state.js'#" tests/game/saves.test.js
 sed -i "s#'../src/animation.js'#'../../src/animation/clips.js'#; s#'../src/state.js'#'../../src/state.js'#" tests/animation/clips.test.js
+sed -i "s#'../src/animation.js'#'../src/animation/clips.js'#" tests/state.test.js
 ```
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
 Run: `npm test`
-Expected: FAIL. Two files report `ERR_MODULE_NOT_FOUND` for `src/game/saves.js` and `src/animation/clips.js`. `tests/state.test.js` still passes.
+Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `src/game/saves.js` and `src/animation/clips.js`.
 
 - [ ] **Step 4: Move the source files**
 
@@ -79,7 +96,7 @@ git mv src/render.js src/render/renderer.js
 sed -i "s#from './state.js'#from '../state.js'#" src/game/saves.js
 sed -i "s#'../assets/#'../../assets/#g; s#from './state.js'#from '../state.js'#; s#from './animation.js'#from './clips.js'#" src/animation/sheets.js
 sed -i "s#from './state.js'#from '../state.js'#; s#from './animation.js'#from './clips.js'#; s#from './animation-art.js'#from './sheets.js'#" src/animation/preview.js
-sed -i "s#'../assets/#'../../assets/#g; s#from './state.js'#from '../state.js'#; s#from './animation-art.js'#from '../animation/sheets.js'#" src/render/renderer.js
+sed -i "s#'../assets/#'../../assets/#g; s#from './state.js'#from '../state.js'#; s#from './animation-art.js'#from '../animation/sheets.js'#; s#from './animation.js'#from '../animation/clips.js'#" src/render/renderer.js
 sed -i "s#from './render.js'#from './render/renderer.js'#; s#from './storage.js'#from './game/saves.js'#; s#from './animation.js'#from './animation/clips.js'#; s#from './animation-preview.js'#from './animation/preview.js'#" src/main.js
 ```
 
@@ -93,7 +110,7 @@ Expected: no output.
 - [ ] **Step 7: Run tests and build**
 
 Run: `npm test`
-Expected: `ℹ tests 20`, `ℹ pass 20`, `ℹ fail 0`.
+Expected: `ℹ tests 29`, `ℹ pass 29`, `ℹ fail 0`.
 
 Run: `npm run build`
 Expected: `✓ built in …`, with no "Could not resolve" errors.
@@ -113,30 +130,140 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Files:**
 - Create: `src/data/balance.js`, `src/data/characters.js`, `src/data/supplies.js`
-- Create: `src/world/map.js`, `src/world/regions.js`
+- Create: `src/world/map.js`, `src/world/nodes.js`, `src/world/regions.js`
 - Create: `src/game/state.js`
 - Create: `src/actions/move.js`, `src/actions/gather.js`, `src/actions/discover.js`
 - Delete: `src/state.js`, `tests/state.test.js`
-- Modify: `src/main.js` (imports, `collect()`, one line in `frame()`), `src/game/saves.js:1`, `src/animation/sheets.js` (`CHARACTERS` import), `src/animation/preview.js:1`, `src/render/renderer.js:2`
-- Test: `tests/world/map.test.js`, `tests/game/state.test.js`, `tests/actions/move.test.js`, `tests/actions/gather.test.js`, `tests/actions/discover.test.js`, `tests/boundaries.test.js`
+- Modify: `src/main.js` (imports, `collect()`, one line in `frame()`), `src/game/saves.js` (line 1), `src/animation/sheets.js` (`CHARACTERS` import), `src/animation/preview.js` (line 1), `src/render/renderer.js` (line 2)
+- Test: `tests/world/map.test.js`, `tests/world/nodes.test.js`, `tests/game/state.test.js`, `tests/actions/move.test.js`, `tests/actions/gather.test.js`, `tests/actions/discover.test.js`, `tests/boundaries.test.js`
 - Modify test imports: `tests/game/saves.test.js`, `tests/animation/clips.test.js`
 
 **Interfaces:**
-- Consumes (from Task 1): `startAction(animator, clip, target)` and `createAnimator()` from `src/animation/clips.js`.
+- Consumes (from Task 1): `startAction(animator, clip, target, duration)`, `createAnimator()`, `advanceAnimation(animator, dt, opts) -> {clip, target} | null`, `CLIPS` from `src/animation/clips.js`.
 - Produces:
-  - `src/data/balance.js`: `WALK_SPEED, RUN_SPEED, MAX_MOVE_DT, GATHER_RANGE, DISCOVERY_RADIUS, REGION_LABEL_RANGE` (numbers).
-  - `src/data/characters.js`: `REGION_OFFSETS`, `at(region, x, y) -> {x, y}`, `CHARACTERS` (array of `{id, row, name, shortName, location, tagline, description, kit, spawn:{x,y}, resources:{wood,stone,food}}`).
-  - `src/data/supplies.js`: `NODES` (array of `{id, x, y, type, amount, label}`).
-  - `src/world/map.js`: `WORLD {width, height, margin}`, `OBSTACLES` (array of `[left, top, right, bottom]`), `isWalkable(x, y) -> boolean`.
-  - `src/world/regions.js`: `LOCATIONS` (array of `{id, name, x, y, radius}`), `regionAt(player) -> string`.
-  - `src/game/state.js`: `createGame(characterId) -> state`, `serializeGame(state) -> string`, `restoreGame(json) -> state | null`.
+  - `src/data/balance.js`: `WALK_SPEED, RUN_SPEED, MAX_MOVE_DT, GATHER_RANGE, GATHER_SECONDS, DISCOVERY_RADIUS, REGION_LABEL_RANGE` (numbers).
+  - `src/data/characters.js`: `REGION_OFFSETS`, `at(region, x, y) -> {x, y}`, `CHARACTERS`.
+  - `src/data/supplies.js`: `SUPPLIES` (9 fixed nodes `{id, x, y, type, amount, label, verb, clip, sprite, scale}`), `WILD` (`{flowers: {type, amount, label, verb, clip, regrow}}`), `RESOURCES` (`['wood','stone','food','herbs']`).
+  - `src/world/map.js`: `WORLD {width, height, margin}`, `OBJECT_SPECS`, `MAP_OBJECTS` (the map's `objects` layer array), `OBSTACLES`, `blocks(rects, x, y) -> boolean`, `isWalkable(x, y, extra=[]) -> boolean`.
+  - `src/world/nodes.js`: `NODES` (`SUPPLIES` plus one node per wild map patch, id `<name>-<x>-<y>`), `nodeBases(collected) -> rect[]`.
+  - `src/world/regions.js`: `LOCATIONS`, `regionAt(player) -> string`.
+  - `src/game/state.js`: `createGame(characterId)`, `serializeGame(state)`, `restoreGame(json) -> state | null`.
   - `src/actions/move.js`: `movePlayer(state, dx, dy, dt, running=false) -> boolean`.
-  - `src/actions/gather.js`: `nearbyNode(state) -> node | null`, `beginGather(state, animator) -> {ok:true, node} | {ok:false, reason:'busy'|'none'}`, `finishGather(state) -> node | null`.
+  - `src/actions/gather.js`: `gatherTime(state, node) -> seconds`, `isAvailable(state, node)`, `hasGathered(state)`, `nearbyNode(state) -> node | null`, `beginGather(state, animator) -> {ok:true, node} | {ok:false, reason:'busy'|'none'}`, `finishGather(state, id=nearbyNode(state)?.id) -> node | null`.
   - `src/actions/discover.js`: `discover(state) -> location[]`.
 
 - [ ] **Step 1: Write the new test files**
 
-`tests/world/map.test.js`:
+Split today's `tests/state.test.js` into five files. Move each `test(...)` block **unchanged**, except for two edits: rename every `gather(` call to `finishGather(`, and use the import paths below. Use these exact headers.
+
+`tests/game/state.test.js`. Move these tests here: "all characters begin at distinct, walkable locations with their own identity", "save restores character, coordinates and progress without sharing mutable objects", "invalid, outdated, mismatched and impossible save data is rejected", "saves from before herbs and regrowth load with none of either", and "saved regrowth timers are kept, capped at one regrow, or dropped when the patch is gone".
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { CHARACTERS } from '../../src/data/characters.js';
+import { isWalkable } from '../../src/world/map.js';
+import { NODES, nodeBases } from '../../src/world/nodes.js';
+import { createGame, serializeGame, restoreGame } from '../../src/game/state.js';
+import { movePlayer } from '../../src/actions/move.js';
+
+const wild = NODES.filter(n => n.regrow);
+```
+
+`tests/actions/move.test.js`. Move these tests here: "diagonal movement is normalized and world edges cannot be crossed" and "supply bases block movement until gathered, and never trap a player already inside".
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { WORLD, isWalkable } from '../../src/world/map.js';
+import { NODES, nodeBases } from '../../src/world/nodes.js';
+import { createGame } from '../../src/game/state.js';
+import { movePlayer } from '../../src/actions/move.js';
+```
+
+`tests/actions/discover.test.js`. Move "locations are discovered once when entered" here.
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createGame } from '../../src/game/state.js';
+import { discover } from '../../src/actions/discover.js';
+```
+
+`tests/world/nodes.test.js`. Move these tests here: "every supply is a known, solid, action-backed sprite that takes the full gather time", "wild flower patches are walk-through herb sources drawn smaller than a character", and "every supply and wild patch can be walked to and gathered from each spawn". Note that the `pngSize` path gains one `../`.
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import OBJECT_SPECS from '../../assets/world/source/objects.json' with { type: 'json' };
+import { CHARACTERS } from '../../src/data/characters.js';
+import { RESOURCES } from '../../src/data/supplies.js';
+import { GATHER_SECONDS } from '../../src/data/balance.js';
+import { WORLD, isWalkable } from '../../src/world/map.js';
+import { NODES, nodeBases } from '../../src/world/nodes.js';
+import { createGame } from '../../src/game/state.js';
+import { gatherTime, finishGather } from '../../src/actions/gather.js';
+import { CLIPS } from '../../src/animation/clips.js';
+
+const supplies = NODES.filter(n => !n.regrow), wild = NODES.filter(n => n.regrow);
+const pngSize = name => { const b = readFileSync(new URL(`../../assets/world/source/objects/${name}.png`, import.meta.url)); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
+```
+
+`tests/actions/gather.test.js`. Move "gathering is proximity based and a node can be collected only once" and "a picked flower patch gives herbs, then grows back on the game clock" here, then add the four new `beginGather` tests below.
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { GATHER_SECONDS } from '../../src/data/balance.js';
+import { NODES } from '../../src/world/nodes.js';
+import { createGame } from '../../src/game/state.js';
+import { nearbyNode, isAvailable, hasGathered, beginGather, finishGather } from '../../src/actions/gather.js';
+import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
+
+const wild = NODES.filter(n => n.regrow);
+
+// ...the two moved tests go here...
+
+test('beginGather starts the node\'s own timed action without awarding it',()=>{
+  const game=createGame('scout'),animator=createAnimator(),node=NODES.find(n=>n.id==='pine-wood'),before={...game.resources};
+  game.player.x=node.x-60;game.player.y=node.y;
+  const result=beginGather(game,animator);
+  assert.equal(result.ok,true);assert.equal(result.node.id,'pine-wood');
+  assert.equal(animator.clip,node.clip);
+  assert.deepEqual(animator.pending,{clip:node.clip,target:'pine-wood',duration:GATHER_SECONDS});
+  assert.deepEqual(game.resources,before);assert.deepEqual(game.collected,[]);
+});
+
+test('beginGather refuses while an action is running, and when nothing is in reach',()=>{
+  const game=createGame('scout'),animator=createAnimator(),node=NODES.find(n=>n.id==='pine-wood');
+  game.player.x=node.x-60;game.player.y=node.y;
+  beginGather(game,animator);
+  assert.deepEqual(beginGather(game,animator),{ok:false,reason:'busy'});
+  const far=createGame('scout'),idle=createAnimator(); // nothing is within reach of the camp spawn
+  assert.deepEqual(beginGather(far,idle),{ok:false,reason:'none'});
+  assert.equal(idle.pending,null);
+});
+
+test('beginGather turns the player toward a node that is off to the side',()=>{
+  const node=NODES.find(n=>n.id==='pine-wood');
+  const east=createGame('scout');east.player.x=node.x+40;east.player.y=node.y;east.player.direction=0;
+  beginGather(east,createAnimator());assert.equal(east.player.direction,1);
+  const close=createGame('scout');close.player.x=node.x+5;close.player.y=node.y+30;close.player.direction=3;
+  beginGather(close,createAnimator());assert.equal(close.player.direction,3);
+});
+
+test('the supply is awarded only when the timed action completes',()=>{
+  const game=createGame('scout'),animator=createAnimator(),node=NODES.find(n=>n.id==='pine-wood');
+  game.player.x=node.x-60;game.player.y=node.y;
+  beginGather(game,animator);
+  assert.equal(advanceAnimation(animator,GATHER_SECONDS-0.01,{}),null);
+  assert.deepEqual(advanceAnimation(animator,0.02,{}),{clip:node.clip,target:'pine-wood'});
+  assert.equal(finishGather(game,'pine-wood').id,'pine-wood');assert.equal(game.resources.wood,node.amount);
+});
+```
+
+`tests/world/map.test.js` (new):
 
 ```js
 import { test } from 'node:test';
@@ -153,139 +280,7 @@ test('points past the world margin or not finite are never walkable',()=>{
 });
 ```
 
-`tests/game/state.test.js` (three tests moved from `tests/state.test.js`; only imports change):
-
-```js
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { CHARACTERS } from '../../src/data/characters.js';
-import { isWalkable } from '../../src/world/map.js';
-import { createGame, serializeGame, restoreGame } from '../../src/game/state.js';
-import { movePlayer } from '../../src/actions/move.js';
-
-test('all characters begin at distinct, walkable locations with their own identity', () => {
-  const games = CHARACTERS.map(c => createGame(c.id));
-  assert.equal(new Set(games.map(g => `${g.player.x},${g.player.y}`)).size, 3);
-  for (const [i, game] of games.entries()) {
-    assert.equal(game.character, CHARACTERS[i].id);
-    assert.ok(isWalkable(game.player.x, game.player.y));
-  }
-  assert.throws(() => createGame('unknown'));
-});
-
-test('save restores character, coordinates and progress without sharing mutable objects', () => {
-  const original = createGame('builder');
-  movePlayer(original, 1,0,0.1);
-  original.resources.wood = 9;
-  const restored = restoreGame(serializeGame(original));
-  assert.deepEqual(restored,original);
-  restored.resources.wood++;
-  assert.equal(original.resources.wood, 9);
-});
-
-test('invalid, outdated, mismatched and impossible save data is rejected', () => {
-  assert.equal(restoreGame('not json'), null);
-  assert.equal(restoreGame('{}'), null);
-  for(const edit of [g=>g.version=100, g=>g.character='ghost', g=>g.player.x=-100, g=>g.resources.wood=-5, g=>g.player.y=null, g=>g.collected=['unknown']]) {
-    const game = createGame('survivor'); edit(game);
-    assert.equal(restoreGame(JSON.stringify(game)), null);
-  }
-});
-```
-
-`tests/actions/move.test.js` (moved; only imports change):
-
-```js
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { movePlayer } from '../../src/actions/move.js';
-import { WORLD, isWalkable } from '../../src/world/map.js';
-import { createGame } from '../../src/game/state.js';
-
-test('diagonal movement is normalized and world edges cannot be crossed', () => {
-  const a = createGame('scout'), b = createGame('scout');
-  const origin = {...a.player};
-  movePlayer(a, 1, 0, 0.1); movePlayer(b, 1, 1, 0.1);
-  assert.ok(Math.abs(Math.hypot(a.player.x-origin.x,a.player.y-origin.y) - Math.hypot(b.player.x-origin.x,b.player.y-origin.y)) < 0.001);
-  for(let i=0; i<500; i++) movePlayer(a, -1,-1,0.1);
-  assert.ok(a.player.x >= WORLD.margin && a.player.y >= WORLD.margin);
-  assert.ok(isWalkable(a.player.x, a.player.y));
-});
-```
-
-`tests/actions/gather.test.js` (first test moved with `gather` renamed to `finishGather`; the other four are new):
-
-```js
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { nearbyNode, beginGather, finishGather } from '../../src/actions/gather.js';
-import { NODES } from '../../src/data/supplies.js';
-import { createGame } from '../../src/game/state.js';
-import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
-
-test('gathering is proximity based and a node can be collected only once', () => {
-  const game = createGame('scout');
-  const result = finishGather(game);
-  assert.ok(result);
-  assert.ok(game.resources.wood > 0);
-  assert.equal(finishGather(game), null);
-});
-
-test('beginGather starts the gather clip on the nearest supply without awarding it',()=>{
-  const game=createGame('scout'),animator=createAnimator(),before={...game.resources};
-  const result=beginGather(game,animator);
-  assert.equal(result.ok,true);assert.equal(result.node.id,nearbyNode(game).id);
-  assert.equal(animator.clip,'gather');assert.deepEqual(animator.pending,{clip:'gather',target:result.node.id});
-  assert.deepEqual(game.resources,before);assert.deepEqual(game.collected,[]);
-});
-
-test('beginGather refuses while a clip is already playing, and when nothing is in range',()=>{
-  const game=createGame('scout'),animator=createAnimator();
-  beginGather(game,animator);
-  assert.deepEqual(beginGather(game,animator),{ok:false,reason:'busy'});
-  const far=createGame('scout'),idle=createAnimator();
-  far.player.x=2000;far.player.y=2000;
-  assert.deepEqual(beginGather(far,idle),{ok:false,reason:'none'});
-  assert.equal(idle.pending,null);
-});
-
-test('beginGather turns the player toward a supply that is off to the side',()=>{
-  const node=NODES.find(n=>n.id==='pine-wood');
-  const east=createGame('scout');east.player.x=node.x+40;east.player.y=node.y;east.player.direction=0;
-  beginGather(east,createAnimator());assert.equal(east.player.direction,1);
-  const close=createGame('scout');close.player.x=node.x+5;close.player.y=node.y+30;close.player.direction=3;
-  beginGather(close,createAnimator());assert.equal(close.player.direction,3);
-});
-
-test('the supply is awarded only after the 0.8 s gather clip completes',()=>{
-  const game=createGame('scout'),animator=createAnimator();
-  beginGather(game,animator);
-  assert.equal(advanceAnimation(animator,0.79,{}),null);
-  assert.deepEqual(advanceAnimation(animator,0.02,{}),{clip:'gather',target:'pine-wood'});
-  assert.equal(finishGather(game).id,'pine-wood');assert.equal(game.resources.wood,3);
-});
-```
-
-`tests/actions/discover.test.js` (moved; only imports change):
-
-```js
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { discover } from '../../src/actions/discover.js';
-import { createGame } from '../../src/game/state.js';
-
-test('locations are discovered once when entered', () => {
-  const game=createGame('survivor');
-  assert.equal(discover(game).length,1);
-  assert.equal(discover(game).length,0);
-  const builder=createGame('builder');
-  game.player.x=builder.player.x; game.player.y=builder.player.y;
-  assert.equal(discover(game).length,1);
-  assert.equal(game.discovered.length,2);
-});
-```
-
-`tests/boundaries.test.js`:
+`tests/boundaries.test.js` (new):
 
 ```js
 import { test } from 'node:test';
@@ -305,7 +300,7 @@ const FORBIDDEN=[
 ];
 
 test('pure modules avoid browser-only imports and globals',()=>{
-  assert.ok(PURE.length>=11,`expected at least 11 pure modules, found ${PURE.length}`);
+  assert.ok(PURE.length>=12,`expected at least 12 pure modules, found ${PURE.length}`);
   for(const file of PURE){
     const source=readFileSync(new URL(file,SRC),'utf8');
     for(const [pattern,label] of FORBIDDEN)assert.doesNotMatch(source,pattern,`${file} uses ${label}`);
@@ -316,9 +311,11 @@ test('pure modules import cleanly in Node',async()=>{
 });
 ```
 
-Then delete the old state test and repoint the two moved test files:
+Then check that all 13 old state tests were moved, delete the old file, and repoint the two moved test files:
 
 ```bash
+grep -c "^test(" tests/state.test.js   # expect 13
+cat tests/game/state.test.js tests/actions/move.test.js tests/actions/discover.test.js tests/world/nodes.test.js tests/actions/gather.test.js | grep -c "^test("   # expect 17 (13 moved + 4 new)
 git rm -q tests/state.test.js
 sed -i "s#'../../src/state.js'#'../../src/game/state.js'#" tests/game/saves.test.js tests/animation/clips.test.js
 ```
@@ -326,7 +323,7 @@ sed -i "s#'../../src/state.js'#'../../src/game/state.js'#" tests/game/saves.test
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `npm test`
-Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `src/world/map.js`, `src/game/state.js`, `src/actions/*.js`. `tests/boundaries.test.js` fails with `ENOENT` for `src/data/`.
+Expected: FAIL with `ERR_MODULE_NOT_FOUND` for the new `src/` modules. `tests/boundaries.test.js` fails with `ENOENT` for `src/data/`.
 
 - [ ] **Step 3: Create the data modules**
 
@@ -339,6 +336,8 @@ export const RUN_SPEED = 245;
 // Longest step one movement update may take, so a slow frame can't carry the player through an obstacle.
 export const MAX_MOVE_DT = 0.1;
 export const GATHER_RANGE = 95;
+// Gathering tools will shorten this (towards 0.5 s); until then every supply takes the full time.
+export const GATHER_SECONDS = 6;
 export const DISCOVERY_RADIUS = 230;
 // The HUD keeps naming a region this far beyond its discovery radius.
 export const REGION_LABEL_RANGE = 130;
@@ -364,35 +363,42 @@ export const CHARACTERS = [
 ```js
 import { at } from './characters.js';
 
-// tools/build-map.py KEEP_CLEAR repeats these absolute positions so scattered foliage never covers them.
-export const NODES = [
-  { id:'pine-wood', ...at('forest', 657, 567), type:'wood', amount:3, label:'Fallen branches' },
-  { id:'camp-stone', ...at('forest', 490, 540), type:'stone', amount:2, label:'Loose stones' },
-  { id:'forest-food', ...at('forest', 480, 705), type:'food', amount:2, label:'Wild berries' },
-  { id:'village-wood', ...at('village', 1486, 914), type:'wood', amount:3, label:'Scrap timber' },
-  { id:'village-stone', ...at('village', 1370, 1000), type:'stone', amount:3, label:'Loose stones' },
-  { id:'village-food', ...at('village', 1580, 1190), type:'food', amount:2, label:'Wild berries' },
-  { id:'coast-wood', ...at('coast', 2435, 1600), type:'wood', amount:4, label:'Driftwood' },
-  { id:'coast-stone', ...at('coast', 2250, 1730), type:'stone', amount:2, label:'Beach stones' },
-  { id:'meadow-food', ...at('village', 1920, 1420), type:'food', amount:3, label:'Wild berries' },
+// Each supply is drawn as its own sprite (an objects.json key at `scale`) and stands solid until gathered.
+// tools/build-map.py keeps scenery off these spots (KEEP_CLEAR), so move them there too.
+export const SUPPLIES = [
+  { id:'pine-wood', ...at('forest', 870, 650), type:'wood', amount:3, label:'Pine tree', verb:'Chop', clip:'build', sprite:'pine', scale:1 },
+  { id:'camp-stone', ...at('forest', 480, 570), type:'stone', amount:2, label:'Loose stones', verb:'Gather', clip:'gather', sprite:'rocks-b', scale:0.5 },
+  { id:'forest-food', ...at('forest', 480, 705), type:'food', amount:2, label:'Wild berries', verb:'Pick', clip:'gather', sprite:'berry-bush', scale:1 },
+  { id:'village-wood', ...at('village', 1558, 1012), type:'wood', amount:3, label:'Scrap timber', verb:'Gather', clip:'gather', sprite:'log', scale:0.8 },
+  { id:'village-stone', ...at('village', 1368, 1022), type:'stone', amount:3, label:'Loose stones', verb:'Gather', clip:'gather', sprite:'rocks-b', scale:0.5 },
+  { id:'village-food', ...at('village', 1580, 1190), type:'food', amount:2, label:'Wild berries', verb:'Pick', clip:'gather', sprite:'berry-bush', scale:1 },
+  { id:'coast-wood', ...at('coast', 2558, 1692), type:'wood', amount:4, label:'Driftwood', verb:'Gather', clip:'gather', sprite:'log', scale:0.8 },
+  { id:'coast-stone', ...at('coast', 2250, 1730), type:'stone', amount:2, label:'Beach stones', verb:'Gather', clip:'gather', sprite:'beach-rock', scale:0.6 },
+  { id:'meadow-food', ...at('village', 1678, 1422), type:'food', amount:3, label:'Wild berries', verb:'Pick', clip:'gather', sprite:'berry-bush', scale:1 },
 ];
+// Wild scenery the map scatters (tools/build-map.py) that can be harvested where it stands and grows back `regrow`
+// game-seconds later. world/nodes.js turns each map patch into a node; the renderer draws it from NODES instead of from the map.
+export const WILD = { flowers: { type:'herbs', amount:2, label:'Wildflowers', verb:'Pick', clip:'gather', regrow:180 } };
+export const RESOURCES = ['wood','stone','food','herbs'];
 ```
 
 - [ ] **Step 4: Create the world modules**
 
-`src/world/map.js` (collision code copied unchanged from `src/state.js` lines 1–2, 4 and 19–37):
+`src/world/map.js` (copied from `src/state.js` lines 1–2, 4 and 19–38, with `MAP_OBJECTS`, `OBJECT_SPECS` and `blocks` now exported):
 
 ```js
 import MAP from '../../assets/world/map/wildhaven.json' with { type: 'json' };
 import OBJECT_SPECS from '../../assets/world/source/objects.json' with { type: 'json' };
 
+export { OBJECT_SPECS };
 export const WORLD = { width: MAP.width*MAP.tilewidth, height: MAP.height*MAP.tileheight, margin: 42 };
 
 // Collision comes from the sprite map (tools/build-map.py): water tiles and the solid base of each placed object.
 const layer = name => MAP.layers.find(l => l.name === name);
-export const OBSTACLES = layer('objects').objects.flatMap(o => {
-  const base = OBJECT_SPECS[o.name]?.footprint;
-  return base ? [[o.x-base[0], o.y-base[1], o.x+base[0], o.y]] : [];
+export const MAP_OBJECTS = layer('objects').objects;
+export const OBSTACLES = MAP_OBJECTS.flatMap(o => {
+  const spec = OBJECT_SPECS[o.name], base = spec?.footprint, s = spec?.scale ?? 1;
+  return base ? [[o.x-base[0]*s, o.y-base[1]*s, o.x+base[0]*s, o.y]] : [];
 });
 
 // A water tile records which of its corners (TL, TR, BL, BR) are sea; blending them gives a smooth shoreline.
@@ -403,9 +409,29 @@ function waterAt(x, y) {
   const mask = Math.floor((gid-firstWater)/16)+1, u = x/TILE-tx, v = y/TILE-ty;
   return (mask&1)*(1-u)*(1-v) + (mask>>1&1)*u*(1-v) + (mask>>2&1)*(1-u)*v + (mask>>3&1)*u*v;
 }
-export function isWalkable(x, y) {
+export const blocks=(rects,x,y)=>rects.some(([left,top,right,bottom]) => x>left-10 && x<right+10 && y>top-10 && y<bottom+10);
+export function isWalkable(x, y, extra=[]) {
   if (!Number.isFinite(x) || !Number.isFinite(y) || x < WORLD.margin || y < WORLD.margin || x > WORLD.width-WORLD.margin || y > WORLD.height-WORLD.margin) return false;
-  return waterAt(x, y) < 0.35 && !OBSTACLES.some(([left,top,right,bottom]) => x>left-10 && x<right+10 && y>top-10 && y<bottom+10);
+  return waterAt(x, y) < 0.35 && !blocks(OBSTACLES,x,y) && !blocks(extra,x,y);
+}
+```
+
+`src/world/nodes.js`:
+
+```js
+import { SUPPLIES, WILD } from '../data/supplies.js';
+import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
+
+// The fixed supplies plus every wild patch the map scattered; a patch's map position is its id.
+export const NODES = [...SUPPLIES, ...MAP_OBJECTS.filter(o=>WILD[o.name])
+  .map(o=>({ id:`${o.name}-${o.x}-${o.y}`, x:o.x, y:o.y, ...WILD[o.name], sprite:o.name, scale:OBJECT_SPECS[o.name].scale ?? 1 }))];
+
+// Only one-time supplies are solid; wild patches are walk-through.
+export function nodeBases(collected) {
+  return SUPPLIES.filter(n=>!collected.includes(n.id)).map(n=>{
+    const [halfWidth,depth]=OBJECT_SPECS[n.sprite].footprint;
+    return [n.x-halfWidth*n.scale, n.y-depth*n.scale, n.x+halfWidth*n.scale, n.y];
+  });
 }
 ```
 
@@ -425,18 +451,19 @@ export function regionAt(player) {
 
 - [ ] **Step 5: Create game/state.js**
 
-`src/game/state.js` (logic copied unchanged from `src/state.js` lines 51–55 and 93–106):
+`src/game/state.js` (logic copied unchanged from `src/state.js` lines 76–80 and 122–140):
 
 ```js
 import { CHARACTERS } from '../data/characters.js';
-import { NODES } from '../data/supplies.js';
+import { SUPPLIES, RESOURCES } from '../data/supplies.js';
 import { isWalkable } from '../world/map.js';
+import { NODES } from '../world/nodes.js';
 import { LOCATIONS } from '../world/regions.js';
 
 export function createGame(characterId) {
   const character=CHARACTERS.find(c=>c.id===characterId);
   if(!character) throw new Error('Unknown character');
-  return {version:2, character:character.id, player:{...character.spawn,direction:0}, resources:{...character.resources}, collected:[], discovered:[], elapsed:0, distance:0};
+  return {version:2, character:character.id, player:{...character.spawn,direction:0}, resources:{...Object.fromEntries(RESOURCES.map(r=>[r,0])),...character.resources}, collected:[], regrowAt:{}, discovered:[], elapsed:0, distance:0};
 }
 
 export function serializeGame(state) { return JSON.stringify(state); }
@@ -446,12 +473,17 @@ export function restoreGame(json) {
   try {
     const s=JSON.parse(json);
     if (!s || s.version!==2 || !CHARACTERS.some(c=>c.id===s.character) || !s.player || !isWalkable(s.player.x,s.player.y) || ![0,1,2,3].includes(s.player.direction)) return null;
-    if(!s.resources || !['wood','stone','food'].every(key=>Number.isSafeInteger(s.resources[key]) && s.resources[key]>=0 && s.resources[key]<100000)) return null;
-    for(const [list,allowed] of [[s.collected,NODES],[s.discovered,LOCATIONS]]) {
+    // Saves from before herbs and regrowth have neither field; they load with none of either.
+    const resources=s.resources && {herbs:0,...s.resources}, regrowAt=s.regrowAt ?? {};
+    if(!resources || !RESOURCES.every(key=>Number.isSafeInteger(resources[key]) && resources[key]>=0 && resources[key]<100000)) return null;
+    for(const [list,allowed] of [[s.collected,SUPPLIES],[s.discovered,LOCATIONS]]) {
       if(!Array.isArray(list) || list.length>allowed.length || new Set(list).size!==list.length || !list.every(id=>allowed.some(a=>a.id===id))) return null;
     }
     if(!Number.isFinite(s.elapsed) || s.elapsed<0 || !Number.isFinite(s.distance) || s.distance<0) return null;
-    return {version:2,character:s.character,player:{x:s.player.x,y:s.player.y,direction:s.player.direction},resources:{wood:s.resources.wood,stone:s.resources.stone,food:s.resources.food},collected:[...s.collected],discovered:[...s.discovered],elapsed:s.elapsed,distance:s.distance};
+    if(!regrowAt || typeof regrowAt!=='object' || Array.isArray(regrowAt) || !Object.values(regrowAt).every(t=>Number.isFinite(t) && t>=0)) return null;
+    // Patch ids are map positions, so a rebuilt map can retire one; dropping its timer only lets that patch regrow early.
+    const timers=NODES.filter(n=>n.regrow && Object.hasOwn(regrowAt,n.id)).map(n=>[n.id,Math.min(regrowAt[n.id],s.elapsed+n.regrow)]);
+    return {version:2,character:s.character,player:{x:s.player.x,y:s.player.y,direction:s.player.direction},resources:Object.fromEntries(RESOURCES.map(r=>[r,resources[r]])),collected:[...s.collected],regrowAt:Object.fromEntries(timers),discovered:[...s.discovered],elapsed:s.elapsed,distance:s.distance};
   } catch { return null; }
 }
 ```
@@ -461,7 +493,8 @@ export function restoreGame(json) {
 `src/actions/move.js`:
 
 ```js
-import { isWalkable } from '../world/map.js';
+import { isWalkable, blocks } from '../world/map.js';
+import { nodeBases } from '../world/nodes.js';
 import { WALK_SPEED, RUN_SPEED, MAX_MOVE_DT } from '../data/balance.js';
 
 // One walk or run step. Returns whether the player actually moved, so a blocked step reads as idle.
@@ -472,8 +505,10 @@ export function movePlayer(state, dx, dy, dt, running=false) {
   dx=dx/length*step; dy=dy/length*step;
   const {x,y}=state.player;
   state.player.direction=Math.abs(dx)>Math.abs(dy)?(dx<0?1:2):(dy<0?3:0);
-  if(isWalkable(x+dx,y)) state.player.x+=dx;
-  if(isWalkable(state.player.x,y+dy)) state.player.y+=dy;
+  // A save made before a supply moved may stand inside its base; let the player walk out instead of trapping them.
+  const bases=nodeBases(state.collected).filter(base=>!blocks([base],x,y));
+  if(isWalkable(x+dx,y,bases)) state.player.x+=dx;
+  if(isWalkable(state.player.x,y+dy,bases)) state.player.y+=dy;
   const distance=Math.hypot(state.player.x-x,state.player.y-y);
   state.distance+=distance;
   return distance>0;
@@ -483,29 +518,38 @@ export function movePlayer(state, dx, dy, dt, running=false) {
 `src/actions/gather.js`:
 
 ```js
-import { NODES } from '../data/supplies.js';
-import { GATHER_RANGE } from '../data/balance.js';
+import { NODES } from '../world/nodes.js';
+import { GATHER_RANGE, GATHER_SECONDS } from '../data/balance.js';
 import { startAction } from '../animation/clips.js';
 
+// The one place gathering tools will shorten the action.
+export function gatherTime(state, node) { return GATHER_SECONDS; }
+const inReach=(state,n)=>Math.hypot(n.x-state.player.x,n.y-state.player.y)<GATHER_RANGE;
+// A picked wild patch is gone until the game clock (paused with the game) reaches its regrowAt time.
+export const isAvailable=(state,n)=>n.regrow ? !(state.regrowAt[n.id]>state.elapsed) : !state.collected.includes(n.id);
+export const hasGathered=state=>state.collected.length>0 || Object.keys(state.regrowAt).length>0;
+
 export function nearbyNode(state) {
-  return NODES.filter(n=>!state.collected.includes(n.id) && Math.hypot(n.x-state.player.x,n.y-state.player.y)<GATHER_RANGE)
+  return NODES.filter(n=>isAvailable(state,n) && inReach(state,n))
     .sort((a,b)=>Math.hypot(a.x-state.player.x,a.y-state.player.y)-Math.hypot(b.x-state.player.x,b.y-state.player.y))[0] ?? null;
 }
 
-// E starts the 0.8 s gather clip; the supply is awarded once, by finishGather, when the clip completes.
+// E starts the node's timed action (its clip, for gatherTime seconds); finishGather awards it once the action runs out.
 export function beginGather(state, animator) {
   if(animator.pending) return {ok:false,reason:'busy'};
   const node=nearbyNode(state);
   if(!node) return {ok:false,reason:'none'};
   if(Math.abs(node.x-state.player.x)>8) state.player.direction=node.x<state.player.x?1:2;
-  startAction(animator,'gather',node.id);
+  startAction(animator,node.clip,node.id,gatherTime(state,node));
   return {ok:true,node};
 }
 
-export function finishGather(state) {
-  const node=nearbyNode(state);
-  if(!node) return null;
-  state.collected.push(node.id); state.resources[node.type]+=node.amount;
+// The loop passes the id the action targeted; without one, the nearest available node is used.
+export function finishGather(state, id=nearbyNode(state)?.id) {
+  const node=NODES.find(n=>n.id===id);
+  if(!node || !isAvailable(state,node) || !inReach(state,node)) return null;
+  if(node.regrow) state.regrowAt[node.id]=state.elapsed+node.regrow; else state.collected.push(node.id);
+  state.resources[node.type]+=node.amount;
   return node;
 }
 ```
@@ -529,11 +573,15 @@ node --input-type=module -e "
 import assert from 'node:assert/strict';
 const old=await import('./src/state.js');
 const {CHARACTERS}=await import('./src/data/characters.js');
-const {NODES}=await import('./src/data/supplies.js');
+const {SUPPLIES,WILD,RESOURCES}=await import('./src/data/supplies.js');
+const {GATHER_SECONDS}=await import('./src/data/balance.js');
 const {WORLD,OBSTACLES}=await import('./src/world/map.js');
+const {NODES,nodeBases}=await import('./src/world/nodes.js');
 const {LOCATIONS}=await import('./src/world/regions.js');
-assert.deepEqual(CHARACTERS,old.CHARACTERS);assert.deepEqual(NODES,old.NODES);assert.deepEqual(LOCATIONS,old.LOCATIONS);
-assert.deepEqual(WORLD,old.WORLD);assert.deepEqual(OBSTACLES,old.OBSTACLES);
+assert.deepEqual(CHARACTERS,old.CHARACTERS);assert.deepEqual(NODES,old.NODES);assert.deepEqual(SUPPLIES,old.NODES.filter(n=>!n.regrow));
+assert.deepEqual(WILD,old.WILD);assert.deepEqual(RESOURCES,old.RESOURCES);assert.equal(GATHER_SECONDS,old.GATHER_SECONDS);
+assert.deepEqual(LOCATIONS,old.LOCATIONS);assert.deepEqual(WORLD,old.WORLD);assert.deepEqual(OBSTACLES,old.OBSTACLES);
+assert.deepEqual(nodeBases([]),old.nodeBases([]));assert.deepEqual(nodeBases(['pine-wood']),old.nodeBases(['pine-wood']));
 console.log('data identical');"
 ```
 Expected: `data identical`.
@@ -547,43 +595,38 @@ import { serializeGame } from './state.js';
 import { CHARACTERS } from '../data/characters.js';
 ```
 
-In `src/animation/sheets.js`, replace `import {CHARACTERS} from '../state.js';` with:
+In `src/animation/sheets.js`, replace `import {CHARACTERS} from '../state.js';` with `import {CHARACTERS} from '../data/characters.js';`.
 
-```js
-import {CHARACTERS} from '../data/characters.js';
-```
+In `src/animation/preview.js`, replace `import { CHARACTERS } from '../state.js';` with `import { CHARACTERS } from '../data/characters.js';`.
 
-In `src/animation/preview.js`, replace `import { CHARACTERS } from '../state.js';` with:
-
-```js
-import { CHARACTERS } from '../data/characters.js';
-```
-
-In `src/render/renderer.js`, replace `import { WORLD, CHARACTERS, LOCATIONS, NODES, nearbyNode } from '../state.js';` with the following (`CHARACTERS` was imported but never used):
+In `src/render/renderer.js`, replace `import { WORLD, CHARACTERS, LOCATIONS, NODES, WILD, nearbyNode, isAvailable } from '../state.js';` with the following (`CHARACTERS` was imported but never used):
 
 ```js
 import { WORLD } from '../world/map.js';
 import { LOCATIONS } from '../world/regions.js';
-import { NODES } from '../data/supplies.js';
-import { nearbyNode } from '../actions/gather.js';
+import { NODES } from '../world/nodes.js';
+import { WILD } from '../data/supplies.js';
+import { nearbyNode, isAvailable } from '../actions/gather.js';
 ```
 
-In `src/main.js`, replace line 2 `import { WORLD, CHARACTERS, LOCATIONS, createGame, movePlayer, restoreGame, gather, discover, nearbyNode, regionAt } from './state.js';` with:
+In `src/main.js`, replace line 2 `import { WORLD, CHARACTERS, LOCATIONS, NODES, RESOURCES, createGame, movePlayer, restoreGame, gather, gatherTime, discover, nearbyNode, regionAt, hasGathered } from './state.js';` with:
 
 ```js
 import { CHARACTERS } from './data/characters.js';
+import { RESOURCES } from './data/supplies.js';
 import { WORLD } from './world/map.js';
+import { NODES } from './world/nodes.js';
 import { LOCATIONS, regionAt } from './world/regions.js';
 import { createGame, restoreGame } from './game/state.js';
 import { movePlayer } from './actions/move.js';
-import { nearbyNode, beginGather, finishGather } from './actions/gather.js';
+import { nearbyNode, hasGathered, beginGather, finishGather } from './actions/gather.js';
 import { discover } from './actions/discover.js';
 ```
 
-In `src/main.js`, replace `import { createAnimator, startAction, advanceAnimation } from './animation/clips.js';` with:
+In `src/main.js`, replace `import { createAnimator, startAction, cancelAction, advanceAnimation } from './animation/clips.js';` with:
 
 ```js
-import { createAnimator, advanceAnimation } from './animation/clips.js';
+import { createAnimator, cancelAction, advanceAnimation } from './animation/clips.js';
 ```
 
 In `src/main.js`, replace the whole `collect()` function:
@@ -592,9 +635,9 @@ In `src/main.js`, replace the whole `collect()` function:
 function collect(){
   if(screen!=='game'||isPaused()||animator.pending)return;
   const node=nearbyNode(state);
-  if(!node){notify('Move closer to a marked supply to gather it.');return;}
+  if(!node){notify('Move closer to something you can gather.');return;}
   if(Math.abs(node.x-state.player.x)>8)state.player.direction=node.x<state.player.x?1:2;
-  startAction(animator,'gather',node.id);keys.clear();
+  startAction(animator,node.clip,node.id,gatherTime(state,node));keys.clear();updateHud();
 }
 ```
 
@@ -604,12 +647,12 @@ with:
 function collect(){
   if(screen!=='game'||isPaused())return;
   const result=beginGather(state,animator);
-  if(result.ok)keys.clear();
-  else if(result.reason==='none')notify('Move closer to a marked supply to gather it.');
+  if(result.ok){keys.clear();updateHud();}
+  else if(result.reason==='none')notify('Move closer to something you can gather.');
 }
 ```
 
-In `src/main.js` `frame()`, replace `const node=gather(state);` with `const node=finishGather(state);`.
+In `src/main.js` `frame()`, replace `const node=gather(state,done.target);` with `const node=finishGather(state,done.target);`.
 
 Then:
 
@@ -625,7 +668,7 @@ Expected: no output. (The only `./state.js` import left is `src/game/saves.js` i
 - [ ] **Step 10: Run tests and build**
 
 Run: `npm test`
-Expected: `ℹ tests 28`, `ℹ pass 28`, `ℹ fail 0`.
+Expected: `ℹ tests 37`, `ℹ pass 37`, `ℹ fail 0`. That's 13 moved state tests, 4 new gather tests, 2 map tests, 2 boundary tests, 5 saves tests and 11 clips tests.
 
 Run: `npm run build`
 Expected: `✓ built in …`.
@@ -636,8 +679,9 @@ Expected: `✓ built in …`.
 git add -A src tests
 git commit -m "Split state.js into data, world, game state and one file per action
 
-Adds beginGather/finishGather (gather renamed), balance constants in
-data/balance.js, and a test that keeps the pure modules Node-safe.
+Adds beginGather/finishGather (gather renamed), world/nodes.js for supply
+and wild-patch nodes, balance constants in data/balance.js, and a test
+that keeps the pure modules Node-safe.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
@@ -646,7 +690,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ### Task 3: Split main.js into ui/ and core/
 
-There is no DOM test harness, so this task is checked by the unchanged unit tests, the build, and a browser smoke test (Step 11).
+There is no DOM test harness, so this task is checked by the unchanged unit tests, the build, a template byte-check, and a controller browser smoke test.
 
 **Files:**
 - Create: `src/ui/layout.js`, `src/ui/hud.js`, `src/ui/selection.js`, `src/ui/dialogs.js`
@@ -654,7 +698,13 @@ There is no DOM test harness, so this task is checked by the unchanged unit test
 - Rewrite: `src/main.js`
 
 **Interfaces:**
-- Consumes (from Tasks 1–2): `CHARACTERS` (`src/data/characters.js`), `WORLD` (`src/world/map.js`), `LOCATIONS, regionAt` (`src/world/regions.js`), `createGame, restoreGame` (`src/game/state.js`), `storageKey, readActive, setActive, createSaveSession` (`src/game/saves.js`), `movePlayer` (`src/actions/move.js`), `nearbyNode, beginGather, finishGather` (`src/actions/gather.js`), `discover` (`src/actions/discover.js`), `createAnimator, advanceAnimation` (`src/animation/clips.js`), `setupPreview(getCharacter)` (`src/animation/preview.js`), `createRenderer(container, miniCanvas) -> Promise<{draw(state,dt,animator), drawMap(canvas,state), resetCamera()}>` (`src/render/renderer.js`).
+- Consumes (from Tasks 1–2):
+  - `CHARACTERS` (`src/data/characters.js`), `RESOURCES` (`src/data/supplies.js`)
+  - `WORLD` (`src/world/map.js`), `NODES` (`src/world/nodes.js`), `LOCATIONS, regionAt` (`src/world/regions.js`)
+  - `createGame, restoreGame` (`src/game/state.js`), `storageKey, readActive, setActive, createSaveSession` (`src/game/saves.js`)
+  - `movePlayer` (`src/actions/move.js`), `nearbyNode, hasGathered, beginGather, finishGather` (`src/actions/gather.js`), `discover` (`src/actions/discover.js`)
+  - `createAnimator, cancelAction, advanceAnimation` (`src/animation/clips.js`), `setupPreview(getCharacter)` (`src/animation/preview.js`)
+  - `createRenderer(container, miniCanvas) -> Promise<{draw(state,dt,animator), drawMap(canvas,state), resetCamera()}>` (`src/render/renderer.js`)
 - Produces:
   - `src/ui/layout.js`: `icon(name) -> string`, `$(id) -> HTMLElement`, `mountLayout(app)`.
   - `src/ui/hud.js`: `createHud(session) -> {notify(message), update()}`.
@@ -705,9 +755,13 @@ Expected: `layout identical`.
 - [ ] **Step 3: Create ui/hud.js**
 
 ```js
-import { nearbyNode } from '../actions/gather.js';
+import { RESOURCES } from '../data/supplies.js';
+import { NODES } from '../world/nodes.js';
 import { regionAt } from '../world/regions.js';
+import { nearbyNode, hasGathered } from '../actions/gather.js';
 import { $ } from './layout.js';
+
+const DOING={Chop:'Chopping',Pick:'Picking',Gather:'Gathering'};
 
 export function createHud(session) {
   let toastTimer;
@@ -717,15 +771,17 @@ export function createHud(session) {
   }
   function update() {
     const {state,animator}=session;
-    for(const resource of ['wood','stone','food'])$(resource).textContent=state.resources[resource];
+    for(const resource of RESOURCES)$(resource).textContent=state.resources[resource];
     $('region-name').textContent=regionAt(state.player);
     $('discovery-count').textContent=`${state.discovered.length} / 3`;
-    $('quest-gather').classList.toggle('complete',state.collected.length>0);
+    $('quest-gather').classList.toggle('complete',hasGathered(state));
     $('quest-explore').classList.toggle('complete',state.discovered.length===3);
-    if(state.collected.length&&state.discovered.length===3)$('quest-text').textContent='You have found your feet. Keep exploring — this is just the beginning.';
+    if(hasGathered(state)&&state.discovered.length===3)$('quest-text').textContent='You have found your feet. Keep exploring — this is just the beginning.';
     else $('quest-text').textContent='Gather supplies and follow the paths to discover the world.';
-    const node=nearbyNode(state);$('interact').hidden=!node||!!animator.pending;
-    if(node)$('interact').querySelector('span').textContent=`Gather ${node.label.toLowerCase()}`;
+    const node=nearbyNode(state),busy=NODES.find(n=>n.id===animator.pending?.target),button=$('interact');
+    button.hidden=!node&&!busy;button.classList.toggle('busy',!!busy);button.setAttribute('aria-disabled',String(!!busy));
+    if(busy)button.querySelector('span').textContent=`${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
+    else if(node)button.querySelector('span').textContent=`${node.verb} ${node.label.toLowerCase()}`;
   }
   return {notify,update};
 }
@@ -882,12 +938,12 @@ const TOUCH_KEYS={up:'w',down:'s',left:'a',right:'d'};
 
 export function setupInput(session, ui) {
   const {keys}=session;
-  // E starts the gather clip; the supply is awarded when the clip finishes (see core/loop.js).
+  // E starts the node's timed action; the supply is awarded when the action runs out (see core/loop.js).
   function gather(){
     if(session.screen!=='game'||ui.dialogs.isPaused())return;
     const result=beginGather(session.state,session.animator);
-    if(result.ok)keys.clear();
-    else if(result.reason==='none')ui.hud.notify('Move closer to a marked supply to gather it.');
+    if(result.ok){keys.clear();ui.hud.update();}
+    else if(result.reason==='none')ui.hud.notify('Move closer to something you can gather.');
   }
   $('interact').addEventListener('click',gather);
   window.addEventListener('keydown',event=>{
@@ -896,7 +952,8 @@ export function setupInput(session, ui) {
     if(key==='escape'){if(!ui.dialogs.isPaused()){event.preventDefault();ui.dialogs.openPause();}return;}
     if(key==='m'&&!event.repeat){event.preventDefault();ui.dialogs.toggleMap();return;}
     if(ui.dialogs.isPaused())return;
-    if(MOVE_KEYS.includes(key)){event.preventDefault();keys.add(key);}
+    // Mid-action, key-repeat from a key held since before E is ignored; only a fresh press moves (and so cancels).
+    if(MOVE_KEYS.includes(key)){event.preventDefault();if(!(session.animator.pending&&event.repeat))keys.add(key);}
     if(key==='e'&&!event.repeat){event.preventDefault();gather();}
   });
   window.addEventListener('keyup',event=>keys.delete(event.key.toLowerCase()));
@@ -922,7 +979,7 @@ export function setupInput(session, ui) {
 import { movePlayer } from '../actions/move.js';
 import { finishGather } from '../actions/gather.js';
 import { discover } from '../actions/discover.js';
-import { advanceAnimation } from '../animation/clips.js';
+import { advanceAnimation, cancelAction } from '../animation/clips.js';
 import { save } from './session.js';
 
 // Engine timings, not game balance (that lives in data/balance.js).
@@ -937,10 +994,11 @@ export function startLoop(session, ui) {
       let moving=false;
       if(!ui.dialogs.isPaused()&&!document.hidden){
         const {dx,dy,running}=ui.input.moveIntent();
-        // No movement while the gather clip plays: the 0.8 s lock is intended.
+        // Moving cancels an action in progress; nothing is awarded.
+        if(animator.pending&&(dx||dy)){cancelAction(animator);ui.hud.update();}
         moving=!animator.pending&&movePlayer(state,dx,dy,dt,running);state.elapsed+=dt;
         const done=advanceAnimation(animator,dt,{moving,running});
-        if(done?.clip==='gather'){const node=finishGather(state);if(node){ui.hud.notify(`+${node.amount} ${node.type} · ${node.label}`);ui.hud.update();save(session,ui,true);}}
+        if(done?.target){const node=finishGather(state,done.target);if(node){ui.hud.notify(`+${node.amount} ${node.type} · ${node.label}`);ui.hud.update();save(session,ui,true);}}
         const found=discover(state);if(found.length){ui.hud.notify(`Discovered ${found[0].name}`);save(session,ui,true);}
         clock.sinceSave+=dt;if(clock.sinceSave>AUTOSAVE_EVERY){save(session,ui,true);clock.sinceSave=0;}
       }
@@ -986,7 +1044,7 @@ startLoop(session,ui);
 - [ ] **Step 10: Run tests and build**
 
 Run: `npm test`
-Expected: `ℹ tests 28`, `ℹ pass 28`, `ℹ fail 0`.
+Expected: `ℹ tests 37`, `ℹ pass 37`, `ℹ fail 0`.
 
 Run: `npm run build`
 Expected: `✓ built in …`.
@@ -994,18 +1052,18 @@ Expected: `✓ built in …`.
 Run: `wc -l src/main.js`
 Expected: about 25 lines.
 
-- [ ] **Step 11: Browser smoke test**
+- [ ] **Step 11 (controller): Browser smoke test**
 
-Start the `wildhaven` launch config (or `npm run dev`) and open the printed `127.0.0.1` URL. Check each item:
-- The selection screen looks the same as on the baseline. Left/right arrow keys move between cards, and the save hint updates.
-- **Begin** (Scout) shows the loading screen, then the game. Its toast reads "Welcome to Pinefall Woods. Your story begins here.", or "Welcome back. Your journey continues." if the Scout already has a save at this origin.
+On the dev server at a `127.0.0.1` origin, check each item:
+- The selection screen looks the same as before. Left/right arrow keys move between cards, and the save hint updates.
+- **Begin** shows the loading screen, then the game, with a welcome toast.
 - WASD moves the character, Shift runs, and diagonals move.
-- E next to the marked supply plays the crouch, holding D during the crouch does not move the character, and after about 0.8 s the toast reads "+3 wood · Fallen branches". The HUD Wood count goes up.
-- E away from any supply shows "Move closer to a marked supply to gather it."
-- M opens and closes the map. Esc pauses, and keys are ignored while paused. **Keep exploring** resumes.
-- Pause → **Save adventure** shows "Your adventure has been saved."
-- Pause → **Return to characters** returns to selection, and the card shows **Continue your journey**.
-- Continue, then refresh the page mid-game: the game resumes straight into play.
+- Next to a supply, E starts the timed action and the interact button reads "Chopping/Gathering/Picking …, move to stop". After 6 s the toast reads "+N <type> · <label>" and the HUD count goes up.
+- A fresh movement press during the action cancels it and awards nothing.
+- E away from everything shows "Move closer to something you can gather."
+- M opens and closes the map. Esc pauses, and keys are ignored while paused.
+- **Save adventure** shows "Your adventure has been saved." **Return to characters** goes back, and the card shows **Continue your journey**.
+- Refreshing mid-game resumes the game.
 - **Preview animations** opens from both the selection screen and the pause menu.
 - The browser console shows no errors.
 
@@ -1029,12 +1087,13 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Consumes: the final file layout from Tasks 1–3.
 - Produces: docs that match the code.
 
-- [ ] **Step 1: Final verification, including the baseline save**
+- [ ] **Step 1 (controller): Final verification, including the baseline save**
 
-On the dev server, at the same origin (host and port) recorded in Task 1, Step 1:
-- Choose the Wandering Builder. The card must show **Continue your journey** and a save hint with "Adventure saved". Continue: the HUD Wood/Stone/Food must match the numbers written down in Task 1, Step 1.
+At the origin (host and port) recorded in Task 1, Step 1:
+- Choose the Wandering Builder. The card must show **Continue your journey**, and continuing must show the Wood/Stone/Food/Herbs numbers recorded then.
 - Repeat the Task 3, Step 11 checklist with the Frontier Scout and the Shipwreck Survivor.
-- Walk the Survivor into the Driftwood Coast discovery radius from outside it. The toast reads "Discovered Driftwood Coast" and the quest counter increases.
+- Pick a wildflower patch and check that the herbs count rises.
+- Walk the Survivor into the Driftwood Coast discovery radius. The toast reads "Discovered Driftwood Coast".
 
 - [ ] **Step 2: Update CLAUDE.md**
 
@@ -1052,7 +1111,7 @@ node --test tests/actions/gather.test.js                              # one file
 node --test --test-name-pattern="stale tab" tests/game/saves.test.js  # one test by name
 ```
 
-Replace the whole `## Architecture` section, from its heading up to (not including) the `**Save model.**` paragraph, with:
+Replace the `## Architecture` section, from its heading up to (not including) the `**Save model.**` paragraph, with:
 
 ```markdown
 ## Architecture
@@ -1061,13 +1120,13 @@ Game rules are pure modules. Rendering and the DOM are thin layers around them. 
 
 | Folder | Role | Runs in Node tests? |
 | --- | --- | --- |
-| `src/data/` | `characters.js` (characters, spawns, region offsets), `supplies.js` (supply nodes), `balance.js` (speeds, ranges, radii) | yes |
-| `src/world/` | `map.js` (world size, collision via `isWalkable`), `regions.js` (`LOCATIONS`, `regionAt`) | yes |
-| `src/actions/` | One file per player action: `move.js`, `gather.js` (`beginGather` starts the clip, `finishGather` awards), `discover.js` | yes |
+| `src/data/` | `characters.js` (characters, spawns, region offsets), `supplies.js` (`SUPPLIES` with sprite, scale, verb, clip; `WILD` regrowing patch kinds; `RESOURCES`), `balance.js` (speeds, reach, `GATHER_SECONDS`, radii) | yes |
+| `src/world/` | `map.js` (world size, collision: `isWalkable`, `blocks`, `OBSTACLES`), `nodes.js` (`NODES` = supplies + wild map patches; `nodeBases` solid bases), `regions.js` (`LOCATIONS`, `regionAt`) | yes |
+| `src/actions/` | One file per player action: `move.js` (`movePlayer`), `gather.js` (`beginGather` starts the timed action, `finishGather` awards by id; `gatherTime`, `isAvailable`, `nearbyNode`), `discover.js` | yes |
 | `src/game/` | `state.js` (create, serialize, validate saves), `saves.js` (per-character localStorage session, active character) | yes |
-| `src/animation/` | `clips.js` (clip table, animator; pure), `sheets.js` (sprite loading and frame measuring), `preview.js` (preview dialog) | `clips.js` only |
-| `src/render/` | `renderer.js`: Phaser scene, camera, node markers, minimap and world map | no |
-| `src/ui/` | `layout.js` (HTML template, icons), `selection.js`, `hud.js` (HUD + toast), `dialogs.js` (pause, map, reset, fullscreen) | no |
+| `src/animation/` | `clips.js` (clip table, animator, timed actions; pure), `sheets.js` (sprite loading and frame measuring), `preview.js` (preview dialog) | `clips.js` only |
+| `src/render/` | `renderer.js`: Phaser scene, supply sprites (glow, E cap, progress bar, fade-out), camera, minimap and world map | no |
+| `src/ui/` | `layout.js` (HTML template, icons), `selection.js`, `hud.js` (HUD, interact button, toast), `dialogs.js` (pause, map, reset, fullscreen) | no |
 | `src/core/` | `session.js` (shared session; start, leave, save), `input.js` (keys, touch), `loop.js` (frame loop) | no |
 
 **Keep the pure modules runnable in Node.** `data/`, `world/`, `actions/`, `game/` and `animation/clips.js` must not import `ui/`, `core/`, `render/`, `sheets.js`, `preview.js`, PNG or CSS files, and must not use `import.meta`, `document` or `window`. `tests/boundaries.test.js` enforces this. JSON is imported with `import ... with { type: 'json' }` so Node can read it.
@@ -1078,37 +1137,50 @@ Game rules are pure modules. Rendering and the DOM are thin layers around them. 
 
 **Input belongs to `core/input.js`, not Phaser.** Phaser's keyboard, mouse, and touch input are switched off. `core/input.js` tracks held keys in `session.keys` and exposes `moveIntent()`. The game counts as paused whenever the pause, map, or reset `<dialog>` is open (`ui.dialogs.isPaused()`). The simulation also stops while the tab is hidden.
 
-**Frame loop (`core/loop.js`).** Each frame: clamp `dt` to 0.05, call `movePlayer`, then `advanceAnimation`. When a `gather` clip *finishes*, call `finishGather(state)` to award the resources. Pressing E only calls `beginGather`, which starts the clip, so supplies are granted exactly once. Then run `discover`, autosave every 10 s, call `renderer.draw`, and refresh the HUD about every 0.12 s.
+**Frame loop (`core/loop.js`).** Each frame:
+1. Clamp `dt` to 0.05.
+2. If an action is running and a movement key is held, `cancelAction` (nothing is awarded).
+3. Call `movePlayer`, then `advanceAnimation`.
+4. When a timed action *finishes*, call `finishGather(state, target)` with the node id it targeted. Pressing E only calls `beginGather`, which starts the node's clip for `gatherTime(state, node)` seconds, so supplies are granted exactly once.
+5. Run `discover`, autosave every 10 s, call `renderer.draw`, and refresh the HUD about every 0.12 s.
+
+Because `dt` is clamped, game time runs slower than real time when the page renders below 20 fps (e.g. a hidden browser pane), and an action takes longer.
 ```
 
 Then make these replacements elsewhere in CLAUDE.md:
 - `Collision in \`state.js\` combines two sources.` → `Collision in \`src/world/map.js\` combines two sources.`
 - `**\`build-map.py\` hard-codes coordinates that also live in \`state.js\`.**` → `**\`build-map.py\` hard-codes coordinates that also live in \`src/data/characters.js\` and \`src/data/supplies.js\`.**`
+- In the **Supply nodes are not in the map** bullet:
+  - `` `render.js` draws each one from `NODES` `` → `` `src/render/renderer.js` draws each one from `NODES` (`src/world/nodes.js`) ``
+  - `` `state.js` makes its scaled footprint solid `` → `` `nodeBases` in `src/world/nodes.js` makes its scaled footprint solid ``
+  - Drop the trailing `` (`nodeBases`) `` if it's now redundant.
+- In the **Wild scenery** bullet: `` `WILD` in `state.js` `` → `` `WILD` in `src/data/supplies.js` ``, and `` `render.js` skips them `` → `` the renderer skips them ``.
 - ``measured **`edges`** arrays in `SOURCES` in `src/animation-art.js` `` → ``measured **`edges`** arrays in `SOURCES` in `src/animation/sheets.js` ``
-- `- Balance numbers are constants inside \`src/state.js\`. There is no separate data file.` → `- Balance numbers live in \`src/data/balance.js\`; the gather length lives in the \`gather\` clip in \`src/animation/clips.js\`. Don't hardcode tuning numbers in actions.`
-- In the **Stale Docs** list, replace ``- `README.md` calls `render.js` "Canvas rendering" and lists walking animation as future work.`` with ``- `README.md` lists walking animation as future work.`` (Step 3 fixes the "Canvas rendering" part).
+- `- Balance numbers are constants inside \`src/state.js\`. There is no separate data file.` → `- Balance numbers live in \`src/data/balance.js\` (speeds, reach, \`GATHER_SECONDS\`, discovery radius). Don't hardcode tuning numbers in actions.`
+- In **Stale Docs**, replace ``- `README.md` calls `render.js` "Canvas rendering" and lists walking animation as future work.`` with ``- `README.md` lists walking animation as future work.`` (Step 3 fixes the other half).
+- In the **awesome-gamedev-agent-skills** section, replace `Collision and movement stay in \`state.js\`, and input stays in \`main.js\`.` with `Collision stays in \`src/world/map.js\`, movement in \`src/actions/move.js\`, and input in \`src/core/input.js\`.`
 
-Run: `grep -nE "src/(state|storage|render|animation|animation-art|animation-preview)\.js|tests/(state|storage|animation)\.test\.js" CLAUDE.md`
-Expected: no output.
+Run: `grep -nE "\`(state|storage|render|animation|animation-art|animation-preview)\.js\`|src/(state|storage|render|animation|animation-art|animation-preview)\.js|tests/(state|storage|animation)\.test\.js" CLAUDE.md`
+Expected: no output. Any remaining hit is a stale reference: update it to the new path the same way.
 
 - [ ] **Step 3: Update README.md, build-map.py and verification.md**
 
 In `README.md`, replace the paragraph that starts `State, collision, movement, gathering, and serialization are in \`src/state.js\`.` with:
 
 ```markdown
-Game data and tuning live in `src/data/`, collision and regions in `src/world/`, and each player action (move, gather, discover) in its own file in `src/actions/`. Save state and storage are in `src/game/`. Phaser rendering is in `src/render/renderer.js`, animation clips and sprite sheets are in `src/animation/`, and the DOM screens and dialogs are in `src/ui/`. Input, the frame loop and the shared session are in `src/core/`, and `src/main.js` wires them together. Styling is in `src/style.css`.
+Game data and tuning live in `src/data/`, collision, supply nodes and regions in `src/world/`, and each player action (move, gather, discover) in its own file in `src/actions/`. Save state and storage are in `src/game/`. Phaser rendering is in `src/render/renderer.js`, animation clips and sprite sheets are in `src/animation/`, and the DOM screens and dialogs are in `src/ui/`. Input, the frame loop and the shared session are in `src/core/`, and `src/main.js` wires them together. Styling is in `src/style.css`.
 ```
 
 In `tools/build-map.py`, replace the comment line:
 
 ```python
-# Spawns and supply nodes from src/state.js: nothing is scattered on top of them.
+# Spawns and supply nodes from src/state.js (absolute positions): scenery within 150 of them is dropped after scattering.
 ```
 
 with:
 
 ```python
-# Spawns (src/data/characters.js) and supply nodes (src/data/supplies.js): nothing is scattered on top of them.
+# Spawns (src/data/characters.js) and supply nodes (src/data/supplies.js), as absolute positions: scenery within 150 of them is dropped after scattering.
 ```
 
 Append to `docs/verification.md`:
@@ -1119,16 +1191,16 @@ Append to `docs/verification.md`:
 
 Behavior-preserving move to role-based folders (`data/`, `world/`, `actions/`, `game/`, `animation/`, `render/`, `ui/`, `core/`). See `docs/superpowers/specs/2026-11-19-src-restructure-design.md`.
 
-- `npm test`: 28 passing, including new `beginGather` tests and `tests/boundaries.test.js`, which keeps the pure modules free of browser-only code. `npm run build` succeeds.
-- Copied data was checked equal to the old `state.js` exports (characters, supply nodes, locations, world size, obstacles) before `state.js` was deleted.
-- Browser at 127.0.0.1: selection, loading, walk, run, gather (0.8 s lock intact, awards once), discovery, map, pause, save, return, continue, refresh-resume and the animation preview all behave as before for all three characters. The console shows no errors.
+- `npm test`: 37 passing. The old state tests are split by subject. New tests cover `beginGather`, map edges, and `tests/boundaries.test.js`, which keeps the pure modules free of browser-only code. `npm run build` succeeds.
+- Before `state.js` was deleted, the copied data was checked equal to its exports: characters, nodes, supplies, wild kinds, resources, `GATHER_SECONDS`, locations, world size, obstacles and solid bases.
+- Browser at 127.0.0.1, for all three characters, everything behaves as before: selection, loading, walk, run, the 6 s timed gather (with cancel-on-move and award once), wildflower herbs, discovery, map, pause, save, return, continue, refresh-resume and the animation preview. The console shows no errors.
 - A Builder save made before the restructure loaded with the same resources.
 ```
 
 - [ ] **Step 4: Run tests and build one last time**
 
 Run: `npm test`
-Expected: `ℹ tests 28`, `ℹ pass 28`, `ℹ fail 0`.
+Expected: `ℹ tests 37`, `ℹ pass 37`, `ℹ fail 0`.
 
 Run: `npm run build`
 Expected: `✓ built in …`.

@@ -11,7 +11,7 @@ The first screen uses parchment, forest-green ink, large serif typography, and t
 | `assets/world/starting-regions.png` | Three portrait backgrounds, sliced at render time with CSS |
 | `assets/world/wildhaven.png` | Archived original world painting; no longer the playable map |
 | `assets/world/source/{grass,dirt,sand,water}.png` | Four independently generated repeating ground textures |
-| `assets/world/source/objects/*.png` | Sixteen independently generated transparent world sprites |
+| `assets/world/source/objects/*.png` | Sixteen independently generated transparent world sprites, plus the `berry-bush.png` stand-in |
 | `assets/world/source/objects.json` | Ground-contact origins and solid base footprints for the new art |
 | `assets/world/map/` | Built terrain atlas, Tiled JSON, and minimap overview |
 
@@ -36,4 +36,6 @@ Exact prompts are in `docs/design/character-selection.prompt.txt`, `docs/design/
 
 Intentional adaptations from the concept: condensed typography and illustrations for laptop height; shorter descriptive text; starting-kit details; saved-adventure CTA and fresh-start control; native keyboard focus outlines. These support the requested usable browser flow. Generated mockup text was not used as a screenshot interface.
 
-The world uses generated raster art. Code draws UI markers, map dots, a small character contact shadow, and terrain transitions. Characters have separate idle, walking, running, and gathering art. The terrain repeat check, object contact sheet, full-map preview, and in-game checks are retained in `docs/screenshots/`.
+The world uses generated raster art. Code draws map dots, a small character contact shadow, terrain transitions, and the supply cues (the glow outline, E key cap and progress bar).
+
+`objects/berry-bush.png` is **not generated art**. It is a stand-in derived from `oak.png`: the crown squashed into a low shrub, bark recoloured to foliage, and small berry clusters painted on. The script is in `docs/superpowers/plans/2026-11-19-harvestable-supplies.md`. `berry-bush.prompt.txt` holds the prompt for the real sprite. Generate it with the usual style reference, save it over the stand-in at about 150×104, check `origin`/`footprint` in `objects.json`, and re-run `python tools/build-map.py`. Characters have separate idle, walking, running, and gathering art. The terrain repeat check, object contact sheet, full-map preview, and in-game checks are retained in `docs/screenshots/`.

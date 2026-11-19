@@ -2,6 +2,14 @@
 
 Status: approved in brainstorming on 2026-11-19. This is a behavior-preserving refactor that sets up the code structure before the playability review (`/build-playability-review`).
 
+**Revision (11:40, after `4c689c1` landed harvestable supplies and wild herbs).** Where this spec and the plan disagree, the plan wins. The changes:
+- A new `src/world/nodes.js` holds `NODES` (the fixed supplies plus wild map patches) and `nodeBases`.
+- `src/data/supplies.js` holds `SUPPLIES`, `WILD` and `RESOURCES`.
+- `GATHER_SECONDS` (6) joins `data/balance.js`.
+- `world/map.js` also exports `blocks`, `MAP_OBJECTS` and `OBJECT_SPECS`.
+- `actions/gather.js` also holds `gatherTime`, `isAvailable` and `hasGathered`. `beginGather` starts the node's own clip for `gatherTime` seconds, and `finishGather(state, id)` awards by id.
+- The "0.8 s gather lock" invariant is replaced by the current rule: a 6 s timed action, cancelled by a fresh movement press, awarded once.
+
 ## Goal
 
 Move from today's 8 flat files (where `state.js` mixes data, collision, actions and saves, and `main.js` runs everything in the browser) to a role-based layout. Each player action gets its own file, and game data and tuning numbers live in `src/data/`.

@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createSaveSession,storageKey,readActive,setActive} from '../src/storage.js';
-import {createGame,serializeGame,restoreGame} from '../src/state.js';
+import {createSaveSession,storageKey,readActive,setActive} from '../../src/game/saves.js';
+import {createGame,serializeGame,restoreGame} from '../../src/game/state.js';
 
 function memoryStorage(){const entries=new Map();return {getItem:key=>entries.get(key)??null,setItem:(key,value)=>entries.set(key,value),removeItem:key=>entries.delete(key)};}
 
