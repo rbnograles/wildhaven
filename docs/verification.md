@@ -1,5 +1,13 @@
 # First playable verification — 2026-11-19
 
+## Regenerated deleted world sprites — 2026-11-19
+
+- Replaced seven deleted placeholders with new built-in image-generation artwork: berry bush, cactus, sandstone ruin, driftwood, old boat, rowboat and signpost. Their existing game canvas dimensions, object origins and footprints remain unchanged. Original high-resolution images and exact prompts are preserved; `docs/design/regenerated-world-sprites.json` records paths, source bounds and fitted rectangles.
+- Inspected all source images and the prepared contact sheet at `docs/screenshots/regenerated-world-sprites.png`. Confirmed each final PNG has the expected dimensions, zero-alpha background and opaque artwork. The old boat has transparent holes and broken benches; the repaired boat has an intact hull.
+- `python tools/build-map.py` passed: 3,117 tiles, 6,715 objects, 25 stair flights. `npm run build` and `npm run format:check` passed. Build emitted JSON import-attribute consistency and bundle-size warnings.
+- Final `npm test`: **176 passed, 0 failed**. An earlier run had one hunger-health expectation failure; that test changed concurrently in the workspace and the fresh full rerun passed. This sprite task did not modify gameplay or tests.
+- Verification here covers asset files, visual contact-sheet review, map rebuild and automated checks. No new interactive gameplay session was performed for these replacements.
+
 ## Harvestable supply sprites and 6 s gathering — 2026-11-19
 
 - Spec: `docs/superpowers/specs/2026-11-19-harvestable-supplies-design.md`. Placement review: `docs/screenshots/node-placement-proposal.png`.

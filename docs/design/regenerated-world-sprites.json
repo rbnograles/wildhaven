@@ -1,0 +1,190 @@
+{
+  "date": "2026-11-19",
+  "tool": "built-in image_gen",
+  "purpose": "Replace seven deleted placeholder world sprites with newly generated painted art",
+  "preparation": "Crop to alpha-visible bounds (>32), retain 2 source pixels of edge padding, proportionally fit into the existing game canvas with at least 4 transparent pixels on each side; upright objects bottom-aligned, flat objects centered. Preserve original alpha. Keep existing origins and footprints.",
+  "assets": [
+    {
+      "name": "berry-bush",
+      "kind": "plants",
+      "w": 150,
+      "h": 104,
+      "detail": "A low, broad, naturally rounded wild berry shrub, much wider than tall. Dense overlapping clusters of moss-green and dark olive leaves, with about 8 clearly visible clusters of ripe crimson red berries distributed naturally across front and top. A few woody twigs visible under the foliage, tiny root stem at bottom center. Organic asymmetry and soft rounded leafy masses, attractive painted leaves with lighter upper surfaces, no giant tree trunk. Main silhouette width-to-height about 1.5:1. Elevated three-quarter view. No flowers.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: A low, broad, naturally rounded wild berry shrub, much wider than tall. Dense overlapping clusters of moss-green and dark olive leaves, with about 8 clearly visible clusters of ripe crimson red berries distributed naturally across front and top. A few woody twigs visible under the foliage, tiny root stem at bottom center. Organic asymmetry and soft rounded leafy masses, attractive painted leaves with lighter upper surfaces, no giant tree trunk. Main silhouette width-to-height about 1.5:1. Elevated three-quarter view. No flowers. Compose for a 150 by 104 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/plants/berry-bush-regenerated-v1.png",
+      "output": "assets/world/source/objects/plants/berry-bush.png",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "contentBounds": [
+        76,
+        141,
+        1459,
+        837
+      ],
+      "fittedRect": [
+        4,
+        29,
+        142,
+        71
+      ]
+    },
+    {
+      "name": "cactus",
+      "kind": "plants",
+      "w": 110,
+      "h": 170,
+      "detail": "One mature saguaro cactus: tall central column, one shorter upturned arm on left and one higher upturned arm on right, organically curved joints, softly rounded tips. Desaturated sage and olive green, readable vertical ribs with warm highlights and subtle small pale thorn clusters. Modest age marks, naturally uneven silhouette, appealing painted volume. Narrow root contact centered at bottom. Whole plant width-to-height about 0.63:1, viewed slightly from above. No pot, flowers, rocks, sand or extra cacti.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: One mature saguaro cactus: tall central column, one shorter upturned arm on left and one higher upturned arm on right, organically curved joints, softly rounded tips. Desaturated sage and olive green, readable vertical ribs with warm highlights and subtle small pale thorn clusters. Modest age marks, naturally uneven silhouette, appealing painted volume. Narrow root contact centered at bottom. Whole plant width-to-height about 0.63:1, viewed slightly from above. No pot, flowers, rocks, sand or extra cacti. Compose for a 110 by 170 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/plants/cactus-regenerated-v1.png",
+      "output": "assets/world/source/objects/plants/cactus.png",
+      "sourceSize": [
+        1079,
+        1458
+      ],
+      "contentBounds": [
+        186,
+        49,
+        876,
+        1408
+      ],
+      "fittedRect": [
+        14,
+        4,
+        82,
+        162
+      ]
+    },
+    {
+      "name": "sandstone-ruin",
+      "kind": "buildings",
+      "w": 280,
+      "h": 220,
+      "detail": "One compact ancient sandstone ruin composed of three weathered square columns of different broken heights on a low cracked rectangular stone foundation. Two taller columns support one fractured lintel, the third is a shorter broken column beside them. Warm honey-ochre sandstone blocks, softened chipped edges, visible construction joints, a few integrated rubble blocks resting on the same foundation. Subtle old carved border accents without readable symbols. Elevated three-quarter orthographic view with visible top planes and interior gaps. Broad compact silhouette approximately 1.3:1 width-to-height. Foundation centered near bottom, no ground or terrain outside it. Make it believable ancient masonry, not flat rectangles.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: One compact ancient sandstone ruin composed of three weathered square columns of different broken heights on a low cracked rectangular stone foundation. Two taller columns support one fractured lintel, the third is a shorter broken column beside them. Warm honey-ochre sandstone blocks, softened chipped edges, visible construction joints, a few integrated rubble blocks resting on the same foundation. Subtle old carved border accents without readable symbols. Elevated three-quarter orthographic view with visible top planes and interior gaps. Broad compact silhouette approximately 1.3:1 width-to-height. Foundation centered near bottom, no ground or terrain outside it. Make it believable ancient masonry, not flat rectangles. Compose for a 280 by 220 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/buildings/sandstone-ruin-regenerated-v1.png",
+      "output": "assets/world/source/objects/buildings/sandstone-ruin.png",
+      "sourceSize": [
+        1430,
+        1100
+      ],
+      "contentBounds": [
+        163,
+        37,
+        1255,
+        1068
+      ],
+      "fittedRect": [
+        27,
+        4,
+        225,
+        212
+      ]
+    },
+    {
+      "name": "driftwood",
+      "kind": "props",
+      "w": 150,
+      "h": 70,
+      "detail": "One compact pile of THREE naturally interlocking small driftwood branches, lying flat. A long gently curved silver-grey bleached branch and two shorter weathered pieces beside and partly across it. Warm grey-tan wood grain, rounded water-worn ends, a few knotted stubs and delicate splits. Distinct from a fresh cut log: no bark, no leaves, no mushrooms, no grass. Wide low silhouette approximately 2.15:1 width-to-height. Viewed from above at the game's elevated orthographic angle. Transparent everywhere around and between wood pieces; no sand or cast shadow.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: One compact pile of THREE naturally interlocking small driftwood branches, lying flat. A long gently curved silver-grey bleached branch and two shorter weathered pieces beside and partly across it. Warm grey-tan wood grain, rounded water-worn ends, a few knotted stubs and delicate splits. Distinct from a fresh cut log: no bark, no leaves, no mushrooms, no grass. Wide low silhouette approximately 2.15:1 width-to-height. Viewed from above at the game's elevated orthographic angle. Transparent everywhere around and between wood pieces; no sand or cast shadow. Compose for a 150 by 70 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/props/driftwood-regenerated-v1.png",
+      "output": "assets/world/source/objects/props/driftwood.png",
+      "sourceSize": [
+        1829,
+        860
+      ],
+      "contentBounds": [
+        91,
+        215,
+        1741,
+        673
+      ],
+      "fittedRect": [
+        4,
+        15,
+        142,
+        39
+      ]
+    },
+    {
+      "name": "old-boat",
+      "kind": "props",
+      "w": 200,
+      "h": 90,
+      "detail": "One abandoned, repairable small wooden rowboat with a pointed bow facing SCREEN RIGHT and blunt stern on left. Long horizontal silhouette about 2.2:1 width-to-height. Elevated near-top-down three-quarter view, so both the open interior and near outer hull are visible. Weathered silvery grey and muted tan clinker planks, warped gunwale, two damaged narrow cross-bench seats, several missing floor planks exposing TRANSPARENT holes, one small split in the near hull. The intact ribs and outline make it clearly recognizable as a repairable rowboat. No mast, sail, water, beach, oars, rope piles or loose scenery. Carefully painted marine wood construction, clean readable shape.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: One abandoned, repairable small wooden rowboat with a pointed bow facing SCREEN RIGHT and blunt stern on left. Long horizontal silhouette about 2.2:1 width-to-height. Elevated near-top-down three-quarter view, so both the open interior and near outer hull are visible. Weathered silvery grey and muted tan clinker planks, warped gunwale, two damaged narrow cross-bench seats, several missing floor planks exposing TRANSPARENT holes, one small split in the near hull. The intact ribs and outline make it clearly recognizable as a repairable rowboat. No mast, sail, water, beach, oars, rope piles or loose scenery. Carefully painted marine wood construction, clean readable shape. Compose for a 200 by 90 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/props/old-boat-regenerated-v1.png",
+      "output": "assets/world/source/objects/props/old-boat.png",
+      "sourceSize": [
+        1862,
+        845
+      ],
+      "contentBounds": [
+        52,
+        125,
+        1800,
+        748
+      ],
+      "fittedRect": [
+        4,
+        11,
+        192,
+        68
+      ]
+    },
+    {
+      "name": "rowboat",
+      "kind": "props",
+      "w": 200,
+      "h": 90,
+      "detail": "One sturdy repaired small wooden rowing boat, pointed bow facing SCREEN RIGHT and blunt stern on left. Long horizontal silhouette about 2.2:1 width-to-height. Elevated near-top-down three-quarter view, showing open interior and near outer hull. Warm chestnut-brown clinker planks with ochre highlights, dark interior ribs, exactly two narrow cross-bench seats, continuous sound hull and clean rim. Compact two-person rowboat, no occupants, mast, sails, oars, rigging, water, wake, glow or beach. Keep center of boat around center of canvas for placing the player aboard. Beautiful restrained painted joinery and natural wood grain, clear at small size.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: One sturdy repaired small wooden rowing boat, pointed bow facing SCREEN RIGHT and blunt stern on left. Long horizontal silhouette about 2.2:1 width-to-height. Elevated near-top-down three-quarter view, showing open interior and near outer hull. Warm chestnut-brown clinker planks with ochre highlights, dark interior ribs, exactly two narrow cross-bench seats, continuous sound hull and clean rim. Compact two-person rowboat, no occupants, mast, sails, oars, rigging, water, wake, glow or beach. Keep center of boat around center of canvas for placing the player aboard. Beautiful restrained painted joinery and natural wood grain, clear at small size. Compose for a 200 by 90 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/props/rowboat-regenerated-v1.png",
+      "output": "assets/world/source/objects/props/rowboat.png",
+      "sourceSize": [
+        1870,
+        841
+      ],
+      "contentBounds": [
+        127,
+        150,
+        1761,
+        731
+      ],
+      "fittedRect": [
+        4,
+        11,
+        192,
+        68
+      ]
+    },
+    {
+      "name": "signpost",
+      "kind": "props",
+      "w": 90,
+      "h": 130,
+      "detail": "One rustic wooden trail signpost: a single upright slightly irregular oak post carrying ONE broad arrow-shaped wooden plank pointing SCREEN RIGHT near the top. Blank sign face with NO letters or symbols. Honey-brown aged wood, darker edges, subtle split grain, two visible dark iron fasteners attaching the board, tiny bevel on the arrow tip. Convincing painted three-dimensional object in elevated orthographic view, slight top surfaces visible. Narrow post continues down to bottom-center ground contact. Entire silhouette about 0.69:1 width-to-height. No hanging signs, extra arrows, stones, ground, grass or ropes.",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated environment sprite for the Wildhaven 2D survival RPG. The attached images are STYLE REFERENCES ONLY: match their warm hand-painted storybook rendering, clean dark brown contours, soft layered shading, earthy palette, upper-left light and elevated orthographic camera. Do not draw any characters, tents or logs unless specifically requested below. Make genuinely illustrated game art with readable crafted forms and restrained surface details. Single unified object, centered, full object visible, generous empty margin. Genuine transparent alpha background, including all holes and gaps. No ground patch, sand, grass base, water, horizon, vignette, shadow outside the object, glow, checkerboard painting, text, logos or labels. Prioritize a strong clean silhouette and readable details at small in-game size. Primary request: One rustic wooden trail signpost: a single upright slightly irregular oak post carrying ONE broad arrow-shaped wooden plank pointing SCREEN RIGHT near the top. Blank sign face with NO letters or symbols. Honey-brown aged wood, darker edges, subtle split grain, two visible dark iron fasteners attaching the board, tiny bevel on the arrow tip. Convincing painted three-dimensional object in elevated orthographic view, slight top surfaces visible. Narrow post continues down to bottom-center ground contact. Entire silhouette about 0.69:1 width-to-height. No hanging signs, extra arrows, stones, ground, grass or ropes. Compose for a 90 by 130 pixel game footprint after proportional downscaling; generate high-resolution source art, with 8 percent clear margin.",
+      "original": "assets/world/source/originals/props/signpost-regenerated-v1.png",
+      "output": "assets/world/source/objects/props/signpost.png",
+      "sourceSize": [
+        1024,
+        1536
+      ],
+      "contentBounds": [
+        163,
+        71,
+        873,
+        1474
+      ],
+      "fittedRect": [
+        14,
+        4,
+        62,
+        122
+      ]
+    }
+  ]
+}

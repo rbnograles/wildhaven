@@ -1,5 +1,13 @@
 # Wildhaven art direction
 
+## Diagonal locomotion sprites (2026-11-19)
+
+`assets/characters/diagonal/` adds northeast (rear three-quarter) and southeast (front three-quarter) walk/run sheets for the Scout, Builder and Survivor. Walk sheets have four columns; run sheets have six; each has three character rows. Northwest and southwest reuse them with horizontal mirroring. Created with the built-in image-generation tool and the approved starting-character atlas as the identity/style reference. Exact prompts and frame metadata are in the same folder. Gameplay integration remains separate.
+
+## Survival state sprites (2026-11-19)
+
+`assets/characters/states/` adds seven transparent, four-column, three-row animation sheets matching the approved Scout, Builder, and Survivor: dying, sleeping, waking to standing, hungry, hunger damage, cold damage, and attack damage. Generated with the built-in image-generation tool using the approved starting-character atlas as the identity/style reference. Exact prompts sit beside each PNG; the folder README and manifest describe playback and frame layout. These are delivered art assets, not implemented gameplay animations.
+
 The first screen uses parchment, forest-green ink, large serif typography, and three illustrated character panels. The generated concept is a composition reference; all UI text, buttons, selection states, and gameplay are real HTML/CSS/JavaScript.
 
 ## Assets
@@ -38,7 +46,7 @@ Intentional adaptations from the concept: condensed typography and illustrations
 
 The world uses generated raster art. Code draws map dots, a small character contact shadow, terrain transitions, and the supply cues (the glow outline, E key cap and progress bar).
 
-`objects/berry-bush.png` is **not generated art**. It is a stand-in derived from `oak.png`: the crown squashed into a low shrub, bark recoloured to foliage, and small berry clusters painted on. The script is in `docs/superpowers/plans/2026-11-19-harvestable-supplies.md`. `berry-bush.prompt.txt` holds the prompt for the real sprite. Generate it with the usual style reference, save it over the stand-in at about 150×104, check `origin`/`footprint` in `objects.json`, and re-run `python tools/build-map.py`. Characters have separate idle, walking, running, and gathering art. The terrain repeat check, object contact sheet, full-map preview, and in-game checks are retained in `docs/screenshots/`.
+`objects/plants/berry-bush.png` now uses independently generated painted art, replacing the old recoloured and compressed oak stand-in. Its game canvas remains 150×104. Characters have separate idle, walking, running, and gathering art. The terrain repeat check, object contact sheets, full-map preview, and in-game checks are retained in `docs/screenshots/`.
 
 ## Big-world biome stand-ins (2026-11-19)
 
@@ -56,16 +64,22 @@ Made by `tools/make-biome-standins.py` from existing art, so the 384×256 world 
 | `objects/trees/jungle-tree.png` | big-oak, deep green | Jungle trees |
 | `objects/plants/fern.png` | berry-bush, green | Jungle undergrowth (walk-through) |
 | `objects/plants/dead-bush.png` | berry-bush, brown | Desert and canyons |
-| `objects/plants/cactus.png` | drawn from rounded rectangles | Desert |
-| `objects/buildings/sandstone-ruin.png` | drawn from rectangles | Desert ruins, jungle temple |
 | `objects/props/bridge.png` | drawn plank deck (flat) | River bridges |
-| `objects/props/signpost.png` | drawn post and arrow board | Fast-travel signposts |
 | `source/ground/deep.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Deep sea (archipelago A1) |
-| `objects/props/driftwood.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Beach driftwood (1 wood) |
-| `objects/props/old-boat.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Old boats on the coast |
-| `objects/props/rowboat.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | The repaired boat the player rows |
 
 ### Replaced stand-ins
+
+The seven deleted placeholder sprites were regenerated with the built-in image-generation tool on 2026-11-19. The character atlas, painted log and tent supplied the style reference. Each replacement has a fresh exact prompt next to it; full-resolution originals and prompts are preserved at `source/originals/<kind>/<name>-regenerated-v1.*`. `docs/design/regenerated-world-sprites.json` records prompts, paths, source bounds and preparation. Game canvases, origins and collision footprints retain their existing sizes and values.
+
+| Replacement | Game canvas | New artwork |
+| --- | --- | --- |
+| `objects/plants/berry-bush.png` | 150×104 | Layered leafy shrub with visible red berry clusters |
+| `objects/plants/cactus.png` | 110×170 | Ribbed saguaro with two uneven curved arms |
+| `objects/buildings/sandstone-ruin.png` | 280×220 | Weathered masonry, broken lintel and cracked foundation |
+| `objects/props/driftwood.png` | 150×70 | Three water-worn branches with natural wood grain |
+| `objects/props/old-boat.png` | 200×90 | Weathered repairable hull with broken planks |
+| `objects/props/rowboat.png` | 200×90 | Sound warm-brown hull with two bench seats |
+| `objects/props/signpost.png` | 90×130 | Blank wooden arrow with carved edges and fasteners |
 
 - `objects/trees/palm.png` (lagoon and jungle) was the weakest stand-in: an oak, narrowed and tinted. On 2026-11-19 it was replaced with real art generated by **SpriteCook** (Claude plugin, model `gemini-nano-banana-2.1`, HD, transparent background), with `starting-characters-idle-v1.png` uploaded as the style guide image. The full-size result is in `source/originals/trees/palm.png`; the game sprite is cropped to its alpha bounds and fitted into 200×300 with 4 px padding. Its trunk leans so the base sits right of centre, so its `origin` is `[0.765, 0.982]` and its `footprint` `[15, 12]`. The prompt and settings are in `palm.prompt.txt` and `source/generation-manifest.json`. `tools/make-biome-standins.py` still lists the palm but skips it because the file exists. SpriteCook's Free plan made this image public in its gallery.
 
