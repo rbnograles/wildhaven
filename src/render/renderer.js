@@ -172,7 +172,7 @@ export async function createRenderer(container, miniCanvas) {
         webgl = this.renderer.type === Phaser.WEBGL;
         // Old boats on the beach are drawn the same way; the one the player repaired fades out.
         supplies = [
-          ...NODES.map((node) => ({
+          ...NODES.filter((node) => !node.inScenery).map((node) => ({
             node,
             /** True while the supply or patch has nothing to give. */
             gone: (state) => !isAvailable(state, node),

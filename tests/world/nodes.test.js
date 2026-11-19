@@ -8,20 +8,28 @@ import { readFileSync } from 'node:fs';
 import OBJECT_SPECS from '../../assets/world/source/objects.json' with { type: 'json' };
 import { CHARACTERS } from '../../src/data/characters.js';
 import { WRECKS } from '../../src/data/places.js';
-import { RESOURCES, SUPPLIES } from '../../src/data/supplies.js';
-import { GATHER_SECONDS, SUPPLY_REGROW } from '../../src/data/balance.js';
+import { RESOURCES, SUPPLIES, HARVEST } from '../../src/data/supplies.js';
+import { GATHER_SECONDS, SUPPLY_REGROW, HARVEST_REGROW } from '../../src/data/balance.js';
 import { WORLD, isWalkable } from '../../src/world/map.js';
-import { NODES, nodeBases, wreckBases, goneSupplies, solidBases } from '../../src/world/nodes.js';
+import {
+  NODES,
+  nodeBases,
+  wreckBases,
+  goneSupplies,
+  solidBases,
+  nodesNear,
+} from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { gatherTime, finishGather } from '../../src/actions/gather.js';
 import { CLIPS } from '../../src/animation/clips.js';
 
 /**
- * The hand-placed supplies (they grow back after two days), and the wild patches: flowers and
- * driftwood (they grow back sooner).
+ * The hand-placed supplies (they grow back after two days), the wild patches: flowers and
+ * driftwood (they grow back sooner), and the map's trees and rocks (they need a tool).
  */
 const supplies = NODES.filter((n) => SUPPLIES.includes(n)),
-  wild = NODES.filter((n) => !SUPPLIES.includes(n));
+  wild = NODES.filter((n) => !SUPPLIES.includes(n) && !n.inScenery),
+  harvest = NODES.filter((n) => n.inScenery);
 
 /**
  * Reads a sprite's width and height straight from its PNG file, without a browser.
@@ -140,7 +148,9 @@ test('every supply and wild patch can be walked to and gathered from each spawn'
   for (const c of CHARACTERS) assert.notEqual(near(c.spawn.x, c.spawn.y, G), undefined, c.id);
 
   // For every node, stand on the nearest reachable cell and make sure gathering works from there.
-  for (const node of NODES) {
+  // Trees and rocks are left out: checking ~2,600 of them would take minutes, and a tree deep in
+  // a thicket is scenery, not a promise.
+  for (const node of [...supplies, ...wild]) {
     const i = near(node.x, node.y, 90);
     assert.notEqual(i, undefined, node.id);
 
@@ -190,4 +200,40 @@ test('solidBases holds standing supplies, beached old boats and campfires', () =
       ([left, , right, bottom]) => left < 5000 && right > 5000 && bottom === 5000,
     ),
   );
+});
+
+// Guards the tree and rock nodes: every HARVEST sprite is in the map with a solid base, each node
+// needs the right tool and swings an action clip, trees give wood, and there is iron to mine.
+test('every tree and rock in the map is a node that needs a tool', () => {
+  assert.ok(harvest.length > 2000);
+  for (const name of Object.keys(HARVEST)) {
+    assert.ok(OBJECT_SPECS[name]?.footprint, name);
+    assert.ok(
+      harvest.some((n) => n.sprite === name),
+      name,
+    );
+  }
+  for (const node of harvest) {
+    assert.ok(['axe', 'pickaxe'].includes(node.tool), node.id);
+    assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
+    assert.equal(node.regrow, HARVEST_REGROW, node.id);
+    assert.equal(node.type === 'wood', node.tool === 'axe', node.id);
+    assert.equal(node.id, `${node.sprite}-${node.x}-${node.y}`);
+  }
+  assert.ok(harvest.filter((n) => n.type === 'iron').length >= 100);
+});
+
+// Guards the quick lookup: it finds every node close to a spot, the same as checking them all.
+test('nodesNear finds every node close to a spot', () => {
+  for (const node of NODES.filter((_, i) => i % 97 === 0)) {
+    const x = node.x + 60,
+      y = node.y - 40;
+    /** The ids of the nodes in a list that are within 200 units of the spot, sorted. */
+    const close = (list) =>
+      list
+        .filter((n) => Math.hypot(n.x - x, n.y - y) < 200)
+        .map((n) => n.id)
+        .sort();
+    assert.deepEqual(close(nodesNear(x, y)), close(NODES), node.id);
+  }
 });
