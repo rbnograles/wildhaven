@@ -1174,6 +1174,16 @@ dialog::backdrop {
   white-space: nowrap;
 }
 
+/* A region's name stays hidden until the player has been there (ui/dialogs.js sets hidden). */
+.map-label[hidden] {
+  display: none;
+}
+
+/* The orange dot for camps in the map's key. */
+.legend-camp {
+  color: #f08a3c;
+}
+
 /* A found signpost on the map: a round button centred on its spot. The script sets left and top. */
 .map-waypoint {
   position: absolute;

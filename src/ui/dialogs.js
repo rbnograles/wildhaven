@@ -99,6 +99,9 @@ export function setupDialogs(session, ui) {
     session.keys.clear();
     session.renderer.drawMap($('large-map'), session.state);
     showWaypoints();
+    // Region names show on the map only once the player has been there.
+    for (const label of document.querySelectorAll('.map-label'))
+      label.hidden = !session.state.discovered.includes(label.dataset.region);
     const { regions, places, signposts } = worldProgress(session.state);
     $('map-discovered').textContent =
       `${regions.found} of ${regions.total} regions · ${places.found} of ${places.total} places · ` +

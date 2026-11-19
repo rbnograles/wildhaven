@@ -254,6 +254,7 @@ export function mountLayout(app) {
           (l) =>
             /* HTML */ `<span
               class="map-label"
+              data-region="${l.id}"
               style="left:${(l.x / WORLD.width) * 100}%;top:${(l.y / WORLD.height) * 100}%"
               >${l.name}</span
             >`,
@@ -262,8 +263,8 @@ export function mountLayout(app) {
         <div id="map-waypoints"></div>
       </div>
       <div class="map-footer">
-        <span>● You · ◆ Signpost: click to travel</span><span id="map-discovered"></span
-        ><span><kbd>M</kbd> Close map</span>
+        <span>● You · <b class="legend-camp">●</b> Camp · ◆ Signpost: click to travel</span
+        ><span id="map-discovered"></span><span><kbd>M</kbd> Close map</span>
       </div>
     </dialog>
 
