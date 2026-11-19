@@ -14,7 +14,8 @@ import { SUPPLY_REGROW, HARVEST_REGROW } from './balance.js';
  * Fields: `id` is the save key; `x`/`y` is the world position; `type` and `amount` say what goes
  * into the backpack; `label` and `verb` are the words on the interact button; `clip` is the
  * animation played while gathering; `sprite` and `scale` choose the picture and its size;
- * `regrow` is the seconds it takes to grow back.
+ * `regrow` is the seconds it takes to grow back; `tool`, when set, names the tool needed to
+ * gather it (the pine tree needs an axe).
  */
 export const SUPPLIES = [
   {
@@ -25,6 +26,7 @@ export const SUPPLIES = [
     label: 'Pine tree',
     verb: 'Chop',
     clip: 'build',
+    tool: 'axe',
     sprite: 'pine',
     scale: 1,
   },

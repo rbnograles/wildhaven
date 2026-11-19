@@ -53,7 +53,7 @@ test('every supply is a known, solid, action-backed sprite that takes the full g
     assert.ok(OBJECT_SPECS[node.sprite]?.footprint, node.id);
     assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
     assert.ok(node.scale > 0 && typeof node.verb === 'string', node.id);
-    assert.equal(gatherTime(createGame('scout'), node), GATHER_SECONDS);
+    assert.equal(gatherTime(createGame('survivor'), node), GATHER_SECONDS); // bare hands
   }
   assert.equal(GATHER_SECONDS, 6);
 });

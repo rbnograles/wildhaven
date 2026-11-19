@@ -3,6 +3,7 @@
 // an old boat, or gather a supply.
 
 import { WRECKS } from '../data/places.js';
+import { wearTool } from '../world/tools.js';
 import { nearbyNode, beginGather, finishGather } from './gather.js';
 import {
   nearbyWreck,
@@ -64,8 +65,9 @@ export function beginInteraction(state, animator) {
  *
  * @param {object} state - The game being played.
  * @param {string} target - The id the action was aimed at: an old boat's or a node's.
- * @returns {{kind: string, wreck?: object, node?: object}|null} What was finished, or null if
- *   nothing was awarded.
+ * @returns {{kind: string, wreck?: object, node?: object, wear?: string|null}|null} What was
+ *   finished, or null if nothing was awarded. After a gather, `wear` is 'warn' or 'broke' when a
+ *   stone tool is wearing out (see wearTool).
  */
 export function finishInteraction(state, target) {
   if (WRECKS.some((w) => w.id === target)) {
@@ -73,5 +75,7 @@ export function finishInteraction(state, target) {
     return wreck ? { kind: 'repair', wreck } : null;
   }
   const node = finishGather(state, target);
-  return node ? { kind: 'gather', node } : null;
+  if (!node) return null;
+  // A gather that needed a tool wears it a little; only stone tools wear out.
+  return { kind: 'gather', node, wear: node.tool ? wearTool(state, node.tool) : null };
 }
