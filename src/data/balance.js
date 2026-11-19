@@ -81,7 +81,19 @@ export const WARM_BY_FIRE = 20;
 /** Warmth gained per second away from a fire during dawn and day. */
 export const WARM_BY_DAY = 4;
 
-/** Seconds of freezing (no warmth left, at night, away from a fire) it takes to drain full health. */
+/** The regions where it snows: warmth drains there at every hour, away from a fire. */
+export const SNOW_REGIONS = ['frostpeak'];
+
+// How many times faster than an ordinary night the snow drains warmth: by day and dusk (full warmth
+// lasts 40 s), and at night (24 s). Planned winter gear will lower these; until then only a fire
+// stops the cold, and tea holds it off for a while.
+export const SNOW_COLD = 1.5;
+export const SNOW_NIGHT_COLD = 2.5;
+
+/**
+ * Seconds of freezing (no warmth left, away from a fire, at night or in the snow) it takes to
+ * drain full health.
+ */
 export const FREEZE_SECONDS = 30;
 
 /** Health healed per second beside a fire while not starving. */

@@ -14,6 +14,7 @@ import { hasJournalPage } from '../world/journal.js';
 import { REPAIR_COST } from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
 import { revealAround } from '../world/fog.js';
+import { inSnow } from '../world/regions.js';
 import { describeEvent } from '../ui/hud.js';
 import { save } from './session.js';
 import { logFinds } from './playtest.js';
@@ -27,6 +28,9 @@ const MAX_FRAME_DT = 0.05,
   AUTOSAVE_EVERY = 10,
   HUD_EVERY = 0.12,
   DEEP_WARN_MS = 4000;
+
+// What the player is told on walking into the snow.
+const SNOW_WARNING = 'The snow bites: warmth falls fast here, even by day. Stay near a fire.';
 
 // The words for each kind of find, used in the pop-up message. Each takes the find
 // (`{kind, id, name}`) from discover() and the game state (the old-boat words depend on it).
@@ -91,6 +95,9 @@ export function startLoop(session, ui) {
   // When the last "too rough" warning was shown, so it isn't repeated every frame.
   let warnedDeepAt = -Infinity;
 
+  // Whether the player was in the snow on the frame before, so walking into it is announced once.
+  let wasInSnow = false;
+
   /**
    * Runs one frame: update the game, then draw it.
    *
@@ -144,7 +151,13 @@ export function startLoop(session, ui) {
           save(session, ui, true);
         }
 
+        // Walking into the snow is worth a warning, told together with any find on the same step.
+        const snowy = inSnow(state.player.x, state.player.y),
+          chilled = snowy && !wasInSnow ? [SNOW_WARNING] : [];
+        wasInSnow = snowy;
+
         const found = discover(state);
+        if (!found.length && chilled.length) ui.hud.notify(SNOW_WARNING);
         if (found.length) {
           // A find can also meet a camp need ("Find a place in Frostpeak"); both are announced together.
           const met = markFinds(state, found);
@@ -152,6 +165,7 @@ export function startLoop(session, ui) {
             [
               ...found.map((f) => FOUND[f.kind](f, state)),
               ...met.map(({ camp, need }) => `${camp.name}: need met · ${describeNeed(need)}`),
+              ...chilled,
             ].join(' · '),
           );
           ui.hud.update();

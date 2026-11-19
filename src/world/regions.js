@@ -3,6 +3,7 @@
 // one digit per square; each digit is a region's place in the list in assets/world/source/places.json.
 
 import { REGION_LIST } from '../data/places.js';
+import { SNOW_REGIONS } from '../data/balance.js';
 import { mapProperty, isDryLand } from './map.js';
 
 const cell = mapProperty('regionCell'),
@@ -59,6 +60,15 @@ export function regionOf(x, y) {
     cy = Math.min(rows - 1, Math.max(0, Math.floor(y / cell)));
   return REGIONS[regionIndexAt(cx, cy)];
 }
+
+/**
+ * Says whether a spot is in a snowy region, where the cold bites at every hour.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True in a region listed in SNOW_REGIONS.
+ */
+export const inSnow = (x, y) => SNOW_REGIONS.includes(regionOf(x, y).id);
 
 /**
  * Gives the name of the region the player is standing in, for the title at the top of the screen.

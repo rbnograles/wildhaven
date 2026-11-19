@@ -5,6 +5,8 @@
 import {
   WARMTH_SECONDS,
   STARVING_COLD,
+  SNOW_COLD,
+  SNOW_NIGHT_COLD,
   WARM_BY_FIRE,
   WARM_BY_DAY,
   FREEZE_SECONDS,
@@ -13,6 +15,7 @@ import {
 } from '../data/balance.js';
 import { dayOf, phaseOf } from '../world/clock.js';
 import { byFire } from '../world/camps.js';
+import { inSnow } from '../world/regions.js';
 import { refreshNeeds } from '../world/needs.js';
 
 /**
@@ -36,12 +39,24 @@ export function startDay(state) {
 }
 
 /**
+ * Says how many times faster than an ordinary night the cold drains warmth where the player is.
+ *
+ * @param {boolean} snow - True when the player is in a snowy region.
+ * @param {string} phase - The part of the day: 'dawn', 'day', 'dusk' or 'night'.
+ * @returns {number} 1 outside the snow; in it, SNOW_COLD by day and SNOW_NIGHT_COLD at night.
+ */
+const snowChill = (snow, phase) => {
+  if (!snow) return 1;
+  return phase === 'night' ? SNOW_NIGHT_COLD : SNOW_COLD;
+};
+
+/**
  * Moves the world forward by one small step of time and updates the three meters.
  *
  * Think of the meters as three buckets. Hunger always drips out slowly. Warmth fills up by a fire
  * and in daylight, holds at dusk, and drains at night away from a fire (faster on an empty
- * stomach) unless tea holds the cold off. Health drains while freezing and refills slowly by a
- * fire for a player who isn't starving.
+ * stomach) unless tea holds the cold off. In the snow it drains at every hour, and faster still.
+ * Health drains while freezing and refills slowly by a fire for a player who isn't starving.
  *
  * @param {object} state - The game being played. `time`, `meters`, `tea` and camp needs change.
  * @param {number} dt - Seconds of game time to move forward.
@@ -55,20 +70,23 @@ export function tickSurvival(state, dt) {
   state.time += dt;
   const phase = phaseOf(state.time),
     warm = byFire(state),
-    starving = meters.hunger <= 0;
+    starving = meters.hunger <= 0,
+    snow = inSnow(state.player.x, state.player.y),
+    cold = snow || phase === 'night';
 
   // Hunger always falls.
   meters.hunger = clamp(meters.hunger - (100 / HUNGER_SECONDS) * dt);
 
-  // Warmth: up by a fire, up in daylight, steady at dusk, down at night unless tea holds it off.
-  const chill = (100 / WARMTH_SECONDS) * (starving ? STARVING_COLD : 1);
+  // Warmth: up by a fire, up in daylight, steady at dusk, down in the cold (at night anywhere,
+  // and at every hour in the snow, where it also falls faster) unless tea holds it off.
+  const chill = (100 / WARMTH_SECONDS) * (starving ? STARVING_COLD : 1) * snowChill(snow, phase);
   if (warm) meters.warmth = clamp(meters.warmth + WARM_BY_FIRE * dt);
-  else if (phase === 'night' && state.tea > 0) state.tea = Math.max(0, state.tea - dt);
-  else if (phase === 'night') meters.warmth = clamp(meters.warmth - chill * dt);
+  else if (cold && state.tea > 0) state.tea = Math.max(0, state.tea - dt);
+  else if (cold) meters.warmth = clamp(meters.warmth - chill * dt);
   else if (phase !== 'dusk') meters.warmth = clamp(meters.warmth + WARM_BY_DAY * dt);
 
   // Health: down while freezing, slowly up by a fire for a fed player.
-  if (!warm && phase === 'night' && meters.warmth <= 0)
+  if (!warm && cold && meters.warmth <= 0)
     meters.health = clamp(meters.health - (100 / FREEZE_SECONDS) * dt);
   else if (warm && meters.hunger > 0) meters.health = clamp(meters.health + HEAL_BY_FIRE * dt);
 
@@ -112,18 +130,20 @@ export function skipTo(state, time) {
  *
  * @param {object} state - The game being played.
  * @returns {{warmth: string, health: string, hunger: string}} Warmth: 'warming' by a fire, 'tea'
- *   while tea holds off the night's cold, 'cold' while it drains. Health: 'freezing'. Hunger:
- *   'starving'. An empty string means there is nothing to say.
+ *   while tea holds off the cold, 'snow' while the snow drains it, 'cold' while the night does.
+ *   Health: 'freezing'. Hunger: 'starving'. An empty string means there is nothing to say.
  */
 export function meterTrends(state) {
-  const night = phaseOf(state.time) === 'night',
+  const snow = inSnow(state.player.x, state.player.y),
+    cold = snow || phaseOf(state.time) === 'night',
     warm = byFire(state);
   let warmth = '';
   if (warm) warmth = 'warming';
-  else if (night) warmth = state.tea > 0 ? 'tea' : 'cold';
+  else if (cold && state.tea > 0) warmth = 'tea';
+  else if (cold) warmth = snow ? 'snow' : 'cold';
   return {
     warmth,
-    health: !warm && night && state.meters.warmth <= 0 ? 'freezing' : '',
+    health: !warm && cold && state.meters.warmth <= 0 ? 'freezing' : '',
     hunger: state.meters.hunger <= 0 ? 'starving' : '',
   };
 }

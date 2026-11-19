@@ -727,19 +727,30 @@ kbd {
   justify-self: center;
 }
 
-/* The item box (assets/ui/game/item-*.png, cut by tools/prepare-sprite-art.py from the status */
-/* and inventory sheet): a wooden frame around green felt, holding four painted slots and the */
-/* Build button. The frame is one whole picture stretched over the box; the box is about the */
-/* picture's own shape, so nothing looks squashed. --slot is how wide one slot is on screen, and */
-/* the gaps and edges are sized from it, so the whole box shrinks together on small screens. */
+/* The item box and the Build button sit side by side. --slot is how wide one slot is on screen; */
+/* everything else is sized from it, so the box and the button shrink together on small screens. */
 .hotbar {
-  --slot: 54px;
+  --slot: 52px;
   display: flex;
   align-items: center;
-  gap: calc(var(--slot) * 0.11);
-  padding: calc(var(--slot) * 0.5) calc(var(--slot) * 0.56) calc(var(--slot) * 0.42);
-  background: url('../assets/ui/game/item-card.png') center / 100% 100% no-repeat;
+  gap: calc(var(--slot) * 0.12);
   filter: drop-shadow(0 3px 8px #1f311b55);
+}
+
+/* The item box (assets/ui/game/item-box.png, made by tools/prepare-sprite-art.py from */
+/* assets/ui/item-box-10-slots.png): one whole picture of a wooden frame around green felt, with ten */
+/* slots painted in, two rows of five. The grid below lays one cell exactly over each painted slot. */
+/* The script prints where the slots are in the picture; the numbers here are those, worked out per */
+/* slot width (a slot is 15% of the picture's width): the edges, the gaps and a row's height. */
+.item-box {
+  box-sizing: content-box;
+  display: grid;
+  grid-template-columns: repeat(5, var(--slot));
+  grid-auto-rows: calc(var(--slot) * 0.908);
+  gap: calc(var(--slot) * 0.192) calc(var(--slot) * 0.167);
+  padding: calc(var(--slot) * 0.554) calc(var(--slot) * 0.5) calc(var(--slot) * 0.583)
+    calc(var(--slot) * 0.496);
+  background: url('../assets/ui/game/item-box.png') center / 100% 100% no-repeat;
 }
 
 /* A slot: the resource's picture in a dark painted square, with its count on a small plate at the */
@@ -757,6 +768,14 @@ kbd {
   background: url('../assets/ui/game/item-slot.png') center / 100% 100% no-repeat;
   color: #f7ecc5;
   font: inherit;
+}
+
+/* Inside the item box the dark square is already painted, so a slot there is just its grid cell. */
+/* The six spare slots are empty cells, waiting for items the game does not have yet. */
+.item-box .slot {
+  width: auto;
+  height: auto;
+  background: none;
 }
 
 button.slot {
@@ -777,8 +796,8 @@ button.slot:hover {
 /* The count, written on the painted plate. */
 .slot b {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
+  right: -4px;
+  bottom: -4px;
   min-width: 26px;
   padding: 3px 5px 4px;
   background: url('../assets/ui/game/item-badge.png') center / 100% 100% no-repeat;
@@ -810,27 +829,30 @@ button.slot:hover {
   opacity: 0.7;
 }
 
-/* The frame's felt already sets the slots apart, so the old thin line is not shown. */
-.hotbar-rule {
-  display: none;
-}
-
-/* The Build button: the painted green button with its hammer. The hammer sits in the picture's */
-/* upper half, so the name is written in the lower half. It is a little bigger than a slot. */
+/* The Build button: the painted green button with its hammer in the middle. The picture says */
+/* what it is, so the word "Build" is not drawn over the hammer; it stays in the page for screen */
+/* readers, and the tooltip and the B key in the corner say the rest. It is a little bigger than */
+/* a slot. */
 .slot.build-slot {
   width: calc(var(--slot) * 1.14);
   height: calc(var(--slot) * 1.07);
-  margin-left: calc(var(--slot) * 0.08);
-  align-items: end;
   background-image: url('../assets/ui/game/item-build.png');
 }
 
 .build-slot .slot-label {
   display: block;
-  margin-bottom: 14%;
-  font: 600 11px var(--serif);
-  color: #fbf3d6;
-  text-shadow: 0 1px 1px #14260f;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The B key hangs on the button's top right corner, like a tag, so it never covers the hammer. */
+.build-slot kbd {
+  top: -5px;
+  right: -5px;
 }
 
 /* While the build menu is open the button glows gold. */
@@ -1263,7 +1285,7 @@ button.slot:hover {
 /* A short message such as "+3 wood". It starts invisible and 10px low. */
 .toast {
   position: absolute;
-  bottom: 205px;
+  bottom: 256px;
   left: 50%;
   transform: translate(-50%, 10px);
   background: #263b31ec;
@@ -1495,8 +1517,8 @@ button.slot:hover {
   padding: 1px 8px 1px 2px;
   color: #fbf3d6;
   font-weight: 600;
-  /* Raised to clear the painted item box, which is taller than the old flat one. */
-  bottom: 146px;
+  /* Raised to clear the painted item box, which is two rows of slots tall. */
+  bottom: 200px;
 }
 
 .interact kbd {
@@ -1531,20 +1553,25 @@ button.slot:hover {
   filter: drop-shadow(0 3px 6px #1f311b55);
 }
 
-/* The minimap's wooden ring. The picture is laid over the round map so its hole (207 of its 282 */
-/* pixels across, starting 37 from the left and 54 from the top) sits exactly on the map. */
+/* The minimap's wooden ring. The picture (282 by 292) is laid over the round map so the middle of */
+/* its hole sits on the middle of the map. The hole is 210 across and 207 tall, centred 140.5 from */
+/* the picture's left and 152 from its top; the map is drawn as if it were 212 picture pixels */
+/* across, a little bigger than the hole, so its edge is always tucked under the wood. The ring */
+/* reaches about a sixth of the map's width past it on the right and below, so the margin keeps */
+/* the whole ring on screen instead of cut off by the screen's edge. */
 .minimap {
   border: 0;
   box-shadow: none;
+  margin: 0 22px 14px 0;
 }
 
 .minimap::after {
   content: '';
   position: absolute;
-  left: -17.9%;
-  top: -26.1%;
-  width: 136.2%;
-  height: 141.1%;
+  left: -16.3%;
+  top: -21.7%;
+  width: 133%;
+  height: 137.7%;
   background: url('../assets/ui/game/hud-minimap.png') center / 100% 100% no-repeat;
   filter: drop-shadow(0 3px 6px #1f311b66);
   pointer-events: none;
@@ -1756,11 +1783,16 @@ dialog::backdrop {
 }
 
 /* ---- Dialogs: the big world map ---- */
-/* Scrolls inside itself if the screen is too short to show the whole map. */
+/* The map is as big as the screen allows. It is 7 wide for every 5 tall, so the dialog is as wide */
+/* as the screen, or as wide as the map may be for the screen's height (--map-chrome is the room */
+/* the heading, the key under the map and the padding take), whichever is smaller. That way the */
+/* whole map always shows without scrolling; the scroll is only a safety net. */
 .map-dialog {
-  padding: 23px;
-  width: min(980px, calc(100vw - 34px));
-  max-height: 94svh;
+  --map-chrome: 132px;
+  padding: 16px 18px;
+  width: min(calc(100vw - 24px), calc((97svh - var(--map-chrome)) * 1.4 + 36px));
+  max-width: none;
+  max-height: 97svh;
   overflow: auto;
 }
 
@@ -1768,11 +1800,11 @@ dialog::backdrop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 17px;
+  margin-bottom: 10px;
 }
 
 .map-heading h2 {
-  font: 400 33px var(--serif);
+  font: 400 28px var(--serif);
   margin: 0;
 }
 
@@ -1977,7 +2009,7 @@ dialog::backdrop {
     padding: 16px;
   }
   .hotbar {
-    --slot: 48px;
+    --slot: 36px;
   }
   .meter {
     grid-template-columns: 13px 56px 48px;
@@ -1985,9 +2017,23 @@ dialog::backdrop {
   .minimap {
     width: 128px;
     height: 128px;
+    margin-right: 18px;
   }
   .interact {
-    bottom: 100px;
+    bottom: 150px;
+  }
+}
+
+/* Narrow tablets: the ten-slot item box and the round map shrink once more, so the player card, */
+/* the box and the whole map ring still fit side by side. */
+@media (max-width: 860px) and (min-width: 701px) {
+  .hotbar {
+    --slot: 32px;
+  }
+  .minimap {
+    width: 112px;
+    height: 112px;
+    margin-right: 16px;
   }
 }
 
@@ -2045,7 +2091,7 @@ dialog::backdrop {
     transform: translateX(-50%);
   }
   .hotbar {
-    --slot: 42px;
+    --slot: 38px;
   }
   /* Phones have no keyboard, so the slots' key hints are hidden. */
   .slot kbd,
@@ -2057,6 +2103,7 @@ dialog::backdrop {
   }
   .minimap {
     position: absolute;
+    margin: 0;
     /* Further from the corner than before, so the wooden ring around the map is not cut off. */
     right: 24px;
     bottom: 18px;
@@ -2087,12 +2134,12 @@ dialog::backdrop {
   }
   /* The action button and messages sit above the item box. */
   .interact {
-    bottom: 214px;
+    bottom: 254px;
     font-size: 10px;
     max-width: 90vw;
   }
   .toast {
-    bottom: 268px;
+    bottom: 304px;
     font-size: 11px;
   }
   .build-bar {
@@ -2133,7 +2180,7 @@ dialog::backdrop {
 
   /* World map dialog. The "M Close map" hint is hidden because phones have no M key. */
   .map-dialog {
-    padding: 15px;
+    padding: 12px;
   }
   .map-heading h2 {
     font-size: 25px;
@@ -2177,7 +2224,7 @@ dialog::backdrop {
 .key-strip {
   position: absolute;
   left: 50%;
-  bottom: 150px;
+  bottom: 204px;
   transform: translateX(-50%);
   z-index: 5;
   display: flex;
@@ -2346,7 +2393,46 @@ dialog::backdrop {
     padding: 2px 4px 3px;
     font-size: 9px;
   }
-  .build-slot .slot-label {
-    font-size: 9px;
+}
+
+/* ---- The player card on wide screens ---- */
+/* From 1280 px wide there is room beside the item box for a bigger card: the portrait, the dial */
+/* and the three bars all grow by about a third, so the meters are easy to read at a glance. */
+@media (min-width: 1280px) {
+  .identity {
+    padding: 26px 36px 26px 30px;
+    gap: 12px;
+  }
+  .identity .hud-portrait,
+  .day-dial {
+    width: 84px;
+    height: 84px;
+  }
+  .day-dial-pin {
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+  }
+  .identity .meters {
+    gap: 7px;
+  }
+  .identity .meter {
+    grid-template-columns: 24px 200px;
+    gap: 8px;
+  }
+  .identity .meter > img {
+    width: 24px;
+    height: 24px;
+  }
+  .identity .meter-bar {
+    height: 18px;
+  }
+  .identity .meter-bar::after {
+    inset: 3px 3px 4px;
+  }
+  .identity .meter-tag {
+    right: 10px;
+    font-size: 10px;
   }
 }

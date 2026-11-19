@@ -10,6 +10,7 @@ import { WILD } from '../data/supplies.js';
 import { FIRE_RADIUS } from '../data/balance.js';
 import { drawMap } from './maps.js';
 import { createLighting } from './lighting.js';
+import { createSnow } from './snow.js';
 import { isAvailable } from '../actions/gather.js';
 import { chooseInteraction } from '../actions/interact.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
@@ -134,6 +135,7 @@ export async function createRenderer(container, miniCanvas) {
     ghost,
     ring,
     lighting,
+    snow,
     webgl = false,
     snap = true,
     shown = new Set();
@@ -329,6 +331,8 @@ export async function createRenderer(container, miniCanvas) {
 
         // The night layer and the light around fires (render/lighting.js).
         lighting = createLighting(this, reducedMotion);
+        // Falling snow over the snowy regions (render/snow.js).
+        snow = createSnow(this, reducedMotion);
         this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height).setRoundPixels(true);
 
         clearTimeout(timer);
@@ -373,7 +377,8 @@ export async function createRenderer(container, miniCanvas) {
    * Trees sway, campfires flicker, and a chopped tree falls and breaks apart before it fades.
    * Supplies fade out when gathered, the one in reach glows with an E above it, and while an
    * action runs a progress bar fills up instead. Camp fires are drawn, the player sprite gets this
-   * frame's pose, the build ghost follows the pointer, and the night layer goes over everything.
+   * frame's pose, the build ghost follows the pointer, snow falls in the snowy regions, and the
+   * night layer goes over everything.
    *
    * @param {object} state - The game being played.
    * @param {number} dt - Seconds since the last frame.
@@ -577,6 +582,9 @@ export async function createRenderer(container, miniCanvas) {
       ghost.setPosition(build.x, build.y).setTint(ok ? 0xb6f0a0 : 0xff8a7a);
       ring.lineStyle(2, ok ? 0xf7f1de : 0xff8a7a, 0.85).strokeCircle(build.x, build.y, FIRE_RADIUS);
     }
+
+    // Snow falls over the screen while the player is in a snowy region.
+    snow.draw(state, dt, camera, zoom);
 
     // Night: the dark layer covers what the camera sees. The camera stops at the world's edge,
     // so the covered area is kept inside the world the same way.

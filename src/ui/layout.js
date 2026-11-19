@@ -12,6 +12,10 @@ import warmthIconUrl from '../../assets/ui/game/status-icon-warmth.png';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
+import { RESOURCES } from '../data/supplies.js';
+
+// How many of the item box's ten painted slots are still empty: all but one per resource.
+const SPARE_SLOTS = 10 - RESOURCES.length;
 
 /**
  * Finds an element on the page by its id.
@@ -232,8 +236,9 @@ export function mountLayout(app) {
           </div>
         </div>
 
-        <!-- The item box (one slot per resource) and the Build button, with the build menu that
-             opens above it. Clicking the food slot eats and the herbs slot heals. -->
+        <!-- The item box (ten slots: one per resource, the rest spare for items to come) and the
+             Build button beside it, with the build menu that opens above. Clicking the food slot
+             eats and the herbs slot heals. -->
         <div class="hotbar-area">
           <div id="build-menu" class="build-menu hud-panel" hidden>
             <p class="build-menu-title">BUILD</p>
@@ -245,21 +250,23 @@ export function mountLayout(app) {
               ><kbd>1</kbd>
             </button>
           </div>
-          <div class="hotbar" aria-label="Items">
-            <span class="slot" title="Wood"
-              ><img src="${woodIconUrl}" alt="" /><b id="wood">0</b
-              ><span class="slot-label">Wood</span></span
-            ><span class="slot" title="Stone"
-              ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
-              ><span class="slot-label">Stone</span></span
-            ><button id="slot-food" class="slot" title="Eat one food (F)">
-              <img src="${foodIconUrl}" alt="" /><b id="food">0</b
-              ><span class="slot-label">Food</span><kbd>F</kbd></button
-            ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
-              <img src="${herbsIconUrl}" alt="" /><b id="herbs">0</b
-              ><span class="slot-label">Herbs</span><kbd>H</kbd></button
-            ><span class="hotbar-rule" aria-hidden="true"></span
-            ><button
+          <div class="hotbar">
+            <div class="item-box" aria-label="Items">
+              <span class="slot" title="Wood"
+                ><img src="${woodIconUrl}" alt="" /><b id="wood">0</b
+                ><span class="slot-label">Wood</span></span
+              ><span class="slot" title="Stone"
+                ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
+                ><span class="slot-label">Stone</span></span
+              ><button id="slot-food" class="slot" title="Eat one food (F)">
+                <img src="${foodIconUrl}" alt="" /><b id="food">0</b
+                ><span class="slot-label">Food</span><kbd>F</kbd></button
+              ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
+                <img src="${herbsIconUrl}" alt="" /><b id="herbs">0</b
+                ><span class="slot-label">Herbs</span><kbd>H</kbd></button
+              >${'<span class="slot spare" aria-hidden="true"></span>'.repeat(SPARE_SLOTS)}
+            </div>
+            <button
               id="build-button"
               class="slot build-slot"
               title="Build (B)"

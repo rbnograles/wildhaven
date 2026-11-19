@@ -14,6 +14,8 @@ import {
   HEAL_BY_FIRE,
   STARVING_COLD,
   TEA_SECONDS,
+  SNOW_COLD,
+  SNOW_NIGHT_COLD,
 } from '../../src/data/balance.js';
 import { createGame } from '../../src/game/state.js';
 import { tickSurvival, skipTo, meterTrends } from '../../src/actions/survive.js';
@@ -51,6 +53,17 @@ function lightFire(game) {
       { kind: 'signpost', done: false },
     ],
   });
+}
+
+/**
+ * Moves a game's player into the snow: the Traveller's Cairn in Frostpeak.
+ *
+ * @param {object} game - The game to change.
+ * @returns {object} The same game, for chaining.
+ */
+function intoSnow(game) {
+  Object.assign(game.player, { x: 21248, y: 3848 });
+  return game;
 }
 
 /** True when two numbers are within a hair of each other. */
@@ -129,6 +142,37 @@ test('freezing at night drains health', () => {
   const day = gameAt(100, { warmth: 0 });
   tickSurvival(day, 3);
   assert.equal(day.meters.health, 100);
+});
+
+// Guards the snow: warmth falls there by day too, faster than an ordinary night and faster still
+// after dark, and a player with no warmth left takes damage at any hour. Tea and a fire still help.
+test('in the snow, warmth drains at every hour and freezing hurts by day', () => {
+  const day = intoSnow(gameAt(100, { warmth: 50 }));
+  tickSurvival(day, 1);
+  assert.ok(near(day.meters.warmth, 50 - (100 / WARMTH_SECONDS) * SNOW_COLD));
+
+  const night = intoSnow(gameAt(250, { warmth: 50 }));
+  tickSurvival(night, 1);
+  assert.ok(near(night.meters.warmth, 50 - (100 / WARMTH_SECONDS) * SNOW_NIGHT_COLD));
+
+  const frozen = intoSnow(gameAt(100, { warmth: 0 }));
+  const events = tickSurvival(frozen, 3);
+  assert.ok(near(frozen.meters.health, 100 - (100 / FREEZE_SECONDS) * 3));
+  assert.deepEqual(events, []);
+
+  const tea = intoSnow(gameAt(100, { warmth: 50 }));
+  tea.tea = TEA_SECONDS;
+  tickSurvival(tea, 5);
+  assert.equal(tea.meters.warmth, 50);
+  assert.equal(tea.tea, TEA_SECONDS - 5);
+
+  const fire = intoSnow(gameAt(100, { warmth: 10, health: 40 }));
+  lightFire(fire);
+  tickSurvival(fire, 1);
+  assert.ok(near(fire.meters.warmth, 10 + WARM_BY_FIRE));
+  assert.ok(near(fire.meters.health, 40 + HEAL_BY_FIRE));
+  assert.deepEqual(meterTrends(day), { warmth: 'snow', health: '', hunger: '' });
+  assert.equal(meterTrends(frozen).health, 'freezing');
 });
 
 // Guards the first-night pacing the GDD asks for: about 60 s of warmth, then 30 s of health.

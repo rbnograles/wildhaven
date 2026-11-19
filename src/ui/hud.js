@@ -28,6 +28,7 @@ const TREND_WORDS = {
   warming: 'By the fire',
   tea: 'Tea',
   cold: 'Cold',
+  snow: 'Snow',
   freezing: 'Freezing',
   starving: 'Starving',
 };

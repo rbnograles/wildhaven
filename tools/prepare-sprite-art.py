@@ -7,11 +7,13 @@ Inputs : source/animations/<name>.png              tree, rock and fire animation
          source/originals/props/bridge-painted.png the painted bridge
          assets/ui/normal/status-inventory-components.png   the player card and item box pieces
          assets/ui/character-portraits-normal-winter.png    the three characters' round portraits
+         assets/ui/item-box-10-slots.png           the item box with ten painted slots
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
          source/objects/props/bridge.png           the bridge at game size
          assets/ui/game/status-*.png, item-*.png, portrait-<id>.png   the player card and item box pieces
+         assets/ui/game/item-box.png               the ten-slot item box, trimmed and shrunk
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
@@ -214,3 +216,18 @@ source = os.path.join(ROOT, 'ui', 'character-portraits-normal-winter.png')
 portrait_sheet = load(source)
 for name, box in PORTRAITS.items():
     save(piece_of(portrait_sheet, box, 160), os.path.join(UI, f'portrait-{name}.png'), source)
+
+# ---- the ten-slot item box: one whole picture, two rows of five painted slots --------------------
+# The slots are part of the picture, so the game lays its item pictures over them. To line them up, this
+# prints where the slots are (as percentages of the saved picture); copy those into the `.hotbar` rules
+# in src/style.css if the picture changes. A slot is found by its dark inside: darker than the green felt.
+source = os.path.join(ROOT, 'ui', 'item-box-10-slots.png')
+box = trimmed(load(source))
+save(shrink(box, 720 / box.shape[1]), os.path.join(UI, 'item-box.png'), source)
+dark = (box[:, :, :3].astype(int).sum(axis=2) < 230) & (box[:, :, 3] > 200)
+cols = [r for r in runs(dark.sum(axis=0) > box.shape[0] * 0.4) if r[1] - r[0] > 60]
+rows = [r for r in runs(dark.sum(axis=1) > box.shape[1] * 0.4) if r[1] - r[0] > 60]
+pct = lambda v, whole: round(100 * v / whole, 2)
+print('item box', box.shape[1], 'x', box.shape[0],
+      'slot columns %', [(pct(a, box.shape[1]), pct(b, box.shape[1])) for a, b in cols],
+      'slot rows %', [(pct(a, box.shape[0]), pct(b, box.shape[0])) for a, b in rows])
