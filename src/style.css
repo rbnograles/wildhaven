@@ -1284,6 +1284,34 @@ dialog::backdrop {
   }
 }
 
+/* ---- In-game controls hint ---- */
+/* A strip of keys at the bottom centre when the game opens; it fades after the first step or 8 s. */
+.key-strip {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 10px 18px;
+  border-radius: 9px;
+  background: #f8f5e9ef;
+  box-shadow: 0 3px 20px #1f311b24;
+  font-size: 12px;
+  color: var(--ink);
+  transition: opacity 0.6s ease;
+}
+
+.key-strip.fading {
+  opacity: 0;
+}
+
+/* Phones show the touch arrows instead. */
+@media (max-width: 699px) {
+  .key-strip {
+    display: none;
+  }
+}
+
 /* ---- Reduced motion ---- */
 /* When the player's system asks for less motion, every animation and transition is switched off. */
 @media (prefers-reduced-motion: reduce) {

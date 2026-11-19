@@ -10,14 +10,20 @@ import { $ } from './layout.js';
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
 const DOING = { Chop: 'Chopping', Pick: 'Picking', Gather: 'Gathering' };
 
+// How long the controls strip stays up when nobody moves, and how long its fade-out takes.
+const KEY_STRIP_MS = 8000,
+  KEY_STRIP_FADE_MS = 600;
+
 /**
  * Builds the HUD helpers for one game session.
  *
  * @param {object} session - The shared session; `update` reads its game state and animator.
- * @returns {{notify: Function, update: Function}} A way to pop up a message, and a way to redraw the HUD.
+ * @returns {{notify: Function, update: Function, showKeyStrip: Function, hideKeyStrip: Function}} A way to
+ * pop up a message, a way to redraw the HUD, and ways to show and hide the controls strip.
  */
 export function createHud(session) {
   let toastTimer;
+  let keyStripTimer;
 
   /**
    * Shows a short message at the bottom of the screen for about three seconds.
@@ -68,5 +74,32 @@ export function createHud(session) {
       button.querySelector('span').textContent = `${node.verb} ${node.label.toLowerCase()}`;
   }
 
-  return { notify, update };
+  /**
+   * Shows the controls strip at the bottom of the screen, then fades it after 8 seconds.
+   * Called each time the game screen opens.
+   */
+  function showKeyStrip() {
+    const strip = $('key-strip');
+    clearTimeout(keyStripTimer);
+    strip.classList.remove('fading');
+    strip.hidden = false;
+    keyStripTimer = setTimeout(hideKeyStrip, KEY_STRIP_MS);
+  }
+
+  /**
+   * Fades the controls strip out and then hides it. Does nothing if it is already hidden or
+   * fading, so the game loop can call it on every step without cost.
+   */
+  function hideKeyStrip() {
+    const strip = $('key-strip');
+    if (strip.hidden || strip.classList.contains('fading')) return;
+    clearTimeout(keyStripTimer);
+    strip.classList.add('fading');
+    keyStripTimer = setTimeout(() => {
+      strip.hidden = true;
+      strip.classList.remove('fading');
+    }, KEY_STRIP_FADE_MS);
+  }
+
+  return { notify, update, showKeyStrip, hideKeyStrip };
 }

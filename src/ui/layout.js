@@ -192,6 +192,13 @@ export function mountLayout(app) {
       <!-- The "E" button. It appears when a supply is in reach and shows progress while gathering. -->
       <button id="interact" class="interact" hidden><kbd>E</kbd><span></span></button>
 
+      <!-- The controls, shown for a few seconds each time the game opens. ui/hud.js shows and hides it. -->
+      <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
+        <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
+        ><span><kbd>E</kbd> Gather</span><span><kbd>M</kbd> Map</span
+        ><span><kbd>Esc</kbd> Pause</span>
+      </div>
+
       <!-- Arrow buttons for touch screens. CSS only shows them on narrow screens. -->
       <div class="touch-controls" aria-label="Movement controls">
         <button data-move="up" aria-label="Move north">↑</button>

@@ -149,6 +149,7 @@ export async function start(session, ui, fresh = false) {
     discover(state);
     session.renderer.resetCamera();
     changeScreen(session, 'game');
+    ui.hud.showKeyStrip();
     setActive(tabStorage, state.character);
     Object.assign(session.clock, { last: performance.now(), sinceSave: 0, sinceHud: 0 });
     ui.hud.update();

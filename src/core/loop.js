@@ -56,6 +56,8 @@ export function startLoop(session, ui) {
         }
 
         moving = !animator.pending && movePlayer(state, dx, dy, dt, running);
+        // The first real step hides the controls strip.
+        if (moving) ui.hud.hideKeyStrip();
         state.elapsed += dt;
 
         // When a timed action finishes, award the supply it was aimed at (exactly once).
