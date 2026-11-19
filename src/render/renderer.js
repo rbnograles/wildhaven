@@ -707,7 +707,8 @@ export async function createRenderer(container, miniCanvas) {
       height: seenH * 2,
     });
 
-    drawMap(mini, overview, state, miniCanvas.width, miniCanvas.height, true);
+    // The minimap's arrow tilts while the player walks diagonally, like the character does.
+    drawMap(mini, overview, state, miniCanvas.width, miniCanvas.height, true, animator.diagonal);
   }
 
   return {

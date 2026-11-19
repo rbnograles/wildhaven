@@ -694,18 +694,30 @@ kbd {
   pointer-events: auto;
 }
 
-/* The bottom bar: player card | item box | round map. A grid with the middle column taking the */
-/* free space, so the item box is centred between the other two and they can never overlap. */
+/* The bottom bar: player card | item box | round map. A grid whose two side columns share the */
+/* free space equally, so the item box sits in the middle of the screen (under the region banner */
+/* and the messages), not in the middle of the gap between the card and the map, which are not */
+/* the same width. The three still can never overlap; on a screen too narrow for equal sides the */
+/* box simply sits between them. */
 .game-bottom {
   position: absolute;
   left: 24px;
   right: 24px;
   bottom: 20px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto 1fr;
   align-items: end;
   gap: 16px;
   pointer-events: none;
+}
+
+/* The card hugs the left edge of its column and the map the right edge of its own. */
+.game-bottom > .identity {
+  justify-self: start;
+}
+
+.game-bottom > .minimap {
+  justify-self: end;
 }
 
 /* The player card: face, name, day clock, and the three meters under them. */
@@ -722,15 +734,28 @@ kbd {
 }
 
 /* ---- In-game HUD: the item box and the Build button ---- */
+/* --slot is how wide one slot is on screen; everything else is sized from it, so the box and the */
+/* button shrink together on small screens. */
 .hotbar-area {
+  --slot: 52px;
   position: relative;
   justify-self: center;
 }
 
-/* The item box and the Build button sit side by side. --slot is how wide one slot is on screen; */
-/* everything else is sized from it, so the box and the button shrink together on small screens. */
+/* The Build button hangs off the box's right side. On wide screens the same width is left empty */
+/* on the left, so it is the item box itself, not the box plus the button, that is centred. */
+/* The tools row keeps clear of the button's side too, so it is centred over the box as well. */
+@media (min-width: 1001px) {
+  .hotbar-area {
+    padding-left: calc(var(--slot) * 1.26);
+  }
+  .tool-row {
+    margin-right: calc(var(--slot) * 1.26);
+  }
+}
+
+/* The item box and the Build button sit side by side. */
 .hotbar {
-  --slot: 52px;
   display: flex;
   align-items: center;
   gap: calc(var(--slot) * 0.12);
@@ -962,9 +987,10 @@ button.slot:hover {
 
 /* ---- Tools row ---- */
 
-/* The tools the player owns, as small chips in a row above the item box. */
+/* The tools the player owns, as small chips in a row above the middle of the item box. */
 .tool-row {
   display: flex;
+  justify-content: center;
   gap: 6px;
   margin-bottom: 6px;
 }
@@ -1648,6 +1674,62 @@ button.slot:hover {
   z-index: 1;
 }
 
+/* The journal, fullscreen and pause buttons: the dark painted slot from the item box, stretched */
+/* as a frame, with cream icons and words. There is no painted art made just for them, so they */
+/* borrow the slot's wood so the top right matches the rest of the HUD. */
+.game-actions .hud-panel {
+  border: 9px solid transparent;
+  border-image: url('../assets/ui/game/item-slot.png') 26 fill / 9px stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  color: #f7ecc5;
+  filter: drop-shadow(0 3px 6px #1f311b55);
+}
+
+.game-actions .icon-button {
+  padding: 5px;
+}
+
+.game-actions .journal-button {
+  padding: 3px 6px;
+}
+
+.game-actions .hud-panel:hover {
+  background: none;
+  filter: brightness(1.15) drop-shadow(0 3px 6px #1f311b55);
+}
+
+/* The J key on the journal button is drawn on the little count plate. */
+.game-actions kbd,
+.key-strip kbd {
+  border: 0;
+  padding: 4px 7px 5px;
+  background: url('../assets/ui/game/item-badge.png') center / 100% 100% no-repeat;
+  color: #f7ecc5;
+  font-weight: 700;
+}
+
+/* The tool chips: the same dark slot frame, so they read as small slots above the item box. */
+.tool-chip {
+  border: 7px solid transparent;
+  border-image: url('../assets/ui/game/item-slot.png') 26 fill / 7px stretch;
+  border-radius: 0;
+  padding: 0 5px 0 2px;
+  background: none;
+  color: #f7ecc5;
+  filter: drop-shadow(0 2px 4px #1f311b55);
+}
+
+.tool-chip svg {
+  color: #e6c98f;
+}
+
+.tool-chip.iron svg {
+  color: #b9cbd9;
+}
+
 /* ---- In-game: build mode ---- */
 /* The bar under the region name while placing a campfire: the cost, or why the spot is refused. */
 .build-bar {
@@ -2075,7 +2157,7 @@ dialog::backdrop {
     max-width: 213px;
     padding: 16px;
   }
-  .hotbar {
+  .hotbar-area {
     --slot: 36px;
   }
   .meter {
@@ -2094,7 +2176,7 @@ dialog::backdrop {
 /* Narrow tablets: the ten-slot item box and the round map shrink once more, so the player card, */
 /* the box and the whole map ring still fit side by side. */
 @media (max-width: 860px) and (min-width: 701px) {
-  .hotbar {
+  .hotbar-area {
     --slot: 32px;
   }
   .minimap {
@@ -2157,7 +2239,7 @@ dialog::backdrop {
     bottom: 120px;
     transform: translateX(-50%);
   }
-  .hotbar {
+  .hotbar-area {
     --slot: 38px;
   }
   /* Phones have no keyboard, so the slots' key hints are hidden. */
@@ -2285,13 +2367,14 @@ dialog::backdrop {
 }
 
 /* ---- In-game controls hint ---- */
-/* A strip of keys above the bottom bar (clear of the player card) when the game opens; it fades */
-/* after the first step or 8 s, and gives way to the action button and the build menu. It wraps */
-/* onto two lines if narrow. */
+/* A strip of keys above the bottom bar (clear of the item box and its tools row) when the game */
+/* opens; it fades after the first step or 8 s, and gives way to the action button and the build */
+/* menu. It wraps onto two lines if narrow. It is the same cream paper in a wooden frame as the */
+/* build menu, and each key sits on the painted count plate (see "painted panels"). */
 .key-strip {
   position: absolute;
   left: 50%;
-  bottom: 204px;
+  bottom: 240px;
   transform: translateX(-50%);
   z-index: 5;
   display: flex;
@@ -2300,11 +2383,12 @@ dialog::backdrop {
   gap: 4px 14px;
   width: max-content;
   max-width: calc(100vw - 48px);
-  padding: 10px 18px;
-  border-radius: 9px;
-  background: #f8f5e9ef;
-  box-shadow: 0 3px 20px #1f311b24;
+  padding: 0 6px;
+  border: 20px solid transparent;
+  border-image: url('../assets/ui/game/hud-popup.png') 40 fill / 20px stretch;
+  filter: drop-shadow(0 3px 8px #1f311b55);
   font-size: 12px;
+  font-weight: 600;
   color: var(--ink);
   transition: opacity 0.6s ease;
   /* Decorative, so clicks pass through to the E button and minimap underneath. */
@@ -2313,6 +2397,13 @@ dialog::backdrop {
 
 .key-strip.fading {
   opacity: 0;
+}
+
+/* Tablets and small laptops: the item box is smaller there, so the strip sits lower. */
+@media (max-width: 1000px) {
+  .key-strip {
+    bottom: 170px;
+  }
 }
 
 /* Hidden where the touch arrows show; phones have no keys to learn. */

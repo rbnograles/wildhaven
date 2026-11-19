@@ -20,6 +20,15 @@ const FOG_RGBA = [38, 54, 45, 255];
 // 0 south, 1 west, 2 east, 3 north. The numbers are angles in radians, clockwise.
 const ARROW_TURN = [Math.PI, -Math.PI / 2, Math.PI / 2, 0];
 
+// How far to turn the arrow while the player walks diagonally: halfway between two of the turns
+// above. The names are the ones the walk animation uses ('ne' is north-east, and so on).
+const DIAGONAL_TURN = {
+  ne: Math.PI / 4,
+  se: (Math.PI * 3) / 4,
+  sw: (-Math.PI * 3) / 4,
+  nw: -Math.PI / 4,
+};
+
 // The fog picture: one pixel per fog square, remade only when the fog string changes.
 const fogPicture = { fog: null, canvas: null };
 
@@ -54,7 +63,7 @@ function fogCanvas(fog) {
  * the world the player hasn't seen are under fog. Found places are cream dots, found signposts
  * gold diamonds, found old boats brown squares, the player's moored boat a brown oval, camps
  * orange dots (named on the big map), and the player is the white arrow, which points the way
- * they are facing.
+ * they are facing, or the way they are heading while they walk diagonally.
  *
  * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
  * @param {HTMLImageElement} overview - The picture of the whole world (overview.webp).
@@ -62,8 +71,10 @@ function fogCanvas(fog) {
  * @param {number} w - Canvas width in pixels.
  * @param {number} h - Canvas height in pixels.
  * @param {boolean} [local=false] - True to show only the area around the player.
+ * @param {string|null} [diagonal=null] - 'ne', 'nw', 'se' or 'sw' while the player is moving
+ *   diagonally, so the arrow tilts that way; otherwise it points one of the four straight ways.
  */
-export function drawMap(ctx, overview, state, w, h, local = false) {
+export function drawMap(ctx, overview, state, w, h, local = false, diagonal = null) {
   // The part of the world this map shows, in world units.
   const vw = local ? MINI_VIEW : WORLD.width,
     vh = local ? (MINI_VIEW * h) / w : WORLD.height,
@@ -163,7 +174,7 @@ export function drawMap(ctx, overview, state, w, h, local = false) {
   const size = local ? 13 : 11;
   ctx.save();
   ctx.translate(px(state.player.x), py(state.player.y));
-  ctx.rotate(ARROW_TURN[state.player.direction] ?? ARROW_TURN[0]);
+  ctx.rotate(DIAGONAL_TURN[diagonal] ?? ARROW_TURN[state.player.direction] ?? ARROW_TURN[0]);
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#294c3b';
   ctx.lineWidth = 2;
