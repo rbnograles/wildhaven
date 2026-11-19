@@ -51,7 +51,7 @@ const pngSize = (name) => {
 test('every supply is a known, solid, action-backed sprite that takes the full gather time', () => {
   for (const node of supplies) {
     assert.ok(OBJECT_SPECS[node.sprite]?.footprint, node.id);
-    assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
+    assert.equal(CLIPS[node.clip]?.action, true, node.id);
     assert.ok(node.scale > 0 && typeof node.verb === 'string', node.id);
     assert.equal(gatherTime(createGame('survivor'), node), GATHER_SECONDS); // bare hands
   }
@@ -66,7 +66,7 @@ test('wild patches are walk-through, regrowing and drawn smaller than a characte
   for (const node of wild) {
     assert.ok(RESOURCES.includes(node.type));
     assert.equal(OBJECT_SPECS[node.sprite].footprint, undefined, node.id);
-    assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
+    assert.equal(CLIPS[node.clip]?.action, true, node.id);
     assert.ok(node.regrow > 0 && node.amount > 0, node.id);
     assert.ok(
       pngSize(node.sprite).every((side) => side * node.scale < 112),
@@ -215,12 +215,14 @@ test('every tree and rock in the map is a node that needs a tool', () => {
   }
   for (const node of harvest) {
     assert.ok(['axe', 'pickaxe'].includes(node.tool), node.id);
-    assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
+    assert.equal(CLIPS[node.clip]?.action, true, node.id);
+    assert.equal(node.clip, node.tool === 'axe' ? 'chop' : 'build', node.id);
     assert.equal(node.regrow, HARVEST_REGROW, node.id);
     assert.equal(node.type === 'wood', node.tool === 'axe', node.id);
     assert.equal(node.id, `${node.sprite}-${node.x}-${node.y}`);
   }
-  assert.ok(harvest.filter((n) => n.type === 'iron').length >= 100);
+  // About a hundred iron-streaked rocks (96 after the map clean-up), split between two regions.
+  assert.ok(harvest.filter((n) => n.type === 'iron').length >= 80);
 });
 
 // Guards the quick lookup: it finds every node close to a spot, the same as checking them all.

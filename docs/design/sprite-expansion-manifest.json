@@ -1,0 +1,206 @@
+[
+  {
+    "name": "scout-idle-loop",
+    "file": "assets/characters/scout/scout-idle-loop.png",
+    "prompt": "ONLY character in reference row 1: female Frontier Scout with brown bun, green cape and orange scarf. Keep EXACT face, hair, costume, equipment and proportions. Create animation spritesheet EXACTLY 4 columns x 4 rows of 16 full-body sprites, equal cells and generous transparent gutters. Rows: south/front, west/left, east/right, north/back. Each row is 4 subtle breathing idle phases: rest, inhale, exhale with a blink, return. Fixed planted feet, identical size, no walking, no exaggerated body changes, no new props.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 4,
+    "rows": 4,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-03ab5c2f-d463-45e7-9e43-ed1719f1ddc2.png"
+  },
+  {
+    "name": "scout-chop",
+    "file": "assets/characters/scout/scout-chop.png",
+    "prompt": "ONLY character in reference row 1: female Frontier Scout with brown bun, green cape and orange scarf. Keep EXACT face, hair, costume, equipment and proportions. Animation spritesheet EXACTLY 4 columns x 1 row, four full body frames facing east in elevated three-quarter view, same size and fixed planted foot baseline in equal cells with wide padding for weapon. Chopping tree with a simple wooden handled iron axe: ready with axe near waist, strong overhead anticipation, downward swing to imaginary trunk at waist height on right, low follow-through and recoil. Axe held with both hands, readable movement. No actual tree or ground, no motion trails, no other characters.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 4,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-b8f338ae-8855-4aa0-891a-52780ab7f688.png",
+    "correctionPrompt": "Edit the FIRST image only: remove its entire white/translucent background and all ground shadows to genuinely fully transparent alpha 0. Keep all four scout axe-chopping poses, colors, outlines, layout, character identity and framing unchanged. Opaque characters on empty transparent canvas with generous padding. Four evenly spaced columns in one row. Second image is the approved character style reference only. Warm hand-painted 2D indie RPG style with clean soft outlines, earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders or grid lines."
+  },
+  {
+    "name": "builder-idle-loop",
+    "file": "assets/characters/builder/builder-idle-loop.png",
+    "prompt": "ONLY character in reference row 2: blond bearded Wandering Builder with ochre shirt and leather apron. Keep EXACT face, hair, costume, equipment and proportions. Create animation spritesheet EXACTLY 4 columns x 4 rows of 16 full-body sprites, equal cells and generous transparent gutters. Rows: south/front, west/left, east/right, north/back. Each row is 4 subtle breathing idle phases: rest, inhale, exhale with a blink, return. Fixed planted feet, identical size, no walking, no exaggerated body changes, no new props.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 4,
+    "rows": 4,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-39818d45-416f-4a75-bcc8-b42f02d24a86.png"
+  },
+  {
+    "name": "builder-chop",
+    "file": "assets/characters/builder/builder-chop.png",
+    "prompt": "ONLY character in reference row 2: blond bearded Wandering Builder with ochre shirt and leather apron. Keep EXACT face, hair, costume, equipment and proportions. Animation spritesheet EXACTLY 4 columns x 1 row, four full body frames facing east in elevated three-quarter view, same size and fixed planted foot baseline in equal cells with wide padding for weapon. Chopping tree with a simple wooden handled iron axe: ready with axe near waist, strong overhead anticipation, downward swing to imaginary trunk at waist height on right, low follow-through and recoil. Axe held with both hands, readable movement. No actual tree or ground, no motion trails, no other characters.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 4,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-32067023-dd0e-452a-969e-1851e59f5780.png"
+  },
+  {
+    "name": "survivor-idle-loop",
+    "file": "assets/characters/survivor/survivor-idle-loop.png",
+    "prompt": "ONLY character in reference row 3: dark-haired Shipwreck Survivor with blue coat and red scarf. Keep EXACT face, hair, costume, equipment and proportions. Create animation spritesheet EXACTLY 4 columns x 4 rows of 16 full-body sprites, equal cells and generous transparent gutters. Rows: south/front, west/left, east/right, north/back. Each row is 4 subtle breathing idle phases: rest, inhale, exhale with a blink, return. Fixed planted feet, identical size, no walking, no exaggerated body changes, no new props.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 4,
+    "rows": 4,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-a6c67c92-83e5-4902-adc5-902e9e63a590.png"
+  },
+  {
+    "name": "survivor-chop",
+    "file": "assets/characters/survivor/survivor-chop.png",
+    "prompt": "ONLY character in reference row 3: dark-haired Shipwreck Survivor with blue coat and red scarf. Keep EXACT face, hair, costume, equipment and proportions. Animation spritesheet EXACTLY 4 columns x 1 row, four full body frames facing east in elevated three-quarter view, same size and fixed planted foot baseline in equal cells with wide padding for weapon. Chopping tree with a simple wooden handled iron axe: ready with axe near waist, strong overhead anticipation, downward swing to imaginary trunk at waist height on right, low follow-through and recoil. Axe held with both hands, readable movement. No actual tree or ground, no motion trails, no other characters.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 4,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-bab1c71b-225f-46d5-84dd-c40f0a3de46a.png"
+  },
+  {
+    "name": "oak-wind-fall-break",
+    "file": "assets/world/source/animations/oak-wind-fall-break.png",
+    "prompt": "Image 1 supplies the general style; image 2 is the EXACT tree design to animate. Keep its bark, foliage silhouette, colors and proportions. Sprite sheet EXACTLY 4 columns x 3 rows. All 12 cells same large square size, each has ample transparent padding to accommodate horizontal fallen tree. ROW 1 wind loop: tree neutral, foliage sways gently left, neutral, foliage sways gently right; trunk base anchored. ROW 2 tree felling: tree leans right 15 degrees, falls right 45 degrees, falls right 75 degrees, lies horizontally to the right. Pivot about same root base, same tree size throughout. ROW 3 break apart: fallen log and foliage, log cracks into chunks with a few wood chips, chunks separate and foliage dissipates, final small pile of 5 cut firewood pieces with no canopy. No character, ground patch or shadows. Read left to right within rows.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/trees/oak.png"
+    ],
+    "cols": 4,
+    "rows": 3,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-388b3699-32f3-47e2-af5a-02bc6fdb3a93.png"
+  },
+  {
+    "name": "pine-wind-fall-break",
+    "file": "assets/world/source/animations/pine-wind-fall-break.png",
+    "prompt": "Image 1 supplies the general style; image 2 is the EXACT tree design to animate. Keep its bark, foliage silhouette, colors and proportions. Sprite sheet EXACTLY 4 columns x 3 rows. All 12 cells same large square size, each has ample transparent padding to accommodate horizontal fallen tree. ROW 1 wind loop: tree neutral, foliage sways gently left, neutral, foliage sways gently right; trunk base anchored. ROW 2 tree felling: tree leans right 15 degrees, falls right 45 degrees, falls right 75 degrees, lies horizontally to the right. Pivot about same root base, same tree size throughout. ROW 3 break apart: fallen log and foliage, log cracks into chunks with a few wood chips, chunks separate and foliage dissipates, final small pile of 5 cut firewood pieces with no canopy. No character, ground patch or shadows. Read left to right within rows.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/trees/pine.png"
+    ],
+    "cols": 4,
+    "rows": 3,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-72a0f960-3e2c-4028-8d04-2a302ca62ca8.png"
+  },
+  {
+    "name": "fire-loop",
+    "file": "assets/world/source/animations/fire-loop.png",
+    "prompt": "Image 2 is the exact existing cold campfire. Generate EXACTLY 4 columns x 1 row, four animated burning campfire frames with the same stationary stone ring and sticks in every cell. Only flames change: short flame, tall forked flame, curling flame, settling flame. Golden yellow cores and orange tips, no surrounding halo or smoke cloud. Same scale, same base anchor, equal generous gutters.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/props/campfire.png"
+    ],
+    "cols": 4,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-14ce3620-6d63-4748-8588-d903e9cfa08c.png"
+  },
+  {
+    "name": "rock-break",
+    "file": "assets/world/source/animations/rock-break.png",
+    "prompt": "Image 2 is the exact mossy gray rock cluster. Create EXACTLY 4 columns x 1 row animation: intact cluster, same cluster with large cracks, rocks splitting with a few small chips, low pile of small collectible stone chunks. Same position and size reference throughout; no tools, characters, ground, text or blast glow. Even cells with transparent gutters.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/rocks/rocks-a.png"
+    ],
+    "cols": 4,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-b55be0a4-e370-47db-bdce-0d99e17318b2.png"
+  },
+  {
+    "name": "footprints",
+    "file": "assets/world/source/effects/footprints.png",
+    "prompt": "Transparent ground decal sprite atlas EXACTLY 2 columns x 3 rows, six isolated individual boot impressions. Columns left boot, right boot. Row 1 dark brown shallow soil print; row 2 warm sandy ochre print with slightly raised sand rim; row 3 cool gray-blue snow indentation with small white powder rim. Straight down view, boots point upwards, same size, toes and heel clear, subtle simple worn boot tread. No ground tiles or filled background patches. Only the footprint impression and its narrow material rim, fully feathered to transparent outside. Plenty of padding.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 2,
+    "rows": 3,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-7a94eecd-08f1-4ed9-a43c-ff9026bb62a7.png"
+  },
+  {
+    "name": "tree-base-blends",
+    "file": "assets/world/source/effects/tree-base-blends.png",
+    "prompt": "Transparent ground overlay atlas EXACTLY 3 columns x 2 rows, six isolated low elliptical tree-root surround decals viewed from above. Upper row: moss and leaf litter, pine needles and sparse small grass, dark loam with scattered roots. Lower row: dry ochre leaves, sandy roots with sparse grass, snowy roots with white powder. Match the tree reference bark colors. Low subtle overlays to put UNDER a tree so its trunk blends into terrain. Center mostly open for existing trunk. Organic irregular wispy feathered edges to zero alpha; no hard oval perimeter, no full tree, no large rock, no ground tile rectangles. Separate equally sized cells.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/trees/oak.png"
+    ],
+    "cols": 3,
+    "rows": 2,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-88597011-2c7f-4268-a24a-01198abd41c2.png"
+  },
+  {
+    "name": "item-box-10-slots",
+    "file": "assets/ui/item-box-10-slots.png",
+    "prompt": "Single inventory item-box panel on transparent alpha. Warm weathered wooden frame with understated moss-green and parchment accents matching the game reference. EXACTLY TEN empty square item slots in TWO ROWS OF FIVE, equal sizes, generous readable spacing. Each slot dark warm brown recessed interior, slim softly painted bevel. Orthographic front-facing UI asset. No items, text, numbers, labels, icons or buttons. Entire compact panel visible with transparent outer padding. This is a UI panel, so its frame and slot dividers are required.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 1,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-a7424350-afc9-4a46-aa65-2c90843794bb.png"
+  },
+  {
+    "name": "storage-chest",
+    "file": "assets/world/source/objects/props/storage-chest.png",
+    "prompt": "One small wooden item storage chest, weathered warm timber, iron strap hinges and simple latch, closed lid, elevated near-top-down game camera. This is the world sprite for a small ten-slot item box; no visible text or number. Match reference equipment leather/wood style. Fully visible, transparent padding all sides, no ground or cast shadow.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 1,
+    "rows": 1,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-b8f53d81-42a5-45c9-924a-e7ddc72c3c22.png"
+  },
+  {
+    "name": "path-dirt",
+    "file": "assets/world/source/paths/path-dirt.png",
+    "prompt": "Ground path sprite sheet EXACTLY 2 columns x 2 rows, four isolated path modules made of pale ochre packed earth with tiny pebbles. Top left horizontal straight section, top right rounded 90 degree bend connecting west and south, bottom left T-junction connecting west east and south, bottom right four-way crossroad. Same path width in every cell, same scale, straight down orthographic view. Organic detailed side edges blend to transparent. Keep material only on paths, no rectangular terrain backgrounds. Equal square cells with clear transparent gutters, no labels or outlines around cells. Designed as source modules for terrain overlay placement.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 2,
+    "rows": 2,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-8bda3e9c-8644-4b8a-a42d-820d05a9b7e7.png"
+  },
+  {
+    "name": "path-cobblestone",
+    "file": "assets/world/source/paths/path-cobblestone.png",
+    "prompt": "Ground path sprite sheet EXACTLY 2 columns x 2 rows, four isolated path modules made of warm gray irregular cobbles with sparse moss between stones. Top left horizontal straight section, top right rounded 90 degree bend connecting west and south, bottom left T-junction connecting west east and south, bottom right four-way crossroad. Same path width in every cell, same scale, straight down orthographic view. Organic detailed side edges blend to transparent. Keep material only on paths, no rectangular terrain backgrounds. Equal square cells with clear transparent gutters, no labels or outlines around cells. Designed as source modules for terrain overlay placement.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 2,
+    "rows": 2,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-f8f7ef07-d125-4010-8877-fae4a22ad03a.png"
+  },
+  {
+    "name": "path-boardwalk",
+    "file": "assets/world/source/paths/path-boardwalk.png",
+    "prompt": "Ground path sprite sheet EXACTLY 2 columns x 2 rows, four isolated path modules made of weathered warm brown timber planks. Top left horizontal straight section, top right rounded 90 degree bend connecting west and south, bottom left T-junction connecting west east and south, bottom right four-way crossroad. Same path width in every cell, same scale, straight down orthographic view. Organic detailed side edges blend to transparent. Keep material only on paths, no rectangular terrain backgrounds. Equal square cells with clear transparent gutters, no labels or outlines around cells. Designed as source modules for terrain overlay placement.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 2,
+    "rows": 2,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-96219046-b5a6-4a78-9067-ef316708c475.png"
+  },
+  {
+    "name": "path-stepping-stone",
+    "file": "assets/world/source/paths/path-stepping-stone.png",
+    "prompt": "Ground path sprite sheet EXACTLY 2 columns x 2 rows, four isolated path modules made of flat warm gray stepping stones with small gaps. Top left horizontal straight section, top right rounded 90 degree bend connecting west and south, bottom left T-junction connecting west east and south, bottom right four-way crossroad. Same path width in every cell, same scale, straight down orthographic view. Organic detailed side edges blend to transparent. Keep material only on paths, no rectangular terrain backgrounds. Equal square cells with clear transparent gutters, no labels or outlines around cells. Designed as source modules for terrain overlay placement.\nMatch the supplied approved reference exactly: warm hand-painted 2D indie RPG illustration, soft clean dark brown outlines, earthy moss greens and warm ochre, soft light from upper left, elevated orthographic game camera. No text, labels, grid lines, borders, watermarks or background. Genuine transparent alpha.",
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 2,
+    "rows": 2,
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-d5dbfa91-d99d-411c-a756-ea64b7b27adb.png"
+  }
+]

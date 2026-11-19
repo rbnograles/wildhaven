@@ -1,0 +1,97 @@
+{
+  "image": "snowfall-particles.png",
+  "size": [
+    1536,
+    1024
+  ],
+  "grid": {
+    "columns": 4,
+    "rows": 2,
+    "cellWidth": 384,
+    "cellHeight": 512
+  },
+  "type": "particle_variants_not_animation_frames",
+  "frames": [
+    {
+      "id": 0,
+      "rect": [
+        166,
+        231,
+        53,
+        53
+      ],
+      "layer": "far"
+    },
+    {
+      "id": 1,
+      "rect": [
+        545,
+        229,
+        65,
+        61
+      ],
+      "layer": "far"
+    },
+    {
+      "id": 2,
+      "rect": [
+        910,
+        218,
+        92,
+        81
+      ],
+      "layer": "far"
+    },
+    {
+      "id": 3,
+      "rect": [
+        1288,
+        221,
+        112,
+        74
+      ],
+      "layer": "far"
+    },
+    {
+      "id": 4,
+      "rect": [
+        133,
+        706,
+        115,
+        115
+      ],
+      "layer": "middle"
+    },
+    {
+      "id": 5,
+      "rect": [
+        506,
+        699,
+        128,
+        124
+      ],
+      "layer": "middle"
+    },
+    {
+      "id": 6,
+      "rect": [
+        841,
+        645,
+        227,
+        228
+      ],
+      "layer": "near"
+    },
+    {
+      "id": 7,
+      "rect": [
+        1233,
+        652,
+        223,
+        213
+      ],
+      "layer": "near"
+    }
+  ],
+  "note": "Crops are source rectangles only; original PNG is unchanged. Animate particle positions downward with gentle horizontal drift. Enable for the active or visible winter biome; fade out when leaving."
+}

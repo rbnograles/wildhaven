@@ -1,0 +1,32 @@
+Make a modular UI SPRITE COMPONENT ATLAS based EXACTLY on the attached Wildhaven HUD reference. NORMAL, NON-WINTER THEME. Match the warm hand-painted wood, bronze fittings, dark leather, moss-green felt, gold outlines, painted resource icons and portrait design. No snow, frost or icicles anywhere. No scenery. The entire canvas is GENUINE TRANSPARENT ALPHA (including gutters); no colored background, checkerboard, gradients or cast shadows outside pieces. Canvas landscape 1536x1024.
+Extract/recreate the HUD as exactly EIGHTEEN SEPARATE components, NOT an assembled HUD screenshot. All pieces isolated, flat front-facing and fully visible, no overlap, at least 32px transparent gutters and 48px outside margin. Use the following arrangement:
+TOP ROW y48..242:
+1 LEFT: wide low EMPTY player-status outer panel frame, dark warm leather/wood interior, weathered wood perimeter, bronze corner studs. NO internal circles/icons/bars, just the outer frame.
+2 RIGHT: wide low EMPTY inventory outer panel frame, stitched moss-green felt interior, weathered wood perimeter, bronze corner studs, small stitched green tab at top middle. NO slots/icons/text, just outer frame.
+SECOND ROW y304..524:
+3 LEFT: circular framed portrait medallion of the exact reference character (brown hair, red knit beanie, red scarf, brown coat, facing right), bronze rim, muted teal portrait background.
+4 BESIDE IT: circular DAY/NIGHT DIAL from reference, bronze rim and central brass hub, gold sun symbols above and cream crescent moon/tiny stars below on dark blue. No letters or digits.
+5 on RIGHT: one long thin EMPTY dark recessed rounded status-bar trough with bronze trim.
+6 below trough: separate long thin rounded RED health fill strip ONLY, no frame.
+7 below red: separate long thin rounded warm OCHRE hunger fill strip ONLY, no frame.
+8 below ochre: separate long thin rounded BLUE-to-ORANGE temperature fill strip ONLY, no frame.
+All FOUR strips have equal width and height, stacked with transparent gaps, occupy right half of row.
+THIRD ROW y592..724: seven evenly spaced individual isolated icons, left-to-right:
+9 red heart;
+10 small gold fork-and-spoon hunger icon;
+11 warm orange flame;
+12 bundle of three wooden logs;
+13 cluster of three grey stones;
+14 red berries with green leaves;
+15 small fresh green herb sprig.
+BOTTOM ROW y788..976:
+16 LEFT: one EMPTY square dark wood inventory slot with bronze edging, blank interior.
+17 MIDDLE: one small EMPTY rounded dark-brown quantity badge, no number.
+18 RIGHT: large square moss-green felt BUILD button with carved wooden/bronze frame and the exact simple tan hammer icon from reference centered in upper half. Leave lower half blank for runtime label, NO WORDS.
+No words, numbers, letters, labels, watermark, grid lines, divider lines or UI text. No magenta. Do not duplicate any component or embed loose parts into the big frames. All resource art, bar fills and small icons must be separate from the panel bases. Keep important shapes straight and consistent for UI stretching. Soft warm light from upper left, warm hand-painted 2D indie RPG style with clean soft dark-brown outlines. Use attached reference for EXACT design language.
+
+CHARACTER IDENTITY CORRECTION:
+Edit the FIRST image, the normal Wildhaven HUD atlas. Make ONE local identity correction ONLY: replace the red-knit-hat child portrait inside the left circular medallion with an accurate bust portrait of the FEMALE SCOUT from ROW ONE of the SECOND reference. Exact identity: young adult woman, brown hair in a high bun with swept bangs, brown eyes, moss-green hoodless cape, warm orange scarf, cream shirt, brown leather shoulder straps. NO hat, no red knit beanie, no child character. Match the sprite face, hair, adult proportions, clothes and earthy palette. Head-and-shoulders portrait angled slightly to the right. Preserve the medallion's brass/bronze rim, studs, teal inset background, exact location and size. EVERYTHING else in the first image stays unchanged: all other 17 components, layout, dimensions, positions, icons, texture, bars, colors and empty labels. Output same 1536x1024 canvas, preserve genuine transparent alpha background and clear gutters. No added text, numbers or labels. Match the existing warm hand-painted 2D indie RPG style and upper-left lighting. Second image is the character identity source; do not copy its sheet layout.
+
+HAMMER CENTERING CORRECTION:
+Make ONE precise local edit to this 1536x1024 HUD sprite atlas: move the tan hammer icon in the bottom-right green BUILD button DOWN so it is centered BOTH VERTICALLY AND HORIZONTALLY inside the green felt square. The green inset extends approximately x1018..1220 and y798..977. Its center is approximately (1119,888). Place the center of the hammer's visible bounding box at that center, approximately x1119 y888, shifting the current hammer down about 38 pixels. Keep the same icon size, diagonal angle, shape and style. Reconstruct matching green felt where the icon used to be. Do not reserve blank label space below it; there is no text label. Keep the button frame and bronze edging fixed. EVERY other pixel/component should remain visually unchanged, especially the scout portrait, all icons, panel frames, bar fills and atlas layout. Preserve 1536x1024 dimensions and genuine transparent alpha outside components. No added words, letters, numbers, glow, backdrop or shadows. Warm hand-painted Wildhaven art remains identical.

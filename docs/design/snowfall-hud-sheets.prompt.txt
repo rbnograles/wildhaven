@@ -1,0 +1,96 @@
+Wildhaven Snowfall HUD component sheets, for ChatGPT image generation, 2026-11-19.
+Attach docs/design/snowfall-hud-concept.png to every prompt. Generate one sheet per prompt.
+Save results as assets/ui/originals/snowfall-hud-sheet-1.png, -2.png, -3.png, then key out the magenta and cut the pieces.
+
+==================== SHEET 1: PANELS ====================
+
+Use the attached picture as the exact style and design reference. It is the in-game HUD concept for Wildhaven, a cozy hand-painted top-down survival game, in its snowfall winter look. Make a UI COMPONENT SHEET: the HUD panels from that picture pulled apart and laid out one by one on a single image, so each can be cut out and used in the game.
+
+Canvas: landscape, 1536 x 1024.
+Background: one flat, solid, pure magenta #FF00FF over the whole canvas. No gradient, texture, shadow, vignette, scenery or falling snow on the background. Do not use magenta or pink anywhere in the artwork itself.
+Layout: tidy rows, at least 48 px of empty magenta between any two pieces and from every canvas edge. Nothing overlaps or touches. No drop shadows spilling onto the background. Every piece fully visible, front-facing and flat (no perspective tilt), lit softly from the upper left.
+No text, letters, numbers, labels, watermarks or grid lines anywhere.
+
+Draw these 8 panels, all EMPTY inside (no text, icons, items or scenery):
+1. Goals card: parchment panel in a snowy weathered wood frame with bronze corner rivets, snow piled on the top edge, small icicles under the bottom edge.
+2. Region name banner: wide wooden plaque with a moss-green felt centre strip and a small snowy pine tree emblem at each end, snow on top. Centre left blank.
+3. Player card panel: wide, low wooden frame with stitched moss-green felt inside, snow on top, icicles below. Plain empty interior.
+4. Item box panel: wide wooden frame with stitched moss-green felt inside, a small green felt tab with dashed stitching at the top centre, snow on top, icicles below. Plain empty interior.
+5. Round minimap frame: thick round carved wood ring with bronze studs and a small blank compass plate at the top, snow on top, icicles at the bottom. The inside of the ring is solid magenta.
+6. Toast strip: short, wide parchment strip in a snowy wood frame, with a small round empty icon socket at its left end.
+7. Build menu popup: parchment card in a snowy wood frame with a small downward-pointing tail centred on the bottom edge.
+8. Key prompt pill: small dark-wood rounded pill with an empty light key-cap square on its left.
+
+Keep each frame's sides even and straight so the panels can be stretched (9-slice). Snow caps and icicles stay attached to their own frame.
+
+Style: match the reference exactly. Warm hand-painted 2D indie RPG UI, weathered carved wood with bronze corner rivets, stitched moss-green felt with dashed stitching, torn parchment, soft clean dark brown outlines. Snowfall look: soft fresh snow piled on top edges, small icicles under bottom edges, light frost in the wood grain, pale ice-blue and snow-white highlights balanced with warm wood, pine green and ochre. Cozy, not cold.
+
+==================== SHEET 2: BUTTONS AND PLAYER CARD PARTS ====================
+
+Use the attached picture as the exact style and design reference. It is the in-game HUD concept for Wildhaven, a cozy hand-painted top-down survival game, in its snowfall winter look. Make a UI COMPONENT SHEET: the buttons and player-card parts from that picture pulled apart and laid out one by one on a single image, so each can be cut out and used in the game.
+
+Canvas: landscape, 1536 x 1024.
+Background: one flat, solid, pure magenta #FF00FF over the whole canvas. No gradient, texture, shadow, vignette, scenery or falling snow on the background. Do not use magenta or pink anywhere in the artwork itself.
+Layout: tidy rows, at least 48 px of empty magenta between any two pieces and from every canvas edge. Nothing overlaps or touches. No drop shadows spilling onto the background. Every piece fully visible, front-facing and flat (no perspective tilt), lit softly from the upper left.
+No text, letters, numbers, labels, watermarks or grid lines anywhere.
+
+Row 1, buttons (all the same size, square, carved wood frame with bronze rivets and snow on top):
+1. Button with a parchment open-book icon (journal).
+2. Button with a four-arrow expand icon (fullscreen).
+3. Button with a pause icon (two bars).
+4. Button with an empty face.
+5. The same empty button, pressed: pushed in and slightly darker, snow still on top.
+6. Small round red notification badge with a light rim, empty.
+
+Row 2, build button:
+7. Build button: moss-green felt face in a wood frame with a hammer icon, no word, snow on top.
+8. The same build button, pressed: pushed in and slightly darker.
+
+Row 3, player card parts:
+9. Round portrait ring: carved wood ring with bronze studs, empty magenta centre.
+10. Day/night clock dial in a wood rim: upper half pale day sky with two small suns, lower half deep night blue with a crescent moon and stars. No hand.
+11. Clock hand: one small bronze pointer with a round pivot, pointing straight up.
+
+Row 4, meters (all four the same long horizontal size, rounded ends):
+12. Empty meter track: dark recessed groove with a thin wood rim.
+13. Health fill: red strip with a soft highlight.
+14. Hunger fill: amber/ochre strip with a soft highlight.
+15. Warmth fill: ice-blue strip with a soft highlight.
+16. Warmth fill: warm orange strip with a soft highlight.
+
+Style: match the reference exactly. Warm hand-painted 2D indie RPG UI, weathered carved wood with bronze corner rivets, stitched moss-green felt with dashed stitching, torn parchment, soft clean dark brown outlines. Snowfall look: soft fresh snow piled on top edges, small icicles under bottom edges, light frost in the wood grain, pale ice-blue and snow-white highlights balanced with warm wood, pine green and ochre. Cozy, not cold.
+
+==================== SHEET 3: ICONS, SLOTS AND SNOW PIECES ====================
+
+Use the attached picture as the exact style and design reference. It is the in-game HUD concept for Wildhaven, a cozy hand-painted top-down survival game, in its snowfall winter look. Make a UI COMPONENT SHEET: the icons, slots and small decorative pieces from that picture pulled apart and laid out one by one on a single image, so each can be cut out and used in the game.
+
+Canvas: landscape, 1536 x 1024.
+Background: one flat, solid, pure magenta #FF00FF over the whole canvas. No gradient, texture, shadow, vignette, scenery or falling snow on the background. Do not use magenta or pink anywhere in the artwork itself.
+Layout: tidy rows, at least 48 px of empty magenta between any two pieces and from every canvas edge. Nothing overlaps or touches. No drop shadows spilling onto the background. Every piece fully visible, front-facing and flat (no perspective tilt), lit softly from the upper left.
+No text, letters, numbers, labels, watermarks or grid lines anywhere.
+
+Row 1, icons (each about 128 px, no frame or background plate):
+1. Red heart (health).
+2. Fork and knife (hunger).
+3. Small flame (warmth).
+4. Two stacked wood logs (wood).
+5. Small pile of grey stones (stone).
+6. Cluster of red berries with leaves (food).
+7. Green herb sprig (herbs).
+8. Small campfire: ring of stones with logs and a flame.
+
+Row 2, slots and small controls:
+9. Empty item slot: square dark-brown recessed slot with a copper-bronze bevel rim.
+10. The same slot, selected: warm golden glowing rim.
+11. Count badge: small dark wood tag with rounded corners, empty.
+12. Key cap: light square key cap with an empty face.
+13. Checkbox, empty: small parchment square with a dark outline.
+14. Checkbox, checked: the same with a dark ink tick.
+
+Row 3, snow pieces (to lay on top of any frame):
+15. Snow cap, left end: soft rounded drift that ends in a curve on the left.
+16. Snow cap, middle: a straight drift strip whose left and right edges line up so it can repeat side by side.
+17. Snow cap, right end: soft rounded drift that ends in a curve on the right.
+18. Icicle cluster: three small hanging icicles joined at the top.
+
+Style: match the reference exactly. Warm hand-painted 2D indie RPG UI, weathered carved wood with bronze corner rivets, stitched moss-green felt with dashed stitching, torn parchment, soft clean dark brown outlines. Snowfall look: soft fresh snow piled on top edges, small icicles under bottom edges, light frost in the wood grain, pale ice-blue and snow-white highlights balanced with warm wood, pine green and ochre. Cozy, not cold.

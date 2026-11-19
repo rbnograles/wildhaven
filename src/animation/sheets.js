@@ -5,6 +5,12 @@
 import scoutIdle from '../../assets/characters/scout/scout-idle-v1.png';
 import builderIdle from '../../assets/characters/builder/builder-idle-v1.png';
 import survivorIdle from '../../assets/characters/survivor/survivor-idle-v1.png';
+import scoutIdleLoop from '../../assets/characters/scout/scout-idle-loop.png';
+import builderIdleLoop from '../../assets/characters/builder/builder-idle-loop.png';
+import survivorIdleLoop from '../../assets/characters/survivor/survivor-idle-loop.png';
+import scoutChop from '../../assets/characters/scout/scout-chop.png';
+import builderChop from '../../assets/characters/builder/builder-chop.png';
+import survivorChop from '../../assets/characters/survivor/survivor-chop.png';
 import scoutSideWalk from '../../assets/characters/scout/scout-side-walk-v2.png';
 import builderSideWalk from '../../assets/characters/builder/builder-side-walk-v2.png';
 import survivorSideWalk from '../../assets/characters/survivor/survivor-side-walk-v2.png';
@@ -23,7 +29,9 @@ import { sampleAnimation, steadyAnchors } from './clips.js';
 /**
  * Every sprite sheet of each character, by sheet name.
  *
- * `idle` is standing still (one row, one column per facing). `profile` is walking west or east
+ * `idle` is the first standing art (one row, one column per facing); the game now only uses it to
+ * size the others. `idleLoop` is standing still and breathing (4 rows: south, west, east, north).
+ * `chop` is swinging the axe (one row, facing east). `profile` is walking west or east
  * (one row). `locomotion` is walking and running, `run` is the newer run (3 rows: south, east,
  * north), and `actions` is gathering and the other actions.
  *
@@ -36,6 +44,8 @@ import { sampleAnimation, steadyAnchors } from './clips.js';
 const SOURCES = {
   scout: {
     idle: { url: scoutIdle, edges: [0, 418] },
+    idleLoop: { url: scoutIdleLoop, edges: [0, 318, 632, 944, 1254], steady: true },
+    chop: { url: scoutChop, edges: [0, 724], steady: true },
     profile: { url: scoutSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: scoutWalk, edges: [0, 228, 447, 663, 889, 1112, 1331, 1547, 1774] },
     run: { url: scoutRun, edges: [0, 290, 579, 887], steady: true, columns: 6 },
@@ -43,6 +53,8 @@ const SOURCES = {
   },
   builder: {
     idle: { url: builderIdle, edges: [0, 418] },
+    idleLoop: { url: builderIdleLoop, edges: [0, 364, 722, 1081, 1448], steady: true },
+    chop: { url: builderChop, edges: [0, 724], steady: true },
     profile: { url: builderSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: builderWalk, edges: [0, 228, 446, 667, 891, 1109, 1332, 1552, 1774] },
     run: { url: builderRun, edges: [0, 292, 579, 887], steady: true, columns: 6 },
@@ -50,6 +62,8 @@ const SOURCES = {
   },
   survivor: {
     idle: { url: survivorIdle, edges: [0, 418] },
+    idleLoop: { url: survivorIdleLoop, edges: [0, 322, 655, 982, 1312], steady: true },
+    chop: { url: survivorChop, edges: [0, 724], steady: true },
     profile: { url: survivorSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: survivorWalk, edges: [0, 241, 456, 675, 902, 1119, 1331, 1554, 1774] },
     run: { url: survivorRun, edges: [0, 294, 583, 887], steady: true, columns: 6 },
@@ -208,6 +222,13 @@ export function loadCharacterSheets() {
     // game has always sized it by the scout's row. Every character keeps that one size, so each
     // stays as tall next to the others as it was painted.
     for (const atlas of Object.values(atlases)) {
+      // The breathing and chopping sheets were painted one character at a time, each at its own
+      // size. Size them so the first breathing pose is exactly as tall as the old standing pose,
+      // and the "axe ready" pose a touch shorter (the knees are bent).
+      const standing = atlas.idle.frames[0][0].height / atlases.scout.idle.referenceHeight;
+      atlas.idleLoop.referenceHeight = atlas.idleLoop.frames[0][0].height / standing;
+      atlas.chop.referenceHeight = atlas.chop.frames[0][0].height / (standing * 0.97);
+
       atlas.idle.referenceHeight = atlases.scout.idle.referenceHeight;
       atlas.profile.referenceHeight = atlases.scout.profile.referenceHeight;
     }
@@ -244,14 +265,13 @@ export function resolvePose(sheets, characterId, clip, time, direction, loop) {
   const sheetName = profile ? 'profile' : sample.sheet;
   const sheet = sheets.atlases[character.id][sheetName];
 
-  // The idle and side-walk sheets have a single row; on the idle sheet each column is a direction.
-  const row = profile || sample.sheet === 'idle' ? 0 : sample.row;
-  const column = sample.sheet === 'idle' ? sample.direction : sample.frame;
+  // The side-walk sheet has a single row.
+  const row = profile ? 0 : sample.row;
   return {
     sheet,
     key: character.id + '-' + sheetName,
-    name: row + '-' + column,
-    frame: sheet.frames[row][column],
+    name: row + '-' + sample.frame,
+    frame: sheet.frames[row][sample.frame],
     flip: sample.flip || (profile && direction === 1),
     lift: sample.lift,
   };

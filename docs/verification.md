@@ -282,3 +282,13 @@ Browser at `http://127.0.0.1:5181` (this worktree's own Vite server; other sessi
 - No console errors, and no "tree and rock nodes without a picture" warning (every tree and rock node found its scenery picture).
 
 Not checked by hand: mining iron in Stonewater Canyons or Frostpeak, forging an iron tool at a camp, a stone tool's 3-uses warning and break toast, the Builder's hammer chip, a chopped tree staying hidden after walking away and back, and a tree growing back (three in-game days). The rules behind each are covered by the unit tests above; the drawing is not.
+
+## Main (archipelago A1 and the sprite-expansion art) merged into tools-crafting — 2026-11-19
+
+Conflicts were in `CLAUDE.md`, `src/data/supplies.js`, `src/render/renderer.js`, `src/style.css`, `src/ui/hud.js` and `src/ui/layout.js`. Trees now play main's `chop` clip (the Pinefall pine and every map tree) and rocks keep `build`; map oaks, pines and `rocks-a` fall or crack before fading through one `showGone` helper shared with the supplies; the iron slot sits in main's painted item box with the line icon (no painted iron picture yet). Main's map clean-up left 96 iron-streaked rocks (48 + 48), about 1,640 trees and 450 rocks, so the node test now asks for at least 80 iron rocks. Automated: `npm test` 189 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5181` (this worktree's server), with a test Scout save moved beside a map pine:
+- The painted item box holds wood, stone, iron (line icon), food, herbs and Build; the tools row sits above it. Main's painted "E" button overlapped the tools row, so it moved up: 175 px on desktop (main had 146), 160 px up to 1000 px wide, and 243 px on phones (toast 298 px). Measured gaps between the button and the tools row: 19 px at 1024 × 768, 15 px at 900 × 700, 10 px at 390 × 844.
+- Beside the pine: glow and E cap, "Chop pine tree"; E played the Scout's axe swing with the progress bar, then "+2 wood · Pine tree", the pine tipped over (the fall frames) and then faded; the axe chip went 25 → 24.
+- The painted build menu opened with the Tools group (Iron axe for the Scout, Stone pickaxe, Stone hammer).
+- No console errors.

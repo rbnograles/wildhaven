@@ -2,6 +2,13 @@
 // in-game HUD, and the pause, map, journal, reset and camp dialogs. Think of it as the stage set. It
 // is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
+import woodIconUrl from '../../assets/ui/game/item-wood.png';
+import stoneIconUrl from '../../assets/ui/game/item-stone.png';
+import foodIconUrl from '../../assets/ui/game/item-food.png';
+import herbsIconUrl from '../../assets/ui/game/item-herbs.png';
+import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
+import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
+import warmthIconUrl from '../../assets/ui/game/status-icon-warmth.png';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { TOOLS } from '../data/tools.js';
 import { WORLD } from '../world/map.js';
@@ -61,15 +68,15 @@ export const icon = (name) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.compass}</svg>`;
 
 /**
- * Makes the HTML for one survival meter: its icon, a bar that ui/hud.js fills through the
- * `--fill` style, and a small word for why it is changing.
+ * Makes the HTML for one survival meter: its painted icon, a bar that ui/hud.js fills through
+ * the `--fill` style, and a small word for why it is changing.
  *
  * @param {string} id - 'health', 'hunger' or 'warmth'.
  * @param {string} label - The meter's name, read out by screen readers.
- * @param {string} iconName - Which icon to show.
+ * @param {string} iconUrl - The picture shown before the bar.
  * @returns {string} The meter as an HTML string.
  */
-const meter = (id, label, iconName) =>
+const meter = (id, label, iconUrl) =>
   /* HTML */ `<div
     id="meter-${id}"
     class="meter"
@@ -79,7 +86,7 @@ const meter = (id, label, iconName) =>
     aria-valuemax="100"
     aria-valuenow="100"
   >
-    ${icon(iconName)}<span class="meter-bar"></span><span class="meter-tag"></span>
+    <img src="${iconUrl}" alt="" /><span class="meter-bar"></span><span class="meter-tag"></span>
   </div>`;
 
 /**
@@ -214,6 +221,9 @@ export function mountLayout(app) {
         <!-- Who you are, the day clock and your survival meters. -->
         <div class="identity hud-panel">
           <span id="hud-portrait" class="hud-portrait"></span>
+          <span id="day-dial" class="day-dial" role="img"
+            ><i class="day-dial-face"></i><i class="day-dial-rim"></i><i class="day-dial-pin"></i
+          ></span>
           <div class="identity-text">
             <span id="hud-name" class="hud-name"></span
             ><span id="identity-status" class="identity-status" data-phase="day"
@@ -221,11 +231,7 @@ export function mountLayout(app) {
               ><span id="clock"></span
             ></span>
             <div class="meters">
-              ${meter('health', 'Health', 'heart')}${meter('hunger', 'Hunger', 'food')}${meter(
-                'warmth',
-                'Warmth',
-                'flame',
-              )}
+              ${meter('health', 'Health', healthIconUrl)}${meter('hunger', 'Hunger', hungerIconUrl)}${meter('warmth', 'Warmth', warmthIconUrl)}
             </div>
           </div>
         </div>
@@ -266,19 +272,21 @@ export function mountLayout(app) {
                 >`,
             ).join('')}
           </div>
-          <div class="hotbar hud-panel" aria-label="Items">
+          <div class="hotbar" aria-label="Items">
             <span class="slot" title="Wood"
-              >${icon('wood')}<b id="wood">0</b><span class="slot-label">Wood</span></span
+              ><img src="${woodIconUrl}" alt="" /><b id="wood">0</b
+              ><span class="slot-label">Wood</span></span
             ><span class="slot" title="Stone"
-              >${icon('stone')}<b id="stone">0</b><span class="slot-label">Stone</span></span
+              ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
+              ><span class="slot-label">Stone</span></span
             ><span class="slot" title="Iron"
               >${icon('iron')}<b id="iron">0</b><span class="slot-label">Iron</span></span
             ><button id="slot-food" class="slot" title="Eat one food (F)">
-              ${icon('food')}<b id="food">0</b><span class="slot-label">Food</span
-              ><kbd>F</kbd></button
+              <img src="${foodIconUrl}" alt="" /><b id="food">0</b
+              ><span class="slot-label">Food</span><kbd>F</kbd></button
             ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
-              ${icon('herbs')}<b id="herbs">0</b><span class="slot-label">Herbs</span
-              ><kbd>H</kbd></button
+              <img src="${herbsIconUrl}" alt="" /><b id="herbs">0</b
+              ><span class="slot-label">Herbs</span><kbd>H</kbd></button
             ><span class="hotbar-rule" aria-hidden="true"></span
             ><button
               id="build-button"
@@ -287,7 +295,7 @@ export function mountLayout(app) {
               aria-controls="build-menu"
               aria-expanded="false"
             >
-              ${icon('hammer')}<span class="slot-label">Build</span><kbd>B</kbd>
+              <span class="slot-label">Build</span><kbd>B</kbd>
             </button>
           </div>
         </div>

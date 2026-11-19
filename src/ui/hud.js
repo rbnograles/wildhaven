@@ -4,12 +4,18 @@
 // state; it never changes it.
 import { RESOURCES } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
-import { CAMPFIRE_COST, REPAIR_COST, TOOL_WEAR_WARNING } from '../data/balance.js';
+import {
+  CAMPFIRE_COST,
+  REPAIR_COST,
+  DAY_SECONDS,
+  PHASES,
+  TOOL_WEAR_WARNING,
+} from '../data/balance.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { NODES } from '../world/nodes.js';
 import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
-import { clockLabel, phaseOf } from '../world/clock.js';
+import { clockLabel, phaseOf, timeOfDay } from '../world/clock.js';
 import { nearestCamp, campInReach } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { missingForRepair, listMissing } from '../actions/boat.js';
@@ -183,6 +189,12 @@ export function createHud(session) {
   function updateMeters(state) {
     $('identity-status').dataset.phase = phaseOf(state.time);
     $('clock').textContent = clockLabel(state.time);
+
+    // The day dial: its face turns so the present moment sits under the pin at the top.
+    const dial = $('day-dial');
+    dial.style.setProperty('--turn', `${dialTurn(state.time)}deg`);
+    dial.title = dial.ariaLabel = clockLabel(state.time);
+
     const trends = meterTrends(state);
     for (const name of ['health', 'hunger', 'warmth']) {
       const value = Math.round(state.meters[name]),
@@ -194,6 +206,26 @@ export function createHud(session) {
       meter.querySelector('.meter-tag').textContent =
         trend === 'tea' ? `Tea ${Math.ceil(state.tea)}s` : (TREND_WORDS[trend] ?? '');
     }
+  }
+
+  /**
+   * Says how far to turn the day dial so the present moment sits under the pin at its top.
+   *
+   * The painted dial is half day (the suns, on top) and half night (the moon, below), but the
+   * game's day is longer than its night. So the daylight hours are spread over the top half and
+   * the night hours over the bottom half, like a clock whose two halves tick at different speeds:
+   * dawn is at the left, midday at the top, nightfall at the right and midnight at the bottom.
+   *
+   * @param {number} time - The world clock, in game seconds.
+   * @returns {number} Degrees to turn the dial's face (negative turns it anticlockwise).
+   */
+  function dialTurn(time) {
+    const now = timeOfDay(time);
+    const spot =
+      now < PHASES.night
+        ? -90 + (now / PHASES.night) * 180
+        : 90 + ((now - PHASES.night) / (DAY_SECONDS - PHASES.night)) * 180;
+    return -spot;
   }
 
   /**

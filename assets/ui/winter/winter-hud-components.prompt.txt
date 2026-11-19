@@ -1,0 +1,23 @@
+Use the attached image as the exact Wildhaven winter HUD STYLE AND DESIGN reference. Make one UI COMPONENT SHEET, landscape EXACTLY 1536 x 1024 pixels. Recreate its carved weathered brown wood, bronze rivets, warm parchment, stitched moss-green felt, fresh snow caps and small icicles. Pull apart the HUD panels into EIGHT independent empty components. This is a flat front-facing production asset sheet, NOT a screenshot or scene.
+
+BACKGROUND: opaque perfectly uniform pure magenta RGB(255,0,255), hex #FF00FF across the entire canvas and between every component. No gradient, texture, shadow, vignette, scenery, particles or falling snow on background. Do not use pink or magenta in any actual artwork; magenta is exclusively the background/cutout color. The minimap hole is also solid exact #FF00FF.
+
+LAYOUT: three tidy columns, three rows, exactly eight pieces. Use generous gutters: at least 48 pixels of entirely blank magenta between every piece (including snow and icicles) and all canvas edges. Keep ALL art within these suggested bounding boxes; these coordinates are layout instructions only and MUST NOT appear on image:
+TOP ROW y64..320:
+- left x64..480: Goals card, rectangular parchment panel inside snowy weathered wood frame, bronze corner rivets, attached snow cap above, small attached icicles below; interior completely empty warm parchment.
+- middle x560..976: Region banner, wide low wooden plaque, moss-green felt center strip with stitching, a small snowy carved pine tree emblem at EACH end, snow on top; center completely blank. These two pine emblems are the only illustrative symbols allowed anywhere.
+- right x1056..1472: Player panel, wide low rectangular wooden frame with stitched moss-green felt interior, snow on top, icicles below, completely uninterrupted plain empty felt, NO portrait socket, meters, gauges or dividers.
+MIDDLE ROW y384..704:
+- left x64..480: Item box, wide wood frame with stitched moss-green felt interior; small green felt tab with dashed stitches at TOP CENTER, snow on top, icicles below; no slots or items, no internal subdivisions.
+- middle x608..928: Round minimap frame, thick carved wood ring with bronze studs, small BLANK compass plate at top, snow on top, icicles below. Inside ring is entirely solid #FF00FF. No map, needle or compass letters.
+- right x1056..1472: Build menu popup, rectangular empty warm parchment card in snowy wood frame with a small downward-pointing tail centered on bottom.
+BOTTOM ROW y768..960:
+- left x64..480: Toast strip, short wide empty parchment strip in snowy wood frame with small ROUND EMPTY icon socket at LEFT end. Socket plain and unmarked, no symbol.
+- middle x560..976: Key prompt pill, small dark-wood rounded horizontal pill, EMPTY light parchment-colored key-cap square on its LEFT, rest empty dark wood. No markings or letters.
+Leave unused lower right space solid magenta.
+
+NO TEXT, letters, numbers, words, labels, watermarks, grid lines, item icons or scenery ANYWHERE. All panel interiors empty. No drop shadows spilling onto magenta. Every piece fully visible, not touching other pieces. All rectangular frame sides even and straight, flat orthographic front view so they can be 9-sliced; keep decorations attached to their frame.
+Style: match reference exactly. Warm hand-painted 2D indie RPG UI with soft clean dark brown outlines, weathered carved wood, bronze corner rivets, dashed stitching, torn parchment. Soft fresh snow above frames, small pale ice-blue icicles below, light frost in woodgrain. Snow-white and pale ice-blue highlights balanced with warm wood, pine green and ochre. Cozy, not cold. Soft upper-left lighting confined to the artwork.
+
+CORRECTION PASS:
+Production cleanup of FIRST image (the eight winter UI panel sheet), preserving the exact artwork and eight components. SECOND image is style reference only. Output EXACTLY 1536x1024 landscape. CRITICAL: repaint ALL background pixels with the single literal flat color RGB 255,0,255 (#FF00FF), including inside the minimap ring. Use an untextured digitally flat chroma-key magenta fill; absolutely no shading, noise, compression-like color variation, vignetting or gradients. Keep magenta exclusive to the background/hole. SHRINK all eight components uniformly about 12% around their existing centers so every piece has AT LEAST 64 pixels of flat magenta separating it from all other pieces and from canvas borders. Preserve current layout, eight panels, snow, icicles, blank parchment/felt interiors, bronze rivets, pine emblems on region banner. Do not add any text or symbols. No shadows on background. All components flat front-facing, clean edges, fully visible. Keep exact 1536x1024 output and pure uniform RGB(255,0,255) backdrop.

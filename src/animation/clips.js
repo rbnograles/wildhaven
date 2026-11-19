@@ -6,21 +6,85 @@
  * Every animation the characters have, by name.
  *
  * - `label`: the name shown in the preview dialog.
- * - `frames`: how many pictures the animation has.
- * - `fps`: how many of those pictures to show per second.
+ * - `frames`: how many steps the animation has.
+ * - `fps`: how many of those steps to show per second.
  * - `loop`: start over at the end (true) or hold the last picture (false).
- * - `sheet`: which sprite sheet the pictures live on (`idle`, `locomotion`, `run` or `actions`).
- * - `row`: which row of that sheet. Walking adds the facing direction to it.
+ * - `sheet`: which sprite sheet the pictures live on (`idleLoop`, `locomotion`, `run`, `actions`
+ *   or `chop`).
+ * - `row`: which row of that sheet.
+ * - `turns`: the sheet has one row per facing (south, west, east, north), added to `row`.
+ * - `order`: which column to show at each step, when the pictures are not simply played left to
+ *   right. Idle breathes a few times before the picture with the blink, so the eyes don't flutter.
+ * - `action`: a timed action (see `startAction`). Its art faces east and is mirrored for west.
  */
 export const CLIPS = {
-  idle: { label: 'Idle', frames: 1, fps: 1, loop: true, sheet: 'idle' },
-  walk: { label: 'Walking', frames: 4, fps: 7, loop: true, sheet: 'locomotion', row: 0 },
+  idle: {
+    label: 'Idle',
+    frames: 10,
+    fps: 2.5,
+    loop: true,
+    sheet: 'idleLoop',
+    row: 0,
+    turns: true,
+    order: [0, 1, 3, 0, 1, 3, 0, 1, 2, 3],
+  },
+  walk: {
+    label: 'Walking',
+    frames: 4,
+    fps: 7,
+    loop: true,
+    sheet: 'locomotion',
+    row: 0,
+    turns: true,
+  },
   run: { label: 'Running', frames: 6, fps: 15, loop: true, sheet: 'run' },
-  gather: { label: 'Gathering', frames: 4, fps: 5, loop: false, sheet: 'actions', row: 0 },
-  build: { label: 'Building', frames: 4, fps: 4, loop: true, sheet: 'actions', row: 1 },
-  craft: { label: 'Crafting', frames: 4, fps: 5, loop: true, sheet: 'actions', row: 2 },
-  fight: { label: 'Fighting', frames: 4, fps: 7, loop: false, sheet: 'actions', row: 3 },
-  swim: { label: 'Swimming', frames: 4, fps: 6, loop: true, sheet: 'actions', row: 4 },
+  gather: {
+    label: 'Gathering',
+    frames: 4,
+    fps: 5,
+    loop: false,
+    sheet: 'actions',
+    row: 0,
+    action: true,
+  },
+  build: {
+    label: 'Building',
+    frames: 4,
+    fps: 4,
+    loop: true,
+    sheet: 'actions',
+    row: 1,
+    action: true,
+  },
+  craft: {
+    label: 'Crafting',
+    frames: 4,
+    fps: 5,
+    loop: true,
+    sheet: 'actions',
+    row: 2,
+    action: true,
+  },
+  fight: {
+    label: 'Fighting',
+    frames: 4,
+    fps: 7,
+    loop: false,
+    sheet: 'actions',
+    row: 3,
+    action: true,
+  },
+  swim: {
+    label: 'Swimming',
+    frames: 4,
+    fps: 6,
+    loop: true,
+    sheet: 'actions',
+    row: 4,
+    action: true,
+  },
+  // Chopping a tree with the axe: ready, lift overhead, strike, follow through.
+  chop: { label: 'Chopping', frames: 4, fps: 5, loop: true, sheet: 'chop', row: 0, action: true },
 };
 
 /**
@@ -43,7 +107,8 @@ export function sampleAnimation(name, time, direction = 0, loop = CLIPS[name]?.l
 
   // Count whole frames played so far; the tiny extra stops rounding from landing one frame short.
   const tick = Math.floor(Math.max(0, Number.isFinite(time) ? time : 0) * clip.fps + 1e-8);
-  const frame = loop ? tick % clip.frames : Math.min(tick, clip.frames - 1);
+  const step = loop ? tick % clip.frames : Math.min(tick, clip.frames - 1);
+  const frame = clip.order ? clip.order[step] : step;
 
   if (clip === CLIPS.run) {
     // South, east (also mirrored west), north. Both flight poses clear the ground.
@@ -57,13 +122,13 @@ export function sampleAnimation(name, time, direction = 0, loop = CLIPS[name]?.l
     };
   }
 
-  // Walk rows go one per direction; action art faces east, so it is mirrored for west.
+  // Idle and walk rows go one per direction; action art faces east, so it is mirrored for west.
   return {
     sheet: clip.sheet,
-    row: clip.sheet === 'locomotion' ? clip.row + facing : (clip.row ?? 0),
+    row: (clip.row ?? 0) + (clip.turns ? facing : 0),
     frame,
     direction: facing,
-    flip: clip.sheet === 'actions' && facing === 1,
+    flip: !!clip.action && facing === 1,
     lift: 0,
   };
 }
@@ -108,7 +173,7 @@ export function createAnimator() {
  * @returns {boolean} True if the action started; false if one was already running or the clip isn't an action.
  */
 export function startAction(animator, clip, target = null, duration = null) {
-  if (animator.pending || CLIPS[clip]?.sheet !== 'actions') return false;
+  if (animator.pending || !CLIPS[clip]?.action) return false;
 
   const length = CLIPS[clip].frames / CLIPS[clip].fps;
   animator.clip = clip;

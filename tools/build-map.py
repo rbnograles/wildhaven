@@ -598,6 +598,14 @@ def scatter_ok(x, y):
             and all(math.hypot(x - fx, y - fy) > 260 for fx, fy in FORDS)
             and all(abs(x - ox) > 330 or not (-150 < oy - y < 420) for _, ox, oy in fixed))
 
+# Says whether water is drawn within r units of (x, y). The shoreline is painted from the corners of the 64-unit
+# tiles, so water reaches a little past where terrain() says it ends; asking only about the one point let grass
+# tufts and bushes stand in a river's edge. This looks at every tile corner around the spot instead.
+def near_water(x, y, r):
+    c0, c1 = max(0, int((x - r) // TILE)), min(COLS, int((x + r) // TILE) + 1)
+    r0, r1 = max(0, int((y - r) // TILE)), min(ROWS, int((y + r) // TILE) + 1)
+    return bool((corner[r0:r1 + 1, c0:c1 + 1] >= WATER).any())   # WATER and DEEP are the two highest kinds
+
 # What grows in each region: (chance that a grid square gets something, what it can be).
 SCATTER = {
     'D': (0.16, ['cactus', 'cactus', 'dead-bush', 'beach-rock']),
@@ -620,7 +628,7 @@ for gy in range(STEP // 2 - 10 * STEP, LAND_H + PAD, STEP):
         if (not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30) or not scatter_ok(x, y)
                 or not on_flat(x, y, 80)): continue
         ground = terrain(x, y); roll = rng.random()
-        if ground in (WATER, DIRT): continue
+        if ground in (WATER, DIRT) or near_water(x, y, 60): continue
         k = region_key(x, y)
         if k != 'L' and inland(x, y) < BEACH: chance, names = BEACH_SCATTER
         elif k == 'h':
@@ -632,13 +640,14 @@ for gy in range(STEP // 2 - 10 * STEP, LAND_H + PAD, STEP):
         else: chance, names = SCATTER[k]
         if roll < chance: scattered.append((rng.choice(names), x, y))
 
-# Ground detail: grass tufts, tall grass and bare dirt patches on a finer grid, so open ground isn't flat colour.
+# Ground detail: grass tufts and tall grass on a finer grid, so open ground isn't flat colour.
 # It is a separate pass with its own seeds, so adding it did not move a single tree from the pass above.
-# Per region: (chance a square gets something, what it can be). Sand on the lagoon shore and the sea beach, and dirt
-# patches, have their own rules below.
+# Per region: (chance a square gets something, what it can be). Sand on the lagoon shore and the sea beach has its
+# own rule below.
+# There are no round bare-dirt patches any more: scattered over the meadows they read as litter, not as ground.
 DETAIL = {
-    'h': (0.5, ['grass-tuft', 'grass-tuft', 'grass-tuft', 'tall-grass', 'tall-grass', 'dirt-patch']),
-    'P': (0.3, ['grass-tuft', 'grass-tuft', 'tall-grass', 'dirt-patch']),
+    'h': (0.5, ['grass-tuft', 'grass-tuft', 'grass-tuft', 'tall-grass', 'tall-grass']),
+    'P': (0.3, ['grass-tuft', 'grass-tuft', 'tall-grass']),
     'L': (0.3, ['grass-tuft', 'grass-tuft', 'tall-grass']),
     'D': (0.1, ['dry-grass']),
     'C': (0.25, ['dry-grass', 'dry-grass', 'grass-tuft']),
@@ -661,9 +670,7 @@ for gy in range(DETAIL_STEP // 2 - 14 * DETAIL_STEP, LAND_H + PAD, DETAIL_STEP):
         chance, names = DETAIL[k]
         if ground == SAND and (k == 'L' or inland(x, y) < BEACH): chance, names = 0.08, ['dry-grass']   # only a little on a beach
         name = rng.choice(names)
-        if name == 'dirt-patch' and ground != GRASS: name = 'grass-tuft'   # bare earth only shows up on grass
-        reach = 110 if name == 'dirt-patch' else 40
-        if (roll >= chance or not on_flat(x, y, reach)
+        if (roll >= chance or not on_flat(x, y, 40) or near_water(x, y, 45)
                 or any(math.hypot(x - px, y - py) < 70 for px, py in POINTS)
                 or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
                 or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)): continue

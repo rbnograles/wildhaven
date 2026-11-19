@@ -16,6 +16,7 @@ import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets
 import { actionProgress } from '../animation/clips.js';
 import mapData from '../../assets/world/map/wildhaven.json';
 import objectSpecs from '../../assets/world/source/objects.json';
+import animSpecs from '../../assets/world/animations/animations.json';
 import tilesetUrl from '../../assets/world/map/tileset.png';
 import overviewUrl from '../../assets/world/map/overview.webp';
 
@@ -33,6 +34,48 @@ export const objectUrls = Object.fromEntries(
     }),
   ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
 );
+
+// Animated sprite name → the URL of its flip-book sheet (assets/world/animations/, made by
+// tools/prepare-sprite-art.py). animations.json says how big one frame is and where its ground point is.
+const animUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/world/animations/*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
+);
+
+// Wind: a tree stands still most of the time, then leans left, back, and right. These are the
+// sheet columns for each step of that, played at SWAY_FPS steps a second.
+const SWAY = [1, 2, 3, 0, 0, 0, 0, 0, 0, 0];
+const SWAY_FPS = 3;
+
+// What a gathered supply plays before it fades, by how many rows its sheet has: a tree (3 rows)
+// falls and breaks into firewood (frames 4-11), a rock (1 row) cracks into rubble (frames 0-3).
+// `hold` is how many seconds the last picture stays before the fade starts.
+const BREAK = {
+  3: { frames: [4, 5, 6, 7, 8, 9, 10, 11], fps: 8, hold: 0.7 },
+  1: { frames: [0, 1, 2, 3], fps: 6, hold: 0.7 },
+};
+
+// How many flame pictures the campfire shows per second.
+const FIRE_FPS = 8;
+
+/**
+ * Says which sway picture a tree at (x, y) shows right now.
+ *
+ * Trees further east and south start a little later, so a gust seems to roll across the forest
+ * instead of every tree nodding at once.
+ *
+ * @param {number} time - Seconds the world has been drawn for.
+ * @param {number} x - The tree's world x.
+ * @param {number} y - The tree's world y.
+ * @returns {number} A column of the tree sheet's first row: 0 or 2 upright, 1 left, 3 right.
+ */
+const swayFrame = (time, x, y) =>
+  SWAY[Math.floor(time * SWAY_FPS + x / 260 + y / 410) % SWAY.length];
 
 // The map's tile layers, bottom to top: the ground terrains, then the cliffs (lips, walls and their
 // shadows) over them. Each one is painted over the one before. tools/build-map.py decides the order.
@@ -94,8 +137,11 @@ export async function createRenderer(container, miniCanvas) {
     webgl = false,
     snap = true,
     shown = new Set();
+  // `swayers` holds, per chunk key, the trees that sway in the wind. `clock` counts the seconds drawn.
   const chunks = new Map(),
+    swayers = new Map(),
     fires = new Map();
+  let clock = 0;
 
   // Trees and rocks a tool can harvest: `sceneryNodes` maps a node id to its node; `harvest` maps
   // it to its drawn entry ({node, sprite, glow, top}), and `harvestChunks` lists the entries in
@@ -138,6 +184,11 @@ export async function createRenderer(container, miniCanvas) {
         this.load.image('terrain', tilesetUrl);
         for (const [name, url] of Object.entries(objectUrls))
           this.load.image(`object-${name}`, url);
+        for (const [name, url] of Object.entries(animUrls))
+          this.load.spritesheet(`anim-${name}`, url, {
+            frameWidth: animSpecs[name].cell[0],
+            frameHeight: animSpecs[name].cell[1],
+          });
       }
 
       /**
@@ -165,9 +216,11 @@ export async function createRenderer(container, miniCanvas) {
           const spec = objectSpecs[object.name];
           if (!spec || WILD[object.name] || !this.textures.exists(`object-${object.name}`))
             continue;
+          // A sprite with a flip-book sheet is drawn from it (its first frame is the still picture).
+          const anim = animSpecs[object.name];
           const image = this.add
-            .image(object.x, object.y, `object-${object.name}`)
-            .setOrigin(...spec.origin)
+            .image(object.x, object.y, anim ? `anim-${object.name}` : `object-${object.name}`, 0)
+            .setOrigin(...(anim ?? spec).origin)
             .setScale(spec.scale ?? 1)
             .setDepth(spec.flat ? -1 : object.y)
             .setVisible(false);
@@ -175,11 +228,21 @@ export async function createRenderer(container, miniCanvas) {
           if (!chunks.has(key)) chunks.set(key, []);
           chunks.get(key).push(image);
 
+          // Trees (three-row sheets) sway in the wind while they are on screen.
+          if (anim?.rows === 3 && !reducedMotion) {
+            if (!swayers.has(key)) swayers.set(key, []);
+            swayers.get(key).push(image);
+          }
+
+          // A tree or rock a tool can harvest: the same fields as a supply entry (see below).
           const node = sceneryNodes.get(`${object.name}-${object.x}-${object.y}`);
           if (!node) continue;
           const entry = {
             node,
             sprite: image,
+            anim,
+            fx: null,
+            wasGone: false,
             glow: null,
             top: Math.max(node.y - image.displayHeight * image.originY, node.y - 150),
           };
@@ -207,17 +270,23 @@ export async function createRenderer(container, miniCanvas) {
             gone: (state) => state.boat?.from === w.id,
           })),
         ].map(({ node, gone }) => {
-          const spec = objectSpecs[node.sprite];
+          const spec = objectSpecs[node.sprite],
+            anim = animSpecs[node.sprite];
           const sprite = this.add
-            .image(node.x, node.y, `object-${node.sprite}`)
-            .setOrigin(...spec.origin)
+            .image(node.x, node.y, anim ? `anim-${node.sprite}` : `object-${node.sprite}`, 0)
+            .setOrigin(...(anim ?? spec).origin)
             .setScale(node.scale)
             .setDepth(spec.flat ? -1 : node.y);
           // Cue height: the sprite's top, but on a tall tree's canopy rather than its tip, where it would crowd the HUD.
+          // `anim` is its flip-book sheet, if it has one; `fx` counts the seconds of its break
+          // animation (null when none is playing); `wasGone` remembers last frame's state.
           return {
             node,
             gone,
             sprite,
+            anim,
+            fx: null,
+            wasGone: false,
             glow: null,
             top: Math.max(node.y - sprite.displayHeight * sprite.originY, node.y - 150),
           };
@@ -279,8 +348,8 @@ export async function createRenderer(container, miniCanvas) {
         // The ghost campfire shown while placing one, and the ring of warmth it would give.
         // Both sit above the night layer so they stay visible in the dark.
         ghost = this.add
-          .image(0, 0, 'object-campfire')
-          .setOrigin(...objectSpecs.campfire.origin)
+          .image(0, 0, 'anim-campfire', 0)
+          .setOrigin(...animSpecs.campfire.origin)
           .setAlpha(0.75)
           .setDepth(WORLD.height + 0.75)
           .setVisible(false);
@@ -326,9 +395,51 @@ export async function createRenderer(container, miniCanvas) {
   }
 
   /**
+   * Shows a supply, tree or rock as standing or gone this frame.
+   *
+   * A standing one with a tree sheet sways. One just gathered that has a flip-book sheet falls and
+   * breaks apart (a rock cracks to rubble) and only then fades; anything else simply fades out, and
+   * fades back in when it grows back.
+   *
+   * @param {object} s - A `supplies` or `harvest` entry: its `sprite`, `node`, flip-book `anim`, the
+   *   seconds `fx` of a break playing (or null), and `wasGone` from the last frame.
+   * @param {boolean} gone - True while it has nothing to give.
+   * @param {number} dt - Seconds since the last frame.
+   * @param {number} step - How far its see-through-ness may change this frame (1 jumps straight there).
+   * @param {boolean} quiet - True to skip the break animation (reduced motion, a fresh load, or it
+   *   just came on screen).
+   */
+  function showGone(s, gone, dt, step, quiet) {
+    let breaking = false;
+    if (s.anim) {
+      const act = BREAK[s.anim.rows];
+      if (!gone) {
+        s.fx = null;
+        s.sprite.setFrame(
+          s.anim.rows === 3 && !reducedMotion ? swayFrame(clock, s.node.x, s.node.y) : 0,
+        );
+      } else if (!s.wasGone && !quiet) s.fx = 0;
+      if (gone && s.fx !== null) {
+        s.fx += dt;
+        const at = Math.floor(s.fx * act.fps);
+        s.sprite.setFrame(act.frames[Math.min(at, act.frames.length - 1)]);
+        breaking = s.fx < act.frames.length / act.fps + act.hold;
+      }
+    }
+    s.wasGone = gone;
+
+    if (!breaking)
+      s.sprite.setAlpha(
+        gone ? Math.max(0, s.sprite.alpha - step) : Math.min(1, s.sprite.alpha + step),
+      );
+    s.sprite.setVisible(s.sprite.alpha > 0);
+  }
+
+  /**
    * Draws one frame: moves the camera, updates supply sprites, and poses the player.
    *
    * The camera follows the player smoothly, like someone filming who walks a step behind.
+   * Trees sway, campfires flicker, and a chopped tree falls and breaks apart before it fades.
    * Supplies fade out when gathered, the one in reach glows with an E above it, and while an
    * action runs a progress bar fills up instead. Camp fires are drawn, the player sprite gets this
    * frame's pose, the build ghost follows the pointer, and the night layer goes over everything.
@@ -381,6 +492,11 @@ export async function createRenderer(container, miniCanvas) {
     for (const key of appeared) for (const image of chunks.get(key)) image.setVisible(true);
     shown = next;
 
+    // Wind in the trees on screen.
+    clock += dt;
+    for (const key of shown)
+      for (const tree of swayers.get(key) ?? []) tree.setFrame(swayFrame(clock, tree.x, tree.y));
+
     // Campfires: one sprite per camp, made when the camp is founded. Keys include the character,
     // so switching characters never reuses another character's fire.
     const fireKeys = new Set(state.camps.map((camp) => `${state.character}:${camp.id}`));
@@ -395,27 +511,29 @@ export async function createRenderer(container, miniCanvas) {
         fires.set(
           key,
           scene.add
-            .image(camp.x, camp.y, 'object-campfire')
-            .setOrigin(...objectSpecs.campfire.origin)
+            .image(camp.x, camp.y, 'anim-campfire', 0)
+            .setOrigin(...animSpecs.campfire.origin)
             .setDepth(camp.y),
         );
     }
+
+    // The flames flicker through their four pictures (one still picture with reduced motion).
+    const flame = reducedMotion ? 1 : Math.floor(clock * FIRE_FPS) % 4;
+    for (const sprite of fires.values()) sprite.setFrame(flame);
 
     // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
     // What E would do now: a supply or old boat it targets glows with an E cap over it.
     const choice = chooseInteraction(state),
       aimed = choice?.kind === 'gather' || choice?.kind === 'repair' ? choice.target.id : null,
       busy = animator.pending?.target,
-      step = reducedMotion || snap ? 1 : dt * 4;
+      step = reducedMotion || snap ? 1 : dt * 4,
+      quiet = reducedMotion || snap;
     let capped = null,
       working = null;
     snap = false;
     for (const s of supplies) {
       const gone = s.gone(state);
-      s.sprite.setAlpha(
-        gone ? Math.max(0, s.sprite.alpha - step) : Math.min(1, s.sprite.alpha + step),
-      );
-      s.sprite.setVisible(s.sprite.alpha > 0);
+      showGone(s, gone, dt, step, quiet);
       // Highlight the supply being worked on, or else the nearest one in reach.
       const target = !gone && (busy ? s.node.id === busy : s.node.id === aimed);
       if (target) {
@@ -428,18 +546,14 @@ export async function createRenderer(container, miniCanvas) {
       }
     }
 
-    // Trees and rocks on screen fade out when chopped or mined, and back in when they regrow. One
-    // in a chunk that just came into view jumps straight to how it is now instead of fading.
-    for (const key of shown)
-      for (const entry of harvestChunks.get(key) ?? []) {
-        const gone = !isAvailable(state, entry.node),
-          change = appeared.has(key) ? 1 : step,
-          { sprite } = entry;
-        sprite.setAlpha(
-          gone ? Math.max(0, sprite.alpha - change) : Math.min(1, sprite.alpha + change),
-        );
-        sprite.setVisible(sprite.alpha > 0);
-      }
+    // Trees and rocks on screen fall, break and fade like supplies when chopped or mined, and fade
+    // back in when they regrow. One in a chunk that just came into view jumps straight to how it is
+    // now instead of animating.
+    for (const key of shown) {
+      const fresh = appeared.has(key);
+      for (const entry of harvestChunks.get(key) ?? [])
+        showGone(entry, !isAvailable(state, entry.node), dt, fresh ? 1 : step, quiet || fresh);
+    }
 
     // The tree or rock E would chop or mine (or the one being worked on) glows like a supply, with
     // the E cap over it or the progress bar while the work runs.

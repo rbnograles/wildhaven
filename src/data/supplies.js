@@ -25,7 +25,7 @@ export const SUPPLIES = [
     amount: 3,
     label: 'Pine tree',
     verb: 'Chop',
-    clip: 'build',
+    clip: 'chop',
     tool: 'axe',
     sprite: 'pine',
     scale: 1,
@@ -38,7 +38,7 @@ export const SUPPLIES = [
     label: 'Loose stones',
     verb: 'Gather',
     clip: 'gather',
-    sprite: 'rocks-b',
+    sprite: 'rocks-a',
     scale: 0.5,
   },
   {
@@ -71,7 +71,7 @@ export const SUPPLIES = [
     label: 'Loose stones',
     verb: 'Gather',
     clip: 'gather',
-    sprite: 'rocks-b',
+    sprite: 'rocks-a',
     scale: 0.5,
   },
   {
@@ -156,7 +156,7 @@ const tree = (label, amount) => ({
   amount,
   label,
   verb: 'Chop',
-  clip: 'build',
+  clip: 'chop',
   tool: 'axe',
   regrow: HARVEST_REGROW,
 });
@@ -183,7 +183,8 @@ const rock = (label, type, amount) => ({
 // pickaxe. world/nodes.js turns each one the map placed into a node (id `<sprite>-<x>-<y>`). Unlike
 // WILD patches they stay drawn with the map's scenery, and they keep their solid base while standing.
 // Iron comes from the streaked cliff rocks of Stonewater Canyons and the ice rocks of Frostpeak.
-// The `build` clip (an overhead swing) stands in for chopping and mining until those animations exist.
+// Trees play the `chop` clip (the axe swing); rocks play `build` (an overhead swing) until a mining
+// animation exists.
 export const HARVEST = {
   pine: tree('Pine tree', 2),
   'snowy-pine': tree('Snowy pine', 2),

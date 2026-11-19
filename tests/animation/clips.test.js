@@ -18,7 +18,7 @@ import { createGame, serializeGame } from '../../src/game/state.js';
 
 // Guards against a clip going missing or being renamed, and against frame counts that no
 // longer match the sprite sheets (which would show blank or wrong pictures).
-test('all seven requested actions have distinct clip definitions', () => {
+test('every clip the game plays has its own definition', () => {
   assert.deepEqual(Object.keys(CLIPS), [
     'idle',
     'walk',
@@ -28,8 +28,9 @@ test('all seven requested actions have distinct clip definitions', () => {
     'craft',
     'fight',
     'swim',
+    'chop',
   ]);
-  for (const name of ['walk', 'gather', 'build', 'craft', 'fight', 'swim'])
+  for (const name of ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop'])
     assert.equal(CLIPS[name].frames, 4);
   assert.equal(CLIPS.run.frames, 6);
 });
@@ -53,6 +54,37 @@ test('walk and run use all four directional rows and loop their frames', () => {
     assert.equal(pose.frame, i % 6);
     assert.equal(pose.lift > 0, i % 3 === 2);
   }
+});
+
+// Guards the breathing idle: each facing has its own row (so a character standing still never
+// snaps to face south), every step names a real column of the four-frame sheet, and the blink
+// picture (column 2) shows only once per loop so the eyes don't flutter.
+test('idle breathes on its own row per facing and blinks once per loop', () => {
+  const columns = [];
+  for (let step = 0; step < CLIPS.idle.frames; step++) {
+    const pose = sampleAnimation('idle', step / CLIPS.idle.fps, 3);
+    assert.equal(pose.sheet, 'idleLoop');
+    assert.equal(pose.row, 3);
+    assert.equal(pose.flip, false);
+    columns.push(pose.frame);
+  }
+  assert.ok(columns.every((column) => column >= 0 && column < 4));
+  assert.equal(columns.filter((column) => column === 2).length, 1);
+  assert.equal(sampleAnimation('idle', CLIPS.idle.frames / CLIPS.idle.fps, 1).row, 1);
+});
+
+// Guards the axe swing: it is a timed action on its own sheet, loops for the whole gather, and
+// mirrors for west like the other east-facing action art.
+test('chopping is a looping action on its own sheet, mirrored for west', () => {
+  const a = createAnimator();
+  assert.equal(startAction(a, 'chop', 'pine-wood', 6), true);
+  assert.equal(startAction(createAnimator(), 'walk'), false);
+  assert.deepEqual(
+    [0, 1, 2, 3, 4].map((i) => sampleAnimation('chop', i / CLIPS.chop.fps, 2).frame),
+    [0, 1, 2, 3, 0],
+  );
+  assert.equal(sampleAnimation('chop', 0, 2).sheet, 'chop');
+  assert.equal(sampleAnimation('chop', 0, 1).flip, true);
 });
 
 // Guards against two actions sharing one row of the sheet, and checks that facing west just

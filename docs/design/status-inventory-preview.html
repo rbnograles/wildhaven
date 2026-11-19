@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wildhaven â€” seasonal HUD art</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui;background:#1c231d;color:#eee7d7}body{max-width:1200px;margin:32px auto;padding:0 24px}h1{font-size:28px;margin-bottom:8px}p{max-width:850px;color:#c4cbbd}nav{display:flex;gap:12px;margin:20px 0}button{font:inherit;padding:10px 18px;border:1px solid #8c987d;border-radius:7px;color:inherit;background:#344536;cursor:pointer}button[aria-pressed=true]{background:#725332;border-color:#e1b476}figure{background:#65766e;margin:0;position:relative;aspect-ratio:3/2}img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}#winter{opacity:0;transition:opacity .4s}a{color:#e4c888}
+</style>
+<h1>Status and inventory sprites</h1>
+<p>Eighteen modular components per theme, matching the supplied player-status and inventory HUD reference. Toggle to compare normal and winter art. These source atlases retain separate parts for game assembly; final crop alignment and runtime wiring remain.</p>
+<nav aria-label="Preview environment"><button id="normalButton" aria-pressed="true">Normal field</button><button id="snowButton" aria-pressed="false">Snowy field</button></nav>
+<figure aria-label="Eighteen modular status and inventory components in the selected theme"><img src="../../assets/ui/normal/status-inventory-components.png" alt="Normal status and inventory sprites"><img id="winter" src="../../assets/ui/winter/status-inventory-components.png" alt="Winter status and inventory sprites"></figure>
+<p>Portraits match the existing scout, builder and survivor. <a href="../../assets/ui/character-portraits-normal-winter.png">Open all six normal/winter portraits</a>.</p>
+<p><a href="../../assets/ui/normal/status-inventory-components.png">Normal PNG</a> Â· <a href="../../assets/ui/winter/status-inventory-components.png">Winter PNG</a></p>
+<p>Both sheets are 1536 Ã— 1024. Both PNGs have genuine alpha transparency. Snow decorates the frames; icons and fill strips remain readable.</p>
+<script>
+const normalButton=document.querySelector('#normalButton'),snowButton=document.querySelector('#snowButton'),winter=document.querySelector('#winter');
+function choose(snow){winter.style.opacity=snow?'1':'0';normalButton.setAttribute('aria-pressed',String(!snow));snowButton.setAttribute('aria-pressed',String(snow));}
+normalButton.addEventListener('click',()=>choose(false));snowButton.addEventListener('click',()=>choose(true));
+</script>
+</html>
