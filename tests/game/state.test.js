@@ -5,13 +5,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CHARACTERS } from '../../src/data/characters.js';
-import { isWalkable } from '../../src/world/map.js';
+import { WRECKS } from '../../src/data/places.js';
+import { SEA_BORDER, isWalkable } from '../../src/world/map.js';
 import { NODES, nodeBases } from '../../src/world/nodes.js';
 import { createGame, serializeGame, restoreGame } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
 
 /** The wild patches (flowers and driftwood): the only nodes that grow back after being picked. */
 const wild = NODES.filter((n) => n.regrow);
+
+/** The old boat on the lagoon shore, near the survivor's start. */
+const east = WRECKS.find((w) => w.id === 'wreck-east');
 
 // Guards against two characters sharing a start spot, a start spot inside water, a tree or a
 // supply's solid base, and against a typo'd character id quietly making a game.
@@ -40,6 +44,8 @@ test('save restores character, coordinates and progress without sharing mutable 
   original.landmarks.push('h-square');
   original.waypoints.push('h-wp-village');
   original.discovered.push('meadows');
+  original.wrecks.push('wreck-east');
+  original.boat = { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: 2 };
 
   const restored = restoreGame(serializeGame(original));
   assert.deepEqual(restored, original);
@@ -71,6 +77,15 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
     (g) => (g.collected = [wild[0].id]),
     (g) => (g.regrowAt = []),
     (g) => (g.regrowAt = { [wild[0].id]: -1 }),
+    (g) => (g.wrecks = ['nowhere']),
+    (g) => (g.wrecks = undefined),
+    (g) => (g.boat = undefined),
+    (g) => (g.boat = { from: 'nowhere', x: east.launch.x, y: east.launch.y, dir: 2 }),
+    (g) => (g.boat = { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: 7 }),
+    (g) => (g.boat = { from: 'wreck-east', x: NaN, y: east.launch.y, dir: 2 }),
+    (g) => (g.aboard = 'yes'),
+    (g) => (g.aboard = true),
+    (g) => Object.assign(g.player, east.launch),
   ]) {
     const game = createGame('survivor');
     edit(game);
@@ -90,4 +105,64 @@ test('saved regrowth timers are kept, capped at one regrow, or dropped when the 
     [a.id]: 150,
     [b.id]: 100 + b.regrow,
   });
+});
+
+// Guards the boat on load: a player afloat stays afloat, and a boat (or a player in it) that a
+// rebuilt map left on dry land goes back to the water by its old boat, with the player ashore.
+test('a saved boat stays where it floats, or returns to its launch spot if the sea moved', () => {
+  const afloat = createGame('survivor');
+  afloat.boat = { from: east.id, x: east.launch.x, y: east.launch.y, dir: 2 };
+  afloat.aboard = true;
+  Object.assign(afloat.player, { x: east.launch.x, y: east.launch.y, direction: 2 });
+  assert.deepEqual(restoreGame(serializeGame(afloat)), afloat);
+
+  // The same boat saved on dry land (the survivor's start): first moored there, then with the player in it.
+  const moored = createGame('survivor');
+  moored.boat = { from: east.id, x: moored.player.x, y: moored.player.y, dir: 2 };
+  assert.deepEqual(restoreGame(serializeGame(moored)).boat, {
+    ...moored.boat,
+    x: east.launch.x,
+    y: east.launch.y,
+  });
+
+  const stranded = structuredClone(moored);
+  stranded.aboard = true;
+  const back = restoreGame(serializeGame(stranded));
+  assert.equal(back.aboard, false);
+  assert.deepEqual([back.player.x, back.player.y], [east.x, east.y]);
+  assert.deepEqual([back.boat.x, back.boat.y], [east.launch.x, east.launch.y]);
+});
+
+// Guards players who saved before the sea border existed: their adventure moves onto the bigger
+// map with everything they found, and a flower patch's regrow timer follows the patch.
+test('a version 3 save moves onto the bigger map and keeps its progress', () => {
+  const game = createGame('builder');
+  const flower = wild.find((n) => n.sprite === 'flowers');
+  game.landmarks.push('h-square');
+  game.collected.push('village-wood');
+  game.discovered.push('meadows');
+  game.elapsed = 10;
+  game.regrowAt[flower.id] = 50;
+
+  // The same adventure as an older build saved it: positions before the border, no boat fields.
+  const { wrecks, boat, aboard, ...old } = game;
+  old.version = 3;
+  old.player = { ...game.player, x: game.player.x - SEA_BORDER, y: game.player.y - SEA_BORDER };
+  old.regrowAt = { [`flowers-${flower.x - SEA_BORDER}-${flower.y - SEA_BORDER}`]: 50 };
+
+  assert.deepEqual(restoreGame(JSON.stringify(old)), game);
+});
+
+// Guards a version 3 player who stood where the new coast now cuts in: they go back to their
+// start instead of losing the whole save.
+test('a version 3 player whose spot is now sea starts again at their spawn, progress kept', () => {
+  const game = createGame('survivor');
+  game.landmarks.push('l-beacon');
+  const { wrecks, boat, aboard, ...old } = game;
+  old.version = 3;
+  old.player = { x: 24000, y: 9000, direction: 2 }; // the old lagoon sea, still sea on the new map
+
+  const restored = restoreGame(JSON.stringify(old));
+  assert.deepEqual(restored.player, { ...createGame('survivor').player, direction: 2 });
+  assert.deepEqual(restored.landmarks, ['l-beacon']);
 });
