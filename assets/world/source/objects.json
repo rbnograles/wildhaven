@@ -39,5 +39,8 @@
   "snow-stairs": { "kind": "props", "origin": [0.5, 0.975], "flat": true },
   "driftwood": { "kind": "props", "origin": [0.5, 0.7], "flat": true, "scale": 0.6 },
   "old-boat": { "kind": "props", "origin": [0.5, 0.78], "footprint": [70, 26] },
-  "rowboat": { "kind": "props", "origin": [0.5, 0.55] }
+  "rowboat": { "kind": "props", "origin": [0.5, 0.55] },
+  "river-ripple": { "kind": "props", "origin": [0.5, 0.5], "flat": true },
+  "lake-ripple": { "kind": "props", "origin": [0.5, 0.5], "flat": true },
+  "sea-wave": { "kind": "props", "origin": [0.5, 0.5], "flat": true }
 }

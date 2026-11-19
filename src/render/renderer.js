@@ -78,8 +78,20 @@ const FIRE_FPS = 8;
 const swayFrame = (time, x, y) =>
   SWAY[Math.floor(time * SWAY_FPS + x / 260 + y / 410) % SWAY.length];
 
-// The map's tile layers, bottom to top: the ground terrains, then the cliffs (lips, walls and their
-// shadows) over them. Each one is painted over the one before. tools/build-map.py decides the order.
+/**
+ * Says how far into its loop a water ripple at (x, y) starts.
+ *
+ * Without this every ripple would show the same picture at the same moment, like a row of clocks
+ * ticking together. The position is scrambled into a number, so neighbours are out of step.
+ *
+ * @param {number} x - The ripple's world x.
+ * @param {number} y - The ripple's world y.
+ * @returns {number} A head start in frames, from 0 up to (not including) 4.
+ */
+const rippleStart = (x, y) => (Math.abs(Math.sin(x * 12.9898 + y * 78.233)) * 4000) % 4;
+
+// The map's tile layers, bottom to top: the ground terrains, then the painted banks along the
+// water's edge and the cliffs (lips, walls and their shadows) over them. Each one is painted over the one before. tools/build-map.py decides the order.
 const TILE_LAYERS = mapData.layers.filter((l) => l.type === 'tilelayer').map((l) => l.name);
 
 // How tall the player is drawn on screen, in world units.
@@ -139,9 +151,11 @@ export async function createRenderer(container, miniCanvas) {
     webgl = false,
     snap = true,
     shown = new Set();
-  // `swayers` holds, per chunk key, the trees that sway in the wind. `clock` counts the seconds drawn.
+  // `swayers` holds, per chunk key, the trees that sway in the wind, and `loopers` the water ripples
+  // that play round and round. `clock` counts the seconds drawn.
   const chunks = new Map(),
     swayers = new Map(),
+    loopers = new Map(),
     fires = new Map();
   let clock = 0;
 
@@ -224,6 +238,18 @@ export async function createRenderer(container, miniCanvas) {
           if (anim?.rows === 3 && !reducedMotion) {
             if (!swayers.has(key)) swayers.set(key, []);
             swayers.get(key).push(image);
+          }
+
+          // Water ripples (sheets with a `loop` speed) play round and round while they are on screen.
+          // With reduced motion they are left out: a frozen ripple is just a smudge on the water.
+          if (anim?.loop) {
+            if (reducedMotion) image.setAlpha(0);
+            else {
+              if (!loopers.has(key)) loopers.set(key, []);
+              loopers
+                .get(key)
+                .push({ image, fps: anim.loop, start: rippleStart(object.x, object.y) });
+            }
           }
         }
 
@@ -431,6 +457,11 @@ export async function createRenderer(container, miniCanvas) {
     clock += dt;
     for (const key of shown)
       for (const tree of swayers.get(key) ?? []) tree.setFrame(swayFrame(clock, tree.x, tree.y));
+    // Ripples on the water on screen: each loops through its four pictures from its own start time.
+    for (const key of shown)
+      for (const ripple of loopers.get(key) ?? [])
+        ripple.image.setFrame(Math.floor(Math.abs(clock) * ripple.fps + ripple.start) % 4);
+
 
     // Campfires: one sprite per camp, made when the camp is founded. Keys include the character,
     // so switching characters never reuses another character's fire.

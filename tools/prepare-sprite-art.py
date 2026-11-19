@@ -3,7 +3,7 @@
 The generated sheets are far bigger than the game draws them, and each frame sits loosely in its cell. This
 script cuts every frame out, lines the frames up on one ground point, shrinks them to game size and saves
 tidy sheets the renderer can play like a flip-book.
-Inputs : source/animations/<name>.png              tree, rock and fire animation sheets (4 columns)
+Inputs : source/animations/<name>.png              tree, rock, fire and water-ripple animation sheets (4 columns)
          source/originals/props/bridge-painted.png the painted bridge
          assets/ui/normal/status-inventory-components.png   the player card and item box pieces
          assets/ui/character-portraits-normal-winter.png    the three characters' round portraits
@@ -120,10 +120,36 @@ for name, (sheet_name, kind, rows, (side, size), anchors) in ANIMATED.items():
     save(still, os.path.join(SRC, 'objects', kind, name + '.png'), source)
     print(f'{name}: sheet cell {cell_w}x{cell_h}, still {still.size}, objects.json origin [{round(ax / still.width, 3)}, {round(1 - 4 * scale / still.height, 3)}]')
 
+# ---- water ripples: three little looping flip-books, one per row of the sheet --------------------
+# Row 1 is a river current, row 2 a quiet lake's rings, row 3 low sea waves. Each row is the same patch of water
+# changing over time, so a frame must keep its place in its equal cell: the four cells of a row are only cleaned,
+# cropped to the one box that holds all four frames, and shrunk. `loop` in the manifest is how many frames a
+# second the renderer plays, round and round.
+# name -> (row of the sheet, how wide the patch is drawn in world units, frames a second)
+WATER = {'river-ripple': (0, 130, 5), 'lake-ripple': (1, 150, 3), 'sea-wave': (2, 160, 4)}
+source = os.path.join(SRC, 'animations', 'water-ripples-loop.png')
+sheet = load(source).astype(float)
+# The generated sheet has faint stray colour all over its clear parts: anything less than a third solid is dropped.
+sheet[:, :, 3] = np.clip((sheet[:, :, 3] - 90) / 100, 0, 1) * 255
+sheet = sheet.astype('uint8')
+cell_h, cell_w = sheet.shape[0] // 3, sheet.shape[1] // COLS
+for name, (row, width, fps) in WATER.items():
+    cells = [sheet[row * cell_h:(row + 1) * cell_h, c * cell_w:(c + 1) * cell_w] for c in range(COLS)]
+    ys, xs = np.nonzero(np.max([c[:, :, 3] for c in cells], axis=0) > 40)
+    frames = [shrink(c[ys.min():ys.max() + 1, xs.min():xs.max() + 1], width / (xs.max() - xs.min() + 1)) for c in cells]
+    w, h = frames[0].width + 2 * PAD, frames[0].height + 2 * PAD
+    out = Image.new('RGBA', (w * COLS, h))
+    for i, im in enumerate(frames): out.alpha_composite(im, (i * w + PAD, PAD))
+    save(out, os.path.join(OUT, name + '.png'), source)
+    manifest[name] = {'cell': [w, h], 'origin': [0.5, 0.5], 'rows': 1, 'loop': fps}
+    save(frames[1], os.path.join(SRC, 'objects', 'props', name + '.png'), source)   # frame two is the still: frame one of the lake is tiny
+    print(f'{name}: sheet cell {w}x{h}, objects.json origin [0.5, 0.5]')
+
 os.makedirs(OUT, exist_ok=True)
 json.dump({'_comment': 'Made by tools/prepare-sprite-art.py. One entry per animated sprite sheet in this folder: cell = the '
                        'size of one frame in pixels, origin = the ground point as a fraction of a cell, rows = how many '
-                       'rows of four frames it has (trees: sway, fall, break; rocks and fire: one row).', **manifest},
+                       'rows of four frames it has (trees: sway, fall, break; rocks and fire: one row), loop = for water '
+                       'ripples only, how many frames a second the sheet plays round and round.', **manifest},
           open(os.path.join(OUT, 'animations.json'), 'w', encoding='utf-8', newline='\n'), indent=2)
 
 # Trims a picture to what is drawn in it.

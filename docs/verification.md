@@ -265,3 +265,13 @@ Browser at `http://127.0.0.1:5188` (this worktree's dev server; 1280×800 and th
 - No console errors.
 
 Not checked by hand: the 390 px layout beyond a first look (no layout rule changed), signpost travel while aboard (left for the final fixes), and the far corners of the sea border at night (the camera stops at the world edge and the night layer follows the camera, as in M2).
+
+## Painted banks and water ripples — 2026-11-19
+
+`python tools/build-map.py`: 3117 tiles (1,049 of them bank tiles), 6715 objects (1,041 sea waves, 169 river ripples, 8 lake ripples), 4.7 MB map file; the tileset is 4092×3366. Automated: `npm test` 176 passing, `npm run build` and `npm run format:check` pass.
+
+Offline: patches of the built map were drawn at full size from `wildhaven.json` and `tileset.png` (a river bend, the west sea beach, a meadow pond, the lagoon): the bank's waterline sits on the water tile's edge, the sea uses the sand strip, rivers the rooty one and pools the loam one.
+
+Browser at `http://127.0.0.1:5174` (Survivor, 800×600 pane): the sand bank shows along the lagoon beach by the ship; with a test save standing beside the lagoon river, the river bank shows on both sides and the river ripples change picture between two looks a second apart, with no console warnings.
+
+Not checked by hand: the snow and canyon rivers in play, the 390 px layout (no layout rule changed), reduced motion (ripples are hidden by code, not seen), and frame rate on a slow machine with the larger tileset. The pane ran as a background page, so nothing here says how smooth the animation is.

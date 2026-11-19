@@ -1,5 +1,5 @@
 {
-  "_comment": "Made by tools/prepare-sprite-art.py. One entry per animated sprite sheet in this folder: cell = the size of one frame in pixels, origin = the ground point as a fraction of a cell, rows = how many rows of four frames it has (trees: sway, fall, break; rocks and fire: one row).",
+  "_comment": "Made by tools/prepare-sprite-art.py. One entry per animated sprite sheet in this folder: cell = the size of one frame in pixels, origin = the ground point as a fraction of a cell, rows = how many rows of four frames it has (trees: sway, fall, break; rocks and fire: one row), loop = for water ripples only, how many frames a second the sheet plays round and round.",
   "oak": {
     "cell": [
       413,
@@ -43,5 +43,41 @@
       0.974
     ],
     "rows": 1
+  },
+  "river-ripple": {
+    "cell": [
+      134,
+      56
+    ],
+    "origin": [
+      0.5,
+      0.5
+    ],
+    "rows": 1,
+    "loop": 5
+  },
+  "lake-ripple": {
+    "cell": [
+      154,
+      87
+    ],
+    "origin": [
+      0.5,
+      0.5
+    ],
+    "rows": 1,
+    "loop": 3
+  },
+  "sea-wave": {
+    "cell": [
+      164,
+      70
+    ],
+    "origin": [
+      0.5,
+      0.5
+    ],
+    "rows": 1,
+    "loop": 4
   }
 }

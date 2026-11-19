@@ -1,0 +1,8 @@
+{
+  "_comment": "Where tools/build-map.py cuts each bank strip out of <kind>-bank.png. Only the first piece of each sheet (the straight edge with land above and water below) is used: it is repeated along every waterline. All numbers are pixels in the picture. left/right: the stretch of the straight piece that is used (its rounded ends are left out). top: the land-side row the strip starts at. water: the row of the waterline. bottom: the last row of the wet edge past the waterline. fade: how many game rows on the land side fade out, so the strip melts into the ground under it. The ocean strip starts below its row of plants, because the sea beach is bare sand.",
+  "kinds": {
+    "ocean": { "left": 58, "right": 458, "top": 272, "water": 336, "bottom": 350, "fade": 18 },
+    "river": { "left": 48, "right": 486, "top": 215, "water": 328, "bottom": 345, "fade": 5 },
+    "lake": { "left": 75, "right": 520, "top": 205, "water": 298, "bottom": 307, "fade": 5 }
+  }
+}
