@@ -232,6 +232,17 @@
         1303,
         761
       ]
+    },
+    {
+      "name": "palm",
+      "tool": "SpriteCook generate_game_art (gemini-nano-banana-2.1, HD, transparent)",
+      "styleReference": "assets/characters/originals/starting-characters-idle-v1.png (SpriteCook asset 6e0042ba-4492-4806-a571-b117f259413e)",
+      "prompt": "Isolated environment object sprite for a top-down game. The supplied style guide image is a character sprite sheet used as a STYLE REFERENCE ONLY; do not depict the characters or the sheet. Single isolated game object: one leaning coconut palm tree with a slim curved trunk and a crown of long green fronds. The whole object is visible with padding on every side; nothing touches the image edge. No ground patch, no grass, no background scenery, no cast shadow on the ground, no checkerboard. One object only. Easily readable silhouette at small game size (it will be shown at about 200 x 300 pixels). Warm hand-painted 2D indie RPG style with clean soft outlines, matching the style reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "spritecookAssetId": "fd351096-412d-4f86-97ab-d9604e38b202",
+      "sha12": {
+        "objects/trees/palm.png": "76b299309397",
+        "originals/trees/palm.png": "cf0164cec52a"
+      }
     }
   ]
 }

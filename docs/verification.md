@@ -172,3 +172,15 @@ Ground textures moved to `assets/world/source/ground/`; object sprites to `objec
 Browser at `http://127.0.0.1:5178` (1280×720), Builder in Hollowstead: all 29 sprites loaded from their kind folders (buildings 7, plants 5, props 4, rocks 6, trees 7); houses, workshop, boulder, log and berry bush drew as before; no console errors.
 
 Not checked by hand: the field journal's keepsake pictures (they use the same `objectUrls` names, which did not change).
+
+## SpriteCook palm replaces the palm stand-in — 2026-11-19
+
+The palm stand-in (a narrowed oak) was replaced with one image from the SpriteCook Claude plugin (`gemini-nano-banana-2.1`, HD, transparent background, with `starting-characters-idle-v1.png` uploaded as the style guide; 12 credits). The cutout came back clean: alpha is 0 outside the tree. The sprite was cropped to its alpha > 40 bounds and fitted into 200×300 with 4 px padding. Its trunk base sits at x 153 of 200, so `objects.json` now gives the palm `origin` `[0.765, 0.982]` and `footprint` `[15, 12]`. `python tools/build-map.py` rebuilt the map: only `overview.webp` changed, because palm positions and names did not. Automated: `npm test` 63 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5179` (1024×768, hidden pane), test survivor save (the old version-2 survivor save there was backed up and restored afterwards):
+- Driftwood Lagoon, next to the two palms west of the Driftwood Signpost: both palms draw with the trunk base on their map point and the crown leaning left, sized like the other trees.
+- Emerald Jungle, after signpost travel to Jungle Gate (the travel button's own click handler): the palm west of the signpost draws the same way.
+- `isWalkable` around the palm at (20485, 9518): blocked from x −20 to +20 and y −20 to +5 around the trunk base (footprint plus the player's body); open ground under the crown, where the old centred origin would have put the base.
+- No console errors.
+
+Not checked by hand: walking into a palm with the keyboard (the hidden pane ran at a low frame rate), and the 390 px layout (no layout changed).
