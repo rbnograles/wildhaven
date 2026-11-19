@@ -1,0 +1,52 @@
+{
+  "note": "SpriteCook asset IDs for this project. asset_id is the stable key; sha12 is the first 12 hex characters of the local file's SHA-256.",
+  "assets": [
+    {
+      "asset_id": "80fa6fd4-6988-4bd5-b7d8-baab0dbb6876",
+      "sha12": "fde297ed9ab3",
+      "label": "Wildhaven item box (style ref)",
+      "file": "assets/ui/item-box-10-slots.png"
+    },
+    {
+      "asset_id": "4d810635-5fc4-4281-b422-a51efe83c465",
+      "sha12": "948f2580467f",
+      "label": "Snowfall HUD concept A (selected)",
+      "file": "docs/design/snowfall-hud-concept.png"
+    },
+    {
+      "asset_id": "bb319733-63d6-42cd-a26f-9497898464ba",
+      "sha12": "930742be5e91",
+      "label": "Snowfall HUD concept B (not selected, one joined bottom bar)"
+    },
+    {
+      "asset_id": "188631ef-8923-49bc-b3aa-06199e1be4cd",
+      "sha12": "ac79480533e7",
+      "label": "Wildhaven tools: hammer and pickaxe (style ref)",
+      "file": "assets/items/tools-stone-iron.png"
+    },
+    {
+      "asset_id": "e40a3418-8865-49da-b77f-187d45a14b36",
+      "sha12": "37d0b37612f7",
+      "label": "Wildhaven axes: stone and iron",
+      "file": "assets/items/axes-stone-iron.png"
+    }
+  ],
+  "ui_kits": [
+    {
+      "id": "c0ef9131-ad02-4a27-b9a5-a455ebf3cdd3",
+      "name": "Wildhaven Snowfall HUD",
+      "project_id": "2989bb7b-70c5-4df8-8df2-0d45f1a9af65",
+      "state_mode": "visible-only",
+      "selected_concept_asset_id": "4d810635-5fc4-4281-b422-a51efe83c465",
+      "status": "concept selected; component sheets not generated yet (need 22 credits, 14 left on 2026-11-19)",
+      "review_url": "https://app.spritecook.ai/ui-kits?kitId=c0ef9131-ad02-4a27-b9a5-a455ebf3cdd3",
+      "next_steps": [
+        "generate_ui_kit_component_sheets(ui_kit_id, sheet_count=1 or omitted)",
+        "get_ui_kit until status is sheet_review",
+        "extract_ui_kit_components, check quality_summary, set 9-slice borders on panels",
+        "finalize_ui_kit, then add the component asset IDs here"
+      ],
+      "components": []
+    }
+  ]
+}
