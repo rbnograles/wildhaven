@@ -77,7 +77,7 @@ export function setupSelection(session, ui) {
       `${slot.value ? 'Continue your journey' : 'Begin your journey'} ${icon('arrow')}`;
     $('fresh').hidden = !slot.value;
     $('save-hint').textContent = slot.value
-      ? `${slot.value.discovered.length} of 3 regions discovered · Adventure saved`
+      ? `${slot.value.discovered.length} of 7 regions discovered · Adventure saved`
       : slot.invalid
         ? 'This save could not be read. Start fresh to play.'
         : 'Your own path through a shared world.';

@@ -22,6 +22,14 @@ export const WORLD = {
 /** Finds one layer of the map (such as 'water' or 'objects') by its name. */
 const layer = (name) => MAP.layers.find((l) => l.name === name);
 
+/**
+ * Reads one named value that tools/build-map.py stored in the map file.
+ *
+ * @param {string} name - The property name, e.g. 'firstWaterGid'.
+ * @returns {*} The stored value.
+ */
+export const mapProperty = (name) => MAP.properties.find((p) => p.name === name).value;
+
 /** Every object the map placed: trees, rocks, houses, flowers and so on, each with a name and x/y. */
 export const MAP_OBJECTS = layer('objects').objects;
 
@@ -37,7 +45,7 @@ export const OBSTACLES = MAP_OBJECTS.flatMap((o) => {
 // A water tile records which of its corners (TL, TR, BL, BR) are sea; blending them gives a smooth shoreline.
 const TILE = MAP.tilewidth,
   water = layer('water').data,
-  firstWater = MAP.properties.find((p) => p.name === 'firstWaterGid').value;
+  firstWater = mapProperty('firstWaterGid');
 
 /**
  * Says how wet a spot is, from 0 (dry land) to 1 (open sea).
@@ -85,6 +93,47 @@ export const blocks = (rects, x, y) =>
       x > left - 10 && x < right + 10 && y > top - 10 && y < bottom + 10,
   );
 
+// The map holds thousands of solid objects, so checking every one on every step would be slow.
+// Instead the world is cut into big squares, and each square remembers the objects that touch it,
+// like sorting books onto shelves so you only search one shelf.
+const GRID = 256,
+  PAD = 10, // the same padding `blocks` adds around each box
+  gridCols = Math.ceil(WORLD.width / GRID),
+  buckets = new Map();
+
+for (const rect of OBSTACLES) {
+  const [left, top, right, bottom] = rect;
+  for (
+    let cy = Math.max(0, Math.floor((top - PAD) / GRID));
+    cy <= Math.floor((bottom + PAD) / GRID);
+    cy++
+  )
+    for (
+      let cx = Math.max(0, Math.floor((left - PAD) / GRID));
+      cx <= Math.floor((right + PAD) / GRID);
+      cx++
+    ) {
+      const key = cy * gridCols + cx;
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(rect);
+    }
+}
+
+/**
+ * Says whether a spot is inside the solid base of any object the map placed.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True if a tree, rock or building blocks the spot.
+ */
+export function hitsObstacle(x, y) {
+  // Spots just left of or above the world share the first column or row, as the objects there do.
+  const near = buckets.get(
+    Math.max(0, Math.floor(y / GRID)) * gridCols + Math.max(0, Math.floor(x / GRID)),
+  );
+  return near ? blocks(near, x, y) : false;
+}
+
 /**
  * Says whether the player is allowed to stand on a spot.
  *
@@ -106,5 +155,5 @@ export function isWalkable(x, y, extra = []) {
     y > WORLD.height - WORLD.margin
   )
     return false;
-  return waterAt(x, y) < 0.35 && !blocks(OBSTACLES, x, y) && !blocks(extra, x, y);
+  return waterAt(x, y) < 0.35 && !hitsObstacle(x, y) && !blocks(extra, x, y);
 }

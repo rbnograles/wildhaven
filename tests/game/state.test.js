@@ -37,6 +37,10 @@ test('save restores character, coordinates and progress without sharing mutable 
   original.resources.herbs = 4;
   original.regrowAt[wild[0].id] = 42;
 
+  original.landmarks.push('h-square');
+  original.waypoints.push('h-wp-village');
+  original.discovered.push('meadows');
+
   const restored = restoreGame(serializeGame(original));
   assert.deepEqual(restored, original);
 
@@ -52,6 +56,12 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
 
   for (const edit of [
     (g) => (g.version = 100),
+    (g) => (g.version = 2),
+    (g) => (g.landmarks = ['nowhere']),
+    (g) => (g.landmarks = ['h-oak', 'h-oak']),
+    (g) => (g.waypoints = undefined),
+    (g) => (g.waypoints = ['h-oak']),
+    (g) => (g.discovered = ['scout']),
     (g) => (g.character = 'ghost'),
     (g) => (g.player.x = -100),
     (g) => (g.resources.wood = -5),
@@ -66,18 +76,6 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
     edit(game);
     assert.equal(restoreGame(JSON.stringify(game)), null);
   }
-});
-
-// Guards older saves made before herbs and regrowing flowers existed. They must still load,
-// starting with zero herbs and no regrow timers.
-test('saves from before herbs and regrowth load with none of either', () => {
-  const old = createGame('survivor');
-  delete old.resources.herbs;
-  delete old.regrowAt;
-
-  const restored = restoreGame(JSON.stringify(old));
-  assert.equal(restored.resources.herbs, 0);
-  assert.deepEqual(restored.regrowAt, {});
 });
 
 // Guards regrow timers on load: a normal timer is kept, a timer set absurdly far ahead is cut

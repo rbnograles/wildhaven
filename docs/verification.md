@@ -121,3 +121,18 @@ Built from `docs/superpowers/plans/2026-11-19-main-menu.md` (commits 1a4a97b..e7
 - Phone: one panel at a time; the ‹ › arrows, the dots and a touch swipe change character; mouse drags are ignored; `touch-action: pan-y` lets real swipes through. Swipe was tested with simulated touch pointer events, not on a real device.
 - Arrow keys move the selection and focus, wrapping round. Continue, Start a fresh adventure and Preview animations work. No console errors.
 - In-game controls strip: shows when the game opens, fades on the first real step or after about 8 s, shows again on Continue, and is hidden on phones. Clicks pass through to the E button, and below 1000 px it moves bottom-left to clear the minimap.
+
+## Big world (build 1) — 2026-11-19
+
+Branch `big-world`. Automated: `npm test` 55 passing (includes the collision-grid check, region lookups, landmark and signpost discovery, travel, version 3 saves, and a 24-unit flood fill reaching every spawn, landmark, signpost and supply); `npm run build` and `npm run format:check` pass. Map build: 1456 tiles, about 3,600 objects, 2.1 MB map file, 6.7 MB tileset.
+
+Browser at `http://127.0.0.1:5199` (a dev server run from the worktree, so saves on port 5173 were untouched):
+
+- Builder, fresh start: title "Hollowstead Meadows"; the save is `version: 3` with `discovered: ['meadows']` and `landmarks: ['h-square']`; the goals card shows "Gather your first supplies 0 / 1" and "Discover three regions 1 / 3".
+- With a save holding three regions and a gather, the card switches to "EXPLORING / Hollowstead Meadows / Places found 2 / 7 / Signposts found 2 / 2", and to "Emerald Jungle, 1 / 7, 1 / 2" after travelling there.
+- World map: seven region labels, unexplored regions dimmed, found places and signposts marked, one button per found signpost. Clicking "Travel to Temple Path Signpost" closed the map, placed the player at the signpost with the camera already there, showed "Travelled to Temple Path Signpost" and saved the new position.
+- Scout, fresh start: "Pinefall Woods", `landmarks: ['p-camp']`. Walking north onto the Pinefall Signpost showed "Signpost found: Pinefall Signpost" and saved it.
+- Survivor, fresh start at 390 px wide: "Driftwood Lagoon", `landmarks: ['l-wreck']`; the map dialog fits with no horizontal overflow and its footer wraps to two lines.
+- Terrain looked right at a snow ford, the desert oasis and dry riverbed, and in the jungle. Frame rate while walking through the jungle: 61 fps.
+
+Not checked by hand: walking across a region border on foot (positions were set through the save for speed), travel with reduced motion on, the two bridge crossings, and gathering being cancelled by travel. The unit tests cover the rules behind the first three; the last has no test.

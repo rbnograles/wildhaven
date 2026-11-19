@@ -16,6 +16,16 @@ const MAX_FRAME_DT = 0.05,
   AUTOSAVE_EVERY = 10,
   HUD_EVERY = 0.12;
 
+// The words for each kind of find, used in the pop-up message.
+const FOUND = {
+  // Entering a region for the first time.
+  region: (name) => `Discovered ${name}`,
+  // Coming close to a named place.
+  landmark: (name) => `Found ${name}`,
+  // Walking up to a signpost.
+  waypoint: (name) => `Signpost found: ${name}`,
+};
+
 /**
  * Starts the never-ending frame loop that keeps the game running.
  *
@@ -73,7 +83,8 @@ export function startLoop(session, ui) {
 
         const found = discover(state);
         if (found.length) {
-          ui.hud.notify(`Discovered ${found[0].name}`);
+          ui.hud.notify(found.map((f) => FOUND[f.kind](f.name)).join(' · '));
+          ui.hud.update();
           save(session, ui, true);
         }
 

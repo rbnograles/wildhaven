@@ -18,8 +18,8 @@ export const GATHER_RANGE = 95;
 // every supply takes the full time. This is a design decision, so don't shorten it as a "fix".
 export const GATHER_SECONDS = 6;
 
-/** How close the player must walk to a region's centre to discover it. */
-export const DISCOVERY_RADIUS = 230;
+/** How close the player must come to a landmark to find it. */
+export const LANDMARK_RADIUS = 200;
 
-// The HUD keeps naming a region this far beyond its discovery radius.
-export const REGION_LABEL_RANGE = 130;
+/** How close the player must walk to a signpost to find it. */
+export const WAYPOINT_RADIUS = 110;

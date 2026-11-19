@@ -3,7 +3,7 @@
 // once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
 import { WORLD } from '../world/map.js';
-import { LOCATIONS } from '../world/regions.js';
+import { REGIONS } from '../world/regions.js';
 
 /**
  * Finds an element on the page by its id.
@@ -169,16 +169,14 @@ export function mountLayout(app) {
         <span class="region-rule"></span>
       </div>
 
-      <!-- The starting goals. ui/hud.js ticks them off. -->
+      <!-- The goals card. ui/hud.js fills it: the starting goals first, then the current region's progress. -->
       <aside class="quest hud-panel">
-        <span class="quest-label">YOUR FIRST FOOTSTEPS</span>
-        <h2>A place to begin</h2>
-        <p id="quest-text">Gather supplies and follow the paths to discover the world.</p>
+        <span class="quest-label" id="quest-label"></span>
+        <h2 id="quest-title"></h2>
+        <p id="quest-text"></p>
         <ul>
-          <li id="quest-gather">Gather your first supplies</li>
-          <li id="quest-explore">
-            Discover the three starting regions <b id="discovery-count">1 / 3</b>
-          </li>
+          <li id="quest-first"></li>
+          <li id="quest-second"></li>
         </ul>
       </aside>
 
@@ -242,7 +240,7 @@ export function mountLayout(app) {
           height="800"
           aria-label="World map with your current position"
         ></canvas
-        >${LOCATIONS.map(
+        >${REGIONS.map(
           (l) =>
             /* HTML */ `<span
               class="map-label"
@@ -250,9 +248,11 @@ export function mountLayout(app) {
               >${l.name}</span
             >`,
         ).join('')}
+        <!-- One button per found signpost; ui/dialogs.js fills this each time the map opens. -->
+        <div id="map-waypoints"></div>
       </div>
       <div class="map-footer">
-        <span>● Your position</span><span id="map-discovered"></span
+        <span>● You · ◆ Signpost: click to travel</span><span id="map-discovered"></span
         ><span><kbd>M</kbd> Close map</span>
       </div>
     </dialog>

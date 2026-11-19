@@ -4,8 +4,9 @@
 
 import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
-import { LOCATIONS } from '../world/regions.js';
+import { REGIONS, REGION_GRID, regionIndexAt } from '../world/regions.js';
 import { NODES } from '../world/nodes.js';
+import { LANDMARKS, WAYPOINTS } from '../data/places.js';
 import { WILD } from '../data/supplies.js';
 import { nearbyNode, isAvailable } from '../actions/gather.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
@@ -27,10 +28,19 @@ const objectUrls = Object.fromEntries(
 );
 
 // The map's ground layers, bottom to top: each one is painted over the one before.
-const TERRAIN_LAYERS = ['ground', 'dirt', 'sand', 'water'];
+const TERRAIN_LAYERS = ['ground', 'dirt', 'jungle', 'rock', 'snow', 'sand', 'water'];
 
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;
+
+// Scenery is grouped into squares this many world units wide; only squares near the camera are shown.
+const CHUNK = 1024;
+
+// How far past the screen edge scenery is still shown, so a tall tree just off screen doesn't pop in.
+const CULL_MARGIN = 640;
+
+// How many world units wide the corner minimap shows. The whole world would be too small to read.
+const MINI_VIEW = 4096;
 
 /**
  * Loads all the artwork and builds the Phaser scene that draws the world.
@@ -61,12 +71,16 @@ export async function createRenderer(container, miniCanvas) {
   const camera = { x: 0, y: 0, initialized: false };
 
   // Scene objects filled in by create() below. `snap` makes the next draw skip fade animations.
+  // `chunks` maps a chunk key to the scenery images in it; `shown` holds the keys now visible.
   let player,
     shadow,
     supplies,
     cue,
     bar,
-    snap = true;
+    webgl = false,
+    snap = true,
+    shown = new Set();
+  const chunks = new Map();
 
   const scene = await new Promise((resolve, reject) => {
     const timer = setTimeout(
@@ -124,15 +138,21 @@ export async function createRenderer(container, miniCanvas) {
           const spec = objectSpecs[object.name];
           if (!spec || WILD[object.name] || !this.textures.exists(`object-${object.name}`))
             continue;
-          this.add
+          const image = this.add
             .image(object.x, object.y, `object-${object.name}`)
             .setOrigin(...spec.origin)
             .setScale(spec.scale ?? 1)
-            .setDepth(spec.flat ? -1 : object.y);
+            .setDepth(spec.flat ? -1 : object.y)
+            .setVisible(false);
+          const key = `${Math.floor(object.x / CHUNK)},${Math.floor(object.y / CHUNK)}`;
+          if (!chunks.has(key)) chunks.set(key, []);
+          chunks.get(key).push(image);
         }
 
         // Supplies are sprites like the scenery around them; draw() glows the one in reach (WebGL only) and caps it with E.
-        const webgl = this.renderer.type === Phaser.WEBGL;
+        // The glow filter is added the first time a supply comes into reach (see glowOf), because the world has
+        // hundreds of flower patches and a filter on every one would be slow.
+        webgl = this.renderer.type === Phaser.WEBGL;
         supplies = NODES.map((node) => {
           const spec = objectSpecs[node.sprite];
           const sprite = this.add
@@ -140,19 +160,11 @@ export async function createRenderer(container, miniCanvas) {
             .setOrigin(...spec.origin)
             .setScale(node.scale)
             .setDepth(spec.flat ? -1 : node.y);
-          let glow = null;
-          if (webgl) {
-            sprite.enableFilters();
-            glow = sprite.filters.internal
-              .addGlow(0xfff5ce, 3, 0, 1, false, 10, 8)
-              .setPaddingOverride(null);
-            glow.active = false;
-          }
           // Cue height: the sprite's top, but on a tall tree's canopy rather than its tip, where it would crowd the HUD.
           return {
             node,
             sprite,
-            glow,
+            glow: null,
             top: Math.max(node.y - sprite.displayHeight * sprite.originY, node.y - 150),
           };
         });
@@ -225,40 +237,98 @@ export async function createRenderer(container, miniCanvas) {
   });
 
   /**
-   * Paints a small picture of the whole world with region dots and the player's position.
+   * Gives a supply its glow outline, creating it the first time it is needed.
    *
-   * Used for both the corner minimap and the big map dialog. World positions are shrunk to fit
-   * the canvas, like tracing a big map onto a postcard. Discovered regions get a light dot,
-   * undiscovered ones a dark dot, and the player is the white dot.
+   * @param {object} s - One entry of `supplies`.
+   * @returns {object|null} The glow filter, or null on the Canvas renderer, which has no filters.
+   */
+  function glowOf(s) {
+    if (!webgl) return null;
+    if (!s.glow) {
+      s.sprite.enableFilters();
+      s.glow = s.sprite.filters.internal
+        .addGlow(0xfff5ce, 3, 0, 1, false, 10, 8)
+        .setPaddingOverride(null);
+    }
+    return s.glow;
+  }
+
+  /**
+   * Paints a map: either the whole world, or a window around the player for the corner minimap.
+   *
+   * World positions are shrunk to fit the canvas, like tracing a big map onto a postcard. On the
+   * whole-world map, regions the player hasn't entered are dimmed. Found places are cream dots,
+   * found signposts are gold diamonds, and the player is the white dot.
    *
    * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
-   * @param {object} state - The game being played (player position, discovered regions).
+   * @param {object} state - The game being played.
    * @param {number} w - Canvas width in pixels.
    * @param {number} h - Canvas height in pixels.
+   * @param {boolean} [local=false] - True to show only the area around the player.
    */
-  function drawMap(ctx, state, w, h) {
-    ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(overview, 0, 0, w, h);
+  function drawMap(ctx, state, w, h, local = false) {
+    // The part of the world this map shows, in world units.
+    const vw = local ? MINI_VIEW : WORLD.width,
+      vh = local ? (MINI_VIEW * h) / w : WORLD.height,
+      vx = local ? Math.min(Math.max(state.player.x - vw / 2, 0), WORLD.width - vw) : 0,
+      vy = local ? Math.min(Math.max(state.player.y - vh / 2, 0), WORLD.height - vh) : 0;
+    const sx = overview.width / WORLD.width,
+      sy = overview.height / WORLD.height;
+    /** Turns a world x position into a canvas x position. */
+    const px = (x) => ((x - vx) / vw) * w,
+      py = (y) => ((y - vy) / vh) * h;
 
-    for (const loc of LOCATIONS) {
-      const x = (loc.x / WORLD.width) * w,
-        y = (loc.y / WORLD.height) * h;
-      ctx.fillStyle = state.discovered.includes(loc.id) ? '#f7ecc5' : '#273f32';
-      ctx.strokeStyle = '#fff6d7';
-      ctx.lineWidth = 1.5;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(overview, vx * sx, vy * sy, vw * sx, vh * sy, 0, 0, w, h);
+
+    // Dim the regions not yet entered, one grid square at a time.
+    if (!local) {
+      const cw = w / REGION_GRID.cols,
+        ch = h / REGION_GRID.rows;
+      ctx.fillStyle = 'rgba(24, 38, 30, 0.55)';
+      for (let cy = 0; cy < REGION_GRID.rows; cy++)
+        for (let cx = 0; cx < REGION_GRID.cols; cx++)
+          if (!state.discovered.includes(REGIONS[regionIndexAt(cx, cy)].id)) {
+            // Whole-pixel edges, so neighbouring squares neither overlap (dark lines) nor leave gaps.
+            const x0 = Math.round(cx * cw),
+              y0 = Math.round(cy * ch);
+            ctx.fillRect(x0, y0, Math.round((cx + 1) * cw) - x0, Math.round((cy + 1) * ch) - y0);
+          }
+    }
+
+    // Found places: small cream dots.
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#294c3b';
+    ctx.fillStyle = '#f7ecc5';
+    for (const place of LANDMARKS) {
+      if (!state.landmarks.includes(place.id)) continue;
       ctx.beginPath();
-      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.arc(px(place.x), py(place.y), 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
 
-    const x = (state.player.x / WORLD.width) * w,
-      y = (state.player.y / WORLD.height) * h;
+    // Found signposts: gold diamonds. On the big map a button sits over each one (ui/dialogs.js).
+    ctx.fillStyle = '#ffd166';
+    for (const post of WAYPOINTS) {
+      if (!state.waypoints.includes(post.id)) continue;
+      const x = px(post.x),
+        y = py(post.y);
+      ctx.beginPath();
+      ctx.moveTo(x, y - 5);
+      ctx.lineTo(x + 5, y);
+      ctx.lineTo(x, y + 5);
+      ctx.lineTo(x - 5, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // The player.
     ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#294c3b';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+    ctx.arc(px(state.player.x), py(state.player.y), 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
@@ -294,6 +364,27 @@ export async function createRenderer(container, miniCanvas) {
     camera.y += (state.player.y - camera.y) * smoothing;
     view.centerOn(camera.x, camera.y);
 
+    // Show only the scenery chunks the camera can see, plus a margin for tall sprites.
+    const halfW = view.width / zoom / 2 + CULL_MARGIN,
+      halfH = view.height / zoom / 2 + CULL_MARGIN,
+      next = new Set();
+    for (
+      let cy = Math.floor((camera.y - halfH) / CHUNK);
+      cy <= Math.floor((camera.y + halfH) / CHUNK);
+      cy++
+    )
+      for (
+        let cx = Math.floor((camera.x - halfW) / CHUNK);
+        cx <= Math.floor((camera.x + halfW) / CHUNK);
+        cx++
+      )
+        if (chunks.has(`${cx},${cy}`)) next.add(`${cx},${cy}`);
+    for (const key of shown)
+      if (!next.has(key)) for (const image of chunks.get(key)) image.setVisible(false);
+    for (const key of next)
+      if (!shown.has(key)) for (const image of chunks.get(key)) image.setVisible(true);
+    shown = next;
+
     // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
     const nearest = nearbyNode(state),
       busy = animator.pending?.target,
@@ -309,7 +400,10 @@ export async function createRenderer(container, miniCanvas) {
       s.sprite.setVisible(s.sprite.alpha > 0);
       // Highlight the supply being worked on, or else the nearest one in reach.
       const target = !gone && (busy ? s.node.id === busy : s.node.id === nearest?.id);
-      if (s.glow) s.glow.active = target;
+      if (target) {
+        const glow = glowOf(s);
+        if (glow) glow.active = true;
+      } else if (s.glow) s.glow.active = false;
       if (target) {
         if (busy) working = s;
         else capped = s;
@@ -356,7 +450,7 @@ export async function createRenderer(container, miniCanvas) {
       .setDepth(state.player.y);
     shadow.setPosition(state.player.x, state.player.y - 1).setDepth(state.player.y - 0.5);
 
-    drawMap(mini, state, miniCanvas.width, miniCanvas.height);
+    drawMap(mini, state, miniCanvas.width, miniCanvas.height, true);
   }
 
   return {

@@ -1103,16 +1103,37 @@ dialog::backdrop {
 }
 
 /* A region name pinned to its spot on the map. The script sets left and top; */
-/* translate(-50%, 18px) centres the label and moves it just below the region's dot. */
+/* translate(-50%, -50%) centres the label on the region. It ignores clicks so buttons under it still work. */
 .map-label {
   position: absolute;
-  transform: translate(-50%, 18px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
   color: #f9f6e8;
   background: #273d2fe8;
   padding: 4px 8px;
   font-size: 10px;
   border-radius: 4px;
   white-space: nowrap;
+}
+
+/* A found signpost on the map: a round button centred on its spot. The script sets left and top. */
+.map-waypoint {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid #294c3b;
+  border-radius: 50%;
+  background: #ffd166;
+  cursor: pointer;
+}
+
+.map-waypoint:hover,
+.map-waypoint:focus-visible {
+  background: #fff1b8;
+  outline: 2px solid #fff6d7;
+  outline-offset: 2px;
 }
 
 .map-footer {
@@ -1286,7 +1307,7 @@ dialog::backdrop {
   .map-label {
     font-size: 7px;
     padding: 3px 4px;
-    transform: translate(-50%, 10px);
+    transform: translate(-50%, -50%);
   }
   .map-footer {
     font-size: 9px;

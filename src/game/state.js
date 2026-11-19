@@ -6,14 +6,15 @@ import { CHARACTERS } from '../data/characters.js';
 import { SUPPLIES, RESOURCES } from '../data/supplies.js';
 import { isWalkable } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
-import { LOCATIONS } from '../world/regions.js';
+import { REGIONS } from '../world/regions.js';
+import { LANDMARKS, WAYPOINTS } from '../data/places.js';
 
 /**
  * Makes a brand-new adventure for a character, standing at their starting spot.
  *
  * @param {string} characterId - Which character to play: 'scout', 'builder' or 'survivor'.
  * @returns {object} A fresh game state. `collected` lists one-time supplies gathered, `regrowAt`
- *   maps each picked wild patch to the game time it grows back, `discovered` lists region ids,
+ *   maps each picked wild patch to the game time it grows back, `discovered` lists region ids, `landmarks` and `waypoints` list the ids of places and signposts found,
  *   `elapsed` is game seconds played and `distance` is world units walked.
  * @throws {Error} If the character id isn't one of the known characters.
  */
@@ -21,13 +22,15 @@ export function createGame(characterId) {
   const character = CHARACTERS.find((c) => c.id === characterId);
   if (!character) throw new Error('Unknown character');
   return {
-    version: 2,
+    version: 3,
     character: character.id,
     player: { ...character.spawn, direction: 0 },
     resources: { ...Object.fromEntries(RESOURCES.map((r) => [r, 0])), ...character.resources },
     collected: [],
     regrowAt: {},
     discovered: [],
+    landmarks: [],
+    waypoints: [],
     elapsed: 0,
     distance: 0,
   };
@@ -61,7 +64,7 @@ export function restoreGame(json) {
     // The right save version, a known character, and a player standing somewhere they're allowed to be.
     if (
       !s ||
-      s.version !== 2 ||
+      s.version !== 3 ||
       !CHARACTERS.some((c) => c.id === s.character) ||
       !s.player ||
       !isWalkable(s.player.x, s.player.y) ||
@@ -69,9 +72,7 @@ export function restoreGame(json) {
     )
       return null;
 
-    // Saves from before herbs and regrowth have neither field; they load with none of either.
-    const resources = s.resources && { herbs: 0, ...s.resources },
-      regrowAt = s.regrowAt ?? {};
+    const { resources, regrowAt } = s;
 
     // Every resource must be a sensible whole number: not negative, not huge.
     if (
@@ -83,10 +84,12 @@ export function restoreGame(json) {
     )
       return null;
 
-    // The gathered and discovered lists may only hold real ids, each listed once.
+    // The gathered, discovered and found lists may only hold real ids, each listed once.
     for (const [list, allowed] of [
       [s.collected, SUPPLIES],
-      [s.discovered, LOCATIONS],
+      [s.discovered, REGIONS],
+      [s.landmarks, LANDMARKS],
+      [s.waypoints, WAYPOINTS],
     ]) {
       if (
         !Array.isArray(list) ||
@@ -124,13 +127,15 @@ export function restoreGame(json) {
 
     // Build the result fresh, copying only the fields we checked.
     return {
-      version: 2,
+      version: 3,
       character: s.character,
       player: { x: s.player.x, y: s.player.y, direction: s.player.direction },
       resources: Object.fromEntries(RESOURCES.map((r) => [r, resources[r]])),
       collected: [...s.collected],
       regrowAt: Object.fromEntries(timers),
       discovered: [...s.discovered],
+      landmarks: [...s.landmarks],
+      waypoints: [...s.waypoints],
       elapsed: s.elapsed,
       distance: s.distance,
     };
