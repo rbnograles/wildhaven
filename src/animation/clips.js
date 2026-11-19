@@ -11,12 +11,15 @@
  * - `loop`: start over at the end (true) or hold the last picture (false).
  * - `sheet`: which sprite sheet the pictures live on (`idleLoop`, `locomotion`, `run`, `actions`,
  *   `chop`, or one of the survival sheets: `sleep`, `wake`, `hungry`, `hurtHunger`, `hurtCold`,
- *   `hurtAttack`).
+ *   `hurtAttack`, `dying`).
  * - `row`: which row of that sheet.
  * - `turns`: the sheet has one row per facing (south, west, east, north), added to `row`.
  * - `order`: which column to show at each step, when the pictures are not simply played left to
  *   right. Idle breathes a few times before the picture with the blink, so the eyes don't flutter.
  * - `action`: a timed action (see `startAction`). Its art faces east and is mirrored for west.
+ * - `once`: a timed action that plays through one time and then holds its last picture (also
+ *   after it finishes), where other actions loop. It also can't be cancelled: a falling character
+ *   can't change their mind.
  * - `east`: the art only faces east and is mirrored for west, like an action's, but it is not one.
  * - `reaction`: a short flinch played once when something hurts (see `advanceAnimation`).
  * - `every`: seconds a reaction waits before it may play again while its cause lasts. A flinch
@@ -144,7 +147,25 @@ export const CLIPS = {
     reaction: true,
     every: 1,
   },
+  // Falling down when health runs out: sagging, knees buckling, kneeling, hip on the ground,
+  // rolling onto the back, lying still. It plays where the player stood, before they wake by a fire.
+  collapse: {
+    label: 'Collapsing',
+    frames: 6,
+    fps: 6,
+    loop: false,
+    sheet: 'dying',
+    row: 0,
+    action: true,
+    once: true,
+  },
 };
+
+/**
+ * Seconds the collapse lasts before the pass-out screen comes up: one second of falling, then a
+ * moment lying still, so the player sees where and that they fell before the scene changes.
+ */
+export const COLLAPSE_SECONDS = 1.8;
 
 /**
  * Seconds the character is shown asleep when resting at a camp. The night itself is skipped at
@@ -313,11 +334,14 @@ export function startAction(animator, clip, target = null, duration = null) {
 /**
  * Stops the running action early and goes back to standing still. Nothing is finished or awarded.
  *
+ * A collapse (a `once` clip) is the one action that can't be stopped: pressing a movement key
+ * must not let a player with no health left walk away from passing out.
+ *
  * @param {object} animator - The animator from `createAnimator`.
- * @returns {boolean} True if an action was stopped; false if none was running.
+ * @returns {boolean} True if an action was stopped; false if none was running or it can't be stopped.
  */
 export function cancelAction(animator) {
-  if (!animator.pending) return false;
+  if (!animator.pending || CLIPS[animator.pending.clip].once) return false;
   animator.pending = null;
   animator.clip = 'idle';
   animator.time = 0;
@@ -325,10 +349,38 @@ export function cancelAction(animator) {
 }
 
 /**
+ * Makes the character fall down, dropping whatever they were doing.
+ *
+ * This is what running out of health looks like. It is a timed action with no target, so when
+ * `advanceAnimation` reports it done, the game knows it is time to pass out (see `core/loop.js`).
+ * Calling it again while already falling changes nothing, so the fall never starts over.
+ *
+ * @param {object} animator - The animator from `createAnimator`.
+ * @returns {boolean} True if the fall started; false if the character was already falling.
+ */
+export function startCollapse(animator) {
+  if (isCollapsing(animator)) return false;
+  animator.pending = { clip: 'collapse', target: null, duration: COLLAPSE_SECONDS };
+  animator.reaction = null;
+  animator.asleep = 0;
+  animator.clip = 'collapse';
+  animator.time = 0;
+  return true;
+}
+
+/**
+ * Tells whether the character is falling down right now.
+ *
+ * @param {object} animator - The animator from `createAnimator`.
+ * @returns {boolean} True while the collapse action runs.
+ */
+export const isCollapsing = (animator) => animator.pending?.clip === 'collapse';
+
+/**
  * Lays the character down to sleep, dropping whatever they were doing.
  *
- * Passing out sleeps until `wakeUp` is called (when its screen is closed). Resting at a camp is
- * a short nap: the night is skipped at once, so the nap only shows the character asleep for a
+ * Closing the pass-out screen lays the character down by a fire and wakes them at once, so they
+ * are seen getting up there. Resting at a camp is a short nap: the night is skipped at once, so the nap only shows the character asleep for a
  * moment before they get up by themselves.
  *
  * @param {object} animator - The animator from `createAnimator`.
@@ -415,8 +467,13 @@ export function advanceAnimation(
     if (animator.time + 1e-8 >= animator.pending.duration) {
       const { clip, target } = animator.pending;
       animator.pending = null;
-      animator.clip = 'idle';
-      animator.time = 0;
+
+      // A `once` action (the collapse) keeps its last picture, so the character stays lying
+      // down behind the pass-out screen. Every other action goes back to standing.
+      if (!CLIPS[clip].once) {
+        animator.clip = 'idle';
+        animator.time = 0;
+      }
       return { clip, target };
     }
     return null;

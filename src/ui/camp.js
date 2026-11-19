@@ -11,10 +11,10 @@ import {
   MAX_GROWN,
 } from '../data/balance.js';
 import { clockLabel, phaseOf } from '../world/clock.js';
-import { fireRadius } from '../world/camps.js';
+import { fireRadius, nearestCamp } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { nameCamp } from '../actions/build.js';
-import { giveToNeed, eat, heal, brewTea, rest } from '../actions/camp.js';
+import { giveToNeed, eat, heal, brewTea, rest, passOut } from '../actions/camp.js';
 import { startSleep, wakeUp, NAP_SECONDS } from '../animation/clips.js';
 import { save } from '../core/session.js';
 import { describeEvent } from './hud.js';
@@ -233,25 +233,45 @@ export function setupCamp(session, ui) {
   }
 
   /**
-   * Shows the screen after passing out: what happened, where the player woke, whether their boat
-   * drifted home, and any new needs.
-   *
-   * @param {{camp: object|null, events: object[], boatHome: boolean}} result - What `passOut` returned.
+   * Shows the pass-out screen over the spot where the player fell: what happened, and where they
+   * will wake. Nothing in the game changes until the screen is closed (see `getUp`).
    */
-  function showPassOut({ camp, events, boatHome }) {
-    const dawn = events.find((e) => e.kind === 'dawn');
+  function showPassOut() {
+    // `passOut` wakes the player at the same camp: the one nearest to where they fell.
+    const camp = nearestCamp(session.state);
     $('passout-text').textContent = [
       'You got too cold away from a fire.',
       camp
-        ? `You woke at ${camp.name} at midday.`
-        : 'You woke where you started, at midday. Build a campfire so you have somewhere warm to return to.',
-      boatHome ? 'Your boat drifted back to where you mended it.' : '',
-      dawn?.camps.length ? `New needs at ${dawn.camps.join(', ')}.` : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+        ? `You will wake at ${camp.name} at midday.`
+        : 'You will wake where you started, at midday. Build a campfire so you have somewhere warm to return to.',
+    ].join(' ');
     session.keys.clear();
     $('passout-dialog').showModal();
+  }
+
+  /**
+   * Passes the player out for real, once the pass-out screen is closed.
+   *
+   * Only now does the scene change: the clock jumps to midday and the player is moved to a fire
+   * (or their starting spot), where they are seen getting up. A toast tells what the screen could
+   * not know beforehand: a boat that drifted home, and camps with new needs.
+   */
+  function getUp() {
+    if (session.screen !== 'game' || !session.state) return;
+    const { events, boatHome } = passOut(session.state),
+      dawn = events.find((e) => e.kind === 'dawn');
+
+    // Lie down at the new spot and get up straight away.
+    startSleep(session.animator);
+    wakeUp(session.animator);
+    session.renderer.resetCamera();
+
+    const news = [
+      boatHome ? 'Your boat drifted back to where you mended it.' : '',
+      dawn?.camps.length ? `New needs at ${dawn.camps.join(', ')}.` : '',
+    ].filter(Boolean);
+    if (news.length) ui.hud.notify(news.join(' '));
+    refresh();
   }
 
   // However the name box closes, the camp is kept. "Found camp" also renames it to what was typed.
@@ -278,8 +298,8 @@ export function setupCamp(session, ui) {
   $('camp-rest').addEventListener('click', restNight);
   $('passout-close').addEventListener('click', () => $('passout-dialog').close());
 
-  // However the pass-out screen closes (its button or Escape), the sleeper gets up.
-  $('passout-dialog').addEventListener('close', () => wakeUp(session.animator));
+  // However the pass-out screen closes (its button or Escape), the player wakes by a fire.
+  $('passout-dialog').addEventListener('close', getUp);
 
   return { openNaming, openCamp, showPassOut, eatFood, useHerbs };
 }

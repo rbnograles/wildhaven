@@ -310,3 +310,25 @@ Offline: patches of the built map were drawn at full size from `wildhaven.json` 
 Browser at `http://127.0.0.1:5174` (Survivor, 800×600 pane): the sand bank shows along the lagoon beach by the ship; with a test save standing beside the lagoon river, the river bank shows on both sides and the river ripples change picture between two looks a second apart, with no console warnings.
 
 Not checked by hand: the snow and canyon rivers in play, the 390 px layout (no layout rule changed), reduced motion (ripples are hidden by code, not seen), and frame rate on a slow machine with the larger tileset. The pane ran as a background page, so nothing here says how smooth the animation is.
+
+## Collapse animation before passing out — 2026-11-19
+
+The six-frame `dying-v2` sheets are loaded as the `dying` sheet and played as the `collapse` clip. Automated: `npm test` 206 passing (three new collapse tests in `tests/animation/clips.test.js`), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5177` (Scout, 800×600 pane), with a test save edited to 0 health and reloaded:
+- The preview dialog lists "Collapsing" and draws it.
+- On loading with no health the Scout fell where she stood (seen: upright, kneeling, lying flat on the back, held), then the pass-out screen came up and she lay asleep at the spawn behind it. This is also the "saved mid-fall" path.
+- No console errors.
+
+Not checked by hand: the Builder and Survivor in play, facing west (mirrored), freezing to 0 health the slow way, holding a movement key during the fall, and passing out in the boat (no fall there). The pane ran as a background page, so it says nothing about how smooth the fall is.
+
+### Scene change waits for "Get up" (same day)
+
+The fall now only opens the pass-out screen; closing it runs `passOut`. Automated: `npm test` 206 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5173` (Survivor, walked about 170 units west of the spawn, test save edited to 0 health and reloaded):
+- With the screen open the save still held the fall spot, 0 health and the morning clock, and the screen read "You will wake where you started, at midday."
+- After "Get up" the save held the spawn, 50 health and midday; the Survivor was seen pushing up from the ground there, then standing.
+- No console errors.
+
+Not checked by hand: waking at a named camp, the toast for a drifted boat or new needs, and Escape instead of the button (same `close` handler).

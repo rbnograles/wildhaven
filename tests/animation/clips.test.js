@@ -13,6 +13,9 @@ import {
   actionProgress,
   startSleep,
   wakeUp,
+  startCollapse,
+  isCollapsing,
+  COLLAPSE_SECONDS,
   diagonalOf,
   sampleAnimation,
   steadyAnchors,
@@ -38,11 +41,13 @@ test('every clip the game plays has its own definition', () => {
     'hurtHunger',
     'hurtCold',
     'hurtAttack',
+    'collapse',
   ]);
   const four = ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop', 'sleep', 'wake'];
   for (const name of [...four, 'hurtHunger', 'hurtCold', 'hurtAttack'])
     assert.equal(CLIPS[name].frames, 4);
   assert.equal(CLIPS.run.frames, 6);
+  assert.equal(CLIPS.collapse.frames, 6);
 });
 
 // Guards against the character walking backwards or sideways, against run frames picking the
@@ -301,6 +306,61 @@ test('a timed nap ends by itself and the character gets up', () => {
   assert.equal(a.clip, 'wake');
   assert.equal(a.asleep, 0);
   assert.equal(wakeUp(createAnimator()), false);
+});
+
+// Guards the fall when health runs out: it uses the six-frame dying sheet, mirrors for west,
+// plays through once and then stays on the lying-still picture (it must never loop back to
+// standing), and lasts longer than the fall itself so that picture is seen.
+test('the collapse plays its six frames once and holds the last one', () => {
+  const length = CLIPS.collapse.frames / CLIPS.collapse.fps;
+  assert.deepEqual(
+    [0, 1, 2, 3, 4, 5, 6, 60].map(
+      (i) => sampleAnimation('collapse', i / CLIPS.collapse.fps, 2).frame,
+    ),
+    [0, 1, 2, 3, 4, 5, 5, 5],
+  );
+  assert.equal(sampleAnimation('collapse', 0, 2).sheet, 'dying');
+  assert.equal(sampleAnimation('collapse', 0, 2).flip, false);
+  assert.equal(sampleAnimation('collapse', 0, 1).flip, true);
+  assert.equal(CLIPS.collapse.once, true);
+  assert.ok(COLLAPSE_SECONDS > length);
+});
+
+// Guards passing out: a collapse drops the gather in progress (nothing is awarded), can't be
+// walked out of or restarted, and reports itself done exactly once so the player passes out once.
+test('a collapse replaces the running action, cannot be cancelled, and finishes once', () => {
+  const a = createAnimator();
+  startAction(a, 'gather', 'pine-wood', 6);
+  assert.equal(startCollapse(a), true);
+  assert.equal(isCollapsing(a), true);
+  assert.equal(a.pending.target, null);
+
+  assert.equal(startCollapse(a), false);
+  assert.equal(cancelAction(a), false);
+  assert.equal(startAction(a, 'gather', 'pine-wood'), false);
+  assert.equal(advanceAnimation(a, 1, { moving: true, hurt: 'hurtCold' }), null);
+  assert.equal(a.clip, 'collapse');
+  assert.equal(a.time, 1);
+
+  assert.deepEqual(advanceAnimation(a, COLLAPSE_SECONDS - 1, {}), {
+    clip: 'collapse',
+    target: null,
+  });
+  assert.equal(isCollapsing(a), false);
+
+  // The fallen character stays on the lying-still picture behind the pass-out screen.
+  assert.equal(a.clip, 'collapse');
+  assert.equal(sampleAnimation(a.clip, a.time, 2).frame, 5);
+  assert.equal(advanceAnimation(a, 5, {}), null);
+});
+
+// Guards against the pause menu letting the fall finish (and the player pass out) behind it.
+test('pause freezes a collapse', () => {
+  const a = createAnimator();
+  startCollapse(a);
+  assert.equal(advanceAnimation(a, 10, { paused: true }), null);
+  assert.equal(isCollapsing(a), true);
+  assert.equal(a.time, 0);
 });
 
 // Guards the two-key directions: W+D must read as north-east, S+A as south-west and so on, and
