@@ -16,6 +16,8 @@ npm run dev          # Vite on http://127.0.0.1:5173 (also the "wildhaven" confi
 npm test             # node --test: runs tests/*.test.js with Node's built-in runner
 npm run build        # Vite production build → dist/
 npm run preview      # serve dist/
+npm run format       # Prettier: rewrite every file it covers (see .prettierignore)
+npm run format:check # Prettier: fail if any covered file is not formatted
 
 node --test tests/actions/gather.test.js                              # one file
 node --test --test-name-pattern="stale tab" tests/game/saves.test.js  # one test by name
@@ -23,13 +25,13 @@ node --test --test-name-pattern="stale tab" tests/game/saves.test.js  # one test
 python tools/build-map.py [preview.png]   # regenerate assets/world/map/* (needs numpy + Pillow)
 ```
 
-There is no linter or formatter. Requires Node 20.19+ or 22.12+; the project was developed on Node 24.
+Prettier 3 is the formatter (see Code Style below); there is no linter. Requires Node 20.19+ or 22.12+; the project was developed on Node 24.
 
 Saves are scoped to the page's origin, so `127.0.0.1` and `localhost` are separate save locations. Do verification at `127.0.0.1` (the dev script's host) so it never overwrites the user's own saves on `localhost`.
 
 ## Tech Stack
 
-Vanilla JavaScript ES modules, no framework. Vite 7 bundles the code and assets. Phaser 4 is used **only as the renderer**. HTML/CSS handle the UI and dialogs. Node's built-in `node:test` runs the tests. Python (numpy, Pillow) builds the map offline.
+Vanilla JavaScript ES modules, no framework. Vite 7 bundles the code and assets. Phaser 4 is used **only as the renderer**. HTML/CSS handle the UI and dialogs. Node's built-in `node:test` runs the tests. Prettier formats the code. Python (numpy, Pillow) builds the map offline.
 
 ## Architecture
 
@@ -102,9 +104,43 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 - When a node is in reach, its sprite glows (Phaser Glow filter, WebGL only) and an E key cap floats over it. A progress bar replaces the cap while the action runs. Gathered sprites fade out, and regrown patches fade back in; there is no stump or bare-bush art yet.
 - Balance numbers live in `src/data/balance.js` (speeds, reach, `GATHER_SECONDS`, discovery radius). Don't hardcode tuning numbers in actions.
 
+## Code Style (repo rule)
+
+This is a rule, not a preference. Code here should read easily for a beginner. Every change must follow it, and `npm run format:check` and `npm test` enforce most of it.
+
+- **Prettier formats all code.** Run `npm run format` after editing; `npm run format:check` must pass. The settings in `.prettierrc.json` are single quotes, 100-column lines, and each file's existing line endings (this is a Windows checkout with `core.autocrlf`). `.prettierignore` leaves out `assets/` (generated or read by `build-map.py`), Markdown and `docs/`, `.claude/`, and build output. Don't hand-format against Prettier.
+- **Every named function has a comment directly above it, written ELI5-style.** Use plain words a beginner understands and short sentences. Explain any jargon. Add an everyday comparison when it really helps (a backpack for resources, a stopwatch for timers), but don't be cutesy and don't label it "ELI5". Use a `/** ... */` block:
+  - first line: what it does, in one simple sentence;
+  - then a short plain-language explanation of how or why;
+  - then `@param {type} name - meaning` and `@returns {type} meaning`, in plain words.
+
+  A tiny one-line helper can have a one-line `/** ... */`. "Named function" means function declarations (inner ones too), `const name = (...) =>`, class and object methods, object properties holding arrow functions, and classes. Anonymous inline callbacks such as `.map((c) => ...)` are exempt unless their logic is non-obvious; then put a `//` line above. `tests/comments.test.js` fails when a named function has no comment on the line right above it.
+- **Keep the *why*.** Comments that record why a decision was made stay. Examples are the frozen `SCATTER_CLEAR`, the clamped `dt`, and the 6 s `GATHER_SECONDS`. Reword them more simply if needed, but never drop the fact.
+- **Headers and data.** Each file opens with a 2–4 line `//` header saying what it is for. Constants and data tables say what they hold and what each field means.
+- **Spacing.** Put one blank line between top-level declarations and between functions. Inside longer function bodies, put blank lines between steps (setup, checks, work, return), with a short `//` comment on any step that isn't obvious. Short 2–4 line bodies stay tight.
+- **HTML in template strings** is marked `/* HTML */` so Prettier formats it too. Prettier keeps inline tags touching by breaking lines as `</button` + `>`. Don't "tidy" those breaks: real whitespace there would add gaps between buttons.
+- **Pure modules** (`data/`, `world/`, `actions/`, `game/`, `animation/clips.js`): comments must not contain the words `document`, `window` or `import.meta`, because `tests/boundaries.test.js` scans the whole file, comments included.
+- **Tests:** each file has a header, and each `test(...)` has a `//` line above it saying what could break that it guards against.
+- **Python in `tools/`:** a `#` comment above each `def`, not a docstring, so one-line defs stay one line. Prettier doesn't format Python.
+- **CSS:** section headers (`/* ---- Name ---- */`) grouped by what's on screen, plus a note on any rule that isn't obvious.
+
+Example of the expected tone and shape (`src/actions/move.js`):
+
+```js
+/**
+ * Moves the player one small step in the direction the keys point.
+ *
+ * Think of the player as a toy on a table: each frame we nudge it a little. If a tree or the
+ * sea blocks one direction, the toy still slides along the other one instead of stopping dead.
+ *
+ * @param {object} state - The game being played. Its `player` position and `distance` change.
+ * @param {number} dx - Left/right push: -1 is west, 1 is east, 0 is neither.
+ * @returns {boolean} True if the player really moved, so a blocked step shows the idle pose.
+ */
+```
+
 ## Conventions
 
-- Match the existing compact JS style: dense one-line statements and short helpers. Comments explain *why*, not what.
 - Every generated art asset sits next to a `.prompt.txt` holding its exact generation prompt. Keep the original PNGs, and add a prompt file for any new generated art. The asset inventory is in `docs/art-direction.md` and `assets/characters/README.md`.
 - Any failure while loading assets must end on the loading screen's retry state, never an endless loader. Image loads have timeouts (`loadImage`, plus the 20 s Phaser scene timeout).
 - Keep `prefers-reduced-motion` support. It turns off camera smoothing, CSS transitions, and preview autoplay.
@@ -113,7 +149,7 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 
 ## Verifying a Change
 
-- `npm test` and `npm run build` must both pass.
+- `npm test`, `npm run build` and `npm run format:check` must all pass. `npm test` includes the comment rule (`tests/comments.test.js`).
 - Unit tests don't cover rendering, input, animation, the map, or the UI. If you change any of those, start the game from the `wildhaven` launch config and play through with each affected character. Check the browser console for errors. If layout changed, also check the page at about 390 px wide. Add notable checks to `docs/verification.md`.
 
 ## Stale Docs

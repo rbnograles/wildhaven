@@ -46,9 +46,15 @@ Saves live in this browser for this exact site address. `localhost` and `127.0.0
 npm test
 npm run build
 npm run preview
+npm run format        # format the code with Prettier
+npm run format:check  # check the formatting without changing files
 ```
 
 Game data and tuning live in `src/data/`, collision, supply nodes and regions in `src/world/`, and each player action (move, gather, discover) in its own file in `src/actions/`. Save state and storage are in `src/game/`. Phaser rendering is in `src/render/renderer.js`, animation clips and sprite sheets are in `src/animation/`, and the DOM screens and dialogs are in `src/ui/`. Input, the frame loop and the shared session are in `src/core/`, and `src/main.js` wires them together. Styling is in `src/style.css`.
+
+### Code style
+
+The code is meant to be easy to read, even for a beginner. Prettier formats it; run `npm run format` before committing. Every named function has a short plain-language comment above it that explains what it does, as if to someone new to the code. `npm test` fails if one is missing. The full rule is under "Code Style" in `CLAUDE.md`.
 
 ## Current milestone
 

@@ -1,30 +1,1555 @@
+/* How Wildhaven looks: the character selection screen, the loading screen, the in-game HUD, */
+/* the pause, map and reset dialogs, the on-screen arrow buttons for phones, and the */
+/* animation preview. The main colours and the heading font are named once in :root below, */
+/* so you can change them in one place. Screen-size tweaks and reduced motion come near the end. */
+
+/* ---- Fonts and colours ---- */
+/* Loads the two web fonts: DM Sans for normal text and Libre Caslon Display for headings. */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Caslon+Display&display=swap');
 
-:root{font-family:'DM Sans',sans-serif;color:#263b31;background:#f5f2e8;font-synthesis:none;--paper:#f5f2e8;--ink:#263b31;--moss:#385845;--muted:#73796b;--line:#d4d7c9;--serif:'Libre Caslon Display',Georgia,serif}
-*{box-sizing:border-box}body{margin:0}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:3px solid #bd892e;outline-offset:5px}button:disabled{cursor:wait;opacity:.65}button svg{width:21px;height:21px;flex-shrink:0}button{touch-action:manipulation}[hidden]{display:none!important}a{color:inherit;text-decoration:none}svg{vertical-align:middle}button:active{transform:translateY(1px)}
-.selection{max-width:1600px;padding:28px 52px 22px;margin:auto;min-height:100svh;display:flex;flex-direction:column}.masthead{display:flex;align-items:center;gap:28px}.wordmark{display:flex;align-items:center;gap:12px;font-family:Georgia,serif;font-size:23px;font-weight:700;letter-spacing:2px}.wordmark svg{width:39px;height:39px}.header-line{height:1px;background:var(--line);flex:1}.motto{font-family:var(--serif);font-size:21px;font-style:italic}.intro{text-align:center;padding:34px 0 30px}.intro h1{font-family:var(--serif);font-size:clamp(42px,5vw,77px);font-weight:400;letter-spacing:-1.7px;line-height:1.06;margin:0 0 12px}.intro p{font-size:15px;line-height:1.7;color:var(--muted);margin:0}.characters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:23px}.character-card{border:1px solid #c9cbbb;border-radius:17px;padding:0;background:transparent;overflow:hidden;text-align:center;position:relative;transition:border-color .2s,box-shadow .2s,transform .25s}.character-card:hover{border-color:var(--moss);transform:translateY(-3px)}.character-card[aria-pressed=true]{border-color:var(--moss);box-shadow:0 0 0 2px var(--moss)}.portrait{display:block;height:clamp(225px,32vh,355px);position:relative;overflow:hidden;background-image:url('../assets/world/starting-regions.png');background-size:300% 100%;background-position:var(--scene) center}.portrait:after{content:'';position:absolute;inset:70% 0 0;background:linear-gradient(transparent,#1b281b22);pointer-events:none}.portrait-sprite{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);height:98%;aspect-ratio:3/4;background-image:url('../assets/characters/starting-characters-idle-v1.png');background-size:400% 300%;background-position:0 calc(var(--row)*50%);filter:drop-shadow(0 10px 4px #17231240);z-index:1;transition:transform .3s}.character-card[aria-pressed=true] .portrait-sprite{transform:translateX(-50%) scale(1.035)}.selected-mark{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:50%;background:var(--moss);color:#fff;display:grid;place-items:center;z-index:2;opacity:0;transform:scale(.7);transition:.2s}.selected-mark svg{width:18px;height:18px;stroke-width:2}.character-card[aria-pressed=true] .selected-mark{opacity:1;transform:scale(1)}.character-caption{display:block;padding:19px 10px 21px}.character-name{display:block;font-family:var(--serif);font-size:clamp(24px,2.15vw,34px);line-height:1.1}.character-location{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;color:var(--muted);font-size:12px;letter-spacing:.4px}.character-location:before,.character-location:after{content:'';width:30px;height:1px;background:#b7bfac}.departure{display:flex;justify-content:space-between;align-items:center;gap:50px;margin:30px 0 28px;min-height:105px}.character-story{border-left:3px solid #7e936b;padding-left:22px;max-width:650px}.character-story h2{font-family:var(--serif);font-size:30px;font-weight:400;margin:0 0 8px;line-height:1.15}.character-story p{font-size:13px;line-height:1.65;color:#697363;margin:0;max-width:600px}.kit{display:block;margin-top:9px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#536348}.departure-actions{min-width:290px;width:31%;display:flex;align-items:center;flex-direction:column;gap:9px}.primary{display:flex;align-items:center;justify-content:center;gap:25px;background:var(--moss);color:#fbf9ec;border:1px solid var(--moss);border-radius:7px;min-height:58px;padding:15px 25px;font-size:15px;font-weight:500;transition:background .2s,transform .2s;box-shadow:0 3px 7px #21332a0a}.primary:hover{background:#284834}.primary svg{width:22px}.departure-actions .primary{width:100%}.text-button{background:none;border:0;padding:9px 13px;font-size:12px;text-decoration:underline;text-decoration-color:#a6af9b;text-underline-offset:4px}.text-button:hover{color:#6b8048}.save-hint{font-size:10px;color:var(--muted);margin:0;line-height:1.5;text-align:center}.selection-footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;align-items:center;margin-top:auto;padding-top:18px;color:var(--muted);font-size:11px}.key-guide{display:flex;gap:22px;align-items:center}.key-guide>span{display:flex;align-items:center;gap:8px;white-space:nowrap}kbd{font-family:inherit;font-size:10px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;min-width:21px;padding:3px 5px;line-height:1.2;border:1px solid #88917c60;border-bottom-width:2px;border-radius:4px;color:inherit;letter-spacing:.4px}
-.loading{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:16px}.loading-compass svg{width:65px;height:65px;animation:compass-drift 8s ease-in-out infinite}.loading .wordmark{font-size:15px;letter-spacing:5px;margin-top:10px}.loading h1{font:400 46px var(--serif);margin:12px 0 0}.loading p{font-size:14px;color:var(--muted);max-width:420px}.loading-bar{height:3px;width:190px;overflow:hidden;background:var(--line);border-radius:2px}.loading-bar:after{content:'';display:block;width:80px;height:100%;background:var(--moss);animation:loading 1.2s ease-in-out infinite}.loading .primary{min-width:200px}@keyframes loading{from{transform:translateX(-90px)}to{transform:translateX(200px)}}@keyframes compass-drift{50%{transform:rotate(30deg)}}
-.playing{overflow:hidden}.game{position:relative;height:100svh;min-height:400px;width:100%;background:#507345;color:var(--ink);isolation:isolate}.game:fullscreen{height:100vh}#world{display:block;width:100%;height:100%;outline:none;overflow:hidden}#world canvas{width:100%;height:100%;border-radius:0}.hud-panel{background:#f8f5e9ef;border:1px solid #f9f6e8aa;box-shadow:0 3px 20px #1f311b24;border-radius:9px;backdrop-filter:blur(12px)}.game-top{position:absolute;top:22px;left:24px;right:24px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;pointer-events:none}.game-top>*{pointer-events:auto}.identity{display:flex;align-items:center;padding:9px 17px 9px 9px;gap:10px}.hud-portrait{display:block;width:48px;height:48px;overflow:hidden;background-color:#d8ddcb;border-radius:50%;background-image:url('../assets/characters/starting-characters-idle-v1.png');background-size:400% 400%;background-position:0 calc(var(--row)*44.5%)}.hud-name{display:block;font-size:13px;font-weight:600;line-height:1.7}.identity-status{display:flex;gap:5px;align-items:center;font-size:10px;color:var(--muted)}.identity-status>span{width:5px;height:5px;border-radius:50%;background:#72864d}.resources{display:flex;align-items:center;gap:25px;padding:14px 22px;margin-top:1px}.resources>span{display:flex;align-items:center;gap:8px;font-size:12px}.resources svg{width:19px;height:19px;color:#6d7c51}.resources b{font-weight:600;font-size:15px}.resource-label{font-size:10px;color:var(--muted)}.game-actions{display:flex;gap:9px}.icon-button{padding:12px;display:grid;place-items:center;background:#f8f5e9ef;border:1px solid #e0e0d1;border-radius:8px}.icon-button:hover{background:#fffdf4}.icon-button svg{width:19px;height:19px}.region{position:absolute;top:114px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;white-space:nowrap;text-shadow:0 2px 5px #142e2280;color:#fff9e8}.region>span:first-child{font-size:9px;font-weight:600;letter-spacing:3.2px}.region h1{font:400 38px var(--serif);margin:4px 0 9px;letter-spacing:.2px}.region-rule{display:block;width:40px;height:1px;background:#fffae99f;margin:auto}.quest{position:absolute;left:24px;top:115px;padding:20px 21px;max-width:251px}.quest-label{font-size:8px;letter-spacing:1.8px;color:#7c825e;font-weight:600}.quest h2{font:400 26px var(--serif);margin:6px 0 8px}.quest p{font-size:11px;line-height:1.7;color:#6b7564;margin:0}.quest ul{margin:15px 0 0;padding:0;list-style:none;border-top:1px solid #d3d8c7}.quest li{position:relative;font-size:10px;line-height:1.5;padding:12px 0 0 17px;color:#5e6d56}.quest li:before{content:'';position:absolute;left:0;top:14px;border:1px solid #8b9879;width:7px;height:7px;border-radius:50%}.quest li.complete:before{background:#668653;border-color:#668653}.quest li.complete{color:#668653}.quest li b{font-size:9px;display:block;padding-top:6px}.minimap{position:absolute;bottom:24px;right:24px;width:200px;overflow:hidden;padding:5px;transition:transform .2s}.minimap:hover{transform:translateY(-3px)}.minimap canvas{width:100%;height:auto;border-radius:5px;display:block}.minimap>span{display:flex;align-items:center;gap:7px;padding:10px 5px 5px;font-size:10px}.minimap>span svg{width:15px;height:15px}.minimap kbd{margin-left:auto;font-size:9px}.interact{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);border:1px solid #ebeed4;border-radius:7px;background:#f8f5e9f5;box-shadow:0 2px 14px #162b2533;padding:11px 16px;display:flex;align-items:center;gap:10px;font-size:12px;white-space:nowrap}.interact:active{transform:translateX(-50%) translateY(1px)}.interact kbd{background:var(--moss);border-color:var(--moss);color:#fff}.toast{position:absolute;bottom:112px;left:50%;transform:translate(-50%,10px);background:#263b31ec;color:#f8f5e9;padding:12px 22px;border:1px solid #d8e4bc42;border-radius:7px;font-size:12px;opacity:0;transition:.3s;pointer-events:none;text-align:center;max-width:80vw;width:max-content}.toast.visible{opacity:1;transform:translate(-50%,0)}
-dialog{background:var(--paper);color:var(--ink);border:1px solid #cfdbb9;border-radius:15px;box-shadow:0 20px 100px #14251e66}dialog::backdrop{background:#142a2377;backdrop-filter:blur(5px)}.pause-dialog{padding:38px 39px 28px;text-align:center;width:min(420px,calc(100vw - 32px))}.modal-mark svg{width:44px;height:44px}.dialog-kicker{font-size:9px!important;letter-spacing:2px;color:var(--muted);margin-top:22px!important}.pause-dialog h2{font:400 37px var(--serif);margin:8px 0 12px}.pause-dialog p{font-size:12px;line-height:1.7;color:var(--muted);margin:0 0 22px}.pause-dialog .primary,.pause-dialog .secondary{width:100%;margin:12px 0 0}.secondary{display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid #b8c1aa;background:transparent;border-radius:7px;padding:13px;font-size:12px;min-height:47px}.secondary:hover{background:#e8ecde}.pause-dialog .text-button{margin-top:12px}.pause-dialog .fine-print{font-size:10px;margin:16px 0 0}.map-dialog{padding:23px;width:min(980px,calc(100vw - 34px));max-height:94svh;overflow:auto}.map-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:17px}.map-heading h2{font:400 33px var(--serif);margin:0}.map-heading p{margin:0 0 7px!important}.map-surface{position:relative;overflow:hidden;border-radius:6px;border:1px solid #c1c6ae}.map-surface canvas{width:100%;display:block}.map-label{position:absolute;transform:translate(-50%,18px);color:#f9f6e8;background:#273d2fe8;padding:4px 8px;font-size:10px;border-radius:4px;white-space:nowrap}.map-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-top:15px;color:var(--muted)}.touch-controls{display:none}
-@media(min-width:1600px){.selection{padding-top:35px}.intro{padding-top:42px;padding-bottom:40px}.portrait{height:36vh;max-height:420px}.departure{margin-top:36px}}
-@media(max-height:760px) and (min-width:900px){.selection{padding-top:19px;padding-bottom:16px}.intro{padding:24px 0}.intro h1{font-size:54px}.portrait{height:26vh;min-height:180px}.character-caption{padding:13px 7px 16px}.character-name{font-size:27px}.departure{margin:22px 0 20px;min-height:95px}.character-story h2{font-size:27px}.selection-footer{padding-top:14px}.quest{top:103px}.region{top:104px}}
-@media(max-width:1000px){.selection{padding:24px 30px}.characters{gap:16px}.intro h1{font-size:58px}.character-name{font-size:26px}.departure{gap:24px}.departure-actions{min-width:250px}.character-story h2{font-size:26px}.quest{max-width:213px;padding:16px}.resources{gap:17px;padding:14px}.resource-label{display:none}.region h1{font-size:32px}.region{top:103px}}
-@media(max-width:700px){.selection{padding:19px 20px;min-height:100svh}.masthead{gap:15px}.wordmark{font-size:18px;gap:9px}.wordmark svg{width:30px;height:30px}.motto{font-size:15px;white-space:nowrap}.header-line{display:none}.masthead{justify-content:space-between}.intro{padding:34px 8px 27px}.intro h1{font-size:47px;letter-spacing:-1px;max-width:450px;margin:0 auto 14px}.intro p{font-size:12px;max-width:300px;margin:auto}.characters{gap:11px}.portrait{height:185px}.portrait-sprite{height:83%;bottom:12px}.character-card{border-radius:11px}.character-caption{padding:13px 6px 15px}.character-name{font-size:22px}.character-location{font-size:9px;line-height:1.5;gap:0;margin-top:7px}.character-location:before,.character-location:after{display:none}.selected-mark{right:7px;top:7px;width:23px;height:23px}.selected-mark svg{width:15px;height:15px}.departure{flex-direction:column;align-items:stretch;gap:22px;margin:26px 0}.character-story{padding-left:16px;max-width:100%}.character-story h2{font-size:28px}.character-story p{font-size:12px}.departure-actions{width:100%;gap:8px}.selection-footer{align-items:center;flex-direction:column;gap:15px;padding-top:19px;padding-bottom:6px;font-size:10px}.selection-footer .key-guide{gap:10px 19px;flex-wrap:wrap;justify-content:center}.game-top{top:13px;left:13px;right:13px;gap:8px;flex-wrap:wrap}.identity{padding:6px 10px 6px 6px;gap:7px}.hud-name{font-size:11px}.hud-portrait{width:36px;height:36px}.identity-status{font-size:8px}.game-actions{gap:6px;margin-left:auto}.game-actions .icon-button{padding:10px}#fullscreen{display:none}.resources{order:3;margin:0;gap:16px;padding:9px 12px}.resources b{font-size:12px}.resources svg{width:15px;height:15px}.region{top:140px}.region h1{font-size:30px}.region>span:first-child{font-size:7px;letter-spacing:2px}.quest{top:auto;bottom:13px;left:13px;max-width:190px;padding:13px;display:none}.minimap{right:13px;bottom:13px;width:140px}.minimap>span{font-size:9px;padding-top:7px}.interact{bottom:180px;font-size:10px;max-width:90vw}.toast{bottom:238px;font-size:11px}.touch-controls{display:flex;position:absolute;left:17px;bottom:20px;flex-direction:column;align-items:center;gap:5px}.touch-controls>div{display:flex;gap:5px}.touch-controls button{width:40px;height:40px;border:1px solid #f0f2d9ba;background:#f8f5e9cf;border-radius:7px;font-size:20px;touch-action:none}.map-dialog{padding:15px}.map-heading h2{font-size:25px}.map-label{font-size:7px;padding:3px 4px;transform:translate(-50%,10px)}.map-footer{font-size:9px;gap:10px}.map-footer>span:last-child{display:none}}
-@media(max-width:420px){.selection{padding-left:16px;padding-right:16px}.motto{font-size:13px}.wordmark{font-size:16px}.intro h1{font-size:42px}.characters{gap:8px}.portrait{height:150px}.portrait-sprite{height:78%;bottom:13px}.character-name{font-size:20px}.character-caption{padding:12px 4px}.character-location{font-size:8px}.character-story h2{font-size:25px}.intro p{font-size:11px}.selection-footer .key-guide{font-size:9px;gap:12px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Page-wide defaults plus named colours (--paper, --ink, ...) that the rest of the file reuses. */
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #263b31;
+  background: #f5f2e8;
+  font-synthesis: none;
+  --paper: #f5f2e8;
+  --ink: #263b31;
+  --moss: #385845;
+  --muted: #73796b;
+  --line: #d4d7c9;
+  --serif: 'Libre Caslon Display', Georgia, serif;
+}
+
+/* ---- Basics for every screen ---- */
+/* Width and height include padding and border, so boxes are as big as we say. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+/* Stops phones from flashing a grey box when you tap a button or link. */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* A clear gold ring shows which control has keyboard focus. */
+button:focus-visible,
+a:focus-visible,
+canvas:focus-visible {
+  outline: 3px solid #bd892e;
+  outline-offset: 5px;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+button svg {
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
+}
+
+/* Lets a quick tap count right away, without the browser waiting to see if it is a double-tap zoom. */
+button {
+  touch-action: manipulation;
+}
+
+/* The hidden attribute always wins, even over classes that set display: flex or grid. */
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  vertical-align: middle;
+}
+
+/* Buttons dip down one pixel while pressed, so a click feels physical. */
+button:active {
+  transform: translateY(1px);
+}
+
+/* ---- Character selection: page frame, title bar and welcome text ---- */
+/* 100svh is the height of the screen that is always visible, even when a phone shows its toolbars. */
+.selection {
+  max-width: 1600px;
+  padding: 28px 52px 22px;
+  margin: auto;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.wordmark svg {
+  width: 39px;
+  height: 39px;
+}
+
+/* The thin line between the logo and the motto stretches to fill the space. */
+.header-line {
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+
+.motto {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-style: italic;
+}
+
+.intro {
+  text-align: center;
+  padding: 34px 0 30px;
+}
+
+/* clamp() lets the big heading grow with the window but never smaller than 42px or bigger than 77px. */
+.intro h1 {
+  font-family: var(--serif);
+  font-size: clamp(42px, 5vw, 77px);
+  font-weight: 400;
+  letter-spacing: -1.7px;
+  line-height: 1.06;
+  margin: 0 0 12px;
+}
+
+.intro p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ---- Character selection: the three character cards ---- */
+/* Three equal columns, one card per character. */
+.characters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 23px;
+}
+
+.character-card {
+  border: 1px solid #c9cbbb;
+  border-radius: 17px;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  text-align: center;
+  position: relative;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.25s;
+}
+
+.character-card:hover {
+  border-color: var(--moss);
+  transform: translateY(-3px);
+}
+
+/* aria-pressed="true" marks the chosen card, so it gets a thicker green outline. */
+.character-card[aria-pressed='true'] {
+  border-color: var(--moss);
+  box-shadow: 0 0 0 2px var(--moss);
+}
+
+/* The picture behind each character. starting-regions.png holds three scenes side by side. */
+/* It is drawn three cards wide (300%), and --scene (0%, 50% or 100%) slides it to this character's scene. */
+.portrait {
+  display: block;
+  height: clamp(225px, 32vh, 355px);
+  position: relative;
+  overflow: hidden;
+  background-image: url('../assets/world/starting-regions.png');
+  background-size: 300% 100%;
+  background-position: var(--scene) center;
+}
+
+/* A soft shadow along the bottom of the picture so the character's feet sit on the ground. */
+.portrait:after {
+  content: '';
+  position: absolute;
+  inset: 70% 0 0;
+  background: linear-gradient(transparent, #1b281b22);
+  pointer-events: none;
+}
+
+/* The character standing in the picture, cut from the idle sprite sheet. */
+/* The sheet is 4 poses across and 3 characters down, so it is drawn 400% wide and 300% tall. */
+/* x = 0 picks the front-facing pose; --row (0, 1 or 2) times 50% picks this character's row. */
+.portrait-sprite {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  height: 98%;
+  aspect-ratio: 3/4;
+  background-image: url('../assets/characters/starting-characters-idle-v1.png');
+  background-size: 400% 300%;
+  background-position: 0 calc(var(--row) * 50%);
+  filter: drop-shadow(0 10px 4px #17231240);
+  z-index: 1;
+  transition: transform 0.3s;
+}
+
+/* The chosen character grows a little. translateX(-50%) is repeated so it stays centred. */
+.character-card[aria-pressed='true'] .portrait-sprite {
+  transform: translateX(-50%) scale(1.035);
+}
+
+/* The round tick in the corner. It is invisible until its card is chosen. */
+.selected-mark {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--moss);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: 0.2s;
+}
+
+.selected-mark svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.character-card[aria-pressed='true'] .selected-mark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* The name and starting place under each picture. */
+.character-caption {
+  display: block;
+  padding: 19px 10px 21px;
+}
+
+.character-name {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(24px, 2.15vw, 34px);
+  line-height: 1.1;
+}
+
+.character-location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+
+/* Two short lines on either side of the place name, like — Pinefall Woods —. */
+.character-location:before,
+.character-location:after {
+  content: '';
+  width: 30px;
+  height: 1px;
+  background: #b7bfac;
+}
+
+/* ---- Character selection: the chosen character's story and the start buttons ---- */
+/* Story on the left, buttons on the right. */
+.departure {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 50px;
+  margin: 30px 0 28px;
+  min-height: 105px;
+}
+
+.character-story {
+  border-left: 3px solid #7e936b;
+  padding-left: 22px;
+  max-width: 650px;
+}
+
+.character-story h2 {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  line-height: 1.15;
+}
+
+.character-story p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #697363;
+  margin: 0;
+  max-width: 600px;
+}
+
+/* The small capital-letter line listing what the character carries. */
+.kit {
+  display: block;
+  margin-top: 9px;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #536348;
+}
+
+.departure-actions {
+  min-width: 290px;
+  width: 31%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* The big green main button. It is also used on the loading screen and in dialogs. */
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  background: var(--moss);
+  color: #fbf9ec;
+  border: 1px solid var(--moss);
+  border-radius: 7px;
+  min-height: 58px;
+  padding: 15px 25px;
+  font-size: 15px;
+  font-weight: 500;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+  box-shadow: 0 3px 7px #21332a0a;
+}
+
+.primary:hover {
+  background: #284834;
+}
+
+.primary svg {
+  width: 22px;
+}
+
+.departure-actions .primary {
+  width: 100%;
+}
+
+/* A quiet button that looks like an underlined link, for less important choices. */
+.text-button {
+  background: none;
+  border: 0;
+  padding: 9px 13px;
+  font-size: 12px;
+  text-decoration: underline;
+  text-decoration-color: #a6af9b;
+  text-underline-offset: 4px;
+}
+
+.text-button:hover {
+  color: #6b8048;
+}
+
+.save-hint {
+  font-size: 10px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ---- Character selection: the footer with the key guide ---- */
+/* margin-top: auto pushes the footer to the bottom of the screen. */
+.selection-footer {
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.key-guide {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+
+.key-guide > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* A little keyboard key, like the E or Esc labels. The thicker bottom border makes it look pressable. */
+kbd {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 21px;
+  padding: 3px 5px;
+  line-height: 1.2;
+  border: 1px solid #88917c60;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  color: inherit;
+  letter-spacing: 0.4px;
+}
+
+/* ---- Loading screen ---- */
+/* Shown while the world artwork loads. Everything sits in the middle of the screen. */
+.loading {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px;
+  gap: 16px;
+}
+
+/* The compass gently swings back and forth while you wait. */
+.loading-compass svg {
+  width: 65px;
+  height: 65px;
+  animation: compass-drift 8s ease-in-out infinite;
+}
+
+.loading .wordmark {
+  font-size: 15px;
+  letter-spacing: 5px;
+  margin-top: 10px;
+}
+
+.loading h1 {
+  font: 400 46px var(--serif);
+  margin: 12px 0 0;
+}
+
+.loading p {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 420px;
+}
+
+/* A thin track with a green piece sliding along it, so you can see something is happening. */
+.loading-bar {
+  height: 3px;
+  width: 190px;
+  overflow: hidden;
+  background: var(--line);
+  border-radius: 2px;
+}
+
+.loading-bar:after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 100%;
+  background: var(--moss);
+  animation: loading 1.2s ease-in-out infinite;
+}
+
+.loading .primary {
+  min-width: 200px;
+}
+
+/* Slides the green piece from just off the left edge of the track to past the right edge. */
+@keyframes loading {
+  from {
+    transform: translateX(-90px);
+  }
+  to {
+    transform: translateX(200px);
+  }
+}
+
+/* Turns the compass 30 degrees halfway through, then back. */
+@keyframes compass-drift {
+  50% {
+    transform: rotate(30deg);
+  }
+}
+
+/* ---- In-game: the world view ---- */
+/* While playing, the page itself never scrolls. */
+.playing {
+  overflow: hidden;
+}
+
+/* The game fills the screen. isolation: isolate keeps the HUD's layering inside the game area. */
+.game {
+  position: relative;
+  height: 100svh;
+  min-height: 400px;
+  width: 100%;
+  background: #507345;
+  color: var(--ink);
+  isolation: isolate;
+}
+
+.game:fullscreen {
+  height: 100vh;
+}
+
+/* #world holds the canvas that Phaser draws the map and character on. */
+#world {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  overflow: hidden;
+}
+
+#world canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+/* ---- In-game HUD: the top bar (who you are, your supplies, pause and fullscreen) ---- */
+/* The frosted cream card that every HUD piece sits on. The blur softens the map behind it. */
+.hud-panel {
+  background: #f8f5e9ef;
+  border: 1px solid #f9f6e8aa;
+  box-shadow: 0 3px 20px #1f311b24;
+  border-radius: 9px;
+  backdrop-filter: blur(12px);
+}
+
+/* The bar itself ignores clicks so the gaps between its cards don't block the world. */
+/* Its cards (the next rule) take clicks again. */
+.game-top {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.game-top > * {
+  pointer-events: auto;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  padding: 9px 17px 9px 9px;
+  gap: 10px;
+}
+
+/* The round face picture, cut from the same idle sprite sheet as the selection cards. */
+/* It is zoomed in further (400% tall instead of 300%) so the circle shows the top of the sprite. */
+/* At that zoom, each character's row is about 44.5% further down, so --row times 44.5% finds it. */
+.hud-portrait {
+  display: block;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  background-color: #d8ddcb;
+  border-radius: 50%;
+  background-image: url('../assets/characters/starting-characters-idle-v1.png');
+  background-size: 400% 400%;
+  background-position: 0 calc(var(--row) * 44.5%);
+}
+
+.hud-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.identity-status {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* The small green dot before "Exploring the wilds". */
+.identity-status > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #72864d;
+}
+
+/* The wood, stone, food and herb counters. */
+.resources {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 14px 22px;
+  margin-top: 1px;
+}
+
+.resources > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.resources svg {
+  width: 19px;
+  height: 19px;
+  color: #6d7c51;
+}
+
+.resources b {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.resource-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* The fullscreen and pause buttons in the top right. */
+.game-actions {
+  display: flex;
+  gap: 9px;
+}
+
+/* A square button that holds only an icon. */
+.icon-button {
+  padding: 12px;
+  display: grid;
+  place-items: center;
+  background: #f8f5e9ef;
+  border: 1px solid #e0e0d1;
+  border-radius: 8px;
+}
+
+.icon-button:hover {
+  background: #fffdf4;
+}
+
+.icon-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* ---- In-game HUD: the region name in the middle of the screen ---- */
+/* Centred with left: 50% plus translateX(-50%). It ignores clicks because it is only a label. */
+.region {
+  position: absolute;
+  top: 114px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow: 0 2px 5px #142e2280;
+  color: #fff9e8;
+}
+
+/* The small "THE WILDS OF WILDHAVEN" line above the region name. */
+.region > span:first-child {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 3.2px;
+}
+
+.region h1 {
+  font: 400 38px var(--serif);
+  margin: 4px 0 9px;
+  letter-spacing: 0.2px;
+}
+
+.region-rule {
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: #fffae99f;
+  margin: auto;
+}
+
+/* ---- In-game HUD: the quest card on the left ---- */
+.quest {
+  position: absolute;
+  left: 24px;
+  top: 115px;
+  padding: 20px 21px;
+  max-width: 251px;
+}
+
+.quest-label {
+  font-size: 8px;
+  letter-spacing: 1.8px;
+  color: #7c825e;
+  font-weight: 600;
+}
+
+.quest h2 {
+  font: 400 26px var(--serif);
+  margin: 6px 0 8px;
+}
+
+.quest p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #6b7564;
+  margin: 0;
+}
+
+.quest ul {
+  margin: 15px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid #d3d8c7;
+}
+
+.quest li {
+  position: relative;
+  font-size: 10px;
+  line-height: 1.5;
+  padding: 12px 0 0 17px;
+  color: #5e6d56;
+}
+
+/* An empty circle before each goal, drawn with CSS instead of a list bullet. */
+.quest li:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  border: 1px solid #8b9879;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* A finished goal fills its circle and turns green. */
+.quest li.complete:before {
+  background: #668653;
+  border-color: #668653;
+}
+
+.quest li.complete {
+  color: #668653;
+}
+
+/* The "1 / 3" region counter sits on its own line under the goal. */
+.quest li b {
+  font-size: 9px;
+  display: block;
+  padding-top: 6px;
+}
+
+/* ---- In-game HUD: the minimap in the bottom right ---- */
+/* The whole minimap is a button that opens the big world map. */
+.minimap {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: 200px;
+  overflow: hidden;
+  padding: 5px;
+  transition: transform 0.2s;
+}
+
+.minimap:hover {
+  transform: translateY(-3px);
+}
+
+.minimap canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  display: block;
+}
+
+.minimap > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 5px 5px;
+  font-size: 10px;
+}
+
+.minimap > span svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* margin-left: auto pushes the M key label to the right edge. */
+.minimap kbd {
+  margin-left: auto;
+  font-size: 9px;
+}
+
+/* ---- In-game: the action button and pop-up messages ---- */
+/* The "E Pick wild berries" button that appears near the bottom when a supply is in reach. */
+.interact {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid #ebeed4;
+  border-radius: 7px;
+  background: #f8f5e9f5;
+  box-shadow: 0 2px 14px #162b2533;
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* The normal pressed effect would replace the centring transform, so both are written here. */
+.interact:active {
+  transform: translateX(-50%) translateY(1px);
+}
+
+.interact kbd {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: #fff;
+}
+
+/* A short message such as "+3 wood". It starts invisible and 10px low. */
+.toast {
+  position: absolute;
+  bottom: 112px;
+  left: 50%;
+  transform: translate(-50%, 10px);
+  background: #263b31ec;
+  color: #f8f5e9;
+  padding: 12px 22px;
+  border: 1px solid #d8e4bc42;
+  border-radius: 7px;
+  font-size: 12px;
+  opacity: 0;
+  transition: 0.3s;
+  pointer-events: none;
+  text-align: center;
+  max-width: 80vw;
+  width: max-content;
+}
+
+/* When shown, it fades in and slides up into place. */
+.toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---- Dialogs: the shared look, then the pause and "fresh beginning" dialogs ---- */
+dialog {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid #cfdbb9;
+  border-radius: 15px;
+  box-shadow: 0 20px 100px #14251e66;
+}
+
+/* The dark, blurred layer behind an open dialog that covers the game. */
+dialog::backdrop {
+  background: #142a2377;
+  backdrop-filter: blur(5px);
+}
+
+/* Used by both the pause dialog and the reset dialog. Never wider than the screen minus 16px each side. */
+.pause-dialog {
+  padding: 38px 39px 28px;
+  text-align: center;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.modal-mark svg {
+  width: 44px;
+  height: 44px;
+}
+
+/* The small capital-letter line above a dialog title. */
+/* !important beats the more specific ".pause-dialog p" and ".map-heading p" rules. */
+.dialog-kicker {
+  font-size: 9px !important;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-top: 22px !important;
+}
+
+.pause-dialog h2 {
+  font: 400 37px var(--serif);
+  margin: 8px 0 12px;
+}
+
+.pause-dialog p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0 0 22px;
+}
+
+.pause-dialog .primary,
+.pause-dialog .secondary {
+  width: 100%;
+  margin: 12px 0 0;
+}
+
+/* An outlined button, one step quieter than the green main button. */
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #b8c1aa;
+  background: transparent;
+  border-radius: 7px;
+  padding: 13px;
+  font-size: 12px;
+  min-height: 47px;
+}
+
+.secondary:hover {
+  background: #e8ecde;
+}
+
+.pause-dialog .text-button {
+  margin-top: 12px;
+}
+
+.pause-dialog .fine-print {
+  font-size: 10px;
+  margin: 16px 0 0;
+}
+
+/* ---- Dialogs: the big world map ---- */
+/* Scrolls inside itself if the screen is too short to show the whole map. */
+.map-dialog {
+  padding: 23px;
+  width: min(980px, calc(100vw - 34px));
+  max-height: 94svh;
+  overflow: auto;
+}
+
+.map-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 17px;
+}
+
+.map-heading h2 {
+  font: 400 33px var(--serif);
+  margin: 0;
+}
+
+.map-heading p {
+  margin: 0 0 7px !important;
+}
+
+/* position: relative lets the region labels be placed on top of the map canvas. */
+.map-surface {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid #c1c6ae;
+}
+
+.map-surface canvas {
+  width: 100%;
+  display: block;
+}
+
+/* A region name pinned to its spot on the map. The script sets left and top; */
+/* translate(-50%, 18px) centres the label and moves it just below the region's dot. */
+.map-label {
+  position: absolute;
+  transform: translate(-50%, 18px);
+  color: #f9f6e8;
+  background: #273d2fe8;
+  padding: 4px 8px;
+  font-size: 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.map-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  margin-top: 15px;
+  color: var(--muted);
+}
+
+/* ---- Touch controls ---- */
+/* The on-screen arrow buttons. Hidden on big screens; the phone layout below turns them on. */
+.touch-controls {
+  display: none;
+}
+
+/* ---- Screen sizes ---- */
+/* Each block below only applies when the screen matches its size, and changes just a few things. */
+
+/* Very wide screens: a little more breathing room on the selection screen. */
+@media (min-width: 1600px) {
+  .selection {
+    padding-top: 35px;
+  }
+  .intro {
+    padding-top: 42px;
+    padding-bottom: 40px;
+  }
+  .portrait {
+    height: 36vh;
+    max-height: 420px;
+  }
+  .departure {
+    margin-top: 36px;
+  }
+}
+
+/* Wide but short screens, like a laptop: squeeze things vertically so it all fits without scrolling. */
+@media (max-height: 760px) and (min-width: 900px) {
+  .selection {
+    padding-top: 19px;
+    padding-bottom: 16px;
+  }
+  .intro {
+    padding: 24px 0;
+  }
+  .intro h1 {
+    font-size: 54px;
+  }
+  .portrait {
+    height: 26vh;
+    min-height: 180px;
+  }
+  .character-caption {
+    padding: 13px 7px 16px;
+  }
+  .character-name {
+    font-size: 27px;
+  }
+  .departure {
+    margin: 22px 0 20px;
+    min-height: 95px;
+  }
+  .character-story h2 {
+    font-size: 27px;
+  }
+  .selection-footer {
+    padding-top: 14px;
+  }
+  .quest {
+    top: 103px;
+  }
+  .region {
+    top: 104px;
+  }
+}
+
+/* Tablets and small laptops: smaller text and gaps. The resource names hide; the icons are enough. */
+@media (max-width: 1000px) {
+  .selection {
+    padding: 24px 30px;
+  }
+  .characters {
+    gap: 16px;
+  }
+  .intro h1 {
+    font-size: 58px;
+  }
+  .character-name {
+    font-size: 26px;
+  }
+  .departure {
+    gap: 24px;
+  }
+  .departure-actions {
+    min-width: 250px;
+  }
+  .character-story h2 {
+    font-size: 26px;
+  }
+  .quest {
+    max-width: 213px;
+    padding: 16px;
+  }
+  .resources {
+    gap: 17px;
+    padding: 14px;
+  }
+  .resource-label {
+    display: none;
+  }
+  .region h1 {
+    font-size: 32px;
+  }
+  .region {
+    top: 103px;
+  }
+}
+
+/* Phones: the story stacks above the buttons, the HUD shrinks, and the touch arrows appear. */
+@media (max-width: 700px) {
+  /* Selection screen. */
+  .selection {
+    padding: 19px 20px;
+    min-height: 100svh;
+  }
+  .masthead {
+    gap: 15px;
+  }
+  .wordmark {
+    font-size: 18px;
+    gap: 9px;
+  }
+  .wordmark svg {
+    width: 30px;
+    height: 30px;
+  }
+  .motto {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .header-line {
+    display: none;
+  }
+  .masthead {
+    justify-content: space-between;
+  }
+  .intro {
+    padding: 34px 8px 27px;
+  }
+  .intro h1 {
+    font-size: 47px;
+    letter-spacing: -1px;
+    max-width: 450px;
+    margin: 0 auto 14px;
+  }
+  .intro p {
+    font-size: 12px;
+    max-width: 300px;
+    margin: auto;
+  }
+  .characters {
+    gap: 11px;
+  }
+  .portrait {
+    height: 185px;
+  }
+  .portrait-sprite {
+    height: 83%;
+    bottom: 12px;
+  }
+  .character-card {
+    border-radius: 11px;
+  }
+  .character-caption {
+    padding: 13px 6px 15px;
+  }
+  .character-name {
+    font-size: 22px;
+  }
+  .character-location {
+    font-size: 9px;
+    line-height: 1.5;
+    gap: 0;
+    margin-top: 7px;
+  }
+  .character-location:before,
+  .character-location:after {
+    display: none;
+  }
+  .selected-mark {
+    right: 7px;
+    top: 7px;
+    width: 23px;
+    height: 23px;
+  }
+  .selected-mark svg {
+    width: 15px;
+    height: 15px;
+  }
+  .departure {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+    margin: 26px 0;
+  }
+  .character-story {
+    padding-left: 16px;
+    max-width: 100%;
+  }
+  .character-story h2 {
+    font-size: 28px;
+  }
+  .character-story p {
+    font-size: 12px;
+  }
+  .departure-actions {
+    width: 100%;
+    gap: 8px;
+  }
+  .selection-footer {
+    align-items: center;
+    flex-direction: column;
+    gap: 15px;
+    padding-top: 19px;
+    padding-bottom: 6px;
+    font-size: 10px;
+  }
+  .selection-footer .key-guide {
+    gap: 10px 19px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* In-game HUD. The top bar wraps so the resources drop onto their own line (order: 3). */
+  .game-top {
+    top: 13px;
+    left: 13px;
+    right: 13px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .identity {
+    padding: 6px 10px 6px 6px;
+    gap: 7px;
+  }
+  .hud-name {
+    font-size: 11px;
+  }
+  .hud-portrait {
+    width: 36px;
+    height: 36px;
+  }
+  .identity-status {
+    font-size: 8px;
+  }
+  .game-actions {
+    gap: 6px;
+    margin-left: auto;
+  }
+  .game-actions .icon-button {
+    padding: 10px;
+  }
+  /* Phones are already full screen, so the fullscreen button is hidden. */
+  #fullscreen {
+    display: none;
+  }
+  .resources {
+    order: 3;
+    margin: 0;
+    gap: 16px;
+    padding: 9px 12px;
+  }
+  .resources b {
+    font-size: 12px;
+  }
+  .resources svg {
+    width: 15px;
+    height: 15px;
+  }
+  .region {
+    top: 140px;
+  }
+  .region h1 {
+    font-size: 30px;
+  }
+  .region > span:first-child {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+  /* The quest card is hidden on phones; it would sit where the touch arrows are. */
+  .quest {
+    top: auto;
+    bottom: 13px;
+    left: 13px;
+    max-width: 190px;
+    padding: 13px;
+    display: none;
+  }
+  .minimap {
+    right: 13px;
+    bottom: 13px;
+    width: 140px;
+  }
+  .minimap > span {
+    font-size: 9px;
+    padding-top: 7px;
+  }
+  /* The action button and messages move up so they clear the touch arrows and minimap. */
+  .interact {
+    bottom: 180px;
+    font-size: 10px;
+    max-width: 90vw;
+  }
+  .toast {
+    bottom: 238px;
+    font-size: 11px;
+  }
+
+  /* Touch arrows: up on top, then left, down and right in a row, in the bottom-left corner. */
+  .touch-controls {
+    display: flex;
+    position: absolute;
+    left: 17px;
+    bottom: 20px;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .touch-controls > div {
+    display: flex;
+    gap: 5px;
+  }
+  /* touch-action: none stops a held finger from scrolling or zooming the page. */
+  .touch-controls button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #f0f2d9ba;
+    background: #f8f5e9cf;
+    border-radius: 7px;
+    font-size: 20px;
+    touch-action: none;
+  }
+
+  /* World map dialog. The "M Close map" hint is hidden because phones have no M key. */
+  .map-dialog {
+    padding: 15px;
+  }
+  .map-heading h2 {
+    font-size: 25px;
+  }
+  .map-label {
+    font-size: 7px;
+    padding: 3px 4px;
+    transform: translate(-50%, 10px);
+  }
+  .map-footer {
+    font-size: 9px;
+    gap: 10px;
+  }
+  .map-footer > span:last-child {
+    display: none;
+  }
+}
+
+/* Small phones, about 390px wide: trim the selection screen a bit more so three cards still fit. */
+@media (max-width: 420px) {
+  .selection {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .motto {
+    font-size: 13px;
+  }
+  .wordmark {
+    font-size: 16px;
+  }
+  .intro h1 {
+    font-size: 42px;
+  }
+  .characters {
+    gap: 8px;
+  }
+  .portrait {
+    height: 150px;
+  }
+  .portrait-sprite {
+    height: 78%;
+    bottom: 13px;
+  }
+  .character-name {
+    font-size: 20px;
+  }
+  .character-caption {
+    padding: 12px 4px;
+  }
+  .character-location {
+    font-size: 8px;
+  }
+  .character-story h2 {
+    font-size: 25px;
+  }
+  .intro p {
+    font-size: 11px;
+  }
+  .selection-footer .key-guide {
+    font-size: 9px;
+    gap: 12px;
+  }
+}
+
+/* ---- Reduced motion ---- */
+/* When the player's system asks for less motion, every animation and transition is switched off. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Later fixes to the selection screen ---- */
+/* These come last on purpose, so they win over the earlier rules for the same elements. */
 
 /* Preserve the painted landscape proportions within each portrait window. */
-.character-card{display:flex;flex-direction:column}
-.portrait{width:100%;flex-shrink:0;background-size:300% auto;background-position:var(--scene) 58%}
-.character-caption{width:100%;flex:1}
-.intro h1{font-family:Georgia,serif;font-weight:600;letter-spacing:-2.5px}
-@media(max-height:760px) and (min-width:900px){.portrait{height:32vh}.intro h1{font-size:50px}}
-.motion-preview{width:min(540px,94vw);padding:24px;max-height:94svh;overflow:auto}
-.motion-preview header,.preview-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.motion-preview h2{font:400 32px var(--serif);margin:0}
-.motion-preview label{display:inline-flex;flex-direction:column;gap:4px;font-size:12px;margin-top:12px}
-.motion-preview select,.motion-preview button{font:inherit;color:var(--ink);padding:7px;border:1px solid var(--line);background:var(--paper);border-radius:5px}
-.motion-preview canvas{display:block;width:100%;margin-top:14px;background:#e4e8db;border-radius:8px}
-.motion-preview .play-toggle{align-self:flex-end}.motion-preview output{display:block;font-size:12px}
+.character-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* "300% auto" keeps the scene's own shape instead of stretching it; 58% shows a bit below its middle. */
+.portrait {
+  width: 100%;
+  flex-shrink: 0;
+  background-size: 300% auto;
+  background-position: var(--scene) 58%;
+}
+
+/* The caption fills the rest of the card, so all three cards line up at the bottom. */
+.character-caption {
+  width: 100%;
+  flex: 1;
+}
+
+/* The big welcome heading switches to bold Georgia. */
+.intro h1 {
+  font-family: Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -2.5px;
+}
+
+/* On wide but short screens, these sizes replace the ones in the earlier short-screen block. */
+@media (max-height: 760px) and (min-width: 900px) {
+  .portrait {
+    height: 32vh;
+  }
+  .intro h1 {
+    font-size: 50px;
+  }
+}
+
+/* ---- Animation preview dialog ---- */
+/* A dialog that plays each character animation on a canvas, with menus to pick what to show. */
+.motion-preview {
+  width: min(540px, 94vw);
+  padding: 24px;
+  max-height: 94svh;
+  overflow: auto;
+}
+
+.motion-preview header,
+.preview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.motion-preview h2 {
+  font: 400 32px var(--serif);
+  margin: 0;
+}
+
+/* Each label sits above its menu. */
+.motion-preview label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.motion-preview select,
+.motion-preview button {
+  font: inherit;
+  color: var(--ink);
+  padding: 7px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 5px;
+}
+
+.motion-preview canvas {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  background: #e4e8db;
+  border-radius: 8px;
+}
+
+.motion-preview .play-toggle {
+  align-self: flex-end;
+}
+
+.motion-preview output {
+  display: block;
+  font-size: 12px;
+}
+
+/* ---- Action button while gathering ---- */
 /* A running gather shows its status in the action button; E does nothing until it ends. */
-.interact.busy{cursor:default}.interact.busy kbd{display:none}
+.interact.busy {
+  cursor: default;
+}
+
+.interact.busy kbd {
+  display: none;
+}

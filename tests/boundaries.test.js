@@ -1,26 +1,56 @@
+// Checks that the "pure" game-rule files never reach for browser-only things.
+// The other tests load those files straight into Node, which has no web page, no window and
+// no images. If a rule file starts using one of those, every test that imports it would break.
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 
 // These modules must keep running under plain Node: the unit tests import them directly.
-const SRC=new URL('../src/',import.meta.url);
-const PURE=[...['data','world','actions','game'].flatMap(dir=>readdirSync(new URL(`${dir}/`,SRC)).filter(f=>f.endsWith('.js')).map(f=>`${dir}/${f}`)),'animation/clips.js'];
-const FORBIDDEN=[
-  [/from\s+['"][^'"]+\.(png|webp|jpe?g|css)['"]/,'an image or CSS import'],
-  [/import\.meta/,'import.meta'],
-  [/\bdocument\b/,'document'],
-  [/\bwindow\b/,'window'],
-  [/from\s+['"][^'"]*\/(ui|core|render)\//,'a browser-layer import'],
-  [/from\s+['"][^'"]*(sheets|preview)\.js['"]/,'a browser animation import'],
+
+/** The src/ folder, as a URL so file paths can be built from it. */
+const SRC = new URL('../src/', import.meta.url);
+
+/**
+ * Every pure module, as a path inside src/: all the .js files in data/, world/, actions/ and
+ * game/, plus animation/clips.js (the one animation file with no drawing code in it).
+ */
+const PURE = [
+  ...['data', 'world', 'actions', 'game'].flatMap((dir) =>
+    readdirSync(new URL(`${dir}/`, SRC))
+      .filter((f) => f.endsWith('.js'))
+      .map((f) => `${dir}/${f}`),
+  ),
+  'animation/clips.js',
 ];
 
-test('pure modules avoid browser-only imports and globals',()=>{
-  assert.ok(PURE.length>=12,`expected at least 12 pure modules, found ${PURE.length}`);
-  for(const file of PURE){
-    const source=readFileSync(new URL(file,SRC),'utf8');
-    for(const [pattern,label] of FORBIDDEN)assert.doesNotMatch(source,pattern,`${file} uses ${label}`);
+/**
+ * Things a pure module is not allowed to contain. Each entry is a pattern to search for and a
+ * short name for it, used in the failure message.
+ */
+const FORBIDDEN = [
+  [/from\s+['"][^'"]+\.(png|webp|jpe?g|css)['"]/, 'an image or CSS import'],
+  [/import\.meta/, 'import.meta'],
+  [/\bdocument\b/, 'document'],
+  [/\bwindow\b/, 'window'],
+  [/from\s+['"][^'"]*\/(ui|core|render)\//, 'a browser-layer import'],
+  [/from\s+['"][^'"]*(sheets|preview)\.js['"]/, 'a browser animation import'],
+];
+
+// Catches a rule file that quietly starts using the page, the window, or an image import.
+// The count check also catches the file list going empty, which would make the test pass for nothing.
+test('pure modules avoid browser-only imports and globals', () => {
+  assert.ok(PURE.length >= 12, `expected at least 12 pure modules, found ${PURE.length}`);
+
+  for (const file of PURE) {
+    const source = readFileSync(new URL(file, SRC), 'utf8');
+    for (const [pattern, label] of FORBIDDEN)
+      assert.doesNotMatch(source, pattern, `${file} uses ${label}`);
   }
 });
-test('pure modules import cleanly in Node',async()=>{
-  for(const file of PURE)await import(new URL(file,SRC));
+
+// The text search above can miss things, so this actually loads each file in Node.
+// It fails if any of them crashes on import.
+test('pure modules import cleanly in Node', async () => {
+  for (const file of PURE) await import(new URL(file, SRC));
 });

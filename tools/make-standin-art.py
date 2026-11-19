@@ -13,6 +13,11 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'world')
 OUT = os.path.join(ROOT, 'source'); os.makedirs(os.path.join(OUT, 'objects'), exist_ok=True)
 src = Image.open(os.path.join(ROOT, 'wildhaven.png')).convert('RGB')
 
+# Hunts through the painting for the plainest 64x64 square of one kind of ground.
+# `test(r, g, b)` gets a square's average colour and says whether it looks like the ground we
+# want (for example, green enough to be grass). Of the squares that pass, the one with the
+# least colour change inside it wins, because a smooth patch makes a better repeating texture.
+# Returns that square's top-left corner as (x, y).
 def flattest(test):
     a = np.asarray(src).astype(float); best = None
     for y in range(0, src.height - 64, 8):

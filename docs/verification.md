@@ -101,3 +101,12 @@ Behavior-preserving move to role-based folders (`data/`, `world/`, `actions/`, `
 - Before `state.js` was deleted, the copied data was checked equal to its exports: characters, nodes, supplies, wild kinds, resources, `GATHER_SECONDS`, locations, world size, obstacles and solid bases.
 - Browser (port 5177): Builder played through selection, loading, walk, the 6 s timed gather (busy label, cancel on a fresh movement press, key-repeat ignored, award once), map, pause (movement ignored), save, return, continue, refresh-resume and the animation preview. Scout and Survivor started fresh and gathered (Survivor picked wildflowers for +2 herbs). Console shows no errors. The "Discovered" toast was not reproduced in the browser (the route to Hollowstead was blocked); discovery is covered by tests/actions/discover.test.js and its loop code is unchanged.
 - A Builder save made before the restructure loaded with the same resources.
+
+## Prettier and ELI5 comments — 2026-11-19
+
+Added Prettier 3 (`npm run format`, `npm run format:check`) and a plain-language comment above every named function, plus file headers, data-table notes, CSS section headers and `#` comments on the Python tools. The rule is written under "Code Style" in `CLAUDE.md`, and `tests/comments.test.js` enforces the comments.
+
+- Every JS file except `src/ui/layout.js` and `src/animation/preview.js` was minified with esbuild (whitespace and comments stripped, names kept) at HEAD and after the change. The output is byte-identical, so only formatting and comments changed. The minified CSS is identical to HEAD run through Prettier. The only difference from HEAD is a space Prettier adds after custom-property colons, and browsers trim that space.
+- `layout.js` and `preview.js` also had their HTML template strings formatted (`/* HTML */`), which changes whitespace inside the HTML. The old and new templates were both mounted in the browser at 1366×850 and 390×844. All three screens, all three dialogs and the animation preview were measured: 215 elements in all, with every bounding box identical.
+- Browser (127.0.0.1:5178): the Builder started fresh, walked at 155 units/s, and gathered scrap timber in 6 s for +3 wood with the busy label. The quest ticked. The map, pause and animation preview all opened. No console errors.
+- `npm test`: 38 passing (the new comment-rule test included). `npm run build` and `npm run format:check` pass.

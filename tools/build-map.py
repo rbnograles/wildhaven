@@ -21,10 +21,20 @@ rng = random.Random(11)
 
 # ---- terrain at tile corners -------------------------------------------------------------
 PAINTED = [[0,2790],[240,2710],[480,2745],[720,2680],[920,2790],[1110,2660],[1280,2680],[1500,2970],[1650,2850],[1800,2570],[2048,2200]]
+
+# Finds where the sea starts on one row of the map. Give it a height (y) and it returns the x
+# where land turns into water: everything to the right of that x is sea.
+# The top part of the coast is a gentle wave made from two sine curves. The lower part follows
+# the hand-painted points in PAINTED, drawing straight lines between neighbouring points
+# (like connect-the-dots).
 def coast(y):
     if y < 2808: return 5770 + 70 * math.sin(y / 310) + 30 * math.sin(y / 97)
     y -= 2048; i = next((k for k, p in enumerate(PAINTED) if p[0] >= y), len(PAINTED) - 1); a, b = PAINTED[max(0, i - 1)], PAINTED[i]
     return 3072 + a[1] + (b[1] - a[1]) * (0 if a[0] == b[0] else (y - a[0]) / (b[0] - a[0]))
+
+# Says what the ground is at one point of the world: WATER, SAND, DIRT or GRASS.
+# It checks in order: past the coast is sea; a wavy strip along the coast (and a round beach
+# where the survivor washes up) is sand; the village clearing and the forest camp are dirt; everything else is grass.
 def terrain(x, y):
     edge = coast(y)
     if x > edge + 16: return WATER
@@ -42,10 +52,16 @@ noise = np.real(np.fft.ifft2(f * np.exp(-(fx ** 2 + fy ** 2) * 900))); noise -= 
 u = (np.arange(TILE) + 0.5) / TILE; U, V = np.meshgrid(u, u)
 
 tiles = []   # RGBA arrays; gid = index + 1
+
+# Adds 16 tiles to the tileset, one for each 64px square of a 256px texture (4 across, 4 down).
+# `make(px, py)` is a small recipe that paints the tile for square (px, py).
 def variants(make):
     # 16 variants per tile, picked by map position, so each 256px texture runs unbroken across the map
     for py in range(4):
         for px in range(4): tiles.append(make(px, py))
+
+# Cuts one tile-sized square out of a bigger picture, like cutting one square from a sheet of
+# stamps. (px, py) says which square: px across, py down. Returns that 64x64 piece.
 def cut(a, px, py): return a[py*TILE:(py+1)*TILE, px*TILE:(px+1)*TILE]
 first = {'ground': 1}
 variants(lambda px, py: np.dstack([cut(tex['grass'], px, py), np.full((TILE, TILE), 255.0)]))
@@ -54,6 +70,11 @@ for name in ('dirt', 'sand', 'water'):
     for mask in range(1, 16):   # which of the four tile corners (TL, TR, BL, BR) hold this terrain
         tl, tr, bl, br = mask & 1, mask >> 1 & 1, mask >> 2 & 1, mask >> 3 & 1
         blend = tl * (1 - U) * (1 - V) + tr * U * (1 - V) + bl * (1 - U) * V + br * U * V
+
+        # Paints one edge tile for this terrain: the texture is solid where the corners say so
+        # and fades to see-through elsewhere, with a little noise so the edge looks natural.
+        # Water tiles also get pale foam where the sea meets the sand.
+        # Returns the tile's pixels, with an alpha (see-through) channel.
         def make(px, py, blend=blend, name=name):
             val = blend + cut(noise, px, py) * 0.5
             rgb = cut(tex[name], px, py).copy()
@@ -63,6 +84,11 @@ for name in ('dirt', 'sand', 'water'):
                 rgb = rgb * (1 - foam) + np.array([236, 250, 244.0]) * foam
             return np.dstack([rgb, alpha * 255])
         variants(make)
+
+# Picks the tileset number (gid) for one map square.
+# `name` is the terrain layer, `mask` says which of the square's four corners have that terrain,
+# and (tx, ty) is the square's place on the map, used to pick which of the 16 texture pieces to
+# show so the texture flows on without repeating. Returns 0 (empty) when no corner has the terrain.
 def gid(name, mask, tx, ty): return 0 if mask == 0 else first[name] + (mask - 1) * 16 + (ty % 4) * 4 + tx % 4
 
 TS_COLS = 32; ts_rows = math.ceil(len(tiles) / TS_COLS); cell = TILE + 2
@@ -93,6 +119,11 @@ KEEP_CLEAR = [(620, 550), (3072, 2048), (5472, 3628), (870, 650), (480, 570), (4
 # unreadable. Never edit it; move nodes in KEEP_CLEAR instead, which only removes scenery.
 SCATTER_CLEAR = [(620, 550), (3072, 2048), (5472, 3628), (657, 567), (490, 540), (480, 705), (3108, 2072), (2992, 2158), (3202, 2348), (5507, 3648), (5322, 3778), (3542, 2578)]
 fixed = list(objects)
+
+# Says whether a random tree or rock may go at (x, y). It must be more than 150 away from every
+# spot in SCATTER_CLEAR, and must not land on, behind, or just in front of a landmark building
+# (tent, log, campfire, houses, workshop, ship), where it would cover it up. Returns True when
+# the spot is fine.
 def scatter_ok(x, y):
     return (all(math.hypot(x - cx, y - cy) > 150 for cx, cy in SCATTER_CLEAR)
             and all(abs(x - ox) > 330 or not (-150 < oy - y < 420) for _, ox, oy in fixed))
@@ -134,6 +165,9 @@ for n in ('ground', 'dirt', 'sand', 'water'):
     for i, g in enumerate(layers[n]):
         if g: full.alpha_composite(small[g - 1], ((i % COLS) * TILE // S, (i // COLS) * TILE // S))
 sprites = {n: Image.open(os.path.join(SRC, 'objects', f'{n}.png')).convert('RGBA') for n in spec}
+
+# Shrinks sprite `im` (named `n`) down to minimap size: first by its own draw `scale` from
+# objects.json, then by S. Never smaller than 1 pixel. Returns the shrunken picture.
 def shrink(n, im): sc = spec[n].get('scale', 1); return im.resize((max(1, int(im.width * sc) // S), max(1, int(im.height * sc) // S)), Image.LANCZOS)
 sprites = {n: shrink(n, im) for n, im in sprites.items()}
 for n, x, y in sorted(objects, key=lambda o: (not spec[o[0]].get('flat', False), o[2])):
