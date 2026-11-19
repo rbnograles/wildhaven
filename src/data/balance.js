@@ -17,3 +17,9 @@ export const GATHER_RANGE = 95;
 // How many seconds every gather takes. Gathering tools will shorten this (towards 0.5 s); until then
 // every supply takes the full time. This is a design decision, so don't shorten it as a "fix".
 export const GATHER_SECONDS = 6;
+
+/** How close the player must come to a landmark to find it. */
+export const LANDMARK_RADIUS = 200;
+
+/** How close the player must walk to a signpost to find it. */
+export const WAYPOINT_RADIUS = 110;

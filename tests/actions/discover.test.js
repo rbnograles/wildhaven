@@ -5,7 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame } from '../../src/game/state.js';
 import { discover } from '../../src/actions/discover.js';
-import { SPAWNS } from '../../src/data/places.js';
+import { SPAWNS, LANDMARKS, WAYPOINTS } from '../../src/data/places.js';
+import { LANDMARK_RADIUS, WAYPOINT_RADIUS } from '../../src/data/balance.js';
 
 // Guards against a region being "discovered" again on every frame while the player stands in it,
 // and checks that walking into a second region adds it alongside the first.
@@ -20,4 +21,37 @@ test('a region is discovered once, when the player first stands in it', () => {
   Object.assign(game.player, SPAWNS.scout);
   assert.equal(discover(game).filter((f) => f.kind === 'region')[0].id, 'pinefall');
   assert.deepEqual(game.discovered, ['lagoon', 'pinefall']);
+});
+
+// Guards landmark finding: standing close enough finds it once; standing just outside does not.
+test('a landmark is found once when the player comes within its radius', () => {
+  const game = createGame('builder'),
+    oak = LANDMARKS.find((l) => l.id === 'h-oak');
+
+  Object.assign(game.player, { x: oak.x, y: oak.y + LANDMARK_RADIUS + 5 });
+  assert.equal(discover(game).filter((f) => f.kind === 'landmark').length, 0);
+
+  Object.assign(game.player, { x: oak.x, y: oak.y + LANDMARK_RADIUS - 5 });
+  assert.deepEqual(
+    discover(game).filter((f) => f.kind === 'landmark'),
+    [{ kind: 'landmark', id: 'h-oak', name: 'The Great Oak' }],
+  );
+  assert.equal(discover(game).length, 0);
+  assert.deepEqual(game.landmarks, ['h-oak']);
+});
+
+// Guards signpost finding, which is what unlocks fast travel.
+test('a signpost is found once when the player walks up to it', () => {
+  const game = createGame('builder'),
+    post = WAYPOINTS.find((w) => w.id === 'h-wp-east');
+
+  Object.assign(game.player, { x: post.x + WAYPOINT_RADIUS + 5, y: post.y });
+  assert.equal(discover(game).filter((f) => f.kind === 'waypoint').length, 0);
+
+  Object.assign(game.player, { x: post.x, y: post.y });
+  assert.deepEqual(
+    discover(game).filter((f) => f.kind === 'waypoint'),
+    [{ kind: 'waypoint', id: 'h-wp-east', name: 'East Meadow Signpost' }],
+  );
+  assert.deepEqual(game.waypoints, ['h-wp-east']);
 });
