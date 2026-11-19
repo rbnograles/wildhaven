@@ -13,7 +13,7 @@ The standardized game design document is `docs/gdd.md` (imported 2026-11-19 with
 ```sh
 npm install
 npm run dev          # Vite on http://127.0.0.1:5173 (also the "wildhaven" config in .claude/launch.json)
-npm test             # node --test: runs tests/*.test.js with Node's built-in runner
+npm test             # node --test: runs every *.test.js under tests/ with Node's built-in runner
 npm run build        # Vite production build → dist/
 npm run preview      # serve dist/
 npm run format       # Prettier: rewrite every file it covers (see .prettierignore)
@@ -84,7 +84,7 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 - `objects.json` fields: `origin` is the ground contact point as a fraction of the sprite size. `footprint` is `[halfWidth, depth]` of the solid base; leave it out for walk-through objects. `flat` means the object is drawn under characters. `scale` is the draw size wherever the map places that sprite (flowers use 0.4 so a patch is smaller than a character); the footprint scales with it. Every other object is depth-sorted by its y position, so the player can walk in front of or behind it.
 - **`build-map.py` hard-codes coordinates that also live in `src/data/characters.js` and `src/data/supplies.js`.** `REGION_OFFSETS` must match `V_OFF`/`C_OFF`. `KEEP_CLEAR` lists the absolute positions of the spawns and supply nodes; scattered scenery within 150 of them is removed after scattering. If you move or add a spawn or node, update `KEEP_CLEAR` and re-run the script. **Never edit `SCATTER_CLEAR`.** It is the frozen list the scatter loop has always skipped. Changing it changes the random sequence and reshuffles every later tree and rock, which can put a solid base under a saved player and make that save unreadable. The placement of landmark buildings (tent, houses, workshop, ship) is also defined in `build-map.py`.
 - **Supply nodes are not in the map.** `src/render/renderer.js` draws each one from `NODES` (`src/world/nodes.js`) (`sprite` is an `objects.json` key, drawn at `scale`), and `nodeBases` in `src/world/nodes.js` makes its scaled footprint solid until it is collected. `movePlayer` ignores a base the player is already inside, so an old save can't get trapped.
-- **Wild scenery is in the map and also harvestable.** `WILD` in `src/data/supplies.js` names scattered sprites (today only `flowers`) that become `NODES` entries with id `<name>-<x>-<y>` and a `regrow` time. the renderer skips them in the scenery loop and draws them with the supplies. They are walk-through (no footprint), so `nodeBases` covers only the fixed `SUPPLIES`.
+- **Wild scenery is in the map and also harvestable.** `WILD` in `src/data/supplies.js` names scattered sprites (today only `flowers`) that become `NODES` entries with id `<name>-<x>-<y>` and a `regrow` time. The renderer skips them in the scenery loop and draws them with the supplies. They are walk-through (no footprint), so `nodeBases` covers only the fixed `SUPPLIES`.
 - `tools/make-standin-art.py` cut placeholder source art out of `assets/world/wildhaven.png`. **Do not re-run it.** It would overwrite any source art that has since been replaced. To change art, replace the file under `source/` and re-run `build-map.py`.
 
 ## Character Sprites

@@ -218,7 +218,7 @@ export async function createRenderer(container, miniCanvas) {
       banner: false,
       audio: { noAudio: true },
       scale: { mode: Phaser.Scale.RESIZE, width: '100%', height: '100%' },
-      input: { keyboard: false, mouse: false, touch: false }, // main.js owns input through the DOM
+      input: { keyboard: false, mouse: false, touch: false }, // src/core/input.js handles input through the DOM, not Phaser
       render: { antialias: true },
       scene: WorldScene,
     });
