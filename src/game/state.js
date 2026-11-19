@@ -176,7 +176,11 @@ const shiftId = (id) =>
  * @returns {object} A fresh player object.
  */
 function shiftPlayer(s) {
-  const player = { ...s.player, x: s.player?.x + SEA_BORDER, y: s.player?.y + SEA_BORDER };
+  // A missing or non-number position (JSON turns NaN into null, and null + 2048 would look fine) is
+  // kept as NaN, so restoreGame refuses it.
+  const { x, y } = s.player ?? {},
+    shifted = (n) => (Number.isFinite(n) ? n + SEA_BORDER : NaN),
+    player = { ...s.player, x: shifted(x), y: shifted(y) };
   const spawn = CHARACTERS.find((c) => c.id === s.character)?.spawn;
   if (
     Number.isFinite(player.x) &&

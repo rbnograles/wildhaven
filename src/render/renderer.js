@@ -98,8 +98,10 @@ export async function createRenderer(container, miniCanvas) {
     fires = new Map();
 
   const scene = await new Promise((resolve, reject) => {
+    // On timeout, run fail() so the half-built game is destroyed too; a leftover canvas would cover
+    // the new one on "Try again". The game always exists by then: 20 s is long after it was made.
     const timer = setTimeout(
-      () => reject(new Error('The world took too long to load. Please try again.')),
+      () => fail('The world took too long to load. Please try again.'),
       20000,
     );
 

@@ -67,7 +67,7 @@ Kit tools are not equip mechanics; they only identify the character visually (RE
 2. Spot a marked supply. The nearest one within 95 units highlights and shows "E".
 3. Press E: a 6 s gather animation loops (moving cancels it and awards nothing), then the resources are added.
 4. Keep walking to reach the other starting regions (3 total).
-5. The first objective completes when you have gathered once and discovered three regions. After that the goals card follows the region you are in: places found n / 7 and signposts found n / 2. Free exploration continues.
+5. The first objective completes when you have gathered once and discovered three regions. After that the goals card follows the region you are in: places found n / 7 (n / 10 in the lagoon) and signposts found n / 2. Free exploration continues.
 
 The fixed supplies are finite: 9 one-time supply nodes, all near the three starting places. The other four regions (Sunscar Desert, Frostpeak, Stonewater Canyons, Emerald Jungle) have no fixed supplies yet. Wild flower patches (38) are the one renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Resources have no use yet. README: "Resources currently support gathering and exploration objectives, not crafting."
 
@@ -104,7 +104,7 @@ A camp's useful reach should be about half a daylight round trip. **Numbers not 
 "YOUR FIRST FOOTSTEPS / A place to begin"
 - Gather your first supplies
 - Discover three regions (n / 3)
-- Then, per region: places found n / 7, signposts found n / 2
+- Then, per region: places found n / 7 (n / 10 in the lagoon), signposts found n / 2
 - On completion: "You have found your feet. Keep exploring — this is just the beginning."
 
 **Planned objective chain** [Planned, moved from spec "Progression and failure"]
@@ -248,7 +248,7 @@ Superseded: the spec said "Their broader motivation and preferred art references
 
 ### 6.4 Maps and pause [Built]
 - The minimap shows the area around the player. The world map (M, or click the minimap) shows the whole 7:5 world, land and sea border, under the fog of war (6.16), and marks found places, signposts, old boats, the moored boat and camps.
-- Fast travel: any found signpost can be travelled to from the world map.
+- Fast travel: any found signpost can be travelled to from the world map. A player who travels arrives on foot and their boat drifts back to its old boat's launch spot, so it is never stranded.
 - The game pauses while the pause, map or reset dialog is open, on Escape or the pause button, and while the tab is hidden.
 
 ### 6.5 Saves [Built]
@@ -423,13 +423,13 @@ In a running browser the player can explore beyond the starting screen, gather a
 
 The sections above were reconciled with this update on 2026-11-19; this list is kept as the change record. Source: `docs/superpowers/specs/2026-11-19-big-world-design.md`.
 
-- **[Built] World.** 384×256 tiles (24,576×16,384 units), about 100 s to run across. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1.
+- **[Built] World.** 448×320 tiles (28,672×20,480 units): the 384×256-tile home continent (24,576×16,384 units, about 100 s to run across) inside a 2,048-unit sea border. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1.
 - **[Built] Starting places.** Scout in Pinefall Woods, Builder in Hollowstead Meadows, Survivor on the Driftwood Lagoon shore. They are far apart.
-- **[Built] Discovery.** A region is discovered by standing in it. 49 landmarks (seven per region) are found within 200 units; 14 signposts (two per region) within 110.
-- **[Built] Fast travel.** Any found signpost can be travelled to from the world map.
-- **[Built] Objective.** "Your first footsteps" (gather once, discover three regions), then the goals card follows the current region: places found n / 7 and signposts found n / 2. The world map shows totals.
+- **[Built] Discovery.** A region is discovered by standing in it. 52 landmarks (seven per region, ten in the lagoon with its islets) are found within 200 units; 14 signposts (two per region) within 110.
+- **[Built] Fast travel.** Any found signpost can be travelled to from the world map; the boat drifts back to its launch spot.
+- **[Built] Objective.** "Your first footsteps" (gather once, discover three regions), then the goals card follows the current region: places found n / 7 (n / 10 in the lagoon) and signposts found n / 2. The world map shows totals.
 - **[Built] Maps.** The minimap shows the area around the player; the world map dims unexplored regions and marks found places and signposts.
-- **[Built] Saves.** `version: 3`, adding found landmarks and signposts. Older saves take the start-fresh path.
+- **[Built] Saves.** `version: 5` (found landmarks and signposts, survival, camps, fog and the boat). Version 4 and version 3 saves are upgraded; older saves take the start-fresh path.
 - **[Built] Art.** The new biomes use stand-in art derived from existing sprites, each with a prompt file for the real version.
 - **[Planned] Build 2.** Objectives journal, biome-specific supplies and collectibles.
 - **[Planned] Build 3.** Harsh conditions (cold, heat) and gear that counters them; until then every region is freely walkable.
@@ -446,7 +446,7 @@ Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/spec
 - **[Planned] The full world.** An archipelago of about nine continents and many small islands, with open sea between them. The seven-region map is the home continent; the others are locked. The user's reference map (snowy, volcanic, forest, castle and desert islands around a large south-east continent) is a mood board only; all art stays our own.
 - **[Planned] Unlocking.** Other continents are reached by building or repairing boats. Sailing is free: the player steers the boat on the open sea.
 - **[Planned] Boat tiers.** A small boat for coastal water; a bigger ship for deep water and far continents.
-- **[Built] Slice A1: island home and a small boat (2026-11-19).** The map grows by a 2,048-unit sea border (448×320 tiles), with deep water as the edge. Driftwood regrows on beaches. Four old boats on the coast; one can be repaired for 6 wood + 2 stone. The player boards, sails coastal water and lands. The three lagoon islets become reachable, with one new landmark each (52 in all). Merged onto M2, the save is version 5: it upgrades M2's version 4 and the older version 3 saves instead of resetting them. Campfires can't be built from the boat; passing out at sea wakes the player ashore and the boat drifts back to where it was mended.
+- **[Built] Slice A1: island home and a small boat (2026-11-19).** The map grows by a 2,048-unit sea border (448×320 tiles), with deep water as the edge. Driftwood regrows on beaches. Four old boats on the coast; one can be repaired for 6 wood + 2 stone. The player boards, sails coastal water and lands. The three lagoon islets become reachable, with one new landmark each (52 in all). Merged onto M2, the save is version 5: it upgrades M2's version 4 and the older version 3 saves instead of resetting them. Campfires can't be built from the boat; passing out at sea wakes the player ashore and the boat drifts back to where it was mended; fast-travelling to a signpost does the same.
 - **[Planned] Slice A2.** Repair the big shipwreck into a ship that crosses deep water.
 - **[Planned] Slice A3.** A second continent with its own map, loaded one continent at a time (for example a volcanic island with a new lava biome).
 - **[Planned] Slice A4.** The world map zooms out to the archipelago; unvisited continents stay under fog. This also answers Risk 1 at archipelago scale.

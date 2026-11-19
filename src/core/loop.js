@@ -29,7 +29,7 @@ const MAX_FRAME_DT = 0.05,
   DEEP_WARN_MS = 4000;
 
 // The words for each kind of find, used in the pop-up message. Each takes the find
-// (`{kind, id, name}`) from discover().
+// (`{kind, id, name}`) from discover() and the game state (the old-boat words depend on it).
 const FOUND = {
   // Entering a region for the first time.
   region: ({ name }) => `Discovered ${name}`,
@@ -39,8 +39,11 @@ const FOUND = {
   // Walking up to a signpost.
   waypoint: ({ name }) => `Signpost found: ${name}`,
   // Coming close to an old boat on the beach, and what mending it costs.
-  wreck: ({ name }) =>
-    `Found ${name} · Repair it with ${REPAIR_COST.wood} wood and ${REPAIR_COST.stone} stone`,
+  // A player who already owns a boat can't repair another, so the cost is left out for them.
+  wreck: ({ name }, state) =>
+    state.boat
+      ? `Found ${name}`
+      : `Found ${name} · Repair it with ${REPAIR_COST.wood} wood and ${REPAIR_COST.stone} stone`,
 };
 
 /**
@@ -147,7 +150,7 @@ export function startLoop(session, ui) {
           const met = markFinds(state, found);
           ui.hud.notify(
             [
-              ...found.map((f) => FOUND[f.kind](f)),
+              ...found.map((f) => FOUND[f.kind](f, state)),
               ...met.map(({ camp, need }) => `${camp.name}: need met · ${describeNeed(need)}`),
             ].join(' · '),
           );

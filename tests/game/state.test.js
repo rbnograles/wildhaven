@@ -353,6 +353,14 @@ test('a broken version 3 save is still refused', () => {
     assert.equal(restoreGame(v3Save(changes)), null, JSON.stringify(changes));
 });
 
+// Guards the upgrades against a player with no usable position (JSON turns NaN into null):
+// the old labels must not smuggle one into a new game.
+test('version 3 and version 4 saves with a broken player position are refused', () => {
+  const broken = { x: NaN, y: NaN, direction: 0 };
+  assert.equal(restoreGame(v3Save({ player: broken })), null);
+  assert.equal(restoreGame(v4Save({ player: broken })), null);
+});
+
 // Guards survival-update saves: the player, every camp, the regrow timers and the fog move out by
 // the sea border together, so a camp and the fog around it still line up with the land.
 test('a version 4 save moves onto the bigger map: player, camps, timers and fog shift by the sea border', () => {

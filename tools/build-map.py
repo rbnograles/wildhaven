@@ -69,7 +69,9 @@ def coast(y): return 22000 + 450 * math.sin(y / 1700) + 150 * math.sin(y / 430)
 
 # How far a point is inside the island's sea coast: positive on land, negative at sea. The coast follows the old
 # map's edge, pulled in or pushed out by two sine waves (from 220 units in to 520 units out), so it never runs
-# straight. Every place in places.json is at least 900 units inside the old edge, so the coast never reaches one.
+# straight. Landmarks, signposts, spawns and supplies are at least 900 units inside the old edge, so the coast never
+# reaches them. The old boats (wrecks) are the exception: they sit on the new beach by design, about 100 units inland
+# of the coast (wreck-west lies outside the old edge).
 def inland(x, y):
     edge = min(x, y, LAND_W - x, LAND_H - y)
     return edge + 150 + 250 * math.sin((x + y) / 1300 + 0.8) + 120 * math.sin((x - y) / 470 + 2.3)

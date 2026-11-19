@@ -11,6 +11,12 @@ import { BOARD_RANGE, LAND_RANGE } from '../../src/data/balance.js';
 import { nodeBases, wreckBases } from '../../src/world/nodes.js';
 import { flood } from './flood.js';
 
+// Guards re-boarding after landing: landingSpot only looks inside LAND_RANGE, so the player must
+// always be inside BOARD_RANGE of the boat they just left.
+test('the landing range never exceeds the boarding range', () => {
+  assert.ok(LAND_RANGE <= BOARD_RANGE);
+});
+
 // Guards the build-time fact the save migration uses to move old positions onto the bigger map.
 test('the sea border is 2048 units wide', () => {
   assert.equal(SEA_BORDER, 2048);

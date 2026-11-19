@@ -93,6 +93,17 @@ function cover(data, first, x, y) {
 const waterAt = (x, y) => cover(water, firstWater, x, y);
 
 /**
+ * Says whether a spot is dry land, with no more water than the player may wade through.
+ *
+ * It uses the same 0.35 limit as walking, so "dry" here means the sea does not cover the spot.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True if the spot is land (or at least not sea).
+ */
+export const isDryLand = (x, y) => waterAt(x, y) < 0.35;
+
+/**
  * Says whether a spot is deep sea, far from any land, where the small boat can't go.
  *
  * @param {number} x - World x position.
@@ -263,7 +274,7 @@ export function isWalkable(x, y, extra = [], cliffs = true) {
  * Says whether the small boat may float on a spot.
  *
  * The boat needs enough water under it (it can't sit on the beach), must stay out of the deep
- * sea, and can't pass through anything solid, such as a bridge post.
+ * sea, and can't pass through anything solid, such as a rock or a tree standing in the shallows.
  *
  * @param {number} x - World x position.
  * @param {number} y - World y position.

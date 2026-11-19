@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD } from '../../src/world/map.js';
+import { WORLD, isDryLand } from '../../src/world/map.js';
 import {
   REGIONS,
   REGION_GRID,
@@ -27,6 +27,14 @@ test('the region grid covers the world and only names known regions', () => {
       used.add(i);
     }
   assert.equal(used.size, 7);
+});
+
+// Guards the world-map labels: a label on the sea (the lagoon) or on a pool (the desert) looks wrong.
+test('every region label is on dry land', () => {
+  for (const r of REGIONS) {
+    assert.ok(isDryLand(r.x, r.y), r.id);
+    assert.equal(regionOf(r.x, r.y).id, r.id, r.id);
+  }
 });
 
 // Guards the link between a place and its region: the HUD counts places per region, so a
