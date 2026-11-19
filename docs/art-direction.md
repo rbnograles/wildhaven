@@ -61,3 +61,7 @@ Made by `tools/make-biome-standins.py` from existing art, so the 384×256 world 
 | `objects/buildings/sandstone-ruin.png` | drawn from rectangles | Desert ruins, jungle temple |
 | `objects/props/bridge.png` | drawn plank deck (flat) | River bridges |
 | `objects/props/signpost.png` | drawn post and arrow board | Fast-travel signposts |
+| `source/ground/deep.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Deep sea (archipelago A1) |
+| `objects/props/driftwood.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Beach driftwood (1 wood) |
+| `objects/props/old-boat.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Old boats on the coast |
+| `objects/props/rowboat.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | The repaired boat the player rows |

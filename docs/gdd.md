@@ -287,9 +287,10 @@ Discover and recruit up to three settlers. Each belongs to one camp and works ne
 A second camp can be founded "a meaningful walk from the first". Settlements appear on the minimap and can be revisited on foot.
 
 ### 6.13 World layout
-- [Built] Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three unreachable islands. The forest campsite, the abandoned village with its workshop, and the shipwreck beach are the three starting places. The new biomes use stand-in art.
+- [Built] Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1. The forest campsite, the abandoned village with its workshop, and the shipwreck beach are the three starting places. The new biomes use stand-in art.
 - [Planned] "Traversable forest and meadow connect resource sites, a river crossing, ruins, and at least two viable settlement locations."
-- [Planned] The seven-region map is the home continent of an archipelago of about nine continents. The others are reached by boat (see "Archipelago Direction").
+- [Built] The seven-region map is now an island home in a sea border, and slice A1 is built (see "Archipelago Direction").
+- [Planned] It is the home continent of an archipelago of about nine continents. The others are reached by boat (see "Archipelago Direction").
 
 ### 6.14 Controls
 
@@ -372,7 +373,7 @@ Multiplayer, mobile controls, realistic Earth geography, general world streaming
 | M2 | Loop proof: the 9-item critical path below | Planned [Review] | This document |
 | M3 | The rest of the spec plus review additions (10 items below) | Planned [Review] | This document + spec |
 | Later | Towns and cities | Future, **unscoped**: needs its own content list before work starts (Risk 3) | Spec: "towns and cities are later stages" |
-| A1–A4 | Archipelago: island home and a small boat, the ship and open sea, a second continent, the archipelago world map | Planned; A1 has an approved design. Order against M2/M3 and big-world builds 2–4 is open (Open Question 14) | `specs/2026-11-19-archipelago-design.md` |
+| A1–A4 | Archipelago: island home and a small boat, the ship and open sea, a second continent, the archipelago world map | A1 built; A2–A4 planned. Order against M2/M3 and big-world builds 2–4 is open (Open Question 14) | `specs/2026-11-19-archipelago-design.md` |
 
 **M2: loop proof (critical path)** [Review]
 1. Day/night cycle (~6 min, ~4 min daylight; to be retuned by "distance costs")
@@ -413,7 +414,7 @@ In a running browser the player can explore beyond the starting screen, gather a
 
 The sections above were reconciled with this update on 2026-11-19; this list is kept as the change record. Source: `docs/superpowers/specs/2026-11-19-big-world-design.md`.
 
-- **[Built] World.** 384×256 tiles (24,576×16,384 units), about 100 s to run across. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three unreachable islands.
+- **[Built] World.** 384×256 tiles (24,576×16,384 units), about 100 s to run across. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1.
 - **[Built] Starting places.** Scout in Pinefall Woods, Builder in Hollowstead Meadows, Survivor on the Driftwood Lagoon shore. They are far apart.
 - **[Built] Discovery.** A region is discovered by standing in it. 49 landmarks (seven per region) are found within 200 units; 14 signposts (two per region) within 110.
 - **[Built] Fast travel.** Any found signpost can be travelled to from the world map.
@@ -436,7 +437,7 @@ Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/spec
 - **[Planned] The full world.** An archipelago of about nine continents and many small islands, with open sea between them. The seven-region map is the home continent; the others are locked. The user's reference map (snowy, volcanic, forest, castle and desert islands around a large south-east continent) is a mood board only; all art stays our own.
 - **[Planned] Unlocking.** Other continents are reached by building or repairing boats. Sailing is free: the player steers the boat on the open sea.
 - **[Planned] Boat tiers.** A small boat for coastal water; a bigger ship for deep water and far continents.
-- **[Planned] Slice A1: island home and a small boat.** The map grows by a 2,048-unit sea border (448×320 tiles), with deep water as the edge. Driftwood regrows on beaches. Four old boats on the coast; one can be repaired for 6 wood + 2 stone. The player boards, sails coastal water and lands. The three lagoon islets become reachable, with one new landmark each (52 in all). Save version 4 migrates version 3 saves instead of resetting them.
+- **[Built] Slice A1: island home and a small boat (2026-11-19).** The map grows by a 2,048-unit sea border (448×320 tiles), with deep water as the edge. Driftwood regrows on beaches. Four old boats on the coast; one can be repaired for 6 wood + 2 stone. The player boards, sails coastal water and lands. The three lagoon islets become reachable, with one new landmark each (52 in all). Save version 4 migrates version 3 saves instead of resetting them.
 - **[Planned] Slice A2.** Repair the big shipwreck into a ship that crosses deep water.
 - **[Planned] Slice A3.** A second continent with its own map, loaded one continent at a time (for example a volcanic island with a new lava biome).
 - **[Planned] Slice A4.** The world map zooms out to the archipelago; unvisited continents stay under fog. This also answers Risk 1 at archipelago scale.

@@ -1,6 +1,6 @@
 # Archipelago Design (slice 1 of 4: island home and a small boat)
 
-**Date:** 2026-11-19 · **Status:** design approved in chat; spec awaiting review
+**Date:** 2026-11-19 · **Status:** slice A1 built on branch worktree-archipelago-a1
 
 ## Vision
 

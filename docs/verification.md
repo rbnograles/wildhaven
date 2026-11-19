@@ -173,8 +173,8 @@ Browser at `http://127.0.0.1:5178` (1280×720), Builder in Hollowstead: all 29 s
 
 Not checked by hand: the field journal's keepsake pictures (they use the same `objectUrls` names, which did not change).
 
-## Archipelago build A1: sea, old boats and the rowboat (browser at 127.0.0.1:5188)
+## Archipelago A1 (2026-11-19)
 
-Survivor repaired the Lagoon Rowboat (glow and E cap, progress bar, old boat faded, brown rowboat in the water pointing east), boarded (character shows from the waist up, boat rocks), rowed to Gull Isle ("Found Gull Isle"), hit "Too rough for a small boat." at the deep water, landed on the islet and the mainland, and the boat turned for north and south. Reloading aboard and ashore restored player and boat. Scout found the Pinefall Shore Rowboat, "Pick up driftwood" on the beach, goal card read Wood 6 / 6. A version 3 Builder save loaded with "Welcome back." Narrow screen (375 px): the button read "Board the boat" and boarded by tap. No console errors; about 60 fps while rowing.
+Browser check (Task 10) at 127.0.0.1:5188, because other sessions held 5173 and 5179. Survivor repaired the Lagoon Rowboat (glow and E cap, progress bar, old boat faded, brown rowboat in the water pointing east), boarded (character shows from the waist up, boat rocks), rowed to Gull Isle ("Found Gull Isle"), hit "Too rough for a small boat." at the deep water, landed on the islet and the mainland, and the boat turned for north and south. Reloading aboard and ashore restored player and boat. Scout found the Pinefall Shore Rowboat, "Pick up driftwood" on the beach, goal card read Wood 6 / 6. A version 3 Builder save loaded with "Welcome back." Narrow screen (375 px): the button read "Board the boat" and boarded by tap. After landing, `player.setCrop()` with no arguments reset the crop (full body again). No console errors; about 60 fps while rowing (requestAnimationFrame count over 5 s).
 
 Known issue: on the world map the "Driftwood Lagoon" label sits over the shallow sea east of the coast, not on land.
