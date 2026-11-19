@@ -1,0 +1,237 @@
+{
+  "tool": "built-in image_gen",
+  "styleReference": "D:/Code/GameDev/game 1/assets/characters/starting-characters-idle-v1.png",
+  "assets": [
+    {
+      "name": "grass",
+      "prompt": "Use case: stylized-concept. Asset type: seamless ground texture for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSeamless tileable square ground texture for a top-down game, viewed straight down, filling the whole image edge to edge: short meadow grass in warm yellow-green with a few tiny darker tufts; no flowers, rocks or bare patches. Even lighting and even tone across the image, small-scale detail only, no large objects, no shadows from off-screen things, no vignette, no focal point. Left edge matches right edge and top edge matches bottom edge so it repeats without visible seams. Opaque square 1024 x 1024 texture. The straight-down ground-plane view and even illumination take priority over directional shading.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-17df2955-43c8-4e35-bf14-f8684dccc089.png"
+    },
+    {
+      "name": "dirt",
+      "prompt": "Use case: stylized-concept. Asset type: seamless ground texture for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSeamless tileable square ground texture for a top-down game, viewed straight down, filling the whole image edge to edge: trodden pale ochre village dirt with a few tiny pebbles; no footprints, ruts or grass. Even lighting and even tone across the image, small-scale detail only, no large objects, no shadows from off-screen things, no vignette, no focal point. Left edge matches right edge and top edge matches bottom edge so it repeats without visible seams. Opaque square 1024 x 1024 texture. The straight-down ground-plane view and even illumination take priority over directional shading.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-61d8b150-2be9-4280-9ed1-a90a9166a4de.png"
+    },
+    {
+      "name": "sand",
+      "prompt": "Use case: stylized-concept. Asset type: seamless ground texture for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSeamless tileable square ground texture for a top-down game, viewed straight down, filling the whole image edge to edge: fine pale golden beach sand with faint wind ripples; no shells, stones or footprints. Even lighting and even tone across the image, small-scale detail only, no large objects, no shadows from off-screen things, no vignette, no focal point. Left edge matches right edge and top edge matches bottom edge so it repeats without visible seams. Opaque square 1024 x 1024 texture. The straight-down ground-plane view and even illumination take priority over directional shading.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-b85f7fd8-3bac-4221-a5b6-15457421fdfe.png"
+    },
+    {
+      "name": "water",
+      "prompt": "Use case: stylized-concept. Asset type: seamless ground texture for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSeamless tileable square ground texture for a top-down game, viewed straight down, filling the whole image edge to edge: shallow turquoise sea water with soft small wave highlights; no foam lines, rocks or shoreline. Even lighting and even tone across the image, small-scale detail only, no large objects, no shadows from off-screen things, no vignette, no focal point. Left edge matches right edge and top edge matches bottom edge so it repeats without visible seams. Opaque square 1024 x 1024 texture. The straight-down ground-plane view and even illumination take priority over directional shading.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-eb65ba79-ad12-4e3f-8733-f89e7e766847.png"
+    },
+    {
+      "name": "tent",
+      "w": 250,
+      "h": 185,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: small patched canvas ridge tent with a wooden supply crate beside it. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 250 x 185 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-d21588e3-43dd-4749-94d1-da5d2ee34851.png",
+      "contentBounds": [
+        294,
+        159,
+        1133,
+        891
+      ]
+    },
+    {
+      "name": "log",
+      "w": 150,
+      "h": 90,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: fallen tree log lying on its side. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 150 x 90 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-0fefe65b-ab90-4e97-a18b-b6a52d2d4d40.png",
+      "contentBounds": [
+        291,
+        211,
+        1354,
+        767
+      ]
+    },
+    {
+      "name": "campfire",
+      "w": 150,
+      "h": 95,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: cold campfire: ring of stones around charred sticks, no flames. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 150 x 95 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-1494be27-f55a-42bd-9abb-806004783c4a.png",
+      "revisionPrompt": "Use case: background-extraction. Image 1 is the object sprite EDIT TARGET. Image 2 is the character sheet STYLE REFERENCE ONLY. Keep the exact object design, colors, perspective, and outline from image 1. Remove ALL of the fuzzy brown/golden halo, glow, vignette, cast shadows, and backdrop surrounding the object and in the gaps between its parts. Every pixel outside the actual solid object silhouette must be genuine zero alpha transparency. Only the crisp painted object itself remains. Do not place it on a floor or base. Add clean transparent padding on all sides.  Do not draw any characters.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "contentBounds": [
+        394,
+        194,
+        1110,
+        790
+      ]
+    },
+    {
+      "name": "house-a",
+      "w": 435,
+      "h": 335,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: abandoned timber-framed cottage, orange clay tile roof with a hole, ivy on the walls, stone chimney, open doorway facing the viewer. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 435 x 335 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-79ea17b1-e7b7-45f1-8d98-53c51f89e72a.png",
+      "contentBounds": [
+        203,
+        129,
+        1226,
+        982
+      ]
+    },
+    {
+      "name": "house-b",
+      "w": 475,
+      "h": 355,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: abandoned timber-framed cottage with a dormer window, damaged orange tile roof, short wooden fence at one side. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 475 x 355 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-aef58565-4f66-43f1-8ff4-9ab7ae912445.png",
+      "contentBounds": [
+        137,
+        99,
+        1298,
+        986
+      ]
+    },
+    {
+      "name": "house-c",
+      "w": 455,
+      "h": 355,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: abandoned timber-framed cottage, collapsed roof section, barrels by the door. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 455 x 355 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-89560d91-2272-4cdc-a42c-575fb5e936d4.png",
+      "contentBounds": [
+        179,
+        139,
+        1232,
+        980
+      ]
+    },
+    {
+      "name": "workshop",
+      "w": 595,
+      "h": 380,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: ruined open-sided blacksmith workshop: broken tile roof on timber posts, stone forge and chimney, anvil, cart wheel. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 595 x 380 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-e8c0b01b-3bb8-4691-9b1f-3b279bd06efc.png",
+      "revisionPrompt": "Use case: background-extraction. Image 1 is the object sprite EDIT TARGET. Image 2 is the character sheet STYLE REFERENCE ONLY. Keep the exact object design, colors, perspective, and outline from image 1. Remove ALL of the fuzzy brown/golden halo, glow, vignette, cast shadows, and backdrop surrounding the object and in the gaps between its parts. Every pixel outside the actual solid object silhouette must be genuine zero alpha transparency. Only the crisp painted object itself remains. Do not place it on a floor or base. Add clean transparent padding on all sides. The forge is cold and abandoned: remove its fire and glow, leaving dark cold coals. Do not draw any characters.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "contentBounds": [
+        188,
+        43,
+        1345,
+        981
+      ]
+    },
+    {
+      "name": "ship",
+      "w": 530,
+      "h": 525,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: small wrecked wooden sailing ship lying tilted, broken mast with torn sails, splintered hull; no water or sand. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 530 x 525 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-764b41a2-0b24-40c4-a7c7-4edef428b59a.png",
+      "contentBounds": [
+        81,
+        106,
+        1129,
+        1080
+      ]
+    },
+    {
+      "name": "pine",
+      "w": 150,
+      "h": 210,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: single conifer pine tree. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 150 x 210 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-62a33a8d-08ca-4d5d-bc43-70f3a6c28dcb.png",
+      "contentBounds": [
+        200,
+        123,
+        853,
+        1267
+      ]
+    },
+    {
+      "name": "pines",
+      "w": 225,
+      "h": 270,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: two conifer pines of different heights standing close together. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 225 x 270 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-d6fc5fe2-0a15-4351-a9f8-289976bda7d0.png",
+      "contentBounds": [
+        228,
+        162,
+        917,
+        1188
+      ]
+    },
+    {
+      "name": "oak",
+      "w": 295,
+      "h": 280,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: broadleaf tree with a round yellow-green canopy and visible trunk. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 295 x 280 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-5f498df9-0286-4fb5-86a0-ecbb11a5c644.png",
+      "contentBounds": [
+        209,
+        116,
+        1077,
+        1044
+      ]
+    },
+    {
+      "name": "big-oak",
+      "w": 270,
+      "h": 320,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: large old broadleaf tree, wide canopy, thick trunk. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 270 x 320 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-30337708-5b2a-4ac4-ac39-980bbad37c4a.png",
+      "contentBounds": [
+        44,
+        144,
+        1090,
+        1172
+      ]
+    },
+    {
+      "name": "rocks-a",
+      "w": 290,
+      "h": 170,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: cluster of three grey boulders with moss. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 290 x 170 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-d3d20228-9d19-4f09-9a62-befdbce6a970.png",
+      "contentBounds": [
+        420,
+        146,
+        1186,
+        813
+      ]
+    },
+    {
+      "name": "rocks-b",
+      "w": 265,
+      "h": 135,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: two grey boulders, one large and one small. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 265 x 135 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-9d517995-8f90-4c12-8448-f53e78666a77.png",
+      "contentBounds": [
+        473,
+        140,
+        1252,
+        750
+      ]
+    },
+    {
+      "name": "beach-rock",
+      "w": 205,
+      "h": 125,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: weathered pale boulder with a little moss. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 205 x 125 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-a701eea5-d52f-41fe-9f40-771f53144e7e.png",
+      "revisionPrompt": "Use case: background-extraction. Image 1 is the object sprite EDIT TARGET. Image 2 is the character sheet STYLE REFERENCE ONLY. Keep the exact object design, colors, perspective, and outline from image 1. Remove ALL of the fuzzy brown/golden halo, glow, vignette, cast shadows, and backdrop surrounding the object and in the gaps between its parts. Every pixel outside the actual solid object silhouette must be genuine zero alpha transparency. Only the crisp painted object itself remains. Do not place it on a floor or base. Add clean transparent padding on all sides.  Do not draw any characters.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "contentBounds": [
+        441,
+        233,
+        1083,
+        756
+      ]
+    },
+    {
+      "name": "flowers",
+      "w": 255,
+      "h": 155,
+      "prompt": "Use case: stylized-concept. Asset type: isolated environment object sprite for Wildhaven.\nInput image: the supplied character sprite sheet is a STYLE REFERENCE ONLY; do not depict the characters or the sheet.\nSingle isolated game object sprite on GENUINE TRANSPARENT ALPHA: low patch of pink and yellow wildflowers, seen from above. The whole object is visible with transparent padding on every side; nothing touches the image edge. No ground patch, no grass, no background, no cast shadow on the ground, no checkerboard. One object only (the specified cluster or building with its attached props counts as one sprite). Compose to fit an approximately 255 x 155 game sprite; it will be scaled to that size. Use ample clear alpha padding and retain an easily readable silhouette at small game size.\nWarm hand-painted 2D indie RPG style with clean soft outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.",
+      "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-57f23dfd-ee10-4454-bef5-c8099d59e703.png",
+      "contentBounds": [
+        320,
+        190,
+        1303,
+        761
+      ]
+    }
+  ]
+}
