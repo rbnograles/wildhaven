@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CLIPS, createAnimator, startAction, advanceAnimation, cancelAction, actionProgress, sampleAnimation, steadyAnchors } from '../../src/animation/clips.js';
-import { createGame, serializeGame } from '../../src/state.js';
+import { createGame, serializeGame } from '../../src/game/state.js';
 
 test('all seven requested actions have distinct clip definitions',()=>{
   assert.deepEqual(Object.keys(CLIPS),['idle','walk','run','gather','build','craft','fight','swim']);

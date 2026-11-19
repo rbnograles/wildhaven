@@ -1,8 +1,16 @@
 import './style.css';
-import { WORLD, CHARACTERS, LOCATIONS, NODES, RESOURCES, createGame, movePlayer, restoreGame, gather, gatherTime, discover, nearbyNode, regionAt, hasGathered } from './state.js';
+import { CHARACTERS } from './data/characters.js';
+import { RESOURCES } from './data/supplies.js';
+import { WORLD } from './world/map.js';
+import { NODES } from './world/nodes.js';
+import { LOCATIONS, regionAt } from './world/regions.js';
+import { createGame, restoreGame } from './game/state.js';
+import { movePlayer } from './actions/move.js';
+import { nearbyNode, hasGathered, beginGather, finishGather } from './actions/gather.js';
+import { discover } from './actions/discover.js';
 import { createRenderer } from './render/renderer.js';
 import { createSaveSession, storageKey, readActive, setActive } from './game/saves.js';
-import { createAnimator, startAction, cancelAction, advanceAnimation } from './animation/clips.js';
+import { createAnimator, cancelAction, advanceAnimation } from './animation/clips.js';
 import { setupPreview } from './animation/preview.js';
 
 const icons={
@@ -144,11 +152,10 @@ $('open-map').addEventListener('click',toggleMap);$('close-map').addEventListene
 $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{notify('Fullscreen is unavailable in this browser window.');}});
 // E starts the node's timed action; its supplies are awarded once, when the action runs out (see frame()).
 function collect(){
-  if(screen!=='game'||isPaused()||animator.pending)return;
-  const node=nearbyNode(state);
-  if(!node){notify('Move closer to something you can gather.');return;}
-  if(Math.abs(node.x-state.player.x)>8)state.player.direction=node.x<state.player.x?1:2;
-  startAction(animator,node.clip,node.id,gatherTime(state,node));keys.clear();updateHud();
+  if(screen!=='game'||isPaused())return;
+  const result=beginGather(state,animator);
+  if(result.ok){keys.clear();updateHud();}
+  else if(result.reason==='none')notify('Move closer to something you can gather.');
 }
 $('interact').addEventListener('click',collect);
 for(const dialog of dialogs){dialog.addEventListener('close',()=>{keys.clear();if(screen==='game')$('world').focus();});}
@@ -197,7 +204,7 @@ function frame(now){
       if(animator.pending&&(dx||dy)){cancelAction(animator);updateHud();}
       moving=!animator.pending&&movePlayer(state,dx,dy,dt,running);state.elapsed+=dt;
       const done=advanceAnimation(animator,dt,{moving,running});
-      if(done?.target){const node=gather(state,done.target);if(node){notify(`+${node.amount} ${node.type} · ${node.label}`);updateHud();save(true);}}
+      if(done?.target){const node=finishGather(state,done.target);if(node){notify(`+${node.amount} ${node.type} · ${node.label}`);updateHud();save(true);}}
       const found=discover(state);if(found.length){notify(`Discovered ${found[0].name}`);save(true);}
       lastSave+=dt;if(lastSave>10){save(true);lastSave=0;}
     }

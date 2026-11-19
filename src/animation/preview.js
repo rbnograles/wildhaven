@@ -1,4 +1,4 @@
-import { CHARACTERS } from '../state.js';
+import { CHARACTERS } from '../data/characters.js';
 import { CLIPS } from './clips.js';
 import { loadCharacterPainter } from './sheets.js';
 

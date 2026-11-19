@@ -1,5 +1,9 @@
 import * as Phaser from 'phaser';
-import { WORLD, CHARACTERS, LOCATIONS, NODES, WILD, nearbyNode, isAvailable } from '../state.js';
+import { WORLD } from '../world/map.js';
+import { LOCATIONS } from '../world/regions.js';
+import { NODES } from '../world/nodes.js';
+import { WILD } from '../data/supplies.js';
+import { nearbyNode, isAvailable } from '../actions/gather.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress } from '../animation/clips.js';
 import mapData from '../../assets/world/map/wildhaven.json';

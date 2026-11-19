@@ -9,7 +9,7 @@ import survivorWalk from '../../assets/characters/animations/survivor-locomotion
 import scoutActions from '../../assets/characters/animations/scout-actions.png';
 import builderActions from '../../assets/characters/animations/builder-actions.png';
 import survivorActions from '../../assets/characters/animations/survivor-actions.png';
-import {CHARACTERS} from '../state.js';
+import {CHARACTERS} from '../data/characters.js';
 import {sampleAnimation,steadyAnchors} from './clips.js';
 
 // Measured transparent gutters, rather than assumed equal rows, preserve all generated poses.
