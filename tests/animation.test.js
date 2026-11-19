@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CLIPS, createAnimator, startAction, advanceAnimation, sampleAnimation, steadyAnchors } from '../src/animation.js';
+import { CLIPS, createAnimator, startAction, advanceAnimation, cancelAction, actionProgress, sampleAnimation, steadyAnchors } from '../src/animation.js';
 import { createGame, serializeGame } from '../src/state.js';
 
 test('all seven requested actions have distinct clip definitions',()=>{
@@ -44,6 +44,18 @@ test('gathering finishes once and repeated input cannot restart or duplicate it'
   const result=advanceAnimation(a,1,{});
   assert.deepEqual(result,{clip:'gather',target:'pine-wood'});
   assert.equal(advanceAnimation(a,1,{}),null);assert.equal(a.pending,null);
+});
+test('a timed action loops its clip until its duration, then finishes once',()=>{
+  const a=createAnimator();assert.equal(startAction(a,'gather','forest-food',6),true);
+  assert.equal(advanceAnimation(a,5.9,{}),null);assert.equal(a.clip,'gather');
+  assert.ok(Math.abs(actionProgress(a)-5.9/6)<1e-9);
+  assert.deepEqual(advanceAnimation(a,.1,{}),{clip:'gather',target:'forest-food'});
+  assert.equal(a.clip,'idle');assert.equal(actionProgress(a),0);
+});
+test('cancelling an action awards nothing and returns to idle',()=>{
+  const a=createAnimator();startAction(a,'build','pine-wood',6);advanceAnimation(a,3,{});
+  assert.equal(cancelAction(a),true);assert.equal(a.pending,null);assert.equal(a.clip,'idle');
+  assert.equal(advanceAnimation(a,10,{}),null);assert.equal(cancelAction(a),false);
 });
 test('pause freezes action clocks and does not finish a pending gather',()=>{
   const a=createAnimator();startAction(a,'gather','pine-wood');advanceAnimation(a,.2,{});

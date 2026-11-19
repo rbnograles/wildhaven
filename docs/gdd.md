@@ -56,11 +56,11 @@ Kit tools are not equip mechanics; they only identify the character visually (RE
 **Current loop** [Built]
 1. Move (WASD/arrows) or run (Shift) along dirt paths.
 2. Spot a marked supply. The nearest one within 95 units highlights and shows "E".
-3. Press E: a 0.8 s gather animation plays, movement is locked, then the resources are added.
+3. Press E: a 6 s gather animation loops (moving cancels it and awards nothing), then the resources are added.
 4. Keep walking to reach the other starting regions (3 total).
 5. The objective completes when you have gathered once and discovered all 3 regions. Free exploration continues.
 
-The current loop is finite: 9 one-time supply nodes, 3 regions. Resources have no use yet. README: "Resources currently support gathering and exploration objectives, not crafting."
+The fixed supplies are finite: 9 one-time supply nodes, 3 regions. Wild flower patches (38) are the one renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Resources have no use yet. README: "Resources currently support gathering and exploration objectives, not crafting."
 
 **Planned loop** [Planned, moved from spec "Experience and visual direction"]
 > The character begins at the edge of a forest with a few supplies. Explore woodland, meadow, riverbank, and abandoned ruins; gather resources; choose a camp location; and build a settlement that makes subsequent journeys easier.
@@ -115,7 +115,7 @@ If health reaches zero, show a clear death screen with a restart option. Restart
 None. Hobby project. The spec also requires no external accounts or paid services.
 
 **Resources**
-`wood`, `stone`, `food`. Always non-negative integers; saves with any other value are rejected [Built]. Inventory is "shared globally in this prototype; local storage and trade logistics are deferred" [Planned].
+`wood`, `stone`, `food`, `herbs` (herbs added 2026-11-19; intended as the input for healing once health exists [Planned]). Always non-negative integers; saves with any other value are rejected [Built]. Inventory is "shared globally in this prototype; local storage and trade logistics are deferred" [Planned].
 
 **Faucets**
 
@@ -123,6 +123,7 @@ None. Hobby project. The spec also requires no external accounts or paid service
 | --- | --- | --- |
 | Starting kit | [Built] | See the character table in section 1 |
 | 9 supply nodes, one-time | [Built] | Totals: 10 wood, 7 stone, 7 food |
+| 38 wild flower patches, regrowing | [Built] | 2 herbs each, back 180 game-seconds after picking (the game clock pauses with the game) |
 | More depleting nodes | [Planned] | "Nodes deplete; initial supplies and resource distribution must allow at least two camps and sustained food production." |
 | Settler work | [Planned] | Settlers assigned to wood, stone, or farming |
 | Farm | [Planned] | "produces food over time when assigned a settler" |

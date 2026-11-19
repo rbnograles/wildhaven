@@ -26,3 +26,5 @@ dialog{background:var(--paper);color:var(--ink);border:1px solid #cfdbb9;border-
 .motion-preview select,.motion-preview button{font:inherit;color:var(--ink);padding:7px;border:1px solid var(--line);background:var(--paper);border-radius:5px}
 .motion-preview canvas{display:block;width:100%;margin-top:14px;background:#e4e8db;border-radius:8px}
 .motion-preview .play-toggle{align-self:flex-end}.motion-preview output{display:block;font-size:12px}
+/* A running gather shows its status in the action button; E does nothing until it ends. */
+.interact.busy{cursor:default}.interact.busy kbd{display:none}

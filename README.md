@@ -21,7 +21,7 @@ Choose the Frontier Scout, Wandering Builder, or Shipwreck Survivor and press **
 | --- | --- |
 | Move | WASD or arrow keys |
 | Run | Hold Shift while moving |
-| Gather a nearby marked supply | E or the gather button |
+| Gather the glowing supply in reach (6 s; move to stop) | E or the gather button |
 | World map | M or the minimap |
 | Pause | Escape or the pause button |
 | Save / return to characters | Pause menu |
@@ -32,7 +32,7 @@ Small windows show directional touch buttons. Desktop keyboard and mouse is the 
 
 - Three illustrated, keyboard-accessible character choices and different starting supplies.
 - Correct directional sprite, camera following, bounded terrain, major building/ship collision footprints, and coastline blocking.
-- Nine gatherable supply markers; three discoverable regions; minimap and world map.
+- Nine gatherable supplies (a pine tree to chop, berry bushes, stones, timber, driftwood), plus 38 wild flower patches across the open wilds that give herbs and grow back a few minutes after picking; three discoverable regions; minimap and world map.
 - Pause on focus loss, manual pause, and map pause.
 - Per-character saves, auto-save, manual save, restore after reload, and confirmation before replacing a save.
 - Validation of saved data and protection against an older tab overwriting another tab's newer save.

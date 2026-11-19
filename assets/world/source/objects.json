@@ -1,5 +1,5 @@
 {
-  "_comment": "One entry per sprite in objects/. origin = the ground contact point of the sprite as a fraction of its width/height. footprint = [halfWidth, depth] of the solid base in world units, measured up from the origin (omit for walk-through). flat = drawn under characters.",
+  "_comment": "One entry per sprite in objects/. origin = the ground contact point of the sprite as a fraction of its width/height. footprint = [halfWidth, depth] of the solid base in world units, measured up from the origin (omit for walk-through). flat = drawn under characters. scale = draw size wherever the map places this sprite (the footprint scales with it).",
   "tent": { "origin": [0.5, 0.973], "footprint": [84, 65] },
   "log": { "origin": [0.5, 0.944], "footprint": [62, 30] },
   "campfire": { "origin": [0.5, 0.947], "footprint": [47, 70] },
@@ -15,5 +15,6 @@
   "rocks-a": { "origin": [0.5, 0.971], "footprint": [85, 55] },
   "rocks-b": { "origin": [0.5, 0.963], "footprint": [74, 44] },
   "beach-rock": { "origin": [0.5, 0.96], "footprint": [62, 38] },
-  "flowers": { "origin": [0.5, 0.6], "flat": true }
+  "flowers": { "origin": [0.5, 0.6], "flat": true, "scale": 0.4 },
+  "berry-bush": { "origin": [0.5, 0.9], "footprint": [30, 16] }
 }

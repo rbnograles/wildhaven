@@ -1,5 +1,18 @@
 # First playable verification — 2026-11-19
 
+## Harvestable supply sprites and 6 s gathering — 2026-11-19
+
+- Spec: `docs/superpowers/specs/2026-11-19-harvestable-supplies-design.md`. Placement review: `docs/screenshots/node-placement-proposal.png`.
+- `npm test`: 24 passed, 0 failed. `npm run build` succeeded (only the existing chunk-size warning).
+- `python tools/build-map.py`: `wildhaven.json`, `tileset.png` and `overview.webp` are byte-identical to before (SHA-256 compared). Moving the nodes removed no scenery and reshuffled nothing.
+- Browser checks at `http://127.0.0.1:5179/` (a second launch config, `wildhaven-verify`, because another session held 5173). The pane was hidden and the app window not in view, which pauses `requestAnimationFrame`. For the timed checks, the page's `requestAnimationFrame` was routed through `setTimeout` from the console; no project code was changed for this.
+  - Scout at the pine: the sprite glows with an E cap on its canopy and the button reads "Chop pine tree". E plays the overhead swing with a progress bar and "Chopping pine tree… move to stop". It finished with +3 wood, `pine-wood` was saved, and the tree faded out.
+  - Builder at the village berries: auto-repeat from a key held before E did not cancel; a held movement key did. The uninterrupted pick finished in 6.0 s of real time (+2 food, saved).
+  - Survivor: driftwood showed the bar at about 45% after about 2.7 s. At the beach stones, a 120 ms tap of S cancelled with nothing awarded. Esc for 7 s froze an action, which finished about 5 s after resuming (+2 stone).
+  - Collision: walking north into the village loose stones stopped at y 2190 (base 2180 + 10 clearance). After gathering, the same walk passed through.
+  - 375×812: no horizontal overflow, the cap sits on the canopy rather than under the HUD, and the button and touch arrows fit. The console and Vite error logs were empty.
+- Not checked: the Canvas-renderer fallback (no glow, cap only), and `prefers-reduced-motion` (no bob, instant fade) in a browser.
+
 ## Sprite-map art replacement — 2026-11-19
 
 - Replaced four ground textures and sixteen object sprites with individually generated art, using the approved character sheet as the reference every time. Exact prompts and selected full-resolution originals are preserved under `assets/world/source/`.
@@ -67,3 +80,15 @@ The strip along the bottom of the game screen (coordinates, key hints, "Saved lo
 Checked at http://127.0.0.1 as the Scout: at desktop size the minimap, Gather prompt and welcome toast don't overlap, and there are no console errors. At 390×844 the touch controls (bottom-left), minimap (bottom-right), Gather prompt and toast don't overlap, and there's no horizontal overflow. `npm test` (20) and `npm run build` pass.
 
 The selection-screen footer now also lists **Shift** Run and **Esc** Pause, since the in-game bar that showed them is gone. It fits on one line at desktop size. At 390 px the five hints wrap to two centered rows with no horizontal overflow.
+
+## Harvestable wild flowers — 2026-11-19
+
+Wild flower patches are drawn at 0.4 scale (about 100×60, smaller than the 112-unit character). All 38 are now pickable for 2 herbs and grow back 180 game-seconds later. The rebuilt map left `wildhaven.json` and `tileset.png` byte-identical. Only `overview.webp` changed, because it now draws the smaller flowers.
+
+Checked at http://127.0.0.1:5179 (the `wildhaven-verify` config) as the Builder, using a seeded save beside `flowers-3480-2429`:
+
+- The patch showed the E cap and "Pick wildflowers". E looped the gather clip with "Picking wildflowers… move to stop" and a progress bar. It finished with "+2 herbs · Wildflowers", Herbs 0 → 2, and "Gather your first supplies" ticked. The patch faded out.
+- The save held `regrowAt: {"flowers-3480-2429": 194.05}` with `elapsed` 20.0 and an empty `collected`.
+- With the timer edited to five seconds ahead and the player standing beside the patch, it faded back in after the timer ran out (slower in real time while the pane rendered under 20 fps). It came back with the cream glow, the E cap and the prompt.
+- At 375×812 the resources panel fits all four counters. No console errors.
+- `npm test`: 29 passing. New tests cover herb patches that are walk-through and smaller than a character, a 16-unit flood fill showing every supply and patch can be reached and gathered from the spawns, regrowth on the game clock, old saves loading with no herbs or timers, and timer clamping/dropping. `npm run build` passes.

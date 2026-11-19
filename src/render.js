@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
-import { WORLD, CHARACTERS, LOCATIONS, NODES, nearbyNode } from './state.js';
+import { WORLD, CHARACTERS, LOCATIONS, NODES, WILD, nearbyNode, isAvailable } from './state.js';
 import { loadCharacterSheets, loadImage, resolvePose } from './animation-art.js';
+import { actionProgress } from './animation.js';
 import mapData from '../assets/world/map/wildhaven.json';
 import objectSpecs from '../assets/world/source/objects.json';
 import tilesetUrl from '../assets/world/map/tileset.png';
@@ -18,7 +19,7 @@ export async function createRenderer(container, miniCanvas) {
   const [overview,sheets]=await Promise.all([loadImage(overviewUrl,'world map'),loadCharacterSheets()]);
   const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const camera={x:0,y:0,initialized:false};
-  let player,shadow,markers;
+  let player,shadow,supplies,cue,bar,snap=true;
 
   const scene=await new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>reject(new Error('The world took too long to load. Please try again.')),20000);
@@ -36,17 +37,28 @@ export async function createRenderer(container, miniCanvas) {
         TERRAIN_LAYERS.forEach((name,i)=>map.createLayer(name,tiles,0,0).setDepth(i-20));
 
         // Standing objects sort by their ground line, so the character can walk behind a tree or in front of it.
+        // Harvestable wild scenery is skipped here; it is drawn with the supplies below.
         for(const object of map.getObjectLayer('objects').objects) {
           const spec=objectSpecs[object.name];
-          if(!spec || !this.textures.exists(`object-${object.name}`)) continue;
-          this.add.image(object.x,object.y,`object-${object.name}`).setOrigin(...spec.origin).setDepth(spec.flat?-1:object.y);
+          if(!spec || WILD[object.name] || !this.textures.exists(`object-${object.name}`)) continue;
+          this.add.image(object.x,object.y,`object-${object.name}`).setOrigin(...spec.origin).setScale(spec.scale??1).setDepth(spec.flat?-1:object.y);
         }
 
-        markers=NODES.map(node=>({
-          node,
-          ring:this.add.circle(node.x,node.y-15,9,0x254432,0.81).setStrokeStyle(1.5,0xfff5ce),
-          label:this.add.text(node.x,node.y-15,'+',{fontFamily:'system-ui',fontSize:'10px',color:'#fff5ce'}).setOrigin(0.5),
-        }));
+        // Supplies are sprites like the scenery around them; draw() glows the one in reach (WebGL only) and caps it with E.
+        const webgl=this.renderer.type===Phaser.WEBGL;
+        supplies=NODES.map(node=>{
+          const spec=objectSpecs[node.sprite];
+          const sprite=this.add.image(node.x,node.y,`object-${node.sprite}`).setOrigin(...spec.origin).setScale(node.scale).setDepth(spec.flat?-1:node.y);
+          let glow=null;
+          if(webgl){sprite.enableFilters();glow=sprite.filters.internal.addGlow(0xfff5ce,3,0,1,false,10,8).setPaddingOverride(null);glow.active=false;}
+          // Cue height: the sprite's top, but on a tall tree's canopy rather than its tip, where it would crowd the HUD.
+          return {node,sprite,glow,top:Math.max(node.y-sprite.displayHeight*sprite.originY,node.y-150)};
+        });
+        const cap=this.add.graphics().fillStyle(0x172e24,0.3).fillRoundedRect(-12,-10,24,24,6)
+          .fillStyle(0xf7f1de,1).fillRoundedRect(-12,-12,24,24,6).lineStyle(1.5,0x254432,1).strokeRoundedRect(-12,-12,24,24,6);
+        const key=this.add.text(0,0,'E',{fontFamily:'system-ui, sans-serif',fontSize:'13px',fontStyle:'bold',color:'#254432'}).setOrigin(0.5).setResolution(2);
+        cue=this.add.container(0,0,[cap,key]).setDepth(WORLD.height+1).setVisible(false);
+        bar=this.add.graphics().setDepth(WORLD.height+1);
 
         // Each character frame is the full sheet column, trimmed vertically, so feet sit on the frame's bottom centre.
         const addFrames=(key,sheet)=>{
@@ -98,14 +110,28 @@ export async function createRenderer(container, miniCanvas) {
     camera.x+=(state.player.x-camera.x)*smoothing; camera.y+=(state.player.y-camera.y)*smoothing;
     view.centerOn(camera.x,camera.y);
 
-    const nearest=nearbyNode(state);
-    for(const {node,ring,label} of markers) {
-      const visible=!state.collected.includes(node.id),active=nearest?.id===node.id;
-      ring.setVisible(visible).setRadius(active?13:9).setFillStyle(active?0xf7f1de:0x254432,active?1:0.81).setDepth(WORLD.height+1);
-      label.setVisible(visible).setText(active?'E':'+').setColor(active?'#254432':'#fff5ce').setFontSize(active?12:10).setFontStyle(active?'bold':'normal').setDepth(WORLD.height+2);
+    // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
+    const nearest=nearbyNode(state),busy=animator.pending?.target,step=reducedMotion||snap?1:dt*4;
+    let capped=null,working=null;snap=false;
+    for(const s of supplies) {
+      const gone=!isAvailable(state,s.node);
+      s.sprite.setAlpha(gone?Math.max(0,s.sprite.alpha-step):Math.min(1,s.sprite.alpha+step));
+      s.sprite.setVisible(s.sprite.alpha>0);
+      const target=!gone&&(busy?s.node.id===busy:s.node.id===nearest?.id);
+      if(s.glow)s.glow.active=target;
+      if(target){if(busy)working=s;else capped=s;}
+    }
+    cue.setVisible(!!capped);
+    if(capped)cue.setPosition(capped.node.x,capped.top-18+(reducedMotion?0:Math.sin(performance.now()/260)*2.5));
+    bar.clear();
+    if(working){
+      const w=64,x=working.node.x-w/2,y=working.top-24,progress=actionProgress(animator);
+      bar.fillStyle(0x254432,0.88).fillRoundedRect(x-2,y-2,w+4,13,6.5);
+      if(progress>0)bar.fillStyle(0xf7f1de,1).fillRoundedRect(x,y,Math.max(9,w*progress),9,4.5);
     }
 
-    const pose=resolvePose(sheets,state.character,animator.clip,animator.time,state.player.direction);
+    // A timed action is longer than one pass of its clip, so it loops until the action ends.
+    const pose=resolvePose(sheets,state.character,animator.clip,animator.time,state.player.direction,animator.pending?true:undefined);
     const pivot=(pose.frame.anchorX-pose.frame.x)/pose.frame.width;
     player.setTexture(pose.key,pose.name).setOrigin(pose.flip?1-pivot:pivot,1)
       .setFlipX(pose.flip).setScale(PLAYER_HEIGHT/pose.sheet.referenceHeight)
@@ -114,5 +140,5 @@ export async function createRenderer(container, miniCanvas) {
     drawMap(mini,state,miniCanvas.width,miniCanvas.height);
   }
 
-  return { draw, drawMap:(canvas,state)=>drawMap(canvas.getContext('2d'),state,canvas.width,canvas.height), resetCamera:()=>{camera.initialized=false;} };
+  return { draw, drawMap:(canvas,state)=>drawMap(canvas.getContext('2d'),state,canvas.width,canvas.height), resetCamera:()=>{camera.initialized=false;snap=true;} };
 }

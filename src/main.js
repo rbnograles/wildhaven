@@ -1,8 +1,8 @@
 import './style.css';
-import { WORLD, CHARACTERS, LOCATIONS, createGame, movePlayer, restoreGame, gather, discover, nearbyNode, regionAt } from './state.js';
+import { WORLD, CHARACTERS, LOCATIONS, NODES, RESOURCES, createGame, movePlayer, restoreGame, gather, gatherTime, discover, nearbyNode, regionAt, hasGathered } from './state.js';
 import { createRenderer } from './render.js';
 import { createSaveSession, storageKey, readActive, setActive } from './storage.js';
-import { createAnimator, startAction, advanceAnimation } from './animation.js';
+import { createAnimator, startAction, cancelAction, advanceAnimation } from './animation.js';
 import { setupPreview } from './animation-preview.js';
 
 const icons={
@@ -15,6 +15,7 @@ const icons={
   wood:'<path d="m7 3 10 3 4 10-5 5-10-4-3-10Z"/><path d="m7 3 4 10 10 3M11 13l-5 4m4-11 6 2 2 5"/>',
   stone:'<path d="m8 4 10 2 4 10-6 5-12-3-2-7Z"/><path d="m8 4 2 10 12 2m-12-2 6 7M2 11l8 3"/>',
   food:'<path d="M12 7c-7-6-13 3-7 11 4 6 7 1 7 1s3 5 7-1c6-8 0-17-7-11Z"/><path d="M12 7c0-4 2-5 5-5"/>',
+  herbs:'<path d="M12 22V11"/><path d="M12 15c-5 0-8-3-8-8 5 0 8 3 8 8Zm0-4c0-4 3-7 8-7 0 5-3 7-8 7Z"/>',
   save:'<path d="M5 3h13l3 3v15H3V3Zm2 0v6h10V3M7 21v-8h10v8"/>',
   expand:'<path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/>',
   close:'<path d="m6 6 12 12M6 18 18 6"/>',
@@ -41,7 +42,7 @@ app.innerHTML=`
 <section id="game" class="game" hidden aria-label="Wildhaven game">
   <div id="world" tabindex="0" role="application" aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather, M for map, Escape to pause."></div>
   <div class="game-top"><div class="identity hud-panel"><span id="hud-portrait" class="hud-portrait"></span><div><span id="hud-name" class="hud-name"></span><span class="identity-status"><span></span> Exploring the wilds</span></div></div>
-  <div class="resources hud-panel" aria-label="Resources"><span>${icon('wood')}<b id="wood">0</b><span class="resource-label">Wood</span></span><span>${icon('stone')}<b id="stone">0</b><span class="resource-label">Stone</span></span><span>${icon('food')}<b id="food">0</b><span class="resource-label">Food</span></span></div>
+  <div class="resources hud-panel" aria-label="Resources"><span>${icon('wood')}<b id="wood">0</b><span class="resource-label">Wood</span></span><span>${icon('stone')}<b id="stone">0</b><span class="resource-label">Stone</span></span><span>${icon('food')}<b id="food">0</b><span class="resource-label">Food</span></span><span>${icon('herbs')}<b id="herbs">0</b><span class="resource-label">Herbs</span></span></div>
   <div class="game-actions"><button id="fullscreen" class="icon-button hud-panel" aria-label="Toggle fullscreen">${icon('expand')}</button><button id="pause" class="icon-button hud-panel" aria-label="Pause game">${icon('pause')}</button></div></div>
   <div class="region"><span>THE WILDS OF WILDHAVEN</span><h1 id="region-name"></h1><span class="region-rule"></span></div>
   <aside class="quest hud-panel"><span class="quest-label">YOUR FIRST FOOTSTEPS</span><h2>A place to begin</h2><p id="quest-text">Gather supplies and follow the paths to discover the world.</p><ul><li id="quest-gather">Gather your first supplies</li><li id="quest-explore">Discover the three starting regions <b id="discovery-count">1 / 3</b></li></ul></aside>
@@ -141,13 +142,13 @@ $('return').addEventListener('click',()=>{
 });
 $('open-map').addEventListener('click',toggleMap);$('close-map').addEventListener('click',toggleMap);
 $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{notify('Fullscreen is unavailable in this browser window.');}});
-// E starts the gather clip; the supplies are awarded once, when the clip finishes (see frame()).
+// E starts the node's timed action; its supplies are awarded once, when the action runs out (see frame()).
 function collect(){
   if(screen!=='game'||isPaused()||animator.pending)return;
   const node=nearbyNode(state);
-  if(!node){notify('Move closer to a marked supply to gather it.');return;}
+  if(!node){notify('Move closer to something you can gather.');return;}
   if(Math.abs(node.x-state.player.x)>8)state.player.direction=node.x<state.player.x?1:2;
-  startAction(animator,'gather',node.id);keys.clear();
+  startAction(animator,node.clip,node.id,gatherTime(state,node));keys.clear();updateHud();
 }
 $('interact').addEventListener('click',collect);
 for(const dialog of dialogs){dialog.addEventListener('close',()=>{keys.clear();if(screen==='game')$('world').focus();});}
@@ -157,7 +158,8 @@ window.addEventListener('keydown',event=>{
   if(key==='escape'){if(!isPaused()){event.preventDefault();openPause();}return;}
   if(key==='m'&&!event.repeat){event.preventDefault();toggleMap();return;}
   if(isPaused())return;
-  if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright','shift'].includes(key)){event.preventDefault();keys.add(key);}
+  // Mid-action, key-repeat from a key held since before E is ignored; only a fresh press moves (and so cancels).
+  if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright','shift'].includes(key)){event.preventDefault();if(!(animator.pending&&event.repeat))keys.add(key);}
   if(key==='e'&&!event.repeat){event.preventDefault();collect();}
 });
 window.addEventListener('keyup',event=>keys.delete(event.key.toLowerCase()));
@@ -170,16 +172,19 @@ document.querySelectorAll('[data-move]').forEach(button=>{
   for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>keys.delete(touchKeys[button.dataset.move]));
 });
 function updateHud(){
-  for(const resource of ['wood','stone','food'])$(resource).textContent=state.resources[resource];
+  for(const resource of RESOURCES)$(resource).textContent=state.resources[resource];
   $('region-name').textContent=regionAt(state.player);
   $('discovery-count').textContent=`${state.discovered.length} / 3`;
-  $('quest-gather').classList.toggle('complete',state.collected.length>0);
+  $('quest-gather').classList.toggle('complete',hasGathered(state));
   $('quest-explore').classList.toggle('complete',state.discovered.length===3);
-  if(state.collected.length&&state.discovered.length===3)$('quest-text').textContent='You have found your feet. Keep exploring — this is just the beginning.';
+  if(hasGathered(state)&&state.discovered.length===3)$('quest-text').textContent='You have found your feet. Keep exploring — this is just the beginning.';
   else $('quest-text').textContent='Gather supplies and follow the paths to discover the world.';
-  const node=nearbyNode(state);$('interact').hidden=!node||!!animator.pending;
-  if(node)$('interact').querySelector('span').textContent=`Gather ${node.label.toLowerCase()}`;
+  const node=nearbyNode(state),busy=NODES.find(n=>n.id===animator.pending?.target),button=$('interact');
+  button.hidden=!node&&!busy;button.classList.toggle('busy',!!busy);button.setAttribute('aria-disabled',String(!!busy));
+  if(busy)button.querySelector('span').textContent=`${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
+  else if(node)button.querySelector('span').textContent=`${node.verb} ${node.label.toLowerCase()}`;
 }
+const DOING={Chop:'Chopping',Pick:'Picking',Gather:'Gathering'};
 function frame(now){
   const dt=Math.min((now-lastTime)/1000,0.05);lastTime=now;
   if(screen==='game'&&state&&renderer){
@@ -188,9 +193,11 @@ function frame(now){
       const dx=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
       const dy=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'));
       const running=keys.has('shift');
+      // Moving cancels an action in progress; nothing is awarded.
+      if(animator.pending&&(dx||dy)){cancelAction(animator);updateHud();}
       moving=!animator.pending&&movePlayer(state,dx,dy,dt,running);state.elapsed+=dt;
       const done=advanceAnimation(animator,dt,{moving,running});
-      if(done?.clip==='gather'){const node=gather(state);if(node){notify(`+${node.amount} ${node.type} · ${node.label}`);updateHud();save(true);}}
+      if(done?.target){const node=gather(state,done.target);if(node){notify(`+${node.amount} ${node.type} · ${node.label}`);updateHud();save(true);}}
       const found=discover(state);if(found.length){notify(`Discovered ${found[0].name}`);save(true);}
       lastSave+=dt;if(lastSave>10){save(true);lastSave=0;}
     }
