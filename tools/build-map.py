@@ -180,15 +180,16 @@ Image.fromarray(sheet).save(os.path.join(OUT, 'tileset.png'))
 # ---- tile layers -------------------------------------------------------------------------
 # A layer only paints a tile when one of the tile's corners is its own terrain. It then covers every corner of
 # its rank or higher, so the terrain below a shoreline runs on underneath the water and no grass shows in the seam.
-# For water that is exactly "which corners are sea, shallow or deep", which src/world/map.js reads for collision;
-# the deep layer on top says which corners are deep, which the small boat can't enter.
+# The water layer also paints tiles that have a deep corner, so it marks all sea (shallow and deep) for collision,
+# which src/world/map.js reads; the deep layer on top marks only the deep corners, which the small boat can't enter.
 layers = {'ground': [1 + (ty % 4) * 4 + tx % 4 for ty in range(ROWS) for tx in range(COLS)]}
 for rank, name in enumerate(OVERLAYS, start=1):
     data = []
     for ty in range(ROWS):
         for tx in range(COLS):
             c = (corner[ty, tx], corner[ty, tx+1], corner[ty+1, tx], corner[ty+1, tx+1])
-            mask = sum(int(v >= rank) << i for i, v in enumerate(c)) if rank in c else 0
+            paints = rank in c or (name == 'water' and DEEP in c)   # a tile of pure deep sea is still water
+            mask = sum(int(v >= rank) << i for i, v in enumerate(c)) if paints else 0
             data.append(gid(name, mask, tx, ty))
     layers[name] = data
 
