@@ -3,7 +3,16 @@
 // loop finishes it (`finishRepair`), so the cost is paid exactly once.
 
 import { WRECKS } from '../data/places.js';
-import { GATHER_RANGE, REPAIR_COST, REPAIR_SECONDS } from '../data/balance.js';
+import {
+  GATHER_RANGE,
+  REPAIR_COST,
+  REPAIR_SECONDS,
+  BOARD_RANGE,
+  LAND_RANGE,
+  DEEP_LOOKOUT,
+} from '../data/balance.js';
+import { isWalkable, isDeep } from '../world/map.js';
+import { solidBases } from '../world/nodes.js';
 import { startAction } from '../animation/clips.js';
 import { facing } from './move.js';
 
@@ -105,4 +114,86 @@ export function finishRepair(state, id) {
     dir: facing(launch.x - wreck.x, launch.y - wreck.y),
   };
   return wreck;
+}
+
+/**
+ * Says whether the player can get into their boat right now: on foot, owning a boat, and close to it.
+ *
+ * @param {object} state - The game being played.
+ * @returns {boolean} True if pressing E would board the boat.
+ */
+export const canBoard = (state) =>
+  !state.aboard && !!state.boat && distance(state, state.boat) < BOARD_RANGE;
+
+/**
+ * Gets the player into their boat, if it is close enough.
+ *
+ * The player moves onto the boat's spot and faces the way it points.
+ *
+ * @param {object} state - The game being played. `player` and `aboard` change.
+ * @returns {boolean} True if the player got in.
+ */
+export function board(state) {
+  if (!canBoard(state)) return false;
+  Object.assign(state.player, { x: state.boat.x, y: state.boat.y, direction: state.boat.dir });
+  state.aboard = true;
+  return true;
+}
+
+/**
+ * Finds the closest dry spot the player could step onto from the boat.
+ *
+ * It checks rings of spots around the boat, 12 units apart and growing outward, like ripples from
+ * a stone dropped in water, and keeps the first spot the player could stand on. The rings stay
+ * inside LAND_RANGE, so a spot it finds is always close enough to board again.
+ *
+ * @param {object} state - The game being played.
+ * @returns {{x: number, y: number}|null} The spot, or null when the player isn't aboard or no land is near.
+ */
+export function landingSpot(state) {
+  if (!state.aboard) return null;
+  const bases = solidBases(state);
+  for (let r = 12; r < LAND_RANGE; r += 12)
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2,
+        x = Math.round(state.player.x + Math.cos(angle) * r),
+        y = Math.round(state.player.y + Math.sin(angle) * r);
+      if (isWalkable(x, y, bases)) return { x, y };
+    }
+  return null;
+}
+
+/**
+ * Steps the player ashore and leaves the boat moored where it floats.
+ *
+ * @param {object} state - The game being played. `player`, `boat` and `aboard` change.
+ * @returns {boolean} True if the player landed; false when no land is in reach.
+ */
+export function disembark(state) {
+  const spot = landingSpot(state);
+  if (!spot) return false;
+
+  Object.assign(state.boat, { x: state.player.x, y: state.player.y, dir: state.player.direction });
+  Object.assign(state.player, spot, {
+    direction: facing(spot.x - state.boat.x, spot.y - state.boat.y),
+  });
+  state.aboard = false;
+  return true;
+}
+
+/**
+ * Says whether the boat is heading into deep sea, so the HUD can warn that it's too rough.
+ *
+ * @param {object} state - The game being played.
+ * @param {number} dx - Left/right push from the keys: -1, 0 or 1.
+ * @param {number} dy - Up/down push from the keys: -1, 0 or 1.
+ * @returns {boolean} True when aboard and the water DEEP_LOOKOUT units ahead is deep.
+ */
+export function deepAhead(state, dx, dy) {
+  if (!state.aboard || (!dx && !dy)) return false;
+  const length = Math.hypot(dx, dy);
+  return isDeep(
+    state.player.x + (dx / length) * DEEP_LOOKOUT,
+    state.player.y + (dy / length) * DEEP_LOOKOUT,
+  );
 }

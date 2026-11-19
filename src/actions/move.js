@@ -1,9 +1,16 @@
 // The "move" action: walking and running around the world without passing through water,
-// trees, buildings, old boats or supplies that haven't been gathered yet.
+// trees, buildings, old boats or supplies that haven't been gathered yet, and rowing the boat
+// across shallow sea.
 
-import { isWalkable, blocks } from '../world/map.js';
+import { isWalkable, isSailable, blocks } from '../world/map.js';
 import { solidBases } from '../world/nodes.js';
-import { WALK_SPEED, RUN_SPEED, MAX_MOVE_DT } from '../data/balance.js';
+import {
+  WALK_SPEED,
+  RUN_SPEED,
+  BOAT_SPEED,
+  BOAT_FAST_SPEED,
+  MAX_MOVE_DT,
+} from '../data/balance.js';
 
 /**
  * Says which way something faces when it heads along (dx, dy): mostly sideways or mostly up/down.
@@ -24,15 +31,21 @@ export const facing = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2
  * @param {number} dx - Left/right push: -1 is west, 1 is east, 0 is neither.
  * @param {number} dy - Up/down push: -1 is north, 1 is south, 0 is neither.
  * @param {number} dt - Seconds since the last frame.
- * @param {boolean} [running=false] - True while Shift is held, so the step is longer.
+ * @param {boolean} [running=false] - True while Shift is held, so the step (walking or rowing) is longer.
  * @returns {boolean} True if the player really moved, so a blocked step shows the idle pose.
  */
 export function movePlayer(state, dx, dy, dt, running = false) {
   if (![dx, dy, dt].every(Number.isFinite) || dt <= 0 || (!dx && !dy)) return false;
 
   // Make diagonal steps the same length as straight ones, then scale by speed and time.
-  const length = Math.hypot(dx, dy),
-    speed = running ? RUN_SPEED : WALK_SPEED;
+  const length = Math.hypot(dx, dy);
+  const speed = state.aboard
+    ? running
+      ? BOAT_FAST_SPEED
+      : BOAT_SPEED
+    : running
+      ? RUN_SPEED
+      : WALK_SPEED;
   const step = speed * Math.min(dt, MAX_MOVE_DT);
   dx = (dx / length) * step;
   dy = (dy / length) * step;
@@ -44,9 +57,20 @@ export function movePlayer(state, dx, dy, dt, running = false) {
   // A save made before a supply or old boat moved may stand inside its base; let the player walk out instead of trapping them.
   const bases = solidBases(state).filter((base) => !blocks([base], x, y));
 
+  /** True if the player may move onto the spot: shallow sea in the boat, dry open ground on foot. */
+  const free = (px, py) => (state.aboard ? isSailable(px, py) : isWalkable(px, py, bases));
+
   // Try the x and y parts separately, so a wall in one direction still lets the player slide along it.
-  if (isWalkable(x + dx, y, bases)) state.player.x += dx;
-  if (isWalkable(state.player.x, y + dy, bases)) state.player.y += dy;
+  if (free(x + dx, y)) state.player.x += dx;
+  if (free(state.player.x, y + dy)) state.player.y += dy;
+
+  // The boat carries the player, so it goes wherever they go and points the same way.
+  if (state.aboard)
+    Object.assign(state.boat, {
+      x: state.player.x,
+      y: state.player.y,
+      dir: state.player.direction,
+    });
 
   const distance = Math.hypot(state.player.x - x, state.player.y - y);
   state.distance += distance;

@@ -6,7 +6,7 @@ import { createGame } from '../../src/game/state.js';
 import { travelTo } from '../../src/actions/travel.js';
 import { isWalkable } from '../../src/world/map.js';
 import { nodeBases } from '../../src/world/nodes.js';
-import { WAYPOINTS } from '../../src/data/places.js';
+import { WAYPOINTS, WRECKS } from '../../src/data/places.js';
 
 // Guards the unlock rule: without it the whole world is reachable from the first second.
 test('travel is refused to a signpost that has not been found, or does not exist', () => {
@@ -32,4 +32,18 @@ test('travel moves the player to a found signpost', () => {
 // Guards against a signpost whose arrival spot is inside its own post or other scenery.
 test('every signpost can be arrived at', () => {
   for (const w of WAYPOINTS) assert.ok(isWalkable(w.x, w.y, nodeBases([])), w.id);
+});
+
+// Guards signpost travel from the boat: the player arrives on foot and the boat stays where it floated.
+test('travelling from the boat leaves the boat where it floats', () => {
+  const east = WRECKS.find((w) => w.id === 'wreck-east');
+  const game = createGame('survivor');
+  game.boat = { from: east.id, x: east.launch.x, y: east.launch.y, dir: 2 };
+  game.aboard = true;
+  Object.assign(game.player, east.launch);
+  game.waypoints.push('l-wp-wreck');
+
+  assert.ok(travelTo(game, 'l-wp-wreck'));
+  assert.equal(game.aboard, false);
+  assert.deepEqual(game.boat, { from: east.id, x: east.launch.x, y: east.launch.y, dir: 2 });
 });

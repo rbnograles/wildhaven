@@ -41,3 +41,12 @@ export const REPAIR_SECONDS = 8;
 
 /** How close the player must come to an old boat to find it (and mark it on the map). */
 export const WRECK_RADIUS = 200;
+
+/** How fast the small boat moves, in world units per second. Faster than walking: the sea is wide. */
+export const BOAT_SPEED = 210;
+
+/** How fast the small boat moves while Shift is held, in world units per second. */
+export const BOAT_FAST_SPEED = 300;
+
+/** How far ahead of the boat to look for deep sea when warning that it is too rough. */
+export const DEEP_LOOKOUT = 60;
