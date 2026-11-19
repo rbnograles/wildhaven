@@ -97,6 +97,14 @@ export async function createRenderer(container, miniCanvas) {
   const chunks = new Map(),
     fires = new Map();
 
+  // Trees and rocks a tool can harvest: `sceneryNodes` maps a node id to its node; `harvest` maps
+  // it to its drawn entry ({node, sprite, glow, top}), and `harvestChunks` lists the entries in
+  // each scenery chunk, so draw() only fades the ones on screen. `litTree` is the one glowing now.
+  const sceneryNodes = new Map(NODES.filter((n) => n.inScenery).map((n) => [n.id, n])),
+    harvest = new Map(),
+    harvestChunks = new Map();
+  let litTree = null;
+
   const scene = await new Promise((resolve, reject) => {
     // On timeout, run fail() so the half-built game is destroyed too; a leftover canvas would cover
     // the new one on "Try again". The game always exists by then: 20 s is long after it was made.
@@ -150,7 +158,9 @@ export async function createRenderer(container, miniCanvas) {
         TILE_LAYERS.forEach((name, i) => map.createLayer(name, tiles, 0, 0).setDepth(i - 20));
 
         // Standing objects sort by their ground line, so the character can walk behind a tree or in front of it.
-        // Harvestable wild scenery is skipped here; it is drawn with the supplies below.
+        // Harvestable wild patches (flowers, driftwood) are skipped here; they are drawn with the supplies below.
+        // Trees and rocks stay here, chunk by chunk, but each also gets an entry in `harvest`, so
+        // draw() can fade it out when it is chopped or mined and light it up when E would gather it.
         for (const object of map.getObjectLayer('objects').objects) {
           const spec = objectSpecs[object.name];
           if (!spec || WILD[object.name] || !this.textures.exists(`object-${object.name}`))
@@ -164,7 +174,21 @@ export async function createRenderer(container, miniCanvas) {
           const key = `${Math.floor(object.x / CHUNK)},${Math.floor(object.y / CHUNK)}`;
           if (!chunks.has(key)) chunks.set(key, []);
           chunks.get(key).push(image);
+
+          const node = sceneryNodes.get(`${object.name}-${object.x}-${object.y}`);
+          if (!node) continue;
+          const entry = {
+            node,
+            sprite: image,
+            glow: null,
+            top: Math.max(node.y - image.displayHeight * image.originY, node.y - 150),
+          };
+          harvest.set(node.id, entry);
+          if (!harvestChunks.has(key)) harvestChunks.set(key, []);
+          harvestChunks.get(key).push(entry);
         }
+        // Every tree and rock node should have found its picture; if not, the ids drifted apart.
+        console.assert(harvest.size === sceneryNodes.size, 'tree and rock nodes without a picture');
 
         // Supplies are sprites like the scenery around them; draw() glows the one in reach (WebGL only) and caps it with E.
         // The glow filter is added the first time a supply comes into reach (see glowOf), because the world has
@@ -287,7 +311,7 @@ export async function createRenderer(container, miniCanvas) {
   /**
    * Gives a supply its glow outline, creating it the first time it is needed.
    *
-   * @param {object} s - One entry of `supplies`.
+   * @param {object} s - One entry of `supplies` or `harvest`.
    * @returns {object|null} The glow filter, or null on the Canvas renderer, which has no filters.
    */
   function glowOf(s) {
@@ -350,10 +374,11 @@ export async function createRenderer(container, miniCanvas) {
         cx++
       )
         if (chunks.has(`${cx},${cy}`)) next.add(`${cx},${cy}`);
+    // Chunks that just came into view; their trees and rocks jump to how they are now (see below).
+    const appeared = new Set([...next].filter((key) => !shown.has(key)));
     for (const key of shown)
       if (!next.has(key)) for (const image of chunks.get(key)) image.setVisible(false);
-    for (const key of next)
-      if (!shown.has(key)) for (const image of chunks.get(key)) image.setVisible(true);
+    for (const key of appeared) for (const image of chunks.get(key)) image.setVisible(true);
     shown = next;
 
     // Campfires: one sprite per camp, made when the camp is founded. Keys include the character,
@@ -401,6 +426,31 @@ export async function createRenderer(container, miniCanvas) {
         if (busy) working = s;
         else capped = s;
       }
+    }
+
+    // Trees and rocks on screen fade out when chopped or mined, and back in when they regrow. One
+    // in a chunk that just came into view jumps straight to how it is now instead of fading.
+    for (const key of shown)
+      for (const entry of harvestChunks.get(key) ?? []) {
+        const gone = !isAvailable(state, entry.node),
+          change = appeared.has(key) ? 1 : step,
+          { sprite } = entry;
+        sprite.setAlpha(
+          gone ? Math.max(0, sprite.alpha - change) : Math.min(1, sprite.alpha + change),
+        );
+        sprite.setVisible(sprite.alpha > 0);
+      }
+
+    // The tree or rock E would chop or mine (or the one being worked on) glows like a supply, with
+    // the E cap over it or the progress bar while the work runs.
+    const tree = harvest.get(busy ?? aimed) ?? null;
+    if (litTree && litTree !== tree && litTree.glow) litTree.glow.active = false;
+    litTree = tree && isAvailable(state, tree.node) ? tree : null;
+    if (litTree) {
+      const glow = glowOf(litTree);
+      if (glow) glow.active = true;
+      if (busy) working = litTree;
+      else capped = litTree;
     }
 
     // The player's boat, pointing the way it last went and rocking gently on the water.
