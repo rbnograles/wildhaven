@@ -1,0 +1,4 @@
+Tool: Nano Banana (Gemini image generation), 2026-11-19. References attached: the style sheet and cliffs/meadow-block.jpg. NOT USED in the game: the model drew panel lines that read as square tiles.
+
+Using the attached cliff block as the exact reference for material, colour, lighting and wall height, draw a long straight section of the same front cliff face: the thin grassy lip along the top, then the 1-tile-tall packed earth wall with roots, embedded stones and faint soil layers, with a little rubble at its foot. It runs as one horizontal band across the full width of the image, and its left edge matches its right edge so it repeats without a visible seam. No corners, no ends, no steps. Solid pure magenta (#FF00FF) above and below the band, no gradient, no checkerboard, no cast shadow.
+Warm hand-painted 2D indie RPG style with clean soft outlines, soft warm light from the upper left. No text, labels, UI, borders or characters.

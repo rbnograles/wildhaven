@@ -1,14 +1,16 @@
 """Builds the Wildhaven sprite map from assets/world/source/.
 
-Inputs : source/ground/{grass,dirt,jungle,rock,snow,sand,water}.png  seamless ground textures
-         source/objects/<kind>/<name>.png + source/objects.json       one sprite per world object; its
-                                                                      objects.json entry names the kind folder
-         source/places.json                                           regions, spawns, supplies, landmarks, waypoints
-Outputs: map/tileset.png    terrain tiles incl. generated soft transitions (64px, 1px extruded)
-         map/wildhaven.json Tiled-format map: seven tile layers + "objects" layer + a region grid property
+Inputs : source/ground/{grass,dirt,soil,jungle,rock,snow,sand,water}.png  seamless ground textures
+         source/objects/<kind>/<name>.png + source/objects.json            one sprite per world object; its
+                                                                           objects.json entry names the kind folder
+         source/cliffs/<kit>.png + source/cliffs/cliffs.json               the cliff pictures the hill tiles are cut from
+         source/places.json                                                regions, spawns, supplies, landmarks, waypoints
+Outputs: map/tileset.png    terrain and cliff tiles incl. generated soft transitions (64px, 1px extruded)
+         map/wildhaven.json Tiled-format map: eight terrain layers, a "cliffs" layer, an "objects" layer, and
+                            properties for the region grid and the elevation grid
          map/overview.webp  small render of the whole map for the minimap and world map
-The game reads collision from the JSON (water tiles + object footprints) and regions from its region grid.
-Run: python tools/build-map.py [preview.png]
+The game reads collision from the JSON (water tiles, the elevation grid and object footprints) and regions from
+its region grid. Run: python tools/build-map.py [preview.png]
 """
 import json, math, os, random, sys
 import numpy as np
@@ -21,8 +23,8 @@ TILE, COLS, ROWS, TEX = 64, 384, 256, 256
 W, H = COLS * TILE, ROWS * TILE
 
 # Terrains in paint order. A higher terrain is painted over a lower one, so the number is also its layer rank.
-GRASS, DIRT, JUNGLE, ROCK, SNOW, SAND, WATER = range(7)
-OVERLAYS = ['dirt', 'jungle', 'rock', 'snow', 'sand', 'water']   # rank 1..6; grass (rank 0) is the full ground layer
+GRASS, DIRT, SOIL, JUNGLE, ROCK, SNOW, SAND, WATER = range(8)
+OVERLAYS = ['dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water']   # rank 1..7; grass (rank 0) is the full ground layer
 
 # ---- regions -----------------------------------------------------------------------------
 # The world is an 8x8 grid of blocks, one letter per block. The letters are the `key` of each region in places.json.
@@ -82,10 +84,237 @@ def terrain(x, y):
         if ((x - bx) / 400) ** 2 + ((y - by - 12) / 270) ** 2 < 1 + 0.15 * math.sin(x / 90 + y / 70): t = DIRT   # village clearing
         if math.hypot(x - sx + 30, y - sy + 50) < 150: t = DIRT                                                # scout's camp
         if t == GRASS and math.hypot(x - vx, y - vy) < 520: t = SAND                                          # the survivor's beach
+    if t == GRASS and is_soil(k, x, y): t = SOIL
     if t == WATER and any(math.hypot(x - px, y - py) < 130 for px, py in POINTS): t = SAND
     return t
 
+# Says whether a grassy spot is bare forest soil instead: patches of it under the Pinefall pines, and the middle
+# of each grove in the meadows (the same wave pattern that groups the meadow's trees, see the scatter below).
+def is_soil(k, x, y):
+    if k == 'P': return math.sin(x / 520 + 0.8) * math.cos(y / 470 + 2.2) + 0.3 * math.sin(x / 150 + y / 190) > 0.5
+    return k == 'h' and math.sin(x / 610 + 1.3) * math.cos(y / 520 + 0.4) > 0.7
+
 corner = np.array([[terrain(x * TILE, y * TILE) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+
+# Hand-placed objects: the three starting places, each landmark's feature, the signposts and the bridges.
+(sx, sy), (bx, by), (vx, vy) = SPAWN['scout'], SPAWN['builder'], SPAWN['survivor']
+# The Scout's camp has no campfire: the only fires in the world are the ones the player builds.
+fixed = [('tent', sx + 137, sy - 160), ('log', sx - 156, sy - 154),
+         ('house-a', bx - 305, by - 120), ('house-b', bx + 295, by - 110), ('house-c', bx - 372, by + 310),
+         ('workshop', bx + 458, by + 225), ('ship', vx + 325, vy - 20)]
+fixed += [(l['object'], l['x'], l['y'] - 60) for l in PLACES['landmarks'] if 'object' in l]   # the feature stands just north of the spot
+fixed += [('signpost', w['x'], w['y'] - 50) for w in PLACES['waypoints']]
+fixed += [('bridge', x, y) for x, y in BRIDGES]
+
+# ---- hills and cliffs --------------------------------------------------------------------
+# Raised ground the player climbs by stairs. A hill is a stack of flat-topped levels on the tile grid, like a
+# wedding cake seen from above. The south edge of each level drops down a wall WALL_ROWS tiles tall; the other
+# edges only show a low lip, because the camera looks at the world from the south. Each hill is cut from one
+# "kit": a cliff picture in source/cliffs/ that cliffs.json describes.
+CLIFF = json.load(open(os.path.join(SRC, 'cliffs', 'cliffs.json'), encoding='utf-8'))
+KITS = [k for k in CLIFF['kits']]
+WALL_ROWS = 2   # a wall is two tiles (128 units) tall: a little taller than the player
+# Per region: the kit its hills use, the chance a candidate spot gets a hill, and the fewest and most levels.
+HILL_RULES = {'h': ('meadow', 0.55, 1, 2), 'P': ('meadow', 0.4, 1, 1), 'C': ('canyon', 0.65, 1, 2),
+              'D': ('canyon', 0.3, 1, 1), 'S': ('snow', 0.7, 2, 3)}
+HILL_STEP = 1600   # world units between candidate hill spots
+
+# Moves a grid of on/off tiles by (dy, dx) rows and columns; tiles moved in from outside are off.
+def shifted(m, dy, dx):
+    out = np.zeros_like(m); h, w = m.shape
+    out[max(dy, 0):h + min(dy, 0), max(dx, 0):w + min(dx, 0)] = m[max(-dy, 0):h + min(-dy, 0), max(-dx, 0):w + min(-dx, 0)]
+    return out
+
+# Keeps a tile only if every tile in the box reaching up/down/left/right that many tiles from it is on too.
+def shrink_box(m, up, down, left, right):
+    out = m.copy()
+    for dy in range(-up, down + 1):
+        for dx in range(-left, right + 1): out &= shifted(m, -dy, -dx)
+    return out
+
+# Turns on every tile that a box of that size, sitting on a tile that is on, would cover.
+def grow_box(m, up, down, left, right):
+    out = m.copy()
+    for dy in range(-up, down + 1):
+        for dx in range(-left, right + 1): out |= shifted(m, dy, dx)
+    return out
+
+# Spreads like water from the given tiles over every touching tile `can` allows; returns the tiles reached.
+def flood(can, starts):
+    seen = np.zeros_like(can); h, w = can.shape; stack = list(starts)
+    while stack:
+        y, x = stack.pop()
+        if 0 <= y < h and 0 <= x < w and can[y, x] and not seen[y, x]:
+            seen[y, x] = True; stack += [(y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)]
+    return seen
+
+# Fills every hole inside a shape, so a hill never has a pit that would trap the player.
+def fill_holes(m):
+    h, w = m.shape
+    edge = [(y, x) for y in range(h) for x in (0, w - 1)] + [(y, x) for y in (0, h - 1) for x in range(w)]
+    return ~flood(~m, edge)
+
+# Keeps only the biggest connected piece of a shape, so each level is one plateau.
+def biggest_piece(m):
+    left, best = m.copy(), np.zeros_like(m)
+    while left.any():
+        piece = flood(left, [tuple(np.argwhere(left)[0])])
+        if piece.sum() > best.sum(): best = piece
+        left &= ~piece
+    return best
+
+# Below every south edge there must be room for the wall plus one open row in front of it. Where the shape
+# comes back sooner than that, the gap is filled in, so a wall never runs straight into more plateau.
+def fill_short_gaps(m):
+    m = m.copy(); h, w = m.shape
+    for x in range(w):
+        for y in range(h - 1):
+            if m[y, x] and not m[y + 1, x]:
+                for j in range(2, WALL_ROWS + 2):
+                    if y + j < h and m[y + j, x]: m[y + 1:y + j, x] = True; break
+    return m
+
+# Says whether a shape keeps the rule fill_short_gaps makes.
+def gaps_ok(m): return (fill_short_gaps(m) == m).all()
+
+# Smooths a shape: no strips or notches one tile wide, no holes, no short gaps under walls, and one piece.
+def tidy(m):
+    for _ in range(3):
+        m = grow_box(shrink_box(m, 0, 1, 0, 1), 0, 1, 0, 1)   # "opening": drops bits only one tile wide
+        m = shrink_box(grow_box(m, 0, 1, 0, 1), 0, 1, 0, 1)   # "closing": fills notches one tile wide
+        m = fill_short_gaps(fill_holes(m))
+        if m.any(): m = biggest_piece(m)
+    return m
+
+# Draws the levels of one hill centred on tile (cx, cy). Returns the top-left tile (x0, y0) of the box the hill
+# was drawn in and its levels as on/off grids over that box: levels[0] is every tile at least one level up,
+# levels[1] at least two, and so on. Each level sits inside the one below with room for that level's lip
+# around it and, on the south side, for its wall and a path in front of the wall.
+def hill_shape(rng, cx, cy, n):
+    rx = rng.uniform(5, 7.5) + 3 * (n - 1); ry = rx * rng.uniform(0.6, 0.8)
+    pad = WALL_ROWS + 4
+    x0, y0 = int(cx - rx) - pad, int(cy - ry) - pad
+    w, h = int(2 * rx) + 2 * pad + 1, int(2 * ry) + 2 * pad + 1
+    ys, xs = np.mgrid[0:h, 0:w]
+    # Each 2x2 block of tiles (lined up with the world's even tiles) shares one value, so edges step two tiles at
+    # a time and no wall is narrower than two tiles. One-tile steps looked like a row of broken pillars.
+    dx, dy = ((xs + x0) // 2 * 2 + 1 - cx) / rx, ((ys + y0) // 2 * 2 + 1 - cy) / ry
+    angle, p1, p2 = np.arctan2(dy, dx), rng.uniform(0, 6.3), rng.uniform(0, 6.3)
+    # A rounded box rather than an oval, for long straight cliffs, with a gentle wobble so no two hills match.
+    reach = (np.abs(dx) ** 3 + np.abs(dy) ** 3) ** (1 / 3) / (1 + 0.1 * np.sin(3 * angle + p1) + 0.06 * np.sin(5 * angle + p2))
+    levels = []
+    for k in range(n):
+        room = shrink_box(levels[-1], 2, WALL_ROWS + 2, 2, 2) if levels else np.ones_like(reach, bool)
+        m = tidy((reach < 1 - 0.34 * k) & room) & room
+        if m.sum() < 12 or not gaps_ok(m): break
+        levels.append(m)
+    return x0, y0, levels
+
+# Finds where a level's stairs go: two tiles side by side in the wall under its southernmost straight edge, with
+# wall on both sides. `landing_ok(row, col)` says whether the player can stand where the stairs come down.
+# Returns (left column, edge row) in box tiles, or None if no edge is long enough.
+def stairs_spot(m, landing_ok):
+    best, h, w = None, *m.shape
+    for y in range(h - 1):
+        x = 0
+        while x < w:
+            if not (m[y, x] and not m[y + 1, x]): x += 1; continue
+            start = x
+            while x < w and m[y, x] and not m[y + 1, x]: x += 1
+            c = start + (x - start - 2) // 2
+            if x - start >= 4 and landing_ok(y + WALL_ROWS + 1, c) and landing_ok(y + WALL_ROWS + 1, c + 1):
+                if best is None or (y, x - start) > best[0]: best = ((y, x - start), c, y)
+    return best and best[1:]
+
+# Lists the wall tiles under a shape's south edges, as an on/off grid the same size as the shape.
+def walls_of(m):
+    edge = m & ~shifted(m, -1, 0)
+    return np.logical_or.reduce([shifted(edge, r + 1, 0) for r in range(WALL_ROWS)])
+
+level = np.zeros((ROWS, COLS), int)        # how many levels up each tile's ground is
+taken = np.zeros((ROWS, COLS), bool)       # tiles a hill or its walls already use
+kit_of = np.full((ROWS, COLS), -1)         # which kit draws each tile's cliff pieces, or -1
+flights = []                               # stairs: (kit, left column, edge row) in world tiles
+point_tiles = [(int(px // TILE), int(py // TILE)) for px, py in POINTS + [(ox, oy) for _, ox, oy in fixed] + FORDS]
+
+# Says whether a hill may go where `body` (its plateau and walls, an on/off grid whose top-left is world tile
+# (x0, y0)) lies: inside the map and one region, on dry ground, at least 4 tiles from every place the player must
+# reach, hand-placed object and crossing, and at least 5 tiles from other hills. Distances are measured from the
+# hill's own tiles, not its bounding box, so a round hill can sit near a landmark that only its box would cover.
+def hill_fits(key, body, x0, y0):
+    h, w = body.shape
+    if x0 < 4 or y0 < 4 or x0 + w > COLS - 4 or y0 + h > ROWS - 4: return False
+    cells = np.argwhere(body) + (y0, x0)
+    if any(region_key((x + 0.5) * TILE, (y + 0.5) * TILE) != key for y, x in cells): return False
+    near = grow_box(body, 4, 4, 4, 4)
+    if any(0 <= py - y0 < h and 0 <= px - x0 < w and near[py - y0, px - x0] for px, py in point_tiles): return False
+    box = (slice(y0, y0 + h), slice(x0, x0 + w))
+    ground = corner[box][grow_box(body, 3, 3, 3, 3)]
+    return not ((ground == WATER) | (ground == DIRT)).any() and not taken[box][grow_box(body, 5, 5, 5, 5)].any()
+
+# Tries to put one hill of n levels centred on world point (cx, cy) in region `key`. Every level needs stairs: the
+# lowest level's land on dry ground, the others on the level below. Returns True if the hill was placed.
+def place_hill(rng, key, cx, cy, n):
+    kit = HILL_RULES[key][0]
+    x0, y0, levels = hill_shape(rng, cx / TILE, cy / TILE, n)
+    if not levels or x0 < 0 or y0 < 0 or x0 + levels[0].shape[1] > COLS or y0 + levels[0].shape[0] > ROWS: return False
+    stairs = []
+    for k, m in enumerate(levels):
+        if k == 0: ok = lambda y, x: y + y0 < ROWS and not (corner[y + y0:y + y0 + 2, x + x0:x + x0 + 2] == WATER).any()
+        else: ok = lambda y, x, low=levels[k - 1]: y + 1 < low.shape[0] and low[y, x] and low[y + 1, x]
+        spot = stairs_spot(m, ok)
+        if spot is None: levels = levels[:k]; break
+        stairs.append(spot)
+    if not levels: return False
+
+    body = levels[0] | walls_of(levels[0])
+    if not hill_fits(key, body, x0, y0): return False
+    box = (slice(y0, y0 + body.shape[0]), slice(x0, x0 + body.shape[1]))
+    level[box] += sum(m.astype(int) for m in levels)
+    taken[box] |= body
+    kit_of[box][grow_box(body, 1, 1, 1, 1)] = KITS.index(kit)
+    flights.extend((kit, x0 + c, y0 + y) for c, y in stairs)
+    HILL_COUNT[kit] = HILL_COUNT.get(kit, 0) + 1
+    return True
+
+HILL_COUNT = {}
+for gy in range(HILL_STEP // 2, H, HILL_STEP):
+    for gx in range(HILL_STEP // 2, W, HILL_STEP):
+        # Like the scenery, each candidate spot has its own random seed, so one hill never reshuffles another.
+        rng = random.Random(gx * 2654435761 ^ gy * 97531 ^ 0x5eed)
+        if rng.random() > 0.9: continue
+        n = None
+        # A few tries per spot: each moves the centre, and every second try drops a level, so a hill that won't
+        # fit next to a river or a landmark can still find room nearby.
+        for attempt in range(4):
+            cx, cy = gx + rng.randint(-500, 500), gy + rng.randint(-500, 500)
+            key = region_key(cx, cy)
+            if key not in HILL_RULES: continue
+            _, chance, lo, hi = HILL_RULES[key]
+            if n is None:
+                if rng.random() > chance: break
+                n = rng.randint(lo, hi)
+            if place_hill(rng, key, cx, cy, max(lo, n - attempt // 2)): break
+
+# Walls hang below every south edge; stairs replace two tiles of wall. The elevation grid holds one letter per
+# tile for the game's collision (src/world/map.js): '0'-'3' is the level, 'w' a wall, 's' stairs.
+wall_row = np.full((ROWS, COLS), -1)       # which row of its wall a tile is (0 = top), or -1 if not a wall
+edge = level[:-1] > level[1:]
+for r in range(WALL_ROWS): wall_row[1 + r:][edge[:ROWS - 1 - r]] = r
+on_stairs = np.zeros((ROWS, COLS), bool)
+keep_clear = np.zeros((ROWS, COLS), bool)  # the stairs and the ground just above and below them
+for _, c, y in flights:
+    on_stairs[y + 1:y + 1 + WALL_ROWS, c:c + 2] = True
+    keep_clear[y - 1:y + WALL_ROWS + 4, c - 1:c + 3] = True
+elevation = np.where(on_stairs, 's', np.where(wall_row >= 0, 'w', level.astype(str)))
+
+# Says whether everything within r units of (x, y) is on one flat level, away from walls, edges and stairs.
+# Scenery uses it, so no tree stands on a cliff edge or blocks a flight of stairs.
+def on_flat(x, y, r):
+    ys = slice(max(0, int((y - r) // TILE)), int((y + r) // TILE) + 1)
+    xs = slice(max(0, int((x - r) // TILE)), int((x + r) // TILE) + 1)
+    near = elevation[ys, xs]
+    return (near == near.flat[0]).all() and near.flat[0] not in 'ws' and not keep_clear[ys, xs].any()
 
 # ---- tileset -----------------------------------------------------------------------------
 tex = {n: np.asarray(Image.open(os.path.join(SRC, 'ground', f'{n}.png')).convert('RGB').resize((TEX, TEX))).astype(float)
@@ -127,7 +356,143 @@ for name in OVERLAYS:
 # Picks the tileset number (gid) for one map square; 0 means empty.
 def gid(name, mask, tx, ty): return 0 if mask == 0 else first[name] + (mask - 1) * 16 + (ty % 4) * 4 + tx % 4
 
-TS_COLS = 32; ts_rows = math.ceil(len(tiles) / TS_COLS); cell = TILE + 2
+# ---- cliff tiles -------------------------------------------------------------------------
+# Each kit picture is cut into strips at game size (one pixel per world unit):
+#   wall       two stretches of plain wall side by side, 128 units wide in all and joined so they repeat. Its top
+#              SLIP rows are the lip that overhangs the wall; the 128 rows under them are the wall itself.
+#   cap_l/r    the left and right ends of the wall, LIP units wide, with the corner of the lip above them
+#   side/sideE the low lip along a west or east edge: LIP units across, 32 units along, joined so it repeats
+# A tile is then painted from these strips for each mix of open edges, wall row and shadow the map needs.
+LIP = 12                                  # how far a north, west or east lip reaches into the plateau, in units
+PPU = CLIFF['pixelsPerUnit']
+SLIP = (CLIFF['kits']['meadow']['wallTop'] - CLIFF['kits']['meadow']['lipTop']) // PPU   # rows of lip over a wall
+
+# Makes the first n rows of a picture repeat smoothly: its first `blend` rows fade in from the rows just after n.
+def loop_rows(a, n, blend):
+    out = a[:n].copy(); w = (np.arange(blend) / blend).reshape((-1,) + (1,) * (a.ndim - 1))
+    out[:blend] = a[:blend] * w + a[n:n + blend] * (1 - w)
+    return out
+
+# Cuts the strips for one kit out of its picture.
+def kit_strips(name):
+    g = CLIFF['kits'][name]
+    pic = Image.open(os.path.join(SRC, 'cliffs', f'{name}.png')).convert('RGBA')
+    rows = (g['wallBottom'] - g['lipTop']) // PPU
+
+    # Cuts a box out of the picture and shrinks it to w x h game pixels.
+    def piece(x0, x1, y0, y1, w, h): return np.asarray(pic.crop((x0, y0, x1, y1)).resize((w, h), Image.LANCZOS)).astype(float)
+    (a0, a1), (b0, b1) = g['sides']
+    a = piece(a0, a1, g['lipTop'], g['wallBottom'], TILE + 8, rows)
+    b = piece(b0, b1, g['lipTop'], g['wallBottom'], TILE + 8, rows)
+    ramp = (np.arange(8) / 8)[None, :, None]
+    wall = np.concatenate([a[:, :TILE], b[:, :TILE]], axis=1)
+    wall[:, :8] = a[:, :8] * ramp + b[:, TILE:] * (1 - ramp)               # the right end of b runs on into a...
+    wall[:, TILE:TILE + 8] = b[:, :8] * ramp + a[:, TILE:] * (1 - ramp)     # ...and the right end of a into b
+    lip_edge = LIP * PPU
+    cap_l = piece(g['leftTip'], g['leftTip'] + lip_edge, g['lipTop'], g['wallBottom'], LIP, rows)
+    cap_r = piece(g['rightTip'] - lip_edge, g['rightTip'], g['lipTop'], g['wallBottom'], LIP, rows)
+    side = loop_rows(piece(g['leftTip'], g['leftTip'] + lip_edge, 8, g['lipTop'] - 5, LIP, 38), 32, 6)
+    side_e = loop_rows(piece(g['rightTip'] - lip_edge, g['rightTip'], 8, g['lipTop'] - 5, LIP, 38)[:, ::-1], 32, 6)
+
+    # The inner side of every lip fades out, so it melts into the plateau's own ground texture.
+    fade_in = np.clip(np.arange(rows) / 5, 0, 1)[:, None]
+    for strip in (wall, cap_l, cap_r): strip[:SLIP, :, 3] *= fade_in[:SLIP]
+    across = np.clip((LIP - 0.5 - np.arange(LIP)) / 4, 0, 1)[None, :]
+    for strip in (side, side_e): strip[..., 3] *= across
+    return {'wall': wall, 'cap_l': cap_l, 'cap_r': cap_r, 'side': side, 'side_e': side_e}
+
+STRIPS = [kit_strips(k) for k in KITS]
+
+# Lays picture `src` over picture `dst` (both RGBA, 0-255, alpha not premultiplied), like stacking tracing paper.
+def over(dst, src):
+    sa, da = src[..., 3:] / 255, dst[..., 3:] / 255
+    out_a = sa + da * (1 - sa)
+    rgb = (src[..., :3] * sa + dst[..., :3] * da * (1 - sa)) / np.maximum(out_a, 1e-6)
+    return np.dstack([rgb, out_a * 255])
+
+PX = np.arange(TILE) + 0.5
+X, Y = np.meshgrid(PX, PX)
+
+# Paints one cliff tile. `edges` says which sides (north, south, west, east) drop to lower ground; `inner` which
+# corners (NW, NE, SW, SE) have lower ground only diagonally. `wall` is the wall row (-1: no wall) and `var`
+# which half of the repeating wall to use. `caps` says whether the wall ends on its left/right; `shade` whether
+# a cliff to the west or a wall to the north throws a soft shadow over this tile. `lift` is the level of a plateau
+# tile (0 for anything else): each level up is washed with a little more warm light, so higher ground reads as
+# higher even where no wall shows.
+def cliff_tile(kit, edges, inner, wall, var, caps, shade, lift):
+    s = STRIPS[kit]; tile = np.zeros((TILE, TILE, 4))
+    if lift: tile[:] = (255, 240, 200, 20 * lift)
+
+    # Shadows first, on the ground: light comes from the upper left, so cliffs shade the ground east and south of them.
+    if shade[0]: tile = over(tile, np.dstack([np.full((TILE, TILE, 3), (25, 30, 40)), 70 * np.clip(1 - X / 18, 0, 1)]))
+    if shade[1]: tile = over(tile, np.dstack([np.full((TILE, TILE, 3), (25, 30, 40)), 80 * np.clip(1 - Y / 12, 0, 1)]))
+
+    # A wall tile: a slice of the repeating wall, with an end piece where the wall stops.
+    if wall >= 0:
+        top = SLIP + wall * TILE
+        part = s['wall'][top:top + TILE, var * TILE:(var + 1) * TILE].copy()
+        blend = np.clip((np.arange(LIP) - (LIP - 4)) / 3, 0, 1)[None, :, None]   # the last few columns melt into the wall
+        if caps[0]: part[:, :LIP] = s['cap_l'][top:top + TILE] * (1 - blend) + part[:, :LIP] * blend
+        if caps[1]: part[:, -LIP:] = s['cap_r'][top:top + TILE] * (1 - blend[:, ::-1]) + part[:, -LIP:] * blend[:, ::-1]
+        tile = over(tile, part)
+
+    # Lips on a plateau tile. Each pixel takes its lip from the nearest open edge (or inner corner).
+    north, south, west, east = edges
+    far = np.full((TILE, TILE), 1e9)
+    dist = np.stack([np.where(north, Y, far), np.where(south, TILE - Y, far), np.where(west, X, far), np.where(east, TILE - X, far),
+                     np.where(inner[0], np.hypot(X, Y), far), np.where(inner[1], np.hypot(TILE - X, Y), far),
+                     np.where(inner[2], np.hypot(X, TILE - Y), far), np.where(inner[3], np.hypot(TILE - X, TILE - Y), far)])
+    nearest, d = dist.argmin(axis=0), dist.min(axis=0)
+    # Round the two back corners: inside the corner square, the distance is measured to a quarter circle instead.
+    for on, cx in ((north and west, LIP), (north and east, TILE - LIP)):
+        if on:
+            corner_sq = (np.abs(X - cx) < LIP) & (Y < LIP) & ((X < cx) == (cx == LIP))
+            d = np.where(corner_sq, LIP - np.hypot(X - cx, Y - LIP), d)
+            nearest = np.where(corner_sq, np.where(np.abs(X - cx) > LIP - Y, 2 if cx == LIP else 3, 0), nearest)
+    lip = np.zeros((TILE, TILE, 4))
+    xi, yi = X.astype(int), Y.astype(int); di = np.clip(d, 0, LIP - 1).astype(int)
+    band = (d >= 0) & (d < LIP)
+    for side, rows, cols, src in ((0, xi % 32, di, s['side']), (2, yi % 32, di, s['side']), (3, yi % 32, di, s['side_e']),
+                                  (4, (xi + yi) % 32, di, s['side']), (5, (xi + yi) % 32, di, s['side']),
+                                  (6, (xi + yi) % 32, di, s['side']), (7, (xi + yi) % 32, di, s['side'])):
+        m = band & (nearest == side)
+        lip[m] = src[rows[m], cols[m]]
+    if south:   # the lip over a wall comes from the top rows of the wall strip, or of its end pieces at a corner
+        m = (nearest == 1) & (Y > TILE - SLIP)
+        lip[m] = s['wall'][yi[m] - (TILE - SLIP), var * TILE + xi[m]]
+        for on, xs, cap in ((west, slice(0, LIP), 'cap_l'), (east, slice(TILE - LIP, TILE), 'cap_r')):
+            if on: lip[TILE - SLIP:, xs] = s[cap][:SLIP]
+    lip[~band & (nearest != 1)] = 0
+    return over(tile, lip)
+
+# Works out which cliff tile each map square needs and adds every different one to the tileset once.
+cliff_gid = {}
+cliff_layer = [0] * (ROWS * COLS)
+
+# Reads the level of a tile, treating tiles off the map as ground level.
+def lv(y, x): return level[y, x] if 0 <= y < ROWS and 0 <= x < COLS else 0
+
+for y, x in np.argwhere(kit_of >= 0):
+    here, r = level[y, x], wall_row[y, x]
+    top = r < 0 and here > 0
+    edges = tuple(bool(top and lv(y + dy, x + dx) < here) for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)))
+    inner = tuple(bool(top and lv(y + dy, x) >= here and lv(y, x + dx) >= here and lv(y + dy, x + dx) < here)
+                  for dy, dx in ((-1, -1), (-1, 1), (1, -1), (1, 1)))
+    caps = (False, False)
+    if r >= 0:
+        wall_top = level[y - 1 - r, x]
+        # Says whether the wall stops at the next tile over: it does unless that tile is the same wall or higher ground.
+        def ends(dx): return not (0 <= x + dx < COLS) or not (wall_row[y, x + dx] == r and level[y - 1 - r, x + dx] == wall_top) and level[y, x + dx] < wall_top
+        caps = (ends(-1), ends(1))
+    shade = (r < 0 and x > 0 and ((wall_row[y, x - 1] < 0 and level[y, x - 1] > here) or wall_row[y, x - 1] >= 0),
+             r < 0 and y > 0 and wall_row[y - 1, x] == WALL_ROWS - 1)
+    key = (int(kit_of[y, x]), edges, inner, int(r), x % 2 if (r >= 0 or edges[1]) else 0, caps, shade, int(here) if top else 0)
+    if not (top or r >= 0 or any(shade)): continue
+    if key not in cliff_gid:
+        tiles.append(cliff_tile(*key)); cliff_gid[key] = len(tiles)
+    cliff_layer[y * COLS + x] = cliff_gid[key]
+
+TS_COLS = 48; ts_rows = math.ceil(len(tiles) / TS_COLS); cell = TILE + 2
 sheet = np.zeros((ts_rows * cell, TS_COLS * cell, 4), dtype='uint8')
 for i, t in enumerate(tiles):
     y, x = (i // TS_COLS) * cell, (i % TS_COLS) * cell
@@ -147,6 +512,8 @@ for rank, name in enumerate(OVERLAYS, start=1):
             mask = sum(int(v >= rank) << i for i, v in enumerate(c)) if rank in c else 0
             data.append(gid(name, mask, tx, ty))
     layers[name] = data
+layers['cliffs'] = cliff_layer   # drawn over the ground: lips, walls and their shadows (see "cliff tiles")
+TILE_LAYERS = ['ground'] + OVERLAYS + ['cliffs']
 
 # ---- region grid -------------------------------------------------------------------------
 # One digit per 256-unit square, row by row: the index of that square's region in places.json.
@@ -156,14 +523,8 @@ region_grid = ''.join(str(REGION_INDEX[region_key(cx * REGION_CELL + REGION_CELL
 
 # ---- objects -----------------------------------------------------------------------------
 spec = {k: v for k, v in json.load(open(os.path.join(SRC, 'objects.json'))).items() if not k.startswith('_')}
-(sx, sy), (bx, by), (vx, vy) = SPAWN['scout'], SPAWN['builder'], SPAWN['survivor']
-# The Scout's camp has no campfire: the only fires in the world are the ones the player builds.
-fixed = [('tent', sx + 137, sy - 160), ('log', sx - 156, sy - 154),
-         ('house-a', bx - 305, by - 120), ('house-b', bx + 295, by - 110), ('house-c', bx - 372, by + 310),
-         ('workshop', bx + 458, by + 225), ('ship', vx + 325, vy - 20)]
-fixed += [(l['object'], l['x'], l['y'] - 60) for l in PLACES['landmarks'] if 'object' in l]   # the feature stands just north of the spot
-fixed += [('signpost', w['x'], w['y'] - 50) for w in PLACES['waypoints']]
-fixed += [('bridge', x, y) for x, y in BRIDGES]
+# The stairs sprite of each flight sits centred on its two stairs tiles, its foot on the ground below the wall.
+stairs_objects = [(f'{kit}-stairs', (c + 1) * TILE, (y + 1 + WALL_ROWS) * TILE) for kit, c, y in flights]
 
 # Says whether a random tree or rock may go at (x, y): not on a place the player must stand, not on a crossing,
 # and not on, behind or just in front of a hand-placed object, where it would cover it up.
@@ -188,7 +549,7 @@ for gy in range(STEP // 2, H, STEP):
         # Each grid square has its own random seed, so changing one part of the map never reshuffles another part.
         rng = random.Random(gx * 73856093 ^ gy * 19349663)
         x, y = gx + rng.randint(-70, 70), gy + rng.randint(-70, 70)
-        if not (60 < x < W - 60 and 120 < y < H - 30) or not scatter_ok(x, y): continue
+        if not (60 < x < W - 60 and 120 < y < H - 30) or not scatter_ok(x, y) or not on_flat(x, y, 80): continue
         ground = terrain(x, y); roll = rng.random()
         if ground in (WATER, DIRT): continue
         k = region_key(x, y)
@@ -200,20 +561,54 @@ for gy in range(STEP // 2, H, STEP):
             else: chance, names = 0.28, ['oak', 'palm', 'palm', 'flowers', 'rocks-b']
         else: chance, names = SCATTER[k]
         if roll < chance: scattered.append((rng.choice(names), x, y))
-objects = fixed + scattered
+
+# Ground detail: grass tufts, tall grass and bare dirt patches on a finer grid, so open ground isn't flat colour.
+# It is a separate pass with its own seeds, so adding it did not move a single tree from the pass above.
+# Per region: (chance a square gets something, what it can be). Lagoon sand and dirt patches have their own rules below.
+DETAIL = {
+    'h': (0.5, ['grass-tuft', 'grass-tuft', 'grass-tuft', 'tall-grass', 'tall-grass', 'dirt-patch']),
+    'P': (0.3, ['grass-tuft', 'grass-tuft', 'tall-grass', 'dirt-patch']),
+    'L': (0.3, ['grass-tuft', 'grass-tuft', 'tall-grass']),
+    'D': (0.1, ['dry-grass']),
+    'C': (0.25, ['dry-grass', 'dry-grass', 'grass-tuft']),
+    'S': (0.22, ['snow-grass']),
+}
+# Solid bases of the hand-placed objects, grown a little, so no tuft pokes out of a house wall.
+fixed_bases = [(ox - spec[n]['footprint'][0] - 30, oy - spec[n]['footprint'][1] - 30, ox + spec[n]['footprint'][0] + 30, oy + 30)
+               for n, ox, oy in fixed if 'footprint' in spec[n]]
+details = []
+DETAIL_STEP = 150
+for gy in range(DETAIL_STEP // 2, H, DETAIL_STEP):
+    for gx in range(DETAIL_STEP // 2, W, DETAIL_STEP):
+        rng = random.Random(gx * 83492791 ^ gy * 50331653 ^ 0xd17)
+        x, y = gx + rng.randint(-55, 55), gy + rng.randint(-55, 55)
+        k, ground, roll = region_key(x, y), terrain(x, y), rng.random()
+        if k not in DETAIL or not (60 < x < W - 60 and 120 < y < H - 30) or ground in (WATER, DIRT): continue
+        chance, names = DETAIL[k]
+        if k == 'L' and ground == SAND: chance, names = 0.08, ['dry-grass']
+        name = rng.choice(names)
+        if name == 'dirt-patch' and ground != GRASS: name = 'grass-tuft'   # bare earth only shows up on grass
+        reach = 110 if name == 'dirt-patch' else 40
+        if (roll >= chance or not on_flat(x, y, reach)
+                or any(math.hypot(x - px, y - py) < 70 for px, py in POINTS)
+                or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)): continue
+        details.append((name, x, y))
+objects = fixed + stairs_objects + scattered + details
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
-    'width': COLS, 'height': ROWS, 'tilewidth': TILE, 'tileheight': TILE, 'nextlayerid': len(OVERLAYS) + 3, 'nextobjectid': len(objects) + 1,
+    'width': COLS, 'height': ROWS, 'tilewidth': TILE, 'tileheight': TILE, 'nextlayerid': len(TILE_LAYERS) + 2, 'nextobjectid': len(objects) + 1,
     'tilesets': [{'firstgid': 1, 'name': 'terrain', 'image': 'tileset.png', 'imagewidth': sheet.shape[1], 'imageheight': sheet.shape[0],
                   'tilewidth': TILE, 'tileheight': TILE, 'margin': 1, 'spacing': 2, 'columns': TS_COLS, 'tilecount': len(tiles)}],
     'properties': [{'name': 'firstWaterGid', 'type': 'int', 'value': first['water']},
                    {'name': 'regionCell', 'type': 'int', 'value': REGION_CELL},
                    {'name': 'regionCols', 'type': 'int', 'value': REGION_COLS},
-                   {'name': 'regionGrid', 'type': 'string', 'value': region_grid}],
+                   {'name': 'regionGrid', 'type': 'string', 'value': region_grid},
+                   {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())}],
     'layers': [{'id': i + 1, 'name': n, 'type': 'tilelayer', 'x': 0, 'y': 0, 'width': COLS, 'height': ROWS, 'opacity': 1, 'visible': True, 'data': layers[n]}
-               for i, n in enumerate(['ground'] + OVERLAYS)]
-            + [{'id': len(OVERLAYS) + 2, 'name': 'objects', 'type': 'objectgroup', 'x': 0, 'y': 0, 'opacity': 1, 'visible': True, 'draworder': 'topdown',
+               for i, n in enumerate(TILE_LAYERS)]
+            + [{'id': len(TILE_LAYERS) + 1, 'name': 'objects', 'type': 'objectgroup', 'x': 0, 'y': 0, 'opacity': 1, 'visible': True, 'draworder': 'topdown',
                 'objects': [{'id': i + 1, 'name': n, 'type': n, 'x': x, 'y': y, 'width': 0, 'height': 0, 'rotation': 0, 'point': True, 'visible': True}
                             for i, (n, x, y) in enumerate(objects)]}],
 }
@@ -223,7 +618,7 @@ json.dump(tiled, open(map_path, 'w'), separators=(',', ':'))
 # ---- overview ----------------------------------------------------------------------------
 S = 8; full = Image.new('RGBA', (W // S, H // S))
 small = [Image.fromarray(t.astype('uint8')).resize((TILE // S, TILE // S), Image.BOX) for t in tiles]
-for n in ['ground'] + OVERLAYS:
+for n in TILE_LAYERS:
     for i, g in enumerate(layers[n]):
         if g: full.alpha_composite(small[g - 1], ((i % COLS) * TILE // S, (i // COLS) * TILE // S))
 sprites = {n: Image.open(os.path.join(SRC, 'objects', spec[n]['kind'], f'{n}.png')).convert('RGBA') for n in spec}
@@ -237,4 +632,5 @@ for n, x, y in sorted(objects, key=lambda o: (not spec[o[0]].get('flat', False),
     if px >= 0 and py >= 0 and px + im.width <= full.width and py + im.height <= full.height: full.alpha_composite(im, (px, py))
 full.convert('RGB').resize((1536, 1024), Image.LANCZOS).save(os.path.join(OUT, 'overview.webp'), quality=85)
 if len(sys.argv) > 1: full.convert('RGB').save(sys.argv[1])
-print(len(tiles), 'tiles,', len(objects), 'objects,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file')
+print(len(tiles), 'tiles,', len(objects), 'objects,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file,',
+      len(flights), 'flights of stairs,', len(cliff_gid), 'cliff tiles; hills per kit:', HILL_COUNT)

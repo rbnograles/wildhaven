@@ -90,7 +90,8 @@ const isNeed = (n) =>
 
 /**
  * Checks one camp from a save: an id like "camp-3", a tidy name, a spot on dry land, a growth
- * count in range and exactly three needs.
+ * count in range and exactly three needs. Like the player's spot, cliffs are left out of the
+ * land check, so a camp built before a hill was added on that spot still loads.
  *
  * @param {*} c - The camp read from a save.
  * @returns {boolean} True if the game can use it.
@@ -103,7 +104,7 @@ const isCamp = (c) =>
   c.name.length >= 1 &&
   c.name.length <= CAMP_NAME_MAX &&
   c.name.trim() === c.name &&
-  isWalkable(c.x, c.y) &&
+  isWalkable(c.x, c.y, [], false) &&
   Number.isInteger(c.grown) &&
   c.grown >= 0 &&
   c.grown <= MAX_GROWN &&
@@ -204,12 +205,14 @@ export function restoreGame(json) {
     const s = parsed?.version === 3 ? upgradeV3(parsed) : parsed;
 
     // The right save version, a known character, and a player standing somewhere they're allowed to be.
+    // Cliffs are left out of that check: a save made before a hill was built on the spot still loads,
+    // and movePlayer lets the player walk off the cliff.
     if (
       !s ||
       s.version !== SAVE_VERSION ||
       !CHARACTERS.some((c) => c.id === s.character) ||
       !s.player ||
-      !isWalkable(s.player.x, s.player.y) ||
+      !isWalkable(s.player.x, s.player.y, [], false) ||
       ![0, 1, 2, 3].includes(s.player.direction)
     )
       return null;

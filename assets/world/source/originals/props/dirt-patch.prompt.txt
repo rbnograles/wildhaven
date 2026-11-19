@@ -1,0 +1,6 @@
+Tool: Nano Banana (Gemini image generation), 2026-11-19. References attached: assets/characters/originals/starting-characters-idle-v1.png plus ground/dirt.png and ground/grass.png.
+
+Asset for a top-down 2D game called Wildhaven. The attached images are STYLE REFERENCES ONLY; do not draw them or the characters.
+Single isolated game sprite: an irregular, organic-shaped patch of bare trodden ochre earth seen almost straight down, with a few small pebbles and a ragged fringe of short yellow-green grass blades around its edge so it blends into a meadow. Flat on the ground: no height, no hole, no mound.
+Centered on a perfectly flat, solid pure magenta (#FF00FF) background with no gradient, texture, checkerboard or cast shadow. The whole patch is visible with wide magenta margins; nothing touches the image edge. One patch only. It will be shrunk to about 220 x 140 pixels in game.
+Warm hand-painted 2D indie RPG style with clean soft outlines, matching the attached references: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or characters.

@@ -210,3 +210,26 @@ Browser at `http://127.0.0.1:5180`:
 - Food slot: "You eat. +25 hunger"; herbs slot at full health: "You are already at full health."; empty slots are faded.
 - 768×1024: card 24–241 px, item box 282–575 px, map 616–744 px; no horizontal scroll.
 - 375×812: card top left, journal and pause top right, item box above the touch arrows, round map bottom right, the build menu opens above the item box; key hints are hidden; no horizontal scroll.
+
+## SpriteCook palm replaces the palm stand-in — 2026-11-19
+
+The palm stand-in (a narrowed oak) was replaced with one image from the SpriteCook Claude plugin (`gemini-nano-banana-2.1`, HD, transparent background, with `starting-characters-idle-v1.png` uploaded as the style guide; 12 credits). The cutout came back clean: alpha is 0 outside the tree. The sprite was cropped to its alpha > 40 bounds and fitted into 200×300 with 4 px padding. Its trunk base sits at x 153 of 200, so `objects.json` now gives the palm `origin` `[0.765, 0.982]` and `footprint` `[15, 12]`. `python tools/build-map.py` rebuilt the map: only `overview.webp` changed, because palm positions and names did not. Automated: `npm test` 63 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5179` (1024×768, hidden pane), test survivor save (the old version-2 survivor save there was backed up and restored afterwards):
+- Driftwood Lagoon, next to the two palms west of the Driftwood Signpost: both palms draw with the trunk base on their map point and the crown leaning left, sized like the other trees.
+- Emerald Jungle, after signpost travel to Jungle Gate (the travel button's own click handler): the palm west of the signpost draws the same way.
+- `isWalkable` around the palm at (20485, 9518): blocked from x −20 to +20 and y −20 to +5 around the trunk base (footprint plus the player's body); open ground under the crown, where the old centred origin would have put the base.
+- No console errors.
+
+Not checked by hand: walking into a palm with the keyboard (the hidden pane ran at a low frame rate), and the 390 px layout (no layout changed).
+
+## Hills, cliffs, soil and grass detail from the Nano Banana art — 2026-11-19
+
+`python tools/prepare-generated-art.py` then `python tools/build-map.py`: 17 hills (8 meadow, 6 canyon, 3 snow), 25 flights of stairs, 132 cliff tiles, 6,728 objects (was 3,633; the new ones are the stairs, grass tufts and dirt patches), 3.0 MB map file. Automated: `npm test` 70 passing (6 new in `tests/world/cliffs.test.js`, 1 new in `tests/actions/move.test.js`), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5173` (another chat's dev server on this folder; 1024×768, hidden pane). A test builder save was written there (no saves existed at that origin) and removed afterwards.
+- Hollowstead, two-level meadow hill: from the foot of the lower stairs, walking north climbed onto level 1 and stopped at the level-2 wall; walking east then north climbed the second flight onto level 2 and stopped at its north edge; running west (Shift) stopped at the edge beside the wall below. The walls, stairs, lips, level highlight, soil patches, tufts and dirt patches drew as in the offline renders.
+- Frostpeak, three-level snow mountain: walking north into the bottom wall stopped at its foot. Snow walls and stairs drew correctly.
+- No console errors.
+
+Not checked by hand: the canyon kit in game (checked in an offline full-resolution render only), frame rate (the hidden pane is throttled; about 160 sprites are on screen at once), and the 390 px layout (no layout changed).
