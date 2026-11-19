@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Wildhaven is a single-player, top-down browser exploration game. It is still a prototype. On the selection screen the player picks one of three characters: Frontier Scout, Wandering Builder, or Shipwreck Survivor. Each one starts at its own spot in one shared world. The current milestone covers character selection, exploration, supply gathering, discovering three regions, and saving each character separately. The long-term direction is a survival-and-settlement game with building, settlers, survival meters, and wolves. That design is in `docs/superpowers/specs/2026-11-19-survival-settlement-design.md`, but none of it is implemented. **Do not describe roadmap features as if they already exist.**
+Wildhaven is a single-player, top-down browser exploration game. It is still a prototype. On the selection screen the player picks one of three characters: Frontier Scout, Wandering Builder, or Shipwreck Survivor. Each one starts far from the others in one shared world of seven regions (desert, pine forest, snow, meadows, lagoon, canyons, jungle). The current milestone covers character selection, exploration, supply gathering, discovering regions, finding 49 landmarks, finding 14 signposts and fast-travelling between them, and saving each character separately. The big world is build 1 of 4 in `docs/superpowers/specs/2026-11-19-big-world-design.md`; builds 2 to 4 (objectives journal and collectibles, harsh conditions and gear, locals) are not implemented. The long-term direction is a survival-and-settlement game with building, settlers, survival meters, and wolves. That design is in `docs/superpowers/specs/2026-11-19-survival-settlement-design.md`, but none of it is implemented. **Do not describe roadmap features as if they already exist.**
 
 The standardized game design document is `docs/gdd.md` (imported 2026-11-19 with `/game-import`). It tags every item **[Built]** or **[Planned]**, records the audience (cozy survival), fantasy (exploration/discovery), retention hooks, and the hobby/no-monetization intent, and lists open spec-vs-build mismatches. When the GDD and the code disagree, trust the code.
 
@@ -23,6 +23,7 @@ node --test tests/actions/gather.test.js                              # one file
 node --test --test-name-pattern="stale tab" tests/game/saves.test.js  # one test by name
 
 python tools/build-map.py [preview.png]   # regenerate assets/world/map/* (needs numpy + Pillow)
+python tools/make-biome-standins.py       # create any missing stand-in biome art (never overwrites)
 ```
 
 Prettier 3 is the formatter (see Code Style below); there is no linter. Requires Node 20.19+ or 22.12+; the project was developed on Node 24.
@@ -39,13 +40,13 @@ Game rules are pure modules. Rendering and the DOM are thin layers around them. 
 
 | Folder | Role | Runs in Node tests? |
 | --- | --- | --- |
-| `src/data/` | `characters.js` (characters, spawns, region offsets), `supplies.js` (`SUPPLIES` with sprite, scale, verb, clip; `WILD` regrowing patch kinds; `RESOURCES`), `balance.js` (speeds, reach, `GATHER_SECONDS`, radii) | yes |
-| `src/world/` | `map.js` (world size, collision: `isWalkable`, `blocks`, `OBSTACLES`), `nodes.js` (`NODES` = supplies + wild map patches; `nodeBases` solid bases), `regions.js` (`LOCATIONS`, `regionAt`) | yes |
-| `src/actions/` | One file per player action: `move.js` (`movePlayer`), `gather.js` (`beginGather` starts the timed action, `finishGather` awards by id; `gatherTime`, `isAvailable`, `nearbyNode`), `discover.js` | yes |
+| `src/data/` | `places.js` (regions, spawns, supply spots, `LANDMARKS`, `WAYPOINTS`, all read from `assets/world/source/places.json`), `characters.js` (characters), `supplies.js` (`SUPPLIES` with sprite, scale, verb, clip; `WILD` regrowing patch kinds; `RESOURCES`), `balance.js` (speeds, reach, `GATHER_SECONDS`, landmark and signpost radii) | yes |
+| `src/world/` | `map.js` (world size, collision: `isWalkable`, `blocks`, `OBSTACLES`, the `hitsObstacle` grid lookup, `mapProperty`), `nodes.js` (`NODES` = supplies + wild map patches; `nodeBases` solid bases), `regions.js` (`REGIONS`, `regionOf`, `regionAt`, read from the map's region grid), `progress.js` (found counts per region and for the world) | yes |
+| `src/actions/` | One file per player action: `move.js` (`movePlayer`), `gather.js` (`beginGather` starts the timed action, `finishGather` awards by id; `gatherTime`, `isAvailable`, `nearbyNode`), `discover.js` (regions, landmarks, signposts), `travel.js` (`travelTo` a found signpost) | yes |
 | `src/game/` | `state.js` (create, serialize, validate saves), `saves.js` (per-character localStorage session, active character) | yes |
 | `src/animation/` | `clips.js` (clip table, animator, timed actions; pure), `sheets.js` (sprite loading and frame measuring), `preview.js` (preview dialog) | `clips.js` only |
-| `src/render/` | `renderer.js`: Phaser scene, supply sprites (glow, E cap, progress bar, fade-out), camera, minimap and world map | no |
-| `src/ui/` | `layout.js` (HTML template, icons), `selection.js` (main menu: three painted character panels, the chosen one widens; arrows, swipe and dots on phones), `hud.js` (HUD, interact button, toast, in-game controls strip), `dialogs.js` (pause, map, reset, fullscreen) | no |
+| `src/render/` | `renderer.js`: Phaser scene, supply sprites (glow, E cap, progress bar, fade-out), camera, chunk culling of scenery, local minimap and world map with markers | no |
+| `src/ui/` | `layout.js` (HTML template, icons), `selection.js` (main menu: three painted character panels, the chosen one widens; arrows, swipe and dots on phones), `hud.js` (HUD, goals card with region progress, interact button, toast, in-game controls strip), `dialogs.js` (pause, map with signpost travel buttons, reset, fullscreen) | no |
 | `src/core/` | `session.js` (shared session; start, leave, save), `input.js` (keys, touch), `loop.js` (frame loop) | no |
 
 **Keep the pure modules runnable in Node.** `data/`, `world/`, `actions/`, `game/` and `animation/clips.js` must not import `ui/`, `core/`, `render/`, `sheets.js`, `preview.js`, PNG or CSS files, and must not use `import.meta`, `document` or `window`. `tests/boundaries.test.js` enforces this. JSON is imported with `import ... with { type: 'json' }` so Node can read it.
@@ -65,27 +66,30 @@ Game rules are pure modules. Rendering and the DOM are thin layers around them. 
 
 Because `dt` is clamped, game time runs slower than real time when the page renders below 20 fps (e.g. a hidden browser pane), and an action takes longer.
 
-**Save model.** Each character has its own key, `wildhaven.adventure.v1.<characterId>`, and the save object is `version: 2`. `restoreGame` validates the data strictly and *rebuilds* the object field by field. Adding a field to game state therefore means updating `createGame`, the checks in `restoreGame`, and the object it returns, or the field is silently dropped on load. If old saves can't be read safely, bump `version`; old saves then show the "could not be read, start fresh" path. `createSaveSession` remembers the last raw value it saw and refuses to write if storage has changed (`reason: 'conflict'`), so a stale tab can't overwrite a newer save. Saves happen on gather, discovery, opening pause, hiding the tab, `pagehide`, and every 10 s. Separately, `readActive`/`setActive` keep the character being played in `sessionStorage` (`wildhaven.active`); on load `main.js` resumes it if that slot has a readable save, so a refresh returns to the game. Only the "Return to characters" and loading-screen "Back to characters" buttons clear it. Animation state is never saved, and a test checks this.
+**Save model.** Each character has its own key, `wildhaven.adventure.v1.<characterId>`, and the save object is `version: 3` (it added `landmarks` and `waypoints`, the ids found; version 2 saves take the start-fresh path). `restoreGame` validates the data strictly and *rebuilds* the object field by field. Adding a field to game state therefore means updating `createGame`, the checks in `restoreGame`, and the object it returns, or the field is silently dropped on load. If old saves can't be read safely, bump `version`; old saves then show the "could not be read, start fresh" path. `createSaveSession` remembers the last raw value it saw and refuses to write if storage has changed (`reason: 'conflict'`), so a stale tab can't overwrite a newer save. Saves happen on gather, discovery, signpost travel, opening pause, hiding the tab, `pagehide`, and every 10 s. Separately, `readActive`/`setActive` keep the character being played in `sessionStorage` (`wildhaven.active`); on load `main.js` resumes it if that slot has a readable save, so a refresh returns to the game. Only the "Return to characters" and loading-screen "Back to characters" buttons clear it. Animation state is never saved, and a test checks this.
 
 **Directions** are encoded everywhere (state, sprite columns, locomotion rows) as `0 = south, 1 = west, 2 = east, 3 = north`.
 
 ## World / Map Pipeline
 
 ```
-assets/world/source/{grass,dirt,sand,water}.png
+assets/world/source/{grass,dirt,jungle,rock,snow,sand,water}.png
+assets/world/source/places.json  (regions, spawns, supplies, landmarks, waypoints)
 assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py ──► assets/world/map/
                                                                             tileset.png
                                                                             wildhaven.json  (Tiled format)
                                                                             overview.webp   (minimap/world map)
 ```
 
-- `wildhaven.json` is the single source of truth for both rendering and collision. The map is 96×64 tiles at 64 px each (6144×4096 world units), with tile layers `ground`/`dirt`/`sand`/`water` plus an `objects` point layer.
+- `wildhaven.json` is the single source of truth for both rendering and collision. The map is 384×256 tiles at 64 px each (24,576×16,384 world units), with tile layers `ground`/`dirt`/`jungle`/`rock`/`snow`/`sand`/`water` (bottom to top) plus an `objects` point layer. A layer paints a tile only when one of the tile's corners is its own terrain, and then covers every corner of its rank or higher, so the lower terrain runs on underneath a shoreline. The map file's properties also hold the region grid (`regionCell`, `regionCols`, `regionGrid`: one digit per 256-unit square, the region's index in `places.json`).
 - Collision in `src/world/map.js` combines two sources. The water layer uses per-tile corner masks: the four corner values are blended, and a point counts as water at ≥0.35 (the corner-mask encoding is shared with `build-map.py`). Each object also has a solid base, its `footprint` in `objects.json`.
 - `objects.json` fields: `origin` is the ground contact point as a fraction of the sprite size. `footprint` is `[halfWidth, depth]` of the solid base; leave it out for walk-through objects. `flat` means the object is drawn under characters. `scale` is the draw size wherever the map places that sprite (flowers use 0.4 so a patch is smaller than a character); the footprint scales with it. Every other object is depth-sorted by its y position, so the player can walk in front of or behind it.
-- **`build-map.py` hard-codes coordinates that also live in `src/data/characters.js` and `src/data/supplies.js`.** `REGION_OFFSETS` must match `V_OFF`/`C_OFF`. `KEEP_CLEAR` lists the absolute positions of the spawns and supply nodes; scattered scenery within 150 of them is removed after scattering. If you move or add a spawn or node, update `KEEP_CLEAR` and re-run the script. **Never edit `SCATTER_CLEAR`.** It is the frozen list the scatter loop has always skipped. Changing it changes the random sequence and reshuffles every later tree and rock, which can put a solid base under a saved player and make that save unreadable. The placement of landmark buildings (tent, houses, workshop, ship) is also defined in `build-map.py`.
+- **`assets/world/source/places.json` is the single source for positions.** It holds the regions, spawns, supply spots, landmarks and waypoints. `build-map.py` reads it to shape the land (water is pushed back from every listed point, scenery is kept 150 units away and never stands just south of a point, a landmark's `object` sprite stands 60 units north of it, a `pool` is dug north of it, each signpost stands 50 units north of its waypoint). `src/data/places.js` exposes the same file to the game. To move or add a place, edit the JSON and re-run the script; `tests/world/places.test.js` then checks every point is walkable, in its named region and reachable on foot.
+- **Regions, rivers and scenery are defined in `build-map.py`.** `LAYOUT` is an 8×8 grid of region letters whose borders are warped by sine waves. `RIVERS` are polylines of water; `FORDS` are the crossing points (dry ground within 190 units) and `BRIDGES` add a plank deck. Scenery is scattered with **one random seed per grid square**, so changing one part of the map never reshuffles another part. The placement of landmark buildings (tent, houses, workshop, ship) is relative to the spawns.
 - **Supply nodes are not in the map.** `src/render/renderer.js` draws each one from `NODES` (`src/world/nodes.js`) (`sprite` is an `objects.json` key, drawn at `scale`), and `nodeBases` in `src/world/nodes.js` makes its scaled footprint solid until it is collected. `movePlayer` ignores a base the player is already inside, so an old save can't get trapped.
 - **Wild scenery is in the map and also harvestable.** `WILD` in `src/data/supplies.js` names scattered sprites (today only `flowers`) that become `NODES` entries with id `<name>-<x>-<y>` and a `regrow` time. The renderer skips them in the scenery loop and draws them with the supplies. They are walk-through (no footprint), so `nodeBases` covers only the fixed `SUPPLIES`.
 - `tools/make-standin-art.py` cut placeholder source art out of `assets/world/wildhaven.png`. **Do not re-run it.** It would overwrite any source art that has since been replaced. To change art, replace the file under `source/` and re-run `build-map.py`.
+- `tools/make-biome-standins.py` derives the snow, rock and jungle textures and twelve biome sprites from existing art. It skips any file that already exists, so it is safe to re-run. Each stand-in has a `.prompt.txt` for generating the real art.
 
 ## Character Sprites
 
@@ -97,12 +101,12 @@ assets/world/source/objects/*.png + objects.json  ──► tools/build-map.py �
 
 ## Game Rules That Affect Code
 
-- There are four resources (`RESOURCES`): `wood`, `stone`, `food`, `herbs`. They are always non-negative integers, and `restoreGame` rejects anything else. Herbs come only from wild flowers and have no use yet. Saves from before herbs existed load with `herbs: 0`.
-- Fixed supplies (`SUPPLIES`, the first nine `NODES`) can each be collected once and are tracked by id in `state.collected`. Wild flower patches give 2 herbs and grow back 180 game-seconds later. `state.regrowAt` maps a picked patch's id to the `state.elapsed` time it returns, so the regrowth clock stops when the game is paused or the tab is hidden. On load, `restoreGame` drops timers for patch ids the map no longer has and caps each timer at one `regrow` ahead. Saves without `regrowAt` load with `{}`. Both rules are availability checks in `isAvailable`. A node is gatherable within 95 units. Regions (`LOCATIONS`) are discovered within a 230-unit radius of each spawn.
+- There are four resources (`RESOURCES`): `wood`, `stone`, `food`, `herbs`. They are always non-negative integers, and `restoreGame` rejects anything else. Herbs come only from wild flowers and have no use yet. 
+- Fixed supplies (`SUPPLIES`, the first nine `NODES`) can each be collected once and are tracked by id in `state.collected`. Wild flower patches give 2 herbs and grow back 180 game-seconds later. `state.regrowAt` maps a picked patch's id to the `state.elapsed` time it returns, so the regrowth clock stops when the game is paused or the tab is hidden. On load, `restoreGame` drops timers for patch ids the map no longer has and caps each timer at one `regrow` ahead. Both rules are availability checks in `isAvailable`. A node is gatherable within 95 units. A region (`REGIONS`) is discovered by standing in it; every spot in the world is in exactly one. A landmark is found within 200 units (`LANDMARK_RADIUS`) and a signpost within 110 (`WAYPOINT_RADIUS`). `travelTo` only moves the player to a signpost already in `state.waypoints`.
 - Movement speed is 155 units/s walking and 245 units/s with Shift. Collision is checked separately on the x and y axes so the player slides along obstacles.
 - Every gather is a timed action of `GATHER_SECONDS` = 6 s, read through `gatherTime(state, node)`, and its clip loops for the whole time. This is a design decision: planned gathering tools will lower it towards 0.5 s through `gatherTime`, so don't shorten the base time as a "fix." A fresh movement press cancels the action and awards nothing. Key-repeat from a key that was held when E was pressed does not cancel it. Pause and a hidden tab freeze it.
 - When a node is in reach, its sprite glows (Phaser Glow filter, WebGL only) and an E key cap floats over it. A progress bar replaces the cap while the action runs. Gathered sprites fade out, and regrown patches fade back in; there is no stump or bare-bush art yet.
-- Balance numbers live in `src/data/balance.js` (speeds, reach, `GATHER_SECONDS`, discovery radius). Don't hardcode tuning numbers in actions.
+- Balance numbers live in `src/data/balance.js` (speeds, reach, `GATHER_SECONDS`, landmark and signpost radii). Don't hardcode tuning numbers in actions.
 
 ## Code Style (repo rule)
 
@@ -115,7 +119,7 @@ This is a rule, not a preference. Code here should read easily for a beginner. E
   - then `@param {type} name - meaning` and `@returns {type} meaning`, in plain words.
 
   A tiny one-line helper can have a one-line `/** ... */`. "Named function" means function declarations (inner ones too), `const name = (...) =>`, class and object methods, object properties holding arrow functions, and classes. Anonymous inline callbacks such as `.map((c) => ...)` are exempt unless their logic is non-obvious; then put a `//` line above. `tests/comments.test.js` fails when a named function has no comment on the line right above it.
-- **Keep the *why*.** Comments that record why a decision was made stay. Examples are the frozen `SCATTER_CLEAR`, the clamped `dt`, and the 6 s `GATHER_SECONDS`. Reword them more simply if needed, but never drop the fact.
+- **Keep the *why*.** Comments that record why a decision was made stay. Examples are the per-square scatter seed, the clamped `dt`, and the 6 s `GATHER_SECONDS`. Reword them more simply if needed, but never drop the fact.
 - **Headers and data.** Each file opens with a 2–4 line `//` header saying what it is for. Constants and data tables say what they hold and what each field means.
 - **Spacing.** Put one blank line between top-level declarations and between functions. Inside longer function bodies, put blank lines between steps (setup, checks, work, return), with a short `//` comment on any step that isn't obvious. Short 2–4 line bodies stay tight.
 - **HTML in template strings** is marked `/* HTML */` so Prettier formats it too. Prettier keeps inline tags touching by breaking lines as `</button` + `>`. Don't "tidy" those breaks: real whitespace there would add gaps between buttons.
@@ -150,7 +154,7 @@ Example of the expected tone and shape (`src/actions/move.js`):
 
 ## Verifying a Change
 
-- `npm test`, `npm run build` and `npm run format:check` must all pass. `npm test` includes the comment rule (`tests/comments.test.js`).
+- `npm test`, `npm run build` and `npm run format:check` must all pass. `npm test` includes the comment rule (`tests/comments.test.js`) and a flood fill of the whole world (`tests/world/places.test.js`), so a map change that seals off a spawn, landmark, signpost or supply fails the tests.
 - Unit tests don't cover rendering, input, animation, the map, or the UI. If you change any of those, start the game from the `wildhaven` launch config and play through with each affected character. Check the browser console for errors. If layout changed, also check the page at about 390 px wide. Add notable checks to `docs/verification.md`.
 
 ## Stale Docs

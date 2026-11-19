@@ -299,6 +299,26 @@ In a running browser the player can explore beyond the starting screen, gather a
 
 ---
 
+## Big World Update (2026-11-19)
+
+This section supersedes the world, region and save details above where they differ. Source: `docs/superpowers/specs/2026-11-19-big-world-design.md`.
+
+- **[Built] World.** 384×256 tiles (24,576×16,384 units), about 100 s to run across. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three unreachable islands.
+- **[Built] Starting places.** Scout in Pinefall Woods, Builder in Hollowstead Meadows, Survivor on the Driftwood Lagoon shore. They are far apart.
+- **[Built] Discovery.** A region is discovered by standing in it. 49 landmarks (seven per region) are found within 200 units; 14 signposts (two per region) within 110.
+- **[Built] Fast travel.** Any found signpost can be travelled to from the world map.
+- **[Built] Objective.** "Your first footsteps" (gather once, discover three regions), then the goals card follows the current region: places found n / 7 and signposts found n / 2. The world map shows totals.
+- **[Built] Maps.** The minimap shows the area around the player; the world map dims unexplored regions and marks found places and signposts.
+- **[Built] Saves.** `version: 3`, adding found landmarks and signposts. Older saves take the start-fresh path.
+- **[Built] Art.** The new biomes use stand-in art derived from existing sprites, each with a prompt file for the real version.
+- **[Planned] Build 2.** Objectives journal, biome-specific supplies and collectibles.
+- **[Planned] Build 3.** Harsh conditions (cold, heat) and gear that counters them; until then every region is freely walkable.
+- **[Planned] Build 4.** Stationary locals with requests and rewards.
+
+Retention hook 2 ("new places to find") now has content: the three starts are no longer 12 s apart. Open Question 3 is resolved: rivers and crossings exist.
+
+---
+
 ## Open Questions (spec vs build, recorded, not resolved)
 
 1. **Save slots.** The spec says "one local save slot". The build has one slot per character (three).

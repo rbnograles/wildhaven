@@ -39,3 +39,25 @@ Intentional adaptations from the concept: condensed typography and illustrations
 The world uses generated raster art. Code draws map dots, a small character contact shadow, terrain transitions, and the supply cues (the glow outline, E key cap and progress bar).
 
 `objects/berry-bush.png` is **not generated art**. It is a stand-in derived from `oak.png`: the crown squashed into a low shrub, bark recoloured to foliage, and small berry clusters painted on. The script is in `docs/superpowers/plans/2026-11-19-harvestable-supplies.md`. `berry-bush.prompt.txt` holds the prompt for the real sprite. Generate it with the usual style reference, save it over the stand-in at about 150×104, check `origin`/`footprint` in `objects.json`, and re-run `python tools/build-map.py`. Characters have separate idle, walking, running, and gathering art. The terrain repeat check, object contact sheet, full-map preview, and in-game checks are retained in `docs/screenshots/`.
+
+## Big-world biome stand-ins (2026-11-19)
+
+Made by `tools/make-biome-standins.py` from existing art, so the 384×256 world could be built before real art exists. Each file has a `.prompt.txt` beside it with the prompt for the real version; generate it, save it over the PNG and re-run `tools/build-map.py`.
+
+| File | Stand-in made from | Used for |
+| --- | --- | --- |
+| `source/snow.png` | grass, greyed and brightened | Frostpeak ground |
+| `source/rock.png` | dirt, greyed | Stonewater Canyons ground |
+| `source/jungle.png` | grass, darkened | Emerald Jungle ground |
+| `objects/snowy-pine.png` | pine, frosted tint | Frostpeak trees |
+| `objects/ice-rock.png` | rocks-b, blue tint | Frostpeak rocks |
+| `objects/boulder.png` | rocks-a, grey | Canyons and Frostpeak |
+| `objects/cliff-rock.png` | rocks-a, stretched taller, dark grey | Canyon outcrops and lookouts |
+| `objects/jungle-tree.png` | big-oak, deep green | Jungle trees |
+| `objects/fern.png` | berry-bush, green | Jungle undergrowth (walk-through) |
+| `objects/palm.png` | oak, narrowed, yellow-green | Lagoon and jungle (weakest stand-in) |
+| `objects/dead-bush.png` | berry-bush, brown | Desert and canyons |
+| `objects/cactus.png` | drawn from rounded rectangles | Desert |
+| `objects/sandstone-ruin.png` | drawn from rectangles | Desert ruins, jungle temple |
+| `objects/bridge.png` | drawn plank deck (flat) | River bridges |
+| `objects/signpost.png` | drawn post and arrow board | Fast-travel signposts |
