@@ -1,7 +1,7 @@
 // The frame loop: the heartbeat of the game.
 // About 60 times a second it moves the player (or their boat), runs the current animation and the
-// survival clock, hands out gathered supplies and mended boats, checks for new finds, lifts the
-// fog, autosaves, and asks the renderer to draw.
+// survival clock, hands out gathered supplies, mended boats and crafted tools, checks for new
+// finds, lifts the fog, autosaves, and asks the renderer to draw.
 
 import { movePlayer } from '../actions/move.js';
 import { finishInteraction } from '../actions/interact.js';
@@ -14,7 +14,7 @@ import { hasJournalPage } from '../world/journal.js';
 import { REPAIR_COST } from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
 import { revealAround } from '../world/fog.js';
-import { describeEvent } from '../ui/hud.js';
+import { describeEvent, describeFinish } from '../ui/hud.js';
 import { save } from './session.js';
 import { logFinds } from './playtest.js';
 
@@ -131,17 +131,15 @@ export function startLoop(session, ui) {
           warnedDeepAt = now;
         }
 
-        // When a timed action finishes, hand out what it was aimed at (exactly once): supplies or a mended boat.
+        // When a timed action finishes, hand out what it was aimed at (exactly once): supplies, a
+        // mended boat or a crafted tool.
         const done = advanceAnimation(animator, dt, { moving, running });
         const finished = done?.target ? finishInteraction(state, done.target) : null;
         if (finished) {
-          ui.hud.notify(
-            finished.kind === 'repair'
-              ? 'Boat repaired · Walk to the water’s edge and press E to board'
-              : `+${finished.node.amount} ${finished.node.type} · ${finished.node.label}`,
-          );
+          ui.hud.notify(describeFinish(finished));
           ui.hud.update();
-          save(session, ui, true);
+          // A craft whose last check failed changed nothing, so there is nothing to save.
+          if (finished.ok !== false) save(session, ui, true);
         }
 
         const found = discover(state);

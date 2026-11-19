@@ -3,6 +3,7 @@
 // is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
+import { TOOLS } from '../data/tools.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
 
@@ -42,6 +43,8 @@ const icons = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>',
   hammer: '<path d="m14 3 7 7-3 3-7-7Z"/><path d="M12.5 8.5 3 18l3 3 9.5-9.5"/>',
+  axe: '<path d="m4 20 10-10"/><path d="M12 5c2.5-2.5 6-2.5 8 0l-5 5c-2-.5-3.5-2.5-3-5Z"/>',
+  pickaxe: '<path d="M4 9c5-5 11-5 16 0"/><path d="M12 5.5V21"/>',
 };
 
 /**
@@ -167,7 +170,7 @@ export function mountLayout(app) {
         id="world"
         tabindex="0"
         role="application"
-        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to open the build menu, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
+        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to open the build menu, 2 to 4 in the build menu to craft tools, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
       ></div>
 
       <!-- Top right: the journal, fullscreen and pause buttons. -->
@@ -227,8 +230,9 @@ export function mountLayout(app) {
           </div>
         </div>
 
-        <!-- The item box (one slot per resource) and the Build button, with the build menu that
-             opens above it. Clicking the food slot eats and the herbs slot heals. -->
+        <!-- The item box (one slot per resource) and the Build button, with the build menu (the
+             campfire and the Tools group) that opens above it, and the row of tools owned.
+             Clicking the food slot eats and the herbs slot heals. -->
         <div class="hotbar-area">
           <div id="build-menu" class="build-menu hud-panel" hidden>
             <p class="build-menu-title">BUILD</p>
@@ -239,6 +243,28 @@ export function mountLayout(app) {
                 >${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone</span
               ><kbd>1</kbd>
             </button>
+            <p class="build-menu-title">TOOLS</p>
+            ${TOOLS.map(
+              (t) =>
+                /* HTML */ `<button
+                  id="craft-${t.id}"
+                  class="build-option craft-option"
+                  data-tool="${t.id}"
+                >
+                  ${icon(t.icon)}<span class="build-option-text"
+                    ><b class="craft-name"></b><small>${t.use}</small></span
+                  ><span class="build-cost craft-cost"></span><kbd>${t.key}</kbd>
+                </button>`,
+            ).join('')}
+          </div>
+          <!-- The tools owned: a chip per tool with its tier, and the uses left on a stone one. -->
+          <div class="tool-row" aria-label="Tools">
+            ${TOOLS.map(
+              (t) =>
+                /* HTML */ `<span id="tool-${t.id}" class="tool-chip empty"
+                  >${icon(t.icon)}<span class="tool-state">—</span></span
+                >`,
+            ).join('')}
           </div>
           <div class="hotbar hud-panel" aria-label="Items">
             <span class="slot" title="Wood"
