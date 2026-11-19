@@ -2,7 +2,7 @@
 // in-game HUD, and the pause, map, journal, reset and camp dialogs. Think of it as the stage set. It
 // is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
-import { CAMP_NAME_MAX } from '../data/balance.js';
+import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
 
@@ -40,6 +40,7 @@ const icons = {
   heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>',
+  hammer: '<path d="m14 3 7 7-3 3-7-7Z"/><path d="M12.5 8.5 3 18l3 3 9.5-9.5"/>',
 };
 
 /**
@@ -165,35 +166,11 @@ export function mountLayout(app) {
         id="world"
         tabindex="0"
         role="application"
-        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to place a campfire, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
+        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather or open a camp, B to open the build menu, F to eat, H to heal with herbs, M for map, J for journal, Escape to pause."
       ></div>
 
-      <!-- Top bar: who you are, the day clock and your survival meters, your resources, and the
-           fullscreen and pause buttons. -->
+      <!-- Top right: the journal, fullscreen and pause buttons. -->
       <div class="game-top">
-        <div class="identity hud-panel">
-          <span id="hud-portrait" class="hud-portrait"></span>
-          <div>
-            <span id="hud-name" class="hud-name"></span
-            ><span id="identity-status" class="identity-status" data-phase="day"
-              ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
-              ><span id="clock"></span
-            ></span>
-          </div>
-          <div class="meters">
-            ${meter('health', 'Health', 'heart')}${meter('hunger', 'Hunger', 'food')}${meter(
-              'warmth',
-              'Warmth',
-              'flame',
-            )}
-          </div>
-        </div>
-        <div class="resources hud-panel" aria-label="Resources">
-          <span>${icon('wood')}<b id="wood">0</b><span class="resource-label">Wood</span></span
-          ><span>${icon('stone')}<b id="stone">0</b><span class="resource-label">Stone</span></span
-          ><span>${icon('food')}<b id="food">0</b><span class="resource-label">Food</span></span
-          ><span>${icon('herbs')}<b id="herbs">0</b><span class="resource-label">Herbs</span></span>
-        </div>
         <div class="game-actions">
           <!-- The journal button. Its dot shows while a new page hasn't been read yet (ui/journal.js). -->
           <button
@@ -219,7 +196,7 @@ export function mountLayout(app) {
         <p id="region-progress" class="region-progress"></p>
       </div>
 
-      <!-- The goals card. ui/hud.js fills it: the starting goals first, then the current region's progress. -->
+      <!-- The goals card. ui/hud.js fills it: the first campfire, then the nearest camp's needs. -->
       <aside class="quest hud-panel">
         <span class="quest-label" id="quest-label"></span>
         <h2 id="quest-title"></h2>
@@ -227,11 +204,71 @@ export function mountLayout(app) {
         <ul id="quest-lines"></ul>
       </aside>
 
-      <!-- The small map in the corner. Clicking it opens the big map. -->
-      <button id="open-map" class="minimap hud-panel" aria-label="Open world map">
-        <canvas id="minimap" width="240" height="160" aria-hidden="true"></canvas
-        ><span>${icon('map')} World map <kbd>M</kbd></span>
-      </button>
+      <!-- The bottom bar: the player card on the left, the item box and Build button in the middle,
+           and the round map on the right. It is a grid, so the three never overlap. -->
+      <div class="game-bottom">
+        <!-- Who you are, the day clock and your survival meters. -->
+        <div class="identity hud-panel">
+          <span id="hud-portrait" class="hud-portrait"></span>
+          <div class="identity-text">
+            <span id="hud-name" class="hud-name"></span
+            ><span id="identity-status" class="identity-status" data-phase="day"
+              ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
+              ><span id="clock"></span
+            ></span>
+            <div class="meters">
+              ${meter('health', 'Health', 'heart')}${meter('hunger', 'Hunger', 'food')}${meter(
+                'warmth',
+                'Warmth',
+                'flame',
+              )}
+            </div>
+          </div>
+        </div>
+
+        <!-- The item box (one slot per resource) and the Build button, with the build menu that
+             opens above it. Clicking the food slot eats and the herbs slot heals. -->
+        <div class="hotbar-area">
+          <div id="build-menu" class="build-menu hud-panel" hidden>
+            <p class="build-menu-title">BUILD</p>
+            <button id="build-campfire" class="build-option">
+              ${icon('flame')}<span class="build-option-text"
+                ><b>Campfire</b><small>Warms the night and founds a camp</small></span
+              ><span class="build-cost"
+                >${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone</span
+              ><kbd>1</kbd>
+            </button>
+          </div>
+          <div class="hotbar hud-panel" aria-label="Items">
+            <span class="slot" title="Wood"
+              >${icon('wood')}<b id="wood">0</b><span class="slot-label">Wood</span></span
+            ><span class="slot" title="Stone"
+              >${icon('stone')}<b id="stone">0</b><span class="slot-label">Stone</span></span
+            ><button id="slot-food" class="slot" title="Eat one food (F)">
+              ${icon('food')}<b id="food">0</b><span class="slot-label">Food</span
+              ><kbd>F</kbd></button
+            ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
+              ${icon('herbs')}<b id="herbs">0</b><span class="slot-label">Herbs</span
+              ><kbd>H</kbd></button
+            ><span class="hotbar-rule" aria-hidden="true"></span
+            ><button
+              id="build-button"
+              class="slot build-slot"
+              title="Build (B)"
+              aria-controls="build-menu"
+              aria-expanded="false"
+            >
+              ${icon('hammer')}<span class="slot-label">Build</span><kbd>B</kbd>
+            </button>
+          </div>
+        </div>
+
+        <!-- The round map. Clicking it opens the big map. -->
+        <button id="open-map" class="minimap" aria-label="Open world map (M)">
+          <canvas id="minimap" width="220" height="220" aria-hidden="true"></canvas
+          ><kbd class="minimap-key">M</kbd>
+        </button>
+      </div>
 
       <!-- The "E" button. It appears when a supply is in reach and shows progress while gathering. -->
       <button id="interact" class="interact" hidden><kbd>E</kbd><span></span></button>
@@ -242,7 +279,7 @@ export function mountLayout(app) {
       <!-- The controls, shown for a few seconds each time the game opens. ui/hud.js shows and hides it. -->
       <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
         <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
-        ><span><kbd>E</kbd> Gather / camp</span><span><kbd>B</kbd> Campfire</span
+        ><span><kbd>E</kbd> Gather / camp</span><span><kbd>B</kbd> Build</span
         ><span><kbd>F</kbd> Eat</span><span><kbd>H</kbd> Heal</span><span><kbd>M</kbd> Map</span
         ><span><kbd>J</kbd> Journal</span><span><kbd>Esc</kbd> Pause</span>
       </div>

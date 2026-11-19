@@ -321,7 +321,7 @@ Health / hunger / warmth       Day and time       Resources
 Current objective        contextual action       minimap
              build toolbar when building
 ```
-[Built: portrait with the day clock and the three meters, resources, region name with its progress, objective panel, minimap, contextual action button, build bar, controls bar.]
+[Built 2026-11-19, rearranged after playtest feedback: objective panel top left, region name and progress top centre, journal and pause top right; along the bottom, the player card (portrait, day clock, three meters) on the left, the item box (wood, stone, food and herb slots; clicking food eats and herbs heals) with a Build button and its build menu in the middle, and a round minimap on the right. The contextual action button, controls strip and build bar sit above the item box. The Scout's camp no longer has a decorative campfire, so every fire in the world is one the player built.]
 
 ### 6.16 Fog of war [Built 2026-11-19]
 The maps fill in as the player walks (the spec's "minimap that reveals explored areas"), and region names appear on the world map only once discovered. The world is cut into 256-unit squares; walking uncovers every square within 1,000 units. Unseen land is solid fog on both maps, so its shape stays hidden. Fog is per character, since each character has its own save; older saves are uncovered region by region.

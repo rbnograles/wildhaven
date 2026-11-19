@@ -1,10 +1,12 @@
-// Build mode: placing a campfire with the mouse (or in front of the player). While it is on, a
-// ghost campfire follows the pointer and shows whether it may stand there; a click or E places it.
-// The rules for where a fire may go live in actions/build.js; this file only drives them.
+// Building: the build menu above the item box, and placing a campfire with the mouse (or in front
+// of the player). While placing, a ghost campfire follows the pointer and shows whether it may
+// stand there; a click or E places it. The rules for where a fire may go live in
+// actions/build.js; this file only drives them.
 
 import { checkPlacement, placeCampfire } from '../actions/build.js';
 import { cancelAction } from '../animation/clips.js';
 import { save } from './session.js';
+import { $ } from '../ui/layout.js';
 
 // How far in front of the player the ghost sits when there is no mouse to follow, in world units.
 const AHEAD = 120;
@@ -18,20 +20,22 @@ const FACING = [
 ];
 
 /**
- * Sets up build mode for one session.
+ * Sets up the build menu and build mode for one session.
  *
  * @param {object} session - The shared session; its `build` record and `pointer` are used here.
  * @param {object} ui - The other UI parts (`hud`, `camp`).
- * @returns {{toggle: Function, cancel: Function, place: Function, update: Function}} Ways to
- *   switch build mode on or off, leave it, place the fire, and move the ghost each frame.
+ * @returns {{toggleMenu: Function, start: Function, cancel: Function, place: Function,
+ *   update: Function}} Ways to open or close the menu, start placing a campfire, leave building,
+ *   place the fire, and move the ghost each frame.
  */
 export function setupBuild(session, ui) {
   const { build } = session;
 
-  /** Leaves build mode without placing anything. */
+  /** Closes the build menu and leaves build mode, without placing anything. */
   function cancel() {
-    if (!build.active) return;
+    if (!build.active && !build.menu) return;
     build.active = false;
+    build.menu = false;
     ui.hud.update();
   }
 
@@ -52,10 +56,24 @@ export function setupBuild(session, ui) {
     build.check = checkPlacement(session.state, build.x, build.y);
   }
 
-  /** Turns build mode on, or off again. Turning it on drops any gathering in progress. */
-  function toggle() {
+  /**
+   * Opens the build menu, or closes it again (the Build button and B). While a campfire is being
+   * placed, it leaves build mode instead, so B always backs out one step.
+   */
+  function toggleMenu() {
     if (session.screen !== 'game' || !session.state) return;
     if (build.active) return cancel();
+    build.menu = !build.menu;
+    ui.hud.update();
+  }
+
+  /**
+   * Starts placing a campfire (the menu's Campfire option, or 1 while the menu is open).
+   * The menu closes, the ghost appears, and any gathering in progress stops.
+   */
+  function start() {
+    if (session.screen !== 'game' || !session.state) return;
+    build.menu = false;
     cancelAction(session.animator);
     build.active = true;
     update();
@@ -83,5 +101,9 @@ export function setupBuild(session, ui) {
     ui.camp.openNaming(result.camp);
   }
 
-  return { toggle, cancel, place, update };
+  // The Build button opens the menu; the menu's Campfire option starts placing one.
+  $('build-button').addEventListener('click', toggleMenu);
+  $('build-campfire').addEventListener('click', start);
+
+  return { toggleMenu, start, cancel, place, update };
 }

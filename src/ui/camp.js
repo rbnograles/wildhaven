@@ -264,6 +264,10 @@ export function setupCamp(session, ui) {
   );
   $('camp-eat').addEventListener('click', eatFood);
   $('camp-heal').addEventListener('click', useHerbs);
+
+  // The item box's food and herbs slots do the same as F and H.
+  $('slot-food').addEventListener('click', eatFood);
+  $('slot-herbs').addEventListener('click', useHerbs);
   $('camp-rest').addEventListener('click', restNight);
   $('passout-close').addEventListener('click', () => $('passout-dialog').close());
 

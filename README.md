@@ -22,9 +22,9 @@ Choose the Frontier Scout, Wandering Builder, or Shipwreck Survivor and press **
 | Move | WASD or arrow keys |
 | Run | Hold Shift while moving |
 | Gather the glowing supply in reach (6 s; move to stop) | E or the gather button |
-| Place a campfire (3 wood + 2 stone) | B, then click or E; Escape cancels |
+| Place a campfire (3 wood + 2 stone) | B or the Build button, pick Campfire (or 1), then click or E; Escape cancels |
 | Open your camp (needs, tea, eat, heal, rest) | E beside your fire |
-| Eat / heal with herbs | F / H |
+| Eat / heal with herbs | F / H, or the food / herbs slot in the item box |
 | World map | M or the minimap |
 | Pause | Escape or the pause button |
 | Save / return to characters | Pause menu |

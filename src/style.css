@@ -665,7 +665,7 @@ kbd {
   border-radius: 0;
 }
 
-/* ---- In-game HUD: the top bar (who you are, your supplies, pause and fullscreen) ---- */
+/* ---- In-game HUD: the top-right buttons and the bottom bar (player card, item box, map) ---- */
 /* The frosted cream card that every HUD piece sits on. The blur softens the map behind it. */
 .hud-panel {
   background: #f8f5e9ef;
@@ -675,8 +675,8 @@ kbd {
   backdrop-filter: blur(12px);
 }
 
-/* The bar itself ignores clicks so the gaps between its cards don't block the world. */
-/* Its cards (the next rule) take clicks again. */
+/* The top-right buttons. The bar itself ignores clicks so its empty space doesn't block the world; */
+/* its buttons (the next rule) take clicks again. */
 .game-top {
   position: absolute;
   top: 22px;
@@ -684,20 +684,209 @@ kbd {
   right: 24px;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 20px;
   pointer-events: none;
 }
 
-.game-top > * {
+.game-top > *,
+.game-bottom > * {
   pointer-events: auto;
 }
 
+/* The bottom bar: player card | item box | round map. A grid with the middle column taking the */
+/* free space, so the item box is centred between the other two and they can never overlap. */
+.game-bottom {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: 16px;
+  pointer-events: none;
+}
+
+/* The player card: face, name, day clock, and the three meters under them. */
 .identity {
   display: flex;
   align-items: center;
-  padding: 9px 17px 9px 9px;
+  padding: 10px 16px 10px 10px;
+  gap: 12px;
+}
+
+.identity-text {
+  display: grid;
+  gap: 2px;
+}
+
+/* ---- In-game HUD: the item box and the Build button ---- */
+.hotbar-area {
+  position: relative;
+  justify-self: center;
+}
+
+/* One row of square slots on a cream card. */
+.hotbar {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 7px;
+}
+
+/* A slot: an icon, the count and a small name. Food, herbs and Build are buttons; wood and */
+/* stone are plain. The small key in the corner (F, H, B) says which key does the same. */
+.slot {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 1px;
+  width: 58px;
+  height: 58px;
+  border: 1px solid #dcdccb;
+  border-radius: 7px;
+  background: #fffdf4;
+  color: var(--ink);
+  font: inherit;
+}
+
+button.slot {
+  cursor: pointer;
+}
+
+button.slot:hover {
+  background: #f1f4e6;
+}
+
+.slot svg {
+  width: 20px;
+  height: 20px;
+  color: #6d7c51;
+}
+
+.slot b {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.slot-label {
+  font-size: 8px;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+
+.slot kbd {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 8px;
+  padding: 0 3px;
+}
+
+/* A resource the player has none of is faded, so a full slot stands out. */
+.slot.empty svg,
+.slot.empty b {
+  opacity: 0.45;
+}
+
+/* The thin line between the item slots and the Build button. */
+.hotbar-rule {
+  width: 1px;
+  margin: 6px 3px;
+  background: #d3d8c7;
+}
+
+/* The Build button: moss green, so it reads as an action rather than an item. */
+.build-slot {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: #f8f5e9;
+}
+
+.build-slot svg,
+.build-slot .slot-label {
+  color: #f8f5e9;
+}
+
+button.build-slot:hover,
+.build-slot.active {
+  background: #2c4737;
+}
+
+/* The build menu sits just above the item box, lined up with its right edge (the Build button). */
+.build-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  width: 300px;
+  padding: 12px;
+}
+
+.build-menu[hidden] {
+  display: none;
+}
+
+.build-menu-title {
+  margin: 0 0 8px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.8px;
+  color: #7c825e;
+}
+
+/* One building to pick: its icon, name and use, its cost, and its number key. */
+.build-option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px 1fr auto auto;
+  align-items: center;
   gap: 10px;
+  padding: 10px;
+  border: 1px solid #dcdccb;
+  border-radius: 7px;
+  background: #fffdf4;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.build-option:hover {
+  background: #f1f4e6;
+}
+
+.build-option svg {
+  width: 22px;
+  height: 22px;
+  color: #c4672c;
+}
+
+.build-option-text {
+  display: grid;
+}
+
+.build-option b {
+  font-size: 13px;
+}
+
+.build-option small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.build-cost {
+  font-size: 10px;
+  color: #6b7564;
+  white-space: nowrap;
+}
+
+/* Not enough wood or stone yet: the cost turns red. It can still be picked; the ghost says why. */
+.build-option.short .build-cost {
+  color: #a43c2c;
+  font-weight: 600;
 }
 
 /* The round face picture, cut from the same idle sprite sheet as the selection cards. */
@@ -748,13 +937,11 @@ kbd {
 }
 
 /* ---- In-game HUD: survival meters ---- */
-/* Three thin bars beside the name: health, hunger and warmth. ui/hud.js sets --fill (0-100%). */
+/* Three thin bars under the name: health, hunger and warmth. ui/hud.js sets --fill (0-100%). */
 .meters {
   display: grid;
   gap: 4px;
-  margin-left: 4px;
-  padding-left: 12px;
-  border-left: 1px solid #d3d8c7;
+  margin-top: 6px;
 }
 
 .meter {
@@ -804,38 +991,6 @@ kbd {
 .meter.low .meter-tag {
   color: #a43c2c;
   font-weight: 600;
-}
-
-/* The wood, stone, food and herb counters. */
-.resources {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  padding: 14px 22px;
-  margin-top: 1px;
-}
-
-.resources > span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.resources svg {
-  width: 19px;
-  height: 19px;
-  color: #6d7c51;
-}
-
-.resources b {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.resource-label {
-  font-size: 10px;
-  color: var(--muted);
 }
 
 /* The fullscreen and pause buttons in the top right. */
@@ -916,7 +1071,7 @@ kbd {
 /* Centred with left: 50% plus translateX(-50%). It ignores clicks because it is only a label. */
 .region {
   position: absolute;
-  top: 114px;
+  top: 26px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -951,7 +1106,7 @@ kbd {
 .quest {
   position: absolute;
   left: 24px;
-  top: 115px;
+  top: 22px;
   padding: 20px 21px;
   max-width: 251px;
 }
@@ -1019,15 +1174,17 @@ kbd {
   padding-top: 6px;
 }
 
-/* ---- In-game HUD: the minimap in the bottom right ---- */
-/* The whole minimap is a button that opens the big world map. */
+/* ---- In-game HUD: the round minimap in the bottom right ---- */
+/* The whole minimap is a round button that opens the big world map. The cream ring is its frame. */
 .minimap {
-  position: absolute;
-  bottom: 24px;
-  right: 24px;
-  width: 200px;
-  overflow: hidden;
-  padding: 5px;
+  position: relative;
+  width: 160px;
+  height: 160px;
+  padding: 0;
+  border: 4px solid #f8f5e9;
+  border-radius: 50%;
+  background: #263b31;
+  box-shadow: 0 3px 20px #1f311b40;
   transition: transform 0.2s;
 }
 
@@ -1035,37 +1192,27 @@ kbd {
   transform: translateY(-3px);
 }
 
+/* The square map canvas is clipped into the circle. */
 .minimap canvas {
   width: 100%;
-  height: auto;
-  border-radius: 5px;
+  height: 100%;
+  border-radius: 50%;
   display: block;
 }
 
-.minimap > span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 5px 5px;
-  font-size: 10px;
-}
-
-.minimap > span svg {
-  width: 15px;
-  height: 15px;
-}
-
-/* margin-left: auto pushes the M key label to the right edge. */
-.minimap kbd {
-  margin-left: auto;
+/* The M key badge sits on the ring at the lower left. */
+.minimap-key {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
   font-size: 9px;
 }
 
 /* ---- In-game: the action button and pop-up messages ---- */
-/* The "E Pick wild berries" button that appears near the bottom when a supply is in reach. */
+/* The "E Pick wild berries" button that appears above the item box when a supply is in reach. */
 .interact {
   position: absolute;
-  bottom: 38px;
+  bottom: 118px;
   left: 50%;
   transform: translateX(-50%);
   border: 1px solid #ebeed4;
@@ -1094,7 +1241,7 @@ kbd {
 /* A short message such as "+3 wood". It starts invisible and 10px low. */
 .toast {
   position: absolute;
-  bottom: 112px;
+  bottom: 205px;
   left: 50%;
   transform: translate(-50%, 10px);
   background: #263b31ec;
@@ -1121,7 +1268,7 @@ kbd {
 /* The bar under the region name while placing a campfire: the cost, or why the spot is refused. */
 .build-bar {
   position: absolute;
-  top: 200px;
+  top: 128px;
   left: 50%;
   transform: translateX(-50%);
   max-width: min(90vw, 620px);
@@ -1524,48 +1671,60 @@ dialog::backdrop {
 /* ---- Screen sizes ---- */
 /* Each block below only applies when the screen matches its size, and changes just a few things. */
 
-/* Wide but short screens, like a laptop: the quest card and region name move up to save room. */
-@media (max-height: 760px) and (min-width: 900px) {
-  .quest {
-    top: 103px;
-  }
-  .region {
-    top: 104px;
+/* Short screens, like a laptop: the round map shrinks so the bottom bar stays low. */
+@media (max-height: 760px) and (min-width: 701px) {
+  .minimap {
+    width: 136px;
+    height: 136px;
   }
 }
 
-/* Tablets and small laptops: smaller text and gaps. The resource names hide; the icons are enough. */
+/* Tablets and small laptops: the goals card, slots, meters and map get smaller, and the slot */
+/* names hide (the icons are enough), so the bottom bar fits from about 760 px wide. */
 @media (max-width: 1000px) {
   .quest {
     max-width: 213px;
     padding: 16px;
   }
-  .resources {
-    gap: 17px;
-    padding: 14px;
-  }
-  .resource-label {
-    display: none;
-  }
   .region h1 {
     font-size: 32px;
   }
-  .region {
-    top: 103px;
+  .slot {
+    width: 48px;
+    height: 48px;
+  }
+  .slot-label {
+    display: none;
+  }
+  .meter {
+    grid-template-columns: 13px 56px 48px;
+  }
+  .minimap {
+    width: 128px;
+    height: 128px;
+  }
+  .interact {
+    bottom: 100px;
   }
 }
 
-/* Phones: the HUD shrinks and the touch arrows appear. */
+/* Phones: the HUD shrinks and the touch arrows appear. The bottom bar comes apart (display: */
+/* contents): the player card goes to the top left, the item box sits above the arrows and the */
+/* map, and the round map stays in the bottom-right corner. */
 @media (max-width: 700px) {
-  /* In-game HUD. The top bar wraps so the resources drop onto their own line (order: 3). */
   .game-top {
     top: 13px;
     left: 13px;
     right: 13px;
     gap: 8px;
-    flex-wrap: wrap;
+  }
+  .game-bottom {
+    display: contents;
   }
   .identity {
+    position: absolute;
+    top: 13px;
+    left: 13px;
     padding: 6px 10px 6px 6px;
     gap: 7px;
   }
@@ -1579,9 +1738,16 @@ dialog::backdrop {
   .identity-status {
     font-size: 8px;
   }
+  .meters {
+    margin-top: 3px;
+    gap: 2px;
+  }
+  .meter {
+    grid-template-columns: 11px 46px 44px;
+    font-size: 8px;
+  }
   .game-actions {
     gap: 6px;
-    margin-left: auto;
   }
   .game-actions .icon-button {
     padding: 10px;
@@ -1590,21 +1756,45 @@ dialog::backdrop {
   #fullscreen {
     display: none;
   }
-  .resources {
-    order: 3;
-    margin: 0;
-    gap: 16px;
-    padding: 9px 12px;
+  .hotbar-area {
+    position: absolute;
+    left: 50%;
+    bottom: 120px;
+    transform: translateX(-50%);
   }
-  .resources b {
-    font-size: 12px;
+  .hotbar {
+    gap: 5px;
+    padding: 6px;
   }
-  .resources svg {
-    width: 15px;
-    height: 15px;
+  .slot {
+    width: 44px;
+    height: 44px;
+  }
+  .slot svg {
+    width: 17px;
+    height: 17px;
+  }
+  /* Phones have no keyboard, so the slots' key hints are hidden. */
+  .slot kbd,
+  .build-option kbd {
+    display: none;
+  }
+  .build-menu {
+    width: 270px;
+  }
+  .minimap {
+    position: absolute;
+    right: 13px;
+    bottom: 13px;
+    width: 100px;
+    height: 100px;
+    border-width: 3px;
+  }
+  .minimap-key {
+    display: none;
   }
   .region {
-    top: 140px;
+    top: 116px;
   }
   .region h1 {
     font-size: 30px;
@@ -1613,41 +1803,23 @@ dialog::backdrop {
     font-size: 7px;
     letter-spacing: 2px;
   }
-  /* The quest card is hidden on phones; it would sit where the touch arrows are. */
+  /* The quest card is hidden on phones; there is no room beside the player card. */
   .quest {
-    top: auto;
-    bottom: 13px;
-    left: 13px;
-    max-width: 190px;
-    padding: 13px;
     display: none;
   }
-  .minimap {
-    right: 13px;
-    bottom: 13px;
-    width: 140px;
-  }
-  .minimap > span {
-    font-size: 9px;
-    padding-top: 7px;
-  }
-  /* The action button and messages move up so they clear the touch arrows and minimap. */
+  /* The action button and messages sit above the item box. */
   .interact {
-    bottom: 180px;
+    bottom: 184px;
     font-size: 10px;
     max-width: 90vw;
   }
   .toast {
-    bottom: 238px;
+    bottom: 236px;
     font-size: 11px;
   }
   .build-bar {
-    top: 215px;
+    top: 176px;
     font-size: 11px;
-  }
-  .meter {
-    grid-template-columns: 11px 46px 44px;
-    font-size: 8px;
   }
   .camp-tasks {
     grid-template-columns: 1fr;
@@ -1721,13 +1893,21 @@ dialog::backdrop {
 }
 
 /* ---- In-game controls hint ---- */
-/* A strip of keys at the bottom centre when the game opens; it fades after the first step or 8 s. */
+/* A strip of keys above the bottom bar (clear of the player card) when the game opens; it fades */
+/* after the first step or 8 s, and gives way to the action button and the build menu. It wraps */
+/* onto two lines if narrow. */
 .key-strip {
   position: absolute;
   left: 50%;
-  bottom: 28px;
+  bottom: 150px;
   transform: translateX(-50%);
   z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  width: max-content;
+  max-width: calc(100vw - 48px);
   padding: 10px 18px;
   border-radius: 9px;
   background: #f8f5e9ef;
@@ -1743,15 +1923,7 @@ dialog::backdrop {
   opacity: 0;
 }
 
-/* On narrower screens the strip moves to the bottom-left so it clears the minimap. */
-@media (max-width: 999px) {
-  .key-strip {
-    left: 24px;
-    transform: none;
-  }
-}
-
-/* Hidden where the touch arrows show and where it can't clear the minimap. */
+/* Hidden where the touch arrows show; phones have no keys to learn. */
 @media (max-width: 720px) {
   .key-strip {
     display: none;

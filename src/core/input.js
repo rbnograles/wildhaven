@@ -18,9 +18,9 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  *
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
- * Also handles E to gather or open a camp, B for build mode, F to eat, H to heal, M for the map,
- * J for the journal, Escape to pause (or to leave build mode), the mouse over the world, and
- * saving when the tab is hidden.
+ * Also handles E to gather or open a camp, B for the build menu (and 1 to pick the campfire in
+ * it), F to eat, H to heal, M for the map, J for the journal, Escape to pause (or to leave the
+ * build menu or build mode), the mouse over the world, and saving when the tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
  * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
@@ -68,7 +68,7 @@ export function setupInput(session, ui) {
     if (key === 'escape') {
       if (ui.dialogs.isPaused()) return;
       event.preventDefault();
-      if (session.build.active) ui.build.cancel();
+      if (session.build.active || session.build.menu) ui.build.cancel();
       else ui.dialogs.openPause();
       return;
     }
@@ -89,7 +89,14 @@ export function setupInput(session, ui) {
 
     if (key === 'b' && !event.repeat) {
       event.preventDefault();
-      ui.build.toggle();
+      ui.build.toggleMenu();
+      return;
+    }
+
+    // With the build menu open, 1 picks its first building (the campfire).
+    if (key === '1' && !event.repeat && session.build.menu) {
+      event.preventDefault();
+      ui.build.start();
       return;
     }
 

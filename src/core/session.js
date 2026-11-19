@@ -30,8 +30,9 @@ export const tabStorage = (() => {
  * keep a reference to them.
  *
  * @returns {object} The new session: selected character, game state, animator, renderer, save
- *   session, last save failure, current screen, load counter, held keys, frame clock, build mode
- *   (`build`: on or off, the ghost's spot and its placement check; never saved) and the mouse
+ *   session, last save failure, current screen, load counter, held keys, frame clock, building
+ *   (`build`: whether a fire is being placed, whether the build menu is open, the ghost's spot
+ *   and its placement check; never saved) and the mouse
  *   position over the world (`pointer`, or null).
  */
 export function createSession() {
@@ -46,7 +47,7 @@ export function createSession() {
     loadId: 0,
     keys: new Set(),
     clock: { last: 0, sinceSave: 0, sinceHud: 0 },
-    build: { active: false, x: 0, y: 0, check: null },
+    build: { active: false, menu: false, x: 0, y: 0, check: null },
     pointer: null,
   };
 }
@@ -147,7 +148,7 @@ export async function start(session, ui, fresh = false) {
     }
     session.saveFailure = '';
     session.animator = createAnimator();
-    session.build.active = false;
+    Object.assign(session.build, { active: false, menu: false });
 
     // Fill in the HUD and switch to the game screen.
     const c = CHARACTERS.find((c) => c.id === state.character);
@@ -207,7 +208,7 @@ export function leave(session, ui) {
   $('pause-dialog').close();
   session.state = null;
   session.saveSession = null;
-  session.build.active = false;
+  Object.assign(session.build, { active: false, menu: false });
   setActive(tabStorage, null);
   changeScreen(session, 'selection');
   ui.selection.select(session.selected);

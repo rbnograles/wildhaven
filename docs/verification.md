@@ -198,3 +198,15 @@ Second pass, with the Browser pane visible (a hidden pane runs no animation fram
 Bugs found and fixed in these passes: a duplicate `halfW` in `renderer.draw` (blank page); land shapes faintly visible through the fog (fog made fully solid); a mouse click that placed a fire also moved keyboard focus out of the name box, so typing and Enter went nowhere (the click's default is now prevented and the box focuses its input); camp names on the world map sat under region labels (now drawn below the dot).
 
 Not checked by hand: the dusk toast itself (the runs started at dusk; the unit tests cover it), a starving player, and the Canvas-renderer fallback for the night layer.
+
+## HUD rearranged after playtest feedback — 2026-11-19
+
+Feedback: two campfires at the Scout's start; no item box; no build icon; the top resource bar looked poor; the player card should be lower left; the minimap should be round. Changes: the decorative campfire is gone from `tools/build-map.py` (map rebuilt; only that object changed, and the journal's camp page no longer mentions a fire ring); a bottom bar with the player card (left), an item box of resource slots plus a Build button whose menu lists the campfire (centre), and a round minimap (right). Automated: `npm test` 117 passing, `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5180`:
+- Fresh Scout: the camp shows the tent, log and rocks, and no campfire.
+- 1020×845: card, item box and round map sit in one bottom row without overlapping; the controls strip sits above the card; the goals card is top left and the region name top centre.
+- Build button (and B) opens the menu above the item box: "Campfire · Warms the night and founds a camp · 3 wood · 2 stone · 1", with the cost in red when short. 1 starts placing (the bar read "Needs 3 wood and 2 stone · Esc to cancel"); Escape closes the menu or leaves placing; B again closes the menu.
+- Food slot: "You eat. +25 hunger"; herbs slot at full health: "You are already at full health."; empty slots are faded.
+- 768×1024: card 24–241 px, item box 282–575 px, map 616–744 px; no horizontal scroll.
+- 375×812: card top left, journal and pause top right, item box above the touch arrows, round map bottom right, the build menu opens above the item box; key hints are hidden; no horizontal scroll.

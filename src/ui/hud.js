@@ -1,6 +1,7 @@
-// The HUD: the on-screen panels shown while playing (resources, clock, survival meters, region
-// name and progress, goals card, interact button, build bar) and the short pop-up messages called
-// toasts. It only shows the game state; it never changes it.
+// The HUD: the on-screen panels shown while playing (the player card with clock and survival
+// meters, the item box, the build menu and build bar, region name and progress, goals card,
+// interact button) and the short pop-up messages called toasts. It only shows the game state; it
+// never changes it.
 import { RESOURCES } from '../data/supplies.js';
 import { CAMPFIRE_COST } from '../data/balance.js';
 import { NODES } from '../world/nodes.js';
@@ -160,6 +161,16 @@ export function createHud(session) {
     else if (build.active) label.textContent = 'Place campfire';
     else if (node) label.textContent = `${node.verb} ${node.label.toLowerCase()}`;
     else if (camp) label.textContent = `Open ${camp.name}`;
+    // The controls strip sits where the action button and build menu appear, so it gives way.
+    if (!button.hidden || build.menu) hideKeyStrip();
+
+    // The build menu and its button. A campfire the player can't afford yet is shown faded, but
+    // can still be picked, so the ghost can explain what is missing.
+    const short = Object.entries(CAMPFIRE_COST).some(([type, n]) => state.resources[type] < n);
+    $('build-menu').hidden = !build.menu;
+    $('build-button').setAttribute('aria-expanded', String(build.menu));
+    $('build-button').classList.toggle('active', build.menu || build.active);
+    $('build-campfire').classList.toggle('short', short);
 
     // The build bar: what a campfire costs, or why it can't stand where the ghost is.
     const bar = $('build-bar');
@@ -181,7 +192,11 @@ export function createHud(session) {
   function update() {
     const { state } = session;
     if (!state) return;
-    for (const resource of RESOURCES) $(resource).textContent = state.resources[resource];
+    // The item box: each slot's count, faded when there is none.
+    for (const resource of RESOURCES) {
+      $(resource).textContent = state.resources[resource];
+      $(resource).parentElement.classList.toggle('empty', state.resources[resource] === 0);
+    }
     updateMeters(state);
 
     const region = regionOf(state.player.x, state.player.y),
