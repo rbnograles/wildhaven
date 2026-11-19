@@ -1,13 +1,16 @@
-// The character selection screen, the first screen the player sees.
-// It shows each character's story and save status, and starts the game when "Begin" is pressed.
+// The main menu (character selection), the first screen the player sees.
+// It shows each character's painted panel and save status, and starts the game when "Begin" is pressed.
 import { CHARACTERS, nextCharacterId } from '../data/characters.js';
 import { restoreGame } from '../game/state.js';
 import { storageKey } from '../game/saves.js';
 import { start, cancelLoading } from '../core/session.js';
 import { $, icon } from './layout.js';
 
+// How far a finger must slide sideways, in CSS pixels, before it counts as a swipe.
+const SWIPE_MIN_PX = 50;
+
 /**
- * Wires up the character cards and buttons on the selection screen.
+ * Wires up the character panels and buttons on the main menu.
  *
  * @param {object} session - The shared session; `selected` holds the chosen character's id.
  * @param {object} ui - The other UI parts, passed on when the game starts.
@@ -37,12 +40,13 @@ export function setupSelection(session, ui) {
       // The browser blocked storage (for example in some private modes). Play still works, unsaved.
       $('storage-note').textContent =
         'Storage is unavailable. You can play, but progress will not persist.';
+      $('storage-note').hidden = false;
       return { raw: null, value: null, invalid: false };
     }
   }
 
   /**
-   * Picks a character and shows their story, kit and save status.
+   * Picks a character: brightens their panel, moves the details panel into it, and shows their save status.
    *
    * The big button says "Continue" when the character has a save and "Begin" when they don't.
    *
@@ -53,14 +57,22 @@ export function setupSelection(session, ui) {
     const c = CHARACTERS.find((c) => c.id === id),
       slot = readSlot(id);
 
-    // Mark only the chosen card as pressed.
+    // Only the chosen panel is selected (it widens and brightens); its pick button is pressed.
+    document
+      .querySelectorAll('[data-realm]')
+      .forEach((realm) => realm.classList.toggle('is-selected', realm.dataset.realm === id));
     document
       .querySelectorAll('[data-character]')
       .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.character === id)));
+    document
+      .querySelectorAll('[data-dot]')
+      .forEach((dot) => dot.setAttribute('aria-current', String(dot.dataset.dot === id)));
 
+    // One details panel is shared; it moves into whichever panel is chosen.
+    document.querySelector(`[data-realm="${id}"]`).append($('departure'));
+    $('departure-place').textContent = c.location;
+    $('departure-name').textContent = c.name;
     $('tagline').textContent = c.tagline;
-    $('description').textContent = c.description;
-    $('kit').textContent = c.kit;
     $('begin').innerHTML =
       `${slot.value ? 'Continue your journey' : 'Begin your journey'} ${icon('arrow')}`;
     $('fresh').hidden = !slot.value;
@@ -71,17 +83,43 @@ export function setupSelection(session, ui) {
         : 'Your own path through a shared world.';
   }
 
-  // Character cards: click to pick, or use the left and right arrow keys to move between them.
+  // Character panels: click to pick, or use the left and right arrow keys to move between them.
   document.querySelectorAll('[data-character]').forEach((button) => {
     button.addEventListener('click', () => select(button.dataset.character));
     button.addEventListener('keydown', (event) => {
       if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
       event.preventDefault();
-      // Step one card right or left (wrapping round), then focus that card.
+      // Step one panel right or left (wrapping round), then focus that panel's button.
       select(nextCharacterId(button.dataset.character, event.key === 'ArrowRight' ? 1 : -1));
       document.querySelector(`[data-character="${session.selected}"]`).focus();
     });
   });
+
+  // Phones show one panel at a time: the arrow buttons step to the previous or next character.
+  $('realm-prev').addEventListener('click', () => select(nextCharacterId(session.selected, -1)));
+  $('realm-next').addEventListener('click', () => select(nextCharacterId(session.selected, 1)));
+
+  // The dots under the panel jump straight to a character.
+  document
+    .querySelectorAll('[data-dot]')
+    .forEach((dot) => dot.addEventListener('click', () => select(dot.dataset.dot)));
+
+  // A sideways swipe on a touch screen steps to the next or previous character.
+  // Mouse drags are ignored so desktop clicks never turn into swipes.
+  let swipeStart = null;
+  const realms = document.querySelector('.realms');
+  realms.addEventListener('pointerdown', (event) => {
+    swipeStart = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY };
+  });
+  realms.addEventListener('pointerup', (event) => {
+    if (!swipeStart) return;
+    const dx = event.clientX - swipeStart.x,
+      dy = event.clientY - swipeStart.y;
+    swipeStart = null;
+    if (Math.abs(dx) > SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.2)
+      select(nextCharacterId(session.selected, dx < 0 ? 1 : -1));
+  });
+  realms.addEventListener('pointercancel', () => (swipeStart = null));
 
   $('begin').addEventListener('click', () => start(session, ui));
 

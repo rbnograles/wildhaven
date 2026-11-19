@@ -51,7 +51,7 @@ export const icon = (name) =>
 /**
  * Builds every screen and dialog once; other modules look elements up by id.
  *
- * Like setting up all the rooms of a dollhouse before anyone plays: the selection screen, the
+ * Like setting up all the rooms of a dollhouse before anyone plays: the main menu, the
  * loading screen, the game screen and the three dialogs are all made now. Only one screen shows
  * at a time. The others wait with `hidden` until `changeScreen` in core/session.js swaps them.
  *
@@ -62,60 +62,61 @@ export const icon = (name) =>
  * @param {HTMLElement} app - The empty `#app` element from index.html that receives the layout.
  */
 export function mountLayout(app) {
-  app.innerHTML = /* HTML */ ` <!-- Screen 1: character selection. Pick who to play, then start or continue. -->
+  app.innerHTML = /* HTML */ ` <!-- Screen 1: the main menu. The painting starting-regions.png is split into three panels, one
+     per character. ui/selection.js picks a panel and moves the #departure details into it. -->
     <main id="selection" class="selection">
-      <header class="masthead">
-        <a class="wordmark" href="./" aria-label="Wildhaven home"
-          >${icon('compass')}<span>WILDHAVEN</span></a
-        ><span class="header-line"></span><span class="motto">A world worth wandering</span>
-      </header>
-      <section class="intro">
-        <h1>Every journey starts with you.</h1>
-        <p>Three paths. One untamed world. Choose where your story begins.</p>
-      </section>
-      <!-- One card per character. The portrait is cut from the idle sprite sheet by --row. -->
-      <div class="characters" role="group" aria-label="Choose your character">
+      <a class="wordmark menu-wordmark" href="./" aria-label="Wildhaven home"
+        >${icon('compass')}<span>WILDHAVEN</span></a
+      >
+      <div class="realms" role="group" aria-label="Choose your character">
         ${CHARACTERS.map(
           (c) =>
-            /* HTML */ `<button
-              class="character-card"
-              data-character="${c.id}"
-              aria-pressed="${c.id === 'scout'}"
-              aria-label="Choose ${c.shortName}"
-              style="--row:${c.row};--scene:${c.row * 50}%"
+            /* HTML */ `<div
+              class="realm${c.id === 'scout' ? ' is-selected' : ''}"
+              data-realm="${c.id}"
+              style="--row:${c.row};--index:${c.row}"
             >
-              <span class="portrait"
-                ><span class="portrait-sprite" aria-hidden="true"></span
-                ><span class="selected-mark">${icon('check')}</span></span
+              <span class="realm-scene" aria-hidden="true"></span>
+              <span class="realm-sprite" aria-hidden="true"></span>
+              <button
+                class="realm-pick"
+                data-character="${c.id}"
+                aria-pressed="${c.id === 'scout'}"
+                aria-label="Choose ${c.shortName}"
+              ></button>
+              <span class="realm-label" aria-hidden="true"
+                ><span class="realm-title">${c.name}</span
+                ><span class="realm-place">${c.location}</span></span
               >
-              <span class="character-caption"
-                ><span class="character-name">${c.name}</span
-                ><span class="character-location">${c.location}</span></span
-              >
-            </button>`,
+            </div>`,
         ).join('')}
       </div>
-      <!-- The chosen character's story, plus the buttons to begin. ui/selection.js fills these. -->
-      <section class="departure" aria-label="Your chosen character">
-        <div class="character-story">
-          <h2 id="tagline"></h2>
-          <p id="description"></p>
-          <span id="kit" class="kit"></span>
-        </div>
+      <!-- The chosen character's details and buttons. ui/selection.js fills these and moves the
+           whole panel into the chosen realm. preview.js adds its button inside .departure-actions. -->
+      <section id="departure" class="departure" aria-label="Your chosen character">
+        <p id="departure-place" class="departure-place"></p>
+        <h2 id="departure-name"></h2>
+        <p id="tagline" class="tagline"></p>
         <div class="departure-actions">
           <button id="begin" class="primary">Begin your journey ${icon('arrow')}</button
           ><button id="fresh" class="text-button" hidden>Start a fresh adventure</button>
           <p id="save-hint" class="save-hint">Your own path through a shared world.</p>
         </div>
+        <p id="storage-note" class="storage-note" hidden></p>
       </section>
-      <footer class="selection-footer">
-        <div class="key-guide">
-          <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
-          ><span><kbd>E</kbd> Interact</span><span><kbd>M</kbd> Map</span
-          ><span><kbd>Esc</kbd> Pause</span>
-        </div>
-        <span id="storage-note">Your adventure saves on this device.</span>
-      </footer>
+      <!-- Phones show one panel at a time: these step to the previous or next character. -->
+      <button id="realm-prev" class="realm-step prev" aria-label="Previous character">‹</button
+      ><button id="realm-next" class="realm-step next" aria-label="Next character">›</button>
+      <div class="realm-dots" role="group" aria-label="Characters">
+        ${CHARACTERS.map(
+          (c) =>
+            /* HTML */ `<button
+              class="realm-dot"
+              data-dot="${c.id}"
+              aria-label="Show ${c.shortName}"
+            ></button>`,
+        ).join('')}
+      </div>
     </main>
 
     <!-- Screen 2: loading. Shown while the world art loads; it offers a retry if loading fails. -->
