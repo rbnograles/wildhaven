@@ -127,12 +127,13 @@ button:active {
 }
 
 /* The three panels side by side. The chosen one is twice as wide as each of the others. */
-/* touch-action: pan-y keeps sideways finger moves for the swipe code in ui/selection.js. */
+/* touch-action: pan-y pinch-zoom keeps sideways finger moves for the swipe code in ui/selection.js, */
+/* and still lets people pinch to zoom. */
 /* Without it the browser takes a sideways drag as its own pan and cancels the touch midway. */
 .realms {
   display: flex;
   height: 100%;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* One character's panel. container-type lets the picture inside size itself from this panel. */
@@ -261,14 +262,16 @@ button:active {
 }
 
 /* The chosen character's details and buttons, over the bottom of their panel on a dark fade. */
+/* --fade is the top padding, so the fade is fully dark by the time the text begins. */
 .departure {
+  --fade: 90px;
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 3;
   padding: 90px clamp(20px, 4cqw, 44px) 30px;
-  background: linear-gradient(transparent, #0b130ee6 38%);
+  background: linear-gradient(transparent, #0b130ee6 var(--fade));
   text-align: center;
 }
 
@@ -278,17 +281,21 @@ button:active {
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #e7e2cf;
+  /* A soft shadow keeps the text readable over bright scenery. */
+  text-shadow: 0 1px 3px #0b130ecc;
 }
 
 .departure h2 {
   margin: 6px 0;
   font: 400 clamp(28px, 3vw, 40px) / 1.1 var(--serif);
+  text-shadow: 0 1px 3px #0b130ecc;
 }
 
 .tagline {
   margin: 0 0 18px;
   font-size: 16px;
   color: #f1ecda;
+  text-shadow: 0 1px 3px #0b130ecc;
 }
 
 /* Begin fills the row; Start fresh and Preview sit side by side under it; the hint is last. */
@@ -358,6 +365,7 @@ button:active {
     height: 38%;
   }
   .departure {
+    --fade: 70px;
     padding: 70px 18px 56px;
   }
   .realm-step {
@@ -419,6 +427,7 @@ button:active {
     height: 36%;
   }
   .departure {
+    --fade: 36px;
     padding-top: 36px;
     padding-bottom: 14px;
   }
@@ -1315,8 +1324,8 @@ dialog::backdrop {
   }
 }
 
-/* Phones show the touch arrows instead. */
-@media (max-width: 699px) {
+/* Hidden where the touch arrows show and where it can't clear the minimap. */
+@media (max-width: 720px) {
   .key-strip {
     display: none;
   }

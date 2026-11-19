@@ -18,7 +18,7 @@ The character-selection screen becomes the game's main menu, built from `assets/
 - The headline "Every journey starts with you." and its subtitle.
 - The motto "A world worth wandering" and the header rule.
 - The two-line character description and the kit line ("HATCHET · FIELD PACK · 3 FOOD").
-- The controls footer and the "Your adventure saves on this device" note. The storage message now appears only when storage is unavailable, in the save-hint line.
+- The controls footer and the "Your adventure saves on this device" note. The storage message now appears only when storage is unavailable, in the save-hint line. As built, it has its own `#storage-note` line directly under the save hint, because `select()` rewrites the save hint on every pick.
 
 ## Desktop and tablet (viewport 700 px wide or more)
 

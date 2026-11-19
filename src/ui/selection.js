@@ -91,9 +91,12 @@ export function setupSelection(session, ui) {
    *
    * The stylesheet uses it to stand the chosen character just above the details. A long name
    * or tagline then lifts the character instead of hiding its feet behind the text.
+   * While the menu is hidden the details measure 0, so it does nothing then; that way the
+   * character does not slide up from behind the details when the menu comes back.
    */
   function measureDeparture() {
     const departure = $('departure');
+    if (!departure.offsetHeight) return;
     departure.parentElement.style.setProperty('--departure-h', `${departure.offsetHeight}px`);
   }
 

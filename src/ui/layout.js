@@ -21,7 +21,6 @@ const icons = {
   compass:
     '<circle cx="12" cy="12" r="8"/><path d="m12 1 2.5 8.5L23 12l-8.5 2.5L12 23l-2.5-8.5L1 12l8.5-2.5Z"/><path d="m12 5 0 7 7 0"/>',
   arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
-  check: '<path d="m5 12 4 4L19 6"/>',
   map: '<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
   pin: '<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2"/>',
