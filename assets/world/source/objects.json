@@ -16,5 +16,17 @@
   "rocks-b": { "origin": [0.5, 0.963], "footprint": [74, 44] },
   "beach-rock": { "origin": [0.5, 0.96], "footprint": [62, 38] },
   "flowers": { "origin": [0.5, 0.6], "flat": true, "scale": 0.4 },
-  "berry-bush": { "origin": [0.5, 0.9], "footprint": [30, 16] }
+  "berry-bush": { "origin": [0.5, 0.9], "footprint": [30, 16] },
+  "snowy-pine": { "origin": [0.5, 0.976], "footprint": [18, 14] },
+  "ice-rock": { "origin": [0.5, 0.963], "footprint": [74, 44] },
+  "boulder": { "origin": [0.5, 0.971], "footprint": [85, 55] },
+  "cliff-rock": { "origin": [0.5, 0.98], "footprint": [85, 55] },
+  "jungle-tree": { "origin": [0.5, 0.984], "footprint": [48, 26] },
+  "fern": { "origin": [0.5, 0.9] },
+  "palm": { "origin": [0.5, 0.982], "footprint": [20, 16] },
+  "dead-bush": { "origin": [0.5, 0.9], "footprint": [30, 16] },
+  "cactus": { "origin": [0.5, 0.97], "footprint": [22, 16] },
+  "sandstone-ruin": { "origin": [0.5, 0.97], "footprint": [120, 50] },
+  "bridge": { "origin": [0.5, 0.5], "flat": true },
+  "signpost": { "origin": [0.5, 0.97], "footprint": [14, 10] }
 }
