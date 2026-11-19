@@ -23,11 +23,13 @@ const supplies = NODES.filter((n) => !n.regrow),
  * Reads a sprite's width and height straight from its PNG file, without a browser.
  * A PNG stores its size at a fixed spot near the start of the file, so we just read those bytes.
  *
- * @param {string} name - The sprite's name, like `flowers` (its file in assets/world/source/objects/).
+ * @param {string} name - The sprite's name, like `flowers` (its file is in the kind folder its
+ *   objects.json entry names, such as assets/world/source/objects/plants/).
  * @returns {number[]} `[width, height]` in pixels.
  */
 const pngSize = (name) => {
-  const b = readFileSync(new URL(`../../assets/world/source/objects/${name}.png`, import.meta.url));
+  const file = `../../assets/world/source/objects/${OBJECT_SPECS[name].kind}/${name}.png`;
+  const b = readFileSync(new URL(file, import.meta.url));
   return [b.readUInt32BE(16), b.readUInt32BE(20)];
 };
 

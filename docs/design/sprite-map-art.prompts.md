@@ -20,7 +20,7 @@ Attach `assets/characters/originals/starting-characters-idle-v1.png` as the styl
 
 ## 1. Ground textures
 
-Four files in `assets/world/source/`: `grass.png`, `dirt.png`, `sand.png`, `water.png`.
+Four files in `assets/world/source/ground/`: `grass.png`, `dirt.png`, `sand.png`, `water.png`.
 Square, any size from 256px up (the build resizes to 256). They must tile seamlessly, because each
 one repeats across the whole map, and should be even in tone with no large features.
 
@@ -43,7 +43,8 @@ script, so no transition tiles are needed.
 
 ## 2. Object sprites
 
-One PNG per object in `assets/world/source/objects/`, on genuine transparent alpha. Sizes are a
+One PNG per object in its kind folder under `assets/world/source/objects/` (`trees/`, `plants/`,
+`rocks/`, `buildings/` or `props/`), on genuine transparent alpha. Sizes are a
 guide (1 pixel = 1 world unit; the character is about 112 tall). Other sizes work, but update
 `origin` and `footprint` for that object in `assets/world/source/objects.json` to match.
 
@@ -72,6 +73,7 @@ Prompt template:
 | `beach-rock.png` | 205 x 125 | weathered pale boulder with a little moss |
 | `flowers.png` | 255 x 155 | low patch of pink and yellow wildflowers, seen from above |
 
-To add a new kind of object: save `objects/<name>.png`, add a `<name>` entry to `objects.json`, and
+To add a new kind of object: save `objects/<kind>/<name>.png`, add a `<name>` entry with that `kind`
+to `objects.json`, and
 place it in `tools/build-map.py` (or open `assets/world/map/wildhaven.json` in the Tiled editor
 and add a point named `<name>` on the `objects` layer).

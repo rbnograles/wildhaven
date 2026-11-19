@@ -17,10 +17,13 @@ import tilesetUrl from '../../assets/world/map/tileset.png';
 import overviewUrl from '../../assets/world/map/overview.webp';
 
 // Object sprite name (the PNG file name without `.png`) → the URL Vite serves it from.
+// Sprites sit in kind folders (objects/trees/, objects/rocks/, ...), but only the file name is kept,
+// because objects.json and the map name sprites without their folder. tests/world/objects.test.js
+// checks no two folders hold the same name.
 // The field journal (ui/journal.js) borrows these for its stand-in keepsake pictures.
 export const objectUrls = Object.fromEntries(
   Object.entries(
-    import.meta.glob('../../assets/world/source/objects/*.png', {
+    import.meta.glob('../../assets/world/source/objects/*/*.png', {
       eager: true,
       query: '?url',
       import: 'default',

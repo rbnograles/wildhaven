@@ -10,14 +10,14 @@ The first screen uses parchment, forest-green ink, large serif typography, and t
 | `assets/characters/originals/starting-characters-idle-v1.png` | Approved three-character, four-direction sprite atlas |
 | `assets/world/starting-regions.png` | Three portrait backgrounds, sliced at render time with CSS |
 | `assets/world/wildhaven.png` | Archived original world painting; no longer the playable map |
-| `assets/world/source/{grass,dirt,sand,water}.png` | Four independently generated repeating ground textures |
-| `assets/world/source/objects/*.png` | Sixteen independently generated transparent world sprites, plus the `berry-bush.png` stand-in |
-| `assets/world/source/objects.json` | Ground-contact origins and solid base footprints for the new art |
+| `assets/world/source/ground/{grass,dirt,sand,water}.png` | Four independently generated repeating ground textures (`snow`, `rock` and `jungle` beside them are stand-ins) |
+| `assets/world/source/objects/<kind>/*.png` | Sixteen independently generated transparent world sprites plus stand-ins, in kind folders: `trees/`, `plants/`, `rocks/`, `buildings/`, `props/` |
+| `assets/world/source/objects.json` | Each sprite's kind folder, ground-contact origin and solid base footprint |
 | `assets/world/map/` | Built terrain atlas, Tiled JSON, and minimap overview |
 
 All generated imagery was produced with the built-in image-generation tool. The current world uses 96 by 64 tiles at 64 pixels each (6144 by 4096 world units). Ground textures repeat at 256 pixels after the map build resizes them. Objects render separately and sort by their ground-contact position. Character sprites are read as a four-column, three-row atlas with a consistent foot anchor.
 
-The 2026-11-19 world replacement used `assets/characters/originals/starting-characters-idle-v1.png` as the style reference for every generation. Exact prompts sit beside each source PNG; `source/generation-manifest.json` records generation and revision prompts. Selected full-resolution generated PNGs are preserved in `source/originals/`. Object delivery files are proportionally fitted to the requested canvas dimensions, with four pixels of transparent padding, using alpha-visible bounds. No painted scenery is cut out of the old world painting. Run `python tools/build-map.py` after source changes; never rerun `tools/make-standin-art.py`, which overwrites these assets.
+The 2026-11-19 world replacement used `assets/characters/originals/starting-characters-idle-v1.png` as the style reference for every generation. Exact prompts sit beside each source PNG; `source/generation-manifest.json` records generation and revision prompts. Selected full-resolution generated PNGs are preserved in `source/originals/<kind>/` (`ground/` plus the object kinds). Object delivery files are proportionally fitted to the requested canvas dimensions, with four pixels of transparent padding, using alpha-visible bounds. No painted scenery is cut out of the old world painting. Run `python tools/build-map.py` after source changes; never rerun `tools/make-standin-art.py`, which overwrites these assets.
 
 Exact prompts are in `docs/design/character-selection.prompt.txt`, `docs/design/world.prompt.txt`, `docs/design/starting-regions.prompt.txt`, and `assets/characters/originals/starting-characters-idle-v1.prompt.txt`.
 
@@ -46,18 +46,18 @@ Made by `tools/make-biome-standins.py` from existing art, so the 384×256 world 
 
 | File | Stand-in made from | Used for |
 | --- | --- | --- |
-| `source/snow.png` | grass, greyed and brightened | Frostpeak ground |
-| `source/rock.png` | dirt, greyed | Stonewater Canyons ground |
-| `source/jungle.png` | grass, darkened | Emerald Jungle ground |
-| `objects/snowy-pine.png` | pine, frosted tint | Frostpeak trees |
-| `objects/ice-rock.png` | rocks-b, blue tint | Frostpeak rocks |
-| `objects/boulder.png` | rocks-a, grey | Canyons and Frostpeak |
-| `objects/cliff-rock.png` | rocks-a, stretched taller, dark grey | Canyon outcrops and lookouts |
-| `objects/jungle-tree.png` | big-oak, deep green | Jungle trees |
-| `objects/fern.png` | berry-bush, green | Jungle undergrowth (walk-through) |
-| `objects/palm.png` | oak, narrowed, yellow-green | Lagoon and jungle (weakest stand-in) |
-| `objects/dead-bush.png` | berry-bush, brown | Desert and canyons |
-| `objects/cactus.png` | drawn from rounded rectangles | Desert |
-| `objects/sandstone-ruin.png` | drawn from rectangles | Desert ruins, jungle temple |
-| `objects/bridge.png` | drawn plank deck (flat) | River bridges |
-| `objects/signpost.png` | drawn post and arrow board | Fast-travel signposts |
+| `source/ground/snow.png` | grass, greyed and brightened | Frostpeak ground |
+| `source/ground/rock.png` | dirt, greyed | Stonewater Canyons ground |
+| `source/ground/jungle.png` | grass, darkened | Emerald Jungle ground |
+| `objects/trees/snowy-pine.png` | pine, frosted tint | Frostpeak trees |
+| `objects/rocks/ice-rock.png` | rocks-b, blue tint | Frostpeak rocks |
+| `objects/rocks/boulder.png` | rocks-a, grey | Canyons and Frostpeak |
+| `objects/rocks/cliff-rock.png` | rocks-a, stretched taller, dark grey | Canyon outcrops and lookouts |
+| `objects/trees/jungle-tree.png` | big-oak, deep green | Jungle trees |
+| `objects/plants/fern.png` | berry-bush, green | Jungle undergrowth (walk-through) |
+| `objects/trees/palm.png` | oak, narrowed, yellow-green | Lagoon and jungle (weakest stand-in) |
+| `objects/plants/dead-bush.png` | berry-bush, brown | Desert and canyons |
+| `objects/plants/cactus.png` | drawn from rounded rectangles | Desert |
+| `objects/buildings/sandstone-ruin.png` | drawn from rectangles | Desert ruins, jungle temple |
+| `objects/props/bridge.png` | drawn plank deck (flat) | River bridges |
+| `objects/props/signpost.png` | drawn post and arrow board | Fast-travel signposts |
