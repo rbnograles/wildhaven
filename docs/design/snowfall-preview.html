@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wildhaven snowfall preview</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui;background:#18201c;color:#ece8da}body{max-width:1150px;margin:28px auto;padding:0 22px}h1{font-size:28px;margin-bottom:8px}p{color:#bfcbc4;max-width:880px}nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}button{font:inherit;padding:9px 16px;border:1px solid #829287;border-radius:6px;background:#304038;color:inherit;cursor:pointer}button[aria-pressed=true]{background:#355b6b;border-color:#b3d4e1}canvas{width:100%;aspect-ratio:11/6;display:block;background:linear-gradient(#203e51,#496576);border-radius:10px;transition:background .6s}a{color:#e8c994}#status{font-size:14px}
+</style>
+<h1>Wildhaven snowfall</h1>
+<p>Soft snow particles drift down in three depth layers. Switch biomes to preview the snowfall fading in or out. This is an asset demo; automatic winter-biome detection still needs connection in the game.</p>
+<nav aria-label="Weather preview">
+<button id="winter" aria-pressed="true">Winter biome</button><button id="normal" aria-pressed="false">Normal biome</button><button id="pause">Pause</button>
+<label>Snow density <input id="density" type="range" min="30" max="260" value="140"></label>
+</nav>
+<canvas id="view" width="1100" height="600" aria-label="Animated snowfall preview"></canvas>
+<p id="status">Loading snowfall sprites…</p>
+<p><a href="../../assets/world/source/effects/snowfall-particles.png">Full PNG atlas</a> · <a href="../../assets/world/source/effects/snowfall-particles.json">Particle crop metadata</a> · <a href="hud-season-preview.html">Seasonal HUD preview</a></p>
+<script>
+const canvas=document.querySelector('#view'),ctx=canvas.getContext('2d'),atlas=new Image();
+const rects=[[166,231,53,53],[545,229,65,61],[910,218,92,81],[1288,221,112,74],[133,706,115,115],[506,699,128,124],[841,645,227,228],[1233,652,223,213]];
+atlas.src='../../assets/world/source/effects/snowfall-particles.png';
+let active=true,paused=false,opacity=1,last=performance.now(),time=0;
+const particles=Array.from({length:260},()=>{
+ const chance=Math.random(),id=chance<.65?Math.floor(Math.random()*4):chance<.92?4+Math.floor(Math.random()*2):6+Math.floor(Math.random()*2);
+ const near=id>=6,middle=id>=4;
+ return{x:Math.random()*1100,y:Math.random()*600,id,size:near?15+Math.random()*12:middle?6+Math.random()*6:2+Math.random()*4,speed:near?55+Math.random()*35:middle?30+Math.random()*30:15+Math.random()*25,phase:Math.random()*Math.PI*2,alpha:near?.35+Math.random()*.2:.45+Math.random()*.45};
+});
+function select(winter){active=winter;document.querySelector('#winter').setAttribute('aria-pressed',String(winter));document.querySelector('#normal').setAttribute('aria-pressed',String(!winter));canvas.style.background=winter?'linear-gradient(#203e51,#496576)':'linear-gradient(#253c2d,#526b43)';document.querySelector('#status').textContent=winter?'Winter preview: snowfall enabled.':'Normal preview: snowfall fading out.';}
+document.querySelector('#winter').onclick=()=>select(true);document.querySelector('#normal').onclick=()=>select(false);
+document.querySelector('#pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'Resume':'Pause';};
+atlas.onload=()=>select(true);atlas.onerror=()=>document.querySelector('#status').textContent='Could not load the local snowfall PNG.';
+function draw(now){
+ const dt=Math.min((now-last)/1000,.05);last=now;
+ if(!paused){time+=dt;opacity+=((active?1:0)-opacity)*Math.min(1,dt*2);}
+ ctx.clearRect(0,0,1100,600);
+ const count=Number(document.querySelector('#density').value);
+ if(atlas.complete&&atlas.naturalWidth)for(let i=0;i<count;i++){
+  const p=particles[i],r=rects[p.id];
+  if(!paused){p.y+=p.speed*dt;p.x+=(8+Math.sin(time*.6+p.phase)*10)*dt;if(p.y>630){p.y=-30;p.x=Math.random()*1100;}if(p.x>1130)p.x=-30;}
+  ctx.globalAlpha=p.alpha*opacity;const h=p.size*r[3]/r[2];ctx.drawImage(atlas,...r,p.x-p.size/2,p.y-h/2,p.size,h);
+ }
+ ctx.globalAlpha=1;requestAnimationFrame(draw);
+}requestAnimationFrame(draw);
+</script></html>

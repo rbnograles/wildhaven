@@ -727,29 +727,54 @@ kbd {
   justify-self: center;
 }
 
-/* One row of square slots on a cream card. */
+/* The painted item box (assets/ui/game/item-box.png): a wooden frame with five dark slots in a */
+/* row. The picture is the whole box, so the box keeps the picture's shape (1600 x 491) and every */
+/* slot below is placed over a painted slot by percentages measured from the picture */
+/* (tools/prepare-sprite-art.py prints them). --slot is how wide one painted slot is on screen. */
 .hotbar {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  padding: 7px;
+  --slot: 54px;
+  position: relative;
+  width: calc(var(--slot) / 0.15);
+  aspect-ratio: 1600 / 491;
+  background: url('../assets/ui/game/item-box.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 8px #1f311b55);
 }
 
-/* A slot: an icon, the count and a small name. Food, herbs and Build are buttons; wood and */
-/* stone are plain. The small key in the corner (F, H, B) says which key does the same. */
+/* A slot: an icon and the count. Food, herbs and Build are buttons; wood and stone are plain. */
+/* The small key in the corner (F, H, B) says which key does the same. The names are not shown: */
+/* the painted slots are too small for them, and each slot's tooltip says what it is. */
 .slot {
-  position: relative;
+  position: absolute;
+  top: 27.09%;
+  width: 15%;
+  height: 44.4%;
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 1px;
-  width: 58px;
-  height: 58px;
-  border: 1px solid #dcdccb;
-  border-radius: 7px;
-  background: #fffdf4;
-  color: var(--ink);
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: #f7ecc5;
   font: inherit;
+}
+
+/* Where each painted slot starts, left to right. The Build button sits in the fifth. */
+.slot:nth-child(1) {
+  left: 7.44%;
+}
+.slot:nth-child(2) {
+  left: 25%;
+}
+.slot:nth-child(3) {
+  left: 42.5%;
+}
+.slot:nth-child(4) {
+  left: 60%;
+}
+.slot.build-slot {
+  left: 77.56%;
 }
 
 button.slot {
@@ -757,31 +782,30 @@ button.slot {
 }
 
 button.slot:hover {
-  background: #f1f4e6;
+  background: #ffe9b01f;
 }
 
 .slot svg {
   width: 20px;
   height: 20px;
-  color: #6d7c51;
+  color: #d9c98f;
 }
 
 .slot b {
   font-size: 14px;
   font-weight: 600;
   line-height: 1;
+  text-shadow: 0 1px 2px #1b0f08;
 }
 
 .slot-label {
-  font-size: 8px;
-  letter-spacing: 0.4px;
-  color: var(--muted);
+  display: none;
 }
 
 .slot kbd {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 2px;
+  right: 2px;
   font-size: 8px;
   padding: 0 3px;
 }
@@ -792,28 +816,22 @@ button.slot:hover {
   opacity: 0.45;
 }
 
-/* The thin line between the item slots and the Build button. */
+/* The painted box already has a divider between every slot, so the old thin line is not shown. */
 .hotbar-rule {
-  width: 1px;
-  margin: 6px 3px;
-  background: #d3d8c7;
+  display: none;
 }
 
-/* The Build button: moss green, so it reads as an action rather than an item. */
-.build-slot {
-  background: var(--moss);
-  border-color: var(--moss);
-  color: #f8f5e9;
+/* The Build button: the painted iron hammer, with a gold ring while the build menu is open. */
+.build-slot img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px #1b0f08);
 }
 
-.build-slot svg,
-.build-slot .slot-label {
-  color: #f8f5e9;
-}
-
-button.build-slot:hover,
 .build-slot.active {
-  background: #2c4737;
+  background: #ffe9b02e;
+  box-shadow: inset 0 0 0 2px #ffd166;
 }
 
 /* The build menu sits just above the item box, lined up with its right edge (the Build button). */
@@ -1264,6 +1282,141 @@ button.build-slot:hover,
   transform: translate(-50%, 0);
 }
 
+/* ---- In-game HUD: the painted panels ---- */
+/* The wooden frames come from assets/ui/game/hud-*.png (cut by tools/prepare-sprite-art.py). Most */
+/* are drawn with border-image: the picture is cut into nine pieces (four corners, four edges, the */
+/* middle), the corners keep their size and the edges and middle stretch, so one small picture */
+/* frames a card of any size. `fill` keeps the middle as the card's paper. The numbers before */
+/* `fill` say how many picture pixels deep each corner is. These rules sit after the plain panel */
+/* rules above on purpose, so they win. */
+.quest,
+.identity,
+.build-menu,
+.toast,
+.interact {
+  background: none;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  /* A drop shadow follows the frame's notched corners; a box shadow would be a plain rectangle. */
+  filter: drop-shadow(0 3px 7px #1f311b55);
+}
+
+/* The goals card: cream paper in a wooden frame. */
+.quest {
+  border-width: 20px;
+  border-image: url('../assets/ui/game/hud-goals.png') 40 fill / 20px stretch;
+  padding: 6px 8px 8px;
+}
+
+/* The player card: green cloth, so its words are cream instead of ink. */
+.identity {
+  border-width: 21px;
+  border-image: url('../assets/ui/game/hud-player.png') 42 fill / 21px stretch;
+  padding: 0 6px 0 0;
+  color: #fbf3d6;
+}
+
+.identity .identity-status,
+.identity .meter {
+  color: #e3dfb8;
+}
+
+.identity .meter-bar {
+  background: #22331f99;
+}
+
+.identity .meter.low .meter-tag {
+  color: #ffc2ad;
+}
+
+/* The build menu: the same cream paper as the goals card. */
+.build-menu {
+  border-width: 20px;
+  border-image: url('../assets/ui/game/hud-popup.png') 40 fill / 20px stretch;
+  padding: 2px;
+}
+
+/* Messages: a cream strip. The wider left slice holds the picture's round wooden boss. */
+.toast {
+  border-width: 17px 17px 17px 52px;
+  border-image: url('../assets/ui/game/hud-toast.png') 34 34 34 104 fill / 17px 17px 17px 52px
+    stretch;
+  padding: 3px 8px 3px 6px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The "E Gather" button: dark wood, with the E sitting on the picture's cream key cap. The cap is */
+/* part of the wide left slice, so the letter is placed over it instead of beside the words. */
+.interact {
+  border-width: 15px 14px 15px 48px;
+  border-image: url('../assets/ui/game/hud-prompt.png') 30 28 30 96 fill / 15px 14px 15px 48px
+    stretch;
+  padding: 1px 8px 1px 2px;
+  color: #fbf3d6;
+  font-weight: 600;
+  /* Raised to clear the painted item box, which is taller than the old flat one. */
+  bottom: 146px;
+}
+
+.interact kbd {
+  position: absolute;
+  left: -35px;
+  top: 50%;
+  width: 28px;
+  transform: translateY(-50%);
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: #4a2f17;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* The region's name sits on the green banner between the two little pines. The banner is one */
+/* whole picture at a fixed size (not stretched), so the pines keep their shape; the name is sized */
+/* to fit the cloth, and nudged down a little because the cloth sits below the banner's top tab. */
+.region h1 {
+  display: grid;
+  place-items: center;
+  width: 348px;
+  height: 92px;
+  margin: 2px auto 4px;
+  padding: 9px 78px 0;
+  background: url('../assets/ui/game/hud-banner.png') center / 100% 100% no-repeat;
+  font-size: 19px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px #14260fcc;
+  filter: drop-shadow(0 3px 6px #1f311b55);
+}
+
+/* The minimap's wooden ring. The picture is laid over the round map so its hole (207 of its 282 */
+/* pixels across, starting 37 from the left and 54 from the top) sits exactly on the map. */
+.minimap {
+  border: 0;
+  box-shadow: none;
+}
+
+.minimap::after {
+  content: '';
+  position: absolute;
+  left: -17.9%;
+  top: -26.1%;
+  width: 136.2%;
+  height: 141.1%;
+  background: url('../assets/ui/game/hud-minimap.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 6px #1f311b66);
+  pointer-events: none;
+}
+
+.minimap-key {
+  z-index: 1;
+}
+
 /* ---- In-game: build mode ---- */
 /* The bar under the region name while placing a campfire: the cost, or why the spot is refused. */
 .build-bar {
@@ -1686,15 +1839,8 @@ dialog::backdrop {
     max-width: 213px;
     padding: 16px;
   }
-  .region h1 {
-    font-size: 32px;
-  }
-  .slot {
-    width: 48px;
-    height: 48px;
-  }
-  .slot-label {
-    display: none;
+  .hotbar {
+    --slot: 48px;
   }
   .meter {
     grid-template-columns: 13px 56px 48px;
@@ -1725,7 +1871,10 @@ dialog::backdrop {
     position: absolute;
     top: 13px;
     left: 13px;
-    padding: 6px 10px 6px 6px;
+    /* A thinner frame on phones, where the card is small. */
+    border-width: 15px;
+    border-image-width: 15px;
+    padding: 0 4px 0 0;
     gap: 7px;
   }
   .hud-name {
@@ -1763,12 +1912,7 @@ dialog::backdrop {
     transform: translateX(-50%);
   }
   .hotbar {
-    gap: 5px;
-    padding: 6px;
-  }
-  .slot {
-    width: 44px;
-    height: 44px;
+    --slot: 42px;
   }
   .slot svg {
     width: 17px;
@@ -1784,8 +1928,9 @@ dialog::backdrop {
   }
   .minimap {
     position: absolute;
-    right: 13px;
-    bottom: 13px;
+    /* Further from the corner than before, so the wooden ring around the map is not cut off. */
+    right: 24px;
+    bottom: 18px;
     width: 100px;
     height: 100px;
     border-width: 3px;
@@ -1796,8 +1941,12 @@ dialog::backdrop {
   .region {
     top: 116px;
   }
+  /* A smaller banner, so it fits between the player card and the buttons' row. */
   .region h1 {
-    font-size: 30px;
+    width: 272px;
+    height: 72px;
+    padding: 7px 60px 0;
+    font-size: 15px;
   }
   .region > span:first-child {
     font-size: 7px;
@@ -1809,12 +1958,12 @@ dialog::backdrop {
   }
   /* The action button and messages sit above the item box. */
   .interact {
-    bottom: 184px;
+    bottom: 214px;
     font-size: 10px;
     max-width: 90vw;
   }
   .toast {
-    bottom: 236px;
+    bottom: 268px;
     font-size: 11px;
   }
   .build-bar {

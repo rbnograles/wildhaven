@@ -81,7 +81,7 @@ test('a camp fire is solid, sized by the campfire footprint', () => {
   const game = createGame('scout'),
     { x, y } = game.player;
   addCamp(game, 'camp-1', 'Pinefall Camp', x, y + 30);
-  assert.deepEqual(fireBase(x, y + 30), [x - 47, y + 30 - 70, x + 47, y + 30]);
+  assert.deepEqual(fireBase(x, y + 30), [x - 30, y + 30 - 45, x + 30, y + 30]);
   assert.deepEqual(campBases(game), [fireBase(x, y + 30)]);
   assert.ok(isWalkable(x, y));
   assert.equal(isWalkable(x, y, campBases(game)), false);

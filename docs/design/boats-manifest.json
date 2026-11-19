@@ -1,0 +1,62 @@
+[
+  {
+    "name": "ship-repaired",
+    "file": "assets/world/source/objects/buildings/ship-repaired.png",
+    "cols": 1,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/buildings/ship.png"
+    ],
+    "prompt": "Create the REPAIRED seaworthy version of the wrecked sailing ship in the second reference, preserving its recognizable design: small warm oak wooden ship, raised stern cabin on right with two arched side windows, pointed bow with rope-wrapped bowsprit on left, one tall central mast and cross spar, cream canvas sail. Same elevated three-quarter orthographic camera and bow-left orientation, now upright: completely repaired continuous hull planking, sound rails, intact deck, straight full-height mast, complete untorn cream sails, tidy rigging, modest iron fasteners. Cozy modest village sailing boat, not a grand warship. ONE isolated complete object fully inside generous transparent padding including mast, bowsprit and sail. NO water, ocean, sand, ground patch, cast ground shadow or characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from upper left. Elevated near-top-down orthographic game camera. Genuine transparent alpha. No text, labels, UI, borders, grid lines, checkerboard or watermarks.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-a24d4263-cd60-4d91-a0ad-6882bbb12599.png"
+  },
+  {
+    "name": "rowboat",
+    "file": "assets/world/source/objects/props/rowboat.png",
+    "cols": 1,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "ONE isolated small empty wooden rowboat game sprite, warm honey-ochre oak planks, pointed bow toward RIGHT and flat rounded stern at LEFT, two simple bench seats, slightly raised rim, visible inner ribs, small rope coil at bow, two matching wooden oars resting inside hull. Side-long orientation at elevated near-top-down orthographic camera showing interior clearly. Simple two-person village dinghy that fits the reference world. Entire hull and oars visible with broad transparent padding. No sail, no mast, no motor. No water, waves, foam, scenery, ground, shadow or characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from upper left. Elevated near-top-down orthographic game camera. Genuine transparent alpha. No text, labels, UI, borders, grid lines, checkerboard or watermarks.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-58eaefed-6019-4a5e-93a2-847d11271d15.png"
+  },
+  {
+    "name": "scout-rowing",
+    "file": "assets/characters/scout/scout-rowing.png",
+    "cols": 4,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-58eaefed-6019-4a5e-93a2-847d11271d15.png"
+    ],
+    "prompt": "Create a 4-FRAME ROWING ANIMATION SPRITESHEET, exactly FOUR columns and ONE row, equal-size cells with wide fully transparent gutters. SECOND reference is exact boat design. FIRST reference gives character identity: ONLY the female scout in FIRST ROW of character reference: brown hair bun, moss-green cape, orange scarf. Match face, hair, costume, colors and proportions exactly. Each frame shows the WHOLE SAME small oak rowboat, its bow pointing RIGHT/east, at same elevated near-top-down orthographic angle as boat reference, with that character seated on middle bench FACING LEFT/west (backwards to direction of travel), holding two working wooden oars mounted in opposite port/starboard rowlocks. Remove the loose resting oars from interior; only TWO functional oars total. Complete boat plus rower plus both oar blades fully visible in EACH cell. Fixed identical boat position, size, geometry and camera in every frame; ONLY rower's torso/arms and oar angles change. Left-to-right sequence: 1 catch, body leaned slightly forward to LEFT and arms extended with blades reaching ahead; 2 drive, arms pull in and blades sweep; 3 finish, torso slightly reclined toward RIGHT with handles close to body; 4 recovery, relaxed arms extending back toward catch and blades feathered. Visibly different oar angles, coherent grip, smooth repeat back to frame1. No water or wakes, no foam, no backdrop, no ground or cast shadows, no motion lines, no additional people. Generous padding for entire oar sweep: nothing crosses cell boundaries or touches outside edge. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from upper left. Elevated near-top-down orthographic game camera. Genuine transparent alpha. No text, labels, UI, borders, grid lines, checkerboard or watermarks.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-937b7d7c-e3aa-45db-add4-2eda06acbdc1.png"
+  },
+  {
+    "name": "builder-rowing",
+    "file": "assets/characters/builder/builder-rowing.png",
+    "cols": 4,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-58eaefed-6019-4a5e-93a2-847d11271d15.png"
+    ],
+    "prompt": "Create a 4-FRAME ROWING ANIMATION SPRITESHEET, exactly FOUR columns and ONE row, equal-size cells with wide fully transparent gutters. SECOND reference is exact boat design. FIRST reference gives character identity: ONLY the male builder in SECOND ROW of character reference: blond hair and beard, ochre shirt, brown leather apron. Match face, hair, costume, colors and proportions exactly. Each frame shows the WHOLE SAME small oak rowboat, its bow pointing RIGHT/east, at same elevated near-top-down orthographic angle as boat reference, with that character seated on middle bench FACING LEFT/west (backwards to direction of travel), holding two working wooden oars mounted in opposite port/starboard rowlocks. Remove the loose resting oars from interior; only TWO functional oars total. Complete boat plus rower plus both oar blades fully visible in EACH cell. Fixed identical boat position, size, geometry and camera in every frame; ONLY rower's torso/arms and oar angles change. Left-to-right sequence: 1 catch, body leaned slightly forward to LEFT and arms extended with blades reaching ahead; 2 drive, arms pull in and blades sweep; 3 finish, torso slightly reclined toward RIGHT with handles close to body; 4 recovery, relaxed arms extending back toward catch and blades feathered. Visibly different oar angles, coherent grip, smooth repeat back to frame1. No water or wakes, no foam, no backdrop, no ground or cast shadows, no motion lines, no additional people. Generous padding for entire oar sweep: nothing crosses cell boundaries or touches outside edge. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from upper left. Elevated near-top-down orthographic game camera. Genuine transparent alpha. No text, labels, UI, borders, grid lines, checkerboard or watermarks.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-c762a925-f714-46fe-8c75-61780687a874.png",
+    "correctionPrompt": "Correct ONLY the THIRD frame (third column) of the first attached four-column rowing sheet: the far-side oar is wrong, its blade points into the hull. Redraw that oar with its HANDLE gripped by the builder's far hand, shaft pivoting through the FAR/UPPER gunwale rowlock, and blade OUTSIDE the boat above-left, similar to frame2 but in the finish phase. Both hands must visibly grip one oar each, exactly two oars total, both blades OUTSIDE the hull. Preserve the other three frames unchanged. Preserve the full four-column one-row sheet size, same builder identity, boat geometry, scale, layout and transparent background. Second image is approved character style reference. Warm hand-painted 2D indie RPG style with clean soft outlines, earthy greens, moss, warm ochre, soft warm light from upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines, water, shadows or background."
+  },
+  {
+    "name": "survivor-rowing",
+    "file": "assets/characters/survivor/survivor-rowing.png",
+    "cols": 4,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-58eaefed-6019-4a5e-93a2-847d11271d15.png"
+    ],
+    "prompt": "Create a 4-FRAME ROWING ANIMATION SPRITESHEET, exactly FOUR columns and ONE row, equal-size cells with wide fully transparent gutters. SECOND reference is exact boat design. FIRST reference gives character identity: ONLY the male survivor in THIRD ROW of character reference: dark tousled hair and stubble, patched blue coat, red neckerchief. Match face, hair, costume, colors and proportions exactly. Each frame shows the WHOLE SAME small oak rowboat, its bow pointing RIGHT/east, at same elevated near-top-down orthographic angle as boat reference, with that character seated on middle bench FACING LEFT/west (backwards to direction of travel), holding two working wooden oars mounted in opposite port/starboard rowlocks. Remove the loose resting oars from interior; only TWO functional oars total. Complete boat plus rower plus both oar blades fully visible in EACH cell. Fixed identical boat position, size, geometry and camera in every frame; ONLY rower's torso/arms and oar angles change. Left-to-right sequence: 1 catch, body leaned slightly forward to LEFT and arms extended with blades reaching ahead; 2 drive, arms pull in and blades sweep; 3 finish, torso slightly reclined toward RIGHT with handles close to body; 4 recovery, relaxed arms extending back toward catch and blades feathered. Visibly different oar angles, coherent grip, smooth repeat back to frame1. No water or wakes, no foam, no backdrop, no ground or cast shadows, no motion lines, no additional people. Generous padding for entire oar sweep: nothing crosses cell boundaries or touches outside edge. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from upper left. Elevated near-top-down orthographic game camera. Genuine transparent alpha. No text, labels, UI, borders, grid lines, checkerboard or watermarks.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-c2872c19-b0b8-4898-bb3a-6164d8308a87.png"
+  }
+]

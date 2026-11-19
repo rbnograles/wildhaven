@@ -80,13 +80,13 @@ export function setupPreview(getCharacter) {
   /**
    * Fills the "Facing" dropdown with the directions the chosen animation has, and restarts it.
    *
-   * Action clips (gather, build, ...) are only drawn facing east, and mirrored for west, so they
-   * offer just those two. Walking and running offer all four.
+   * Action clips (gather, build, chop, ...) are only drawn facing east, and mirrored for west, so
+   * they offer just those two. Standing, walking and running offer all four.
    */
   function updateDirections() {
     const facing = field('direction');
     const current = facing.value || '2';
-    const choices = CLIPS[field('clip').value].sheet === 'actions' ? [1, 2] : [0, 1, 2, 3];
+    const choices = CLIPS[field('clip').value].action ? [1, 2] : [0, 1, 2, 3];
     facing.innerHTML = choices
       .map((i) => `<option value="${i}">${['South', 'West', 'East', 'North'][i]}</option>`)
       .join('');

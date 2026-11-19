@@ -39,7 +39,7 @@ const pngSize = (name) => {
 test('every supply is a known, solid, action-backed sprite that takes the full gather time', () => {
   for (const node of supplies) {
     assert.ok(OBJECT_SPECS[node.sprite]?.footprint, node.id);
-    assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
+    assert.equal(CLIPS[node.clip]?.action, true, node.id);
     assert.ok(node.scale > 0 && typeof node.verb === 'string', node.id);
     assert.equal(gatherTime(createGame('scout'), node), GATHER_SECONDS);
   }
@@ -56,7 +56,7 @@ test('wild flower patches are walk-through herb sources drawn smaller than a cha
     assert.equal(node.type, 'herbs');
     assert.ok(RESOURCES.includes(node.type));
     assert.equal(OBJECT_SPECS[node.sprite].footprint, undefined, node.id);
-    assert.equal(CLIPS[node.clip]?.sheet, 'actions', node.id);
+    assert.equal(CLIPS[node.clip]?.action, true, node.id);
     assert.ok(node.regrow > 0 && node.amount > 0, node.id);
     assert.ok(
       pngSize(node.sprite).every((side) => side * node.scale < 112),

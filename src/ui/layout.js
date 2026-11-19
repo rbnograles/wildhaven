@@ -2,6 +2,7 @@
 // in-game HUD, and the pause, map, journal, reset and camp dialogs. Think of it as the stage set. It
 // is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
+import buildHammerUrl from '../../assets/ui/game/build-hammer.png';
 import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
@@ -239,7 +240,7 @@ export function mountLayout(app) {
               ><kbd>1</kbd>
             </button>
           </div>
-          <div class="hotbar hud-panel" aria-label="Items">
+          <div class="hotbar" aria-label="Items">
             <span class="slot" title="Wood"
               >${icon('wood')}<b id="wood">0</b><span class="slot-label">Wood</span></span
             ><span class="slot" title="Stone"
@@ -258,7 +259,8 @@ export function mountLayout(app) {
               aria-controls="build-menu"
               aria-expanded="false"
             >
-              ${icon('hammer')}<span class="slot-label">Build</span><kbd>B</kbd>
+              <img src="${buildHammerUrl}" alt="" /><span class="slot-label">Build</span
+              ><kbd>B</kbd>
             </button>
           </div>
         </div>

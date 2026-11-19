@@ -1,0 +1,12 @@
+Create a GAME SNOWFALL PARTICLE SPRITE ATLAS for Wildhaven, the cozy hand-painted top-down survival game in the supplied style reference. The reference is for brushwork and palette ONLY; no characters or equipment in output.
+Landscape 1536x1024 PNG with GENUINE TRANSPARENT ALPHA. EXACTLY FOUR columns by TWO rows, eight equal cells with broad fully transparent empty gutters. One small isolated falling-snow particle centered precisely in each cell. Each particle is only about one quarter to one third of its cell width, never fills the cell. No other marks.
+Reading order of the 8 particles:
+1 tiny soft round off-white snow fleck
+2 tiny slender off-white diagonal oval fleck
+3 small irregular soft fluffy off-white snow clump
+4 small gently curved elongated pale snow fleck
+5 medium round softly feathered fluffy flake with subtle icy blue underside
+6 medium soft irregular three-lobed snow clump
+7 large out-of-focus translucent near-camera round snow fleck with a soft core and feathered edge
+8 large out-of-focus translucent near-camera oblong drifting snow fleck, feathered edge
+These are individual natural falling snow particles for a screen-space particle emitter, NOT large decorative six-point snowflake symbols, NOT snowballs sitting on ground. Flat simple hand-painted soft shapes, restrained white/ivory highlights and very faint pale ice-blue shading, gentle light upper left. No dark outlines. Alpha must feather smoothly at each flake's edges and be completely ZERO in all empty canvas/gutters. No glow halos, drop shadows, fog, backdrop, magenta, checkerboard, scenery, ground, text, numbers, labels, grid or borders. Cozy calm winter snowfall effect, consistent with the warm hand-painted 2D indie RPG reference. No characters.

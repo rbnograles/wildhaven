@@ -14,6 +14,10 @@ const MINI_VIEW = 4096;
 // the shape of land the player hasn't seen stays a secret (GDD pillar 1: the world is the reward).
 const FOG_RGBA = [38, 54, 45, 255];
 
+// How far to turn the player's arrow, which is drawn pointing up (north), for each facing:
+// 0 south, 1 west, 2 east, 3 north. The numbers are angles in radians, clockwise.
+const ARROW_TURN = [Math.PI, -Math.PI / 2, Math.PI / 2, 0];
+
 // The fog picture: one pixel per fog square, remade only when the fog string changes.
 const fogPicture = { fog: null, canvas: null };
 
@@ -46,7 +50,8 @@ function fogCanvas(fog) {
  *
  * World positions are shrunk to fit the canvas, like tracing a big map onto a postcard. Parts of
  * the world the player hasn't seen are under fog. Found places are cream dots, found signposts
- * gold diamonds, camps orange dots (named on the big map), and the player is the white dot.
+ * gold diamonds, camps orange dots (named on the big map), and the player is the white arrow,
+ * which points the way they are facing.
  *
  * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
  * @param {HTMLImageElement} overview - The picture of the whole world (overview.webp).
@@ -134,12 +139,23 @@ export function drawMap(ctx, overview, state, w, h, local = false) {
     ctx.fillText(camp.name, x, y + 24);
   }
 
-  // The player.
+  // The player: an arrowhead with a notched tail, turned to point the way they face.
+  // The minimap's canvas is drawn smaller than its pixel size, so its arrow is made bigger to match.
+  const size = local ? 13 : 11;
+  ctx.save();
+  ctx.translate(px(state.player.x), py(state.player.y));
+  ctx.rotate(ARROW_TURN[state.player.direction] ?? ARROW_TURN[0]);
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#294c3b';
   ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.arc(px(state.player.x), py(state.player.y), 4.5, 0, Math.PI * 2);
+  ctx.moveTo(0, -size);
+  ctx.lineTo(size * 0.75, size * 0.8);
+  ctx.lineTo(0, size * 0.35);
+  ctx.lineTo(-size * 0.75, size * 0.8);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
 }

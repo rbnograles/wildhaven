@@ -24,7 +24,7 @@ export const SUPPLIES = [
     amount: 3,
     label: 'Pine tree',
     verb: 'Chop',
-    clip: 'build',
+    clip: 'chop',
     sprite: 'pine',
     scale: 1,
   },
@@ -36,7 +36,7 @@ export const SUPPLIES = [
     label: 'Loose stones',
     verb: 'Gather',
     clip: 'gather',
-    sprite: 'rocks-b',
+    sprite: 'rocks-a',
     scale: 0.5,
   },
   {
@@ -69,7 +69,7 @@ export const SUPPLIES = [
     label: 'Loose stones',
     verb: 'Gather',
     clip: 'gather',
-    sprite: 'rocks-b',
+    sprite: 'rocks-a',
     scale: 0.5,
   },
   {

@@ -1,0 +1,116 @@
+[
+  {
+    "name": "house-repaired",
+    "file": "assets/world/source/objects/buildings/house-repaired.png",
+    "cols": 1,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:/Code/GameDev/game 1/assets/world/source/objects/buildings/house-a.png"
+    ],
+    "prompt": "Second reference is the existing ruined cottage. Create its fully repaired version retaining the SAME silhouette, front view, roof pitch, proportions, timber frame, chimney and doorway position: complete warm orange clay tiled roof with no hole, repaired windows, sound cream plaster and wood beams, neat stone foundation, sturdy wooden front door slightly open. Small restrained ivy only at foundation. One isolated building, whole object with transparent padding all sides, no ground patch, no cast shadow, no characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-d67a39a9-f66d-40a3-85e5-47c09860c6ce.png"
+  },
+  {
+    "name": "bridge-painted",
+    "file": "assets/world/source/objects/props/bridge-painted.png",
+    "cols": 1,
+    "rows": 1,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Single isolated small wooden footbridge game sprite, crossing horizontally from left to right, elevated near-top-down orthographic view. Warm weathered oak planks run across the narrow deck, stout timber beams, short simple timber railings along both long edges, rope lashings and end posts. Clear unobstructed walkable deck with visible woodgrain. Modest rustic village craftsmanship matching the reference world. Entire bridge and posts fit inside transparent padding. No river, no land, no supports disappearing outside frame, no ground patch or cast ground shadow, no characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-5ea1b08f-8bfe-42ca-a6fe-7cdefa62c1de.png"
+  },
+  {
+    "name": "water-ripples-loop",
+    "file": "assets/world/source/animations/water-ripples-loop.png",
+    "cols": 4,
+    "rows": 3,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Game water ANIMATION OVERLAY spritesheet exactly 4 columns by 3 rows in uniform equal cells with broad transparent gutters. ONLY pale turquoise and warm ivory painted ripple strokes on genuine transparent alpha, no solid water rectangles, no shores. Row1 river current: four successive looping phases of narrow gently curving parallel flowing highlights drifting right. Row2 quiet lake: four successive looping phases of soft concentric oval ripples gently expanding and dissolving. Row3 ocean: four successive looping phases of low rolling wave crests changing shape, restrained foam. Each row is the SAME small patch evolving over time, fixed position/scale. Every frame fits completely inside its equal cell with at least 12% margin. Flat overhead surface perspective. No objects, characters, rocks, ground, shadows. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-654c4816-cbf8-42f6-8bb0-0c85bf867875.png"
+  },
+  {
+    "name": "tools-stone-iron",
+    "file": "assets/items/tools-stone-iron.png",
+    "cols": 2,
+    "rows": 2,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Inventory tool sprite sheet exactly TWO columns by TWO rows with equal cells, four isolated tools, each full tool large and legible with transparent padding. Top left STONE HAMMER: blunt grey rectangular stone head tightly lashed with rawhide onto short warm wood handle. Top right IRON HAMMER: compact squared forged dark iron striking head with flat faces, short wooden handle, NO pick points. Bottom left STONE PICKAXE: rough elongated grey stone head with two tapering pointed ends, rawhide lashings, long wood handle. Bottom right IRON PICKAXE: curved double pointed dark forged iron head, long wooden handle. Same handle colors, cohesive proportions, clearly different blunt hammers versus pointed picks. Diagonal tool presentation at same angle. No glow, ground, shadow or extra tools. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-54aa7ced-f841-4a2c-a5b5-6a0d13702e1a.png"
+  },
+  {
+    "name": "river-bank",
+    "file": "assets/world/source/shorelines/river-bank.png",
+    "cols": 3,
+    "rows": 2,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Modular terrain boundary game sprite sheet EXACTLY 3 columns x 2 rows, six isolated shoreline segments in uniform cells, wide transparent gutters. Narrow riverbank of warm ochre soil with damp dark earth along the water edge, fine exposed roots, sparse short moss grass on land side. A narrow turquoise shallow-water tint only immediately at edge; no broad water surface. Shapes in reading order: straight horizontal edge with land above and water side below; straight vertical edge with land left and water right; convex rounded outside corner with land upper left; concave inside corner with land outside upper-left quarter-circle and water toward bottom right; broad gentle S curve; short rounded bank tip. Constant bank strip width and consistent material scale. Only a narrow band of land/wet edge, fully transparent outside each band on BOTH land and water sides so it overlays ground textures. Organic feathered land-side edge and crisp readable waterline. All pieces completely visible within cells. Top-down surface rendering, no cast shadows, no characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-e01330b4-b94b-49dd-a721-4c1ca3ac083c.png"
+  },
+  {
+    "name": "lake-bank",
+    "file": "assets/world/source/shorelines/lake-bank.png",
+    "cols": 3,
+    "rows": 2,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Modular terrain boundary game sprite sheet EXACTLY 3 columns x 2 rows, six isolated shoreline segments in uniform cells, wide transparent gutters. Quiet lake bank of warm brown loam, a few tiny rounded pebbles, little reeds and moss. Soft dark wet-earth line and a narrow muted teal tint at water edge; no broad water surface. Shapes in reading order: straight horizontal edge with land above and water side below; straight vertical edge with land left and water right; convex rounded outside corner with land upper left; concave inside corner with land outside upper-left quarter-circle and water toward bottom right; broad gentle S curve; short rounded bank tip. Constant bank strip width and consistent material scale. Only a narrow band of land/wet edge, fully transparent outside each band on BOTH land and water sides so it overlays ground textures. Organic feathered land-side edge and crisp readable waterline. All pieces completely visible within cells. Top-down surface rendering, no cast shadows, no characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-f3a3319d-b070-483f-a9b6-38e118dac07a.png"
+  },
+  {
+    "name": "ocean-bank",
+    "file": "assets/world/source/shorelines/ocean-bank.png",
+    "cols": 3,
+    "rows": 2,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Modular terrain boundary game sprite sheet EXACTLY 3 columns x 2 rows, six isolated shoreline segments in uniform cells, wide transparent gutters. Coastal bank transitioning warm ochre sandy soil to pale golden beach sand, darkened wet sand margin, a thin delicate ivory seafoam line at water edge; no broad water surface, no shells or large rocks. Shapes in reading order: straight horizontal edge with land above and water side below; straight vertical edge with land left and water right; convex rounded outside corner with land upper left; concave inside corner with land outside upper-left quarter-circle and water toward bottom right; broad gentle S curve; short rounded bank tip. Constant bank strip width and consistent material scale. Only a narrow band of land/wet edge, fully transparent outside each band on BOTH land and water sides so it overlays ground textures. Organic feathered land-side edge and crisp readable waterline. All pieces completely visible within cells. Top-down surface rendering, no cast shadows, no characters. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-a43f1fe4-90b6-430a-9d78-3deaba9befe2.png"
+  },
+  {
+    "name": "scout-holding-tools",
+    "file": "assets/characters/scout/scout-holding-tools.png",
+    "cols": 4,
+    "rows": 4,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-54aa7ced-f841-4a2c-a5b5-6a0d13702e1a.png"
+    ],
+    "prompt": "Character equipment spritesheet, exactly FOUR columns and FOUR rows of 16 full-body sprites in equal cells with generous transparent padding around every body and tool. Use ONLY the reference row 1 female Frontier Scout, brown hair bun, green cape, orange scarf. Preserve exact identity, face, costume, body proportions and equipment of first reference. Second reference defines FOUR tools exactly. COLUMNS define tool: column1 STONE HAMMER (blunt rawhide-lashed stone head), column2 IRON HAMMER (blunt squared forged head), column3 STONE PICKAXE (double-point stone head lashed to long wood shaft), column4 IRON PICKAXE (curved double-point iron head). ROWS define facing: row1 SOUTH/front, row2 WEST/left, row3 EAST/right, row4 NORTH/back. Character stands calmly, holding the assigned tool visibly in hands in a relaxed low ready pose at waist level. Tool visible and recognizable in every view. No swinging or walking. Consistent planted feet baseline across each row, fixed character scale. No tools floating separately, no duplicated limbs, no ground, no ground shadow. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-4e783765-a65d-4aef-b24b-3a2bc9ee7ba6.png"
+  },
+  {
+    "name": "builder-holding-tools",
+    "file": "assets/characters/builder/builder-holding-tools.png",
+    "cols": 4,
+    "rows": 4,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-54aa7ced-f841-4a2c-a5b5-6a0d13702e1a.png"
+    ],
+    "prompt": "Character equipment spritesheet, exactly FOUR columns and FOUR rows of 16 full-body sprites in equal cells with generous transparent padding around every body and tool. Use ONLY the reference row 2 male Builder, blond hair and beard, ochre shirt, leather apron. Preserve exact identity, face, costume, body proportions and equipment of first reference. Second reference defines FOUR tools exactly. COLUMNS define tool: column1 STONE HAMMER (blunt rawhide-lashed stone head), column2 IRON HAMMER (blunt squared forged head), column3 STONE PICKAXE (double-point stone head lashed to long wood shaft), column4 IRON PICKAXE (curved double-point iron head). ROWS define facing: row1 SOUTH/front, row2 WEST/left, row3 EAST/right, row4 NORTH/back. Character stands calmly, holding the assigned tool visibly in hands in a relaxed low ready pose at waist level. Tool visible and recognizable in every view. No swinging or walking. Consistent planted feet baseline across each row, fixed character scale. No tools floating separately, no duplicated limbs, no ground, no ground shadow. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-5e2af098-bfe9-41ac-b00e-79b1efda9c47.png"
+  },
+  {
+    "name": "survivor-holding-tools",
+    "file": "assets/characters/survivor/survivor-holding-tools.png",
+    "cols": 4,
+    "rows": 4,
+    "refs": [
+      "D:/Code/GameDev/game 1/assets/characters/originals/starting-characters-idle-v1.png",
+      "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-54aa7ced-f841-4a2c-a5b5-6a0d13702e1a.png"
+    ],
+    "prompt": "Character equipment spritesheet, exactly FOUR columns and FOUR rows of 16 full-body sprites in equal cells with generous transparent padding around every body and tool. Use ONLY the reference row 3 male Survivor, dark tousled hair and stubble, blue patched coat, red neckerchief. Preserve exact identity, face, costume, body proportions and equipment of first reference. Second reference defines FOUR tools exactly. COLUMNS define tool: column1 STONE HAMMER (blunt rawhide-lashed stone head), column2 IRON HAMMER (blunt squared forged head), column3 STONE PICKAXE (double-point stone head lashed to long wood shaft), column4 IRON PICKAXE (curved double-point iron head). ROWS define facing: row1 SOUTH/front, row2 WEST/left, row3 EAST/right, row4 NORTH/back. Character stands calmly, holding the assigned tool visibly in hands in a relaxed low ready pose at waist level. Tool visible and recognizable in every view. No swinging or walking. Consistent planted feet baseline across each row, fixed character scale. No tools floating separately, no duplicated limbs, no ground, no ground shadow. Warm hand-painted 2D indie RPG style with clean soft dark brown outlines, matching the supplied character sprite reference: earthy greens, moss, warm ochre, soft warm light from the upper left. Elevated near-top-down orthographic game camera. No text, labels, UI, borders, grid lines or watermarks. Genuine transparent alpha, no backdrop or checkerboard.",
+    "generatedPath": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f19c-56aa-7ce3-9fdf-bce0bec75e48\\exec-9c92330c-3752-4464-b9f4-d2a295e1b34c.png"
+  }
+]

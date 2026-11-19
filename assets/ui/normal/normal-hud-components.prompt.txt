@@ -1,0 +1,11 @@
+Edit the attached Wildhaven winter HUD COMPONENT SHEET into its MATCHING NORMAL / NO-SNOW variant. This is a precise seasonal reskin of the same eight UI components, not a redesign.
+Output landscape 1536 x 1024, same exact canvas dimensions as reference.
+REMOVE all snow caps, all icicles, all pale blue frost from every frame and tree emblem, revealing natural warm weathered carved wood beneath. Reconstruct the wooden top edges and bronze corner hardware previously covered by snow. Keep the ordinary warm upper-left lighting, soft dark brown outlines, woodgrain, small moss accents, bronze studs, ochre parchment, green felt and dashed stitching.
+LOCK the position, scale, shape, inner content bounds, ordering, orientation and dimensions of ALL EIGHT panel frames to the reference. Do not shrink, enlarge, shift, rearrange or add panels. The two versions will occupy the same screen positions and switch with the biome, so geometry must match. Snow-only silhouette extensions disappear; underlying wooden frame geometry stays the same.
+Keep these same pieces in their exact existing positions:
+top row: empty parchment goals card, moss-green region banner with two small pine tree emblems (now WITHOUT snow), empty moss-green player card;
+middle row: empty moss-green item box with stitched green tab at top center, circular wood minimap ring with blank top compass plaque, empty parchment build popup with bottom downward tail;
+bottom row: empty parchment toast strip with empty round socket on left, empty dark wood key prompt pill with blank light keycap on left.
+All interiors stay BLANK with no text, letters, numbers, icons, items, maps, portraits or meters. The pine emblems on region banner are the only illustrative decorations.
+BACKGROUND: opaque solid pure magenta #FF00FF RGB(255,0,255), including minimap ring hole. Flat digital color-key fill, absolutely no background texture, noise, gradient, vignette, shadows or scenery. No pink or magenta inside artwork. Preserve generous empty gutters. No cast shadows on background.
+Style must match attached art exactly: cozy warm hand-painted 2D indie RPG UI, carved weathered brown wood, bronze rivets, stitched moss-green felt, warm torn parchment, soft clean outlines. NO snow, ice, icicles, frost or winter-white edging anywhere.

@@ -1,0 +1,13 @@
+SpriteCook UI kit "Wildhaven Snowfall HUD" (create_ui_kit, then generate_ui_kit_concepts count=2), 2026-11-19.
+Concept model: gpt-image-2.5-flare default. screen_type hud, platform desktop-console, aspect 16:9, state_mode visible-only.
+Style reference asset: 80fa6fd4-6988-4bd5-b7d8-baab0dbb6876 (assets/ui/item-box-10-slots.png).
+Selected output: snowfall-hud-concept.png (asset 4d810635-5fc4-4281-b422-a51efe83c465).
+
+game_description:
+Wildhaven: cozy top-down browser exploration and survival game. Explore seven regions, gather wood, stone, food and herbs, light campfires that become named camps, keep health, hunger and warmth up through day and night. Warm hand-painted 2D indie RPG art, elevated top-down camera.
+
+style_text:
+Warm hand-painted 2D indie RPG UI matching the reference item box: weathered carved wood frames with bronze corner rivets, stitched moss-green felt and torn parchment strips, soft clean dark brown outlines, soft light from the upper left. Snowfall winter variant: fresh snow piled softly on the top edges of every frame, small icicles hanging from lower edges, light frost creeping into the wood grain, pale ice-blue and snow-white highlights balanced with the existing warm wood, pine green and ochre, so it still feels cozy rather than cold and sterile.
+
+instructions:
+In-game HUD screen shown over a snowy pine-forest region with gentle snow falling. Layout: top-left a goals card (parchment panel with three short checklist rows); top-centre a region name banner (wooden plaque with snow on top); top-right three small square buttons for journal, fullscreen and pause plus a small round notification dot. Bottom bar across the screen: left a player card with a round character portrait frame, a day/night clock dial, and three horizontal meter bars (health red, hunger amber, warmth ice-blue to orange) each with a small icon; centre an item box with four resource slots (wood, stone, food, herbs) with count badges and a Build button that opens a small build menu popup with one campfire option; right a round minimap frame with a compass notch. Also show a small toast notification strip and an E key-cap prompt bubble. Keep text short placeholder labels only; the real text is rendered by the game in HTML. Frames must be clean and reusable as 9-slice panels.
