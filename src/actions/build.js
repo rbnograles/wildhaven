@@ -69,9 +69,11 @@ export function checkPlacement(state, x, y) {
     Math.hypot(x - player.x, y - player.y) > PLACE_RANGE
   )
     return { ok: false, reason: 'far', message: 'Too far away' };
+  // Supplies and flower patches need room around a fire; trees and rocks only need to be off its
+  // base, which baseIsClear checks (a chopped one still counts, since it will grow back).
   if (
     blocks([fireBase(x, y)], player.x, player.y) ||
-    NODES.some((n) => Math.hypot(n.x - x, n.y - y) < NODE_CLEARANCE) ||
+    NODES.some((n) => !n.inScenery && Math.hypot(n.x - x, n.y - y) < NODE_CLEARANCE) ||
     !baseIsClear(state, x, y)
   )
     return { ok: false, reason: 'blocked', message: 'Something is in the way' };

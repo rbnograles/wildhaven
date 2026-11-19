@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CAMPFIRE_COST, CAMP_SPACING, PLACE_RANGE, MAX_CAMPS } from '../../src/data/balance.js';
 import { NODES } from '../../src/world/nodes.js';
+import { isWalkable } from '../../src/world/map.js';
 import { createGame } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
 import { checkPlacement, placeCampfire, nameCamp } from '../../src/actions/build.js';
@@ -149,4 +150,15 @@ test('a campfire cannot be placed while the player is in the boat', () => {
   assert.equal(placeCampfire(game, spot.x, spot.y).ok, false);
   assert.deepEqual(game.camps, []);
   assert.deepEqual([game.resources.wood, game.resources.stone], [5, 2]);
+});
+
+// Guards regrowth: a fire can't go where a chopped tree will grow back, or the tree would come
+// back inside the fire.
+test('a campfire cannot be placed where a chopped tree will grow back', () => {
+  const tree = NODES.find((n) => n.inScenery && n.tool === 'axe' && isWalkable(n.x, n.y + 160));
+  const game = createGame('builder');
+  Object.assign(game.resources, { wood: 9, stone: 9 });
+  Object.assign(game.player, { x: tree.x, y: tree.y + 160 });
+  game.regrowAt[tree.id] = game.time + 100;
+  assert.equal(checkPlacement(game, tree.x, tree.y).reason, 'blocked');
 });

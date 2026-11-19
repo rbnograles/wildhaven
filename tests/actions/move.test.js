@@ -69,3 +69,32 @@ test('running at full speed never jumps an edge between two levels', () => {
     `a run step (${step}) must be shorter than the blocked strip (${2 * CLIFF_GAP})`,
   );
 });
+
+// Guards chopped scenery: a tree stops blocking while it is gone, and a tree that grows back
+// around the player never traps them.
+test('a chopped tree can be walked through until it grows back, and never traps the player', () => {
+  const tree = NODES.find(
+    (n) =>
+      n.inScenery &&
+      n.sprite === 'pine' &&
+      !isWalkable(n.x, n.y - 5) &&
+      [-60, -50, -40, -30, 30, 40, 50, 60].every((d) => isWalkable(n.x + d, n.y - 5)),
+  );
+  assert.ok(tree, 'a pine tree with open ground on both sides');
+  const game = createGame('scout');
+
+  /** Puts the player west of the tree and walks east for 0.7 s; returns where they end up. */
+  const walkEast = () => {
+    Object.assign(game.player, { x: tree.x - 60, y: tree.y - 5 });
+    for (let i = 0; i < 7; i++) movePlayer(game, 1, 0, 0.1);
+    return game.player.x;
+  };
+  assert.ok(walkEast() < tree.x); // a standing tree blocks the way
+
+  game.regrowAt[tree.id] = game.time + 100;
+  assert.ok(walkEast() > tree.x); // a chopped one doesn't
+
+  game.time += 100; // it grows back around a player standing on its spot
+  Object.assign(game.player, { x: tree.x, y: tree.y - 5 });
+  assert.ok(movePlayer(game, 1, 0, 0.1));
+});

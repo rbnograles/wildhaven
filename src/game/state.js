@@ -18,7 +18,7 @@ import {
 } from '../data/balance.js';
 import { TOOL_IDS } from '../data/tools.js';
 import { isWalkable, isSailable, SEA_BORDER } from '../world/map.js';
-import { NODES } from '../world/nodes.js';
+import { NODES, isSceneryNode } from '../world/nodes.js';
 import { REGIONS } from '../world/regions.js';
 import { emptyFog, isFogString, revealAround, revealRegions, growFog } from '../world/fog.js';
 import { startingTools } from '../world/tools.js';
@@ -448,11 +448,12 @@ export function restoreGame(json) {
     // On foot the player must stand somewhere walkable. Aboard, any real position will do here:
     // placeBoat brings them ashore if the map no longer has sea there. Cliffs are left out of the
     // on-foot check: a save made before a hill was built on the spot still loads, and movePlayer
-    // lets the player walk off the cliff.
+    // lets the player walk off the cliff. Trees and rocks are left out too: the player may have
+    // saved where one was chopped, and movePlayer lets them walk out of one that grew back.
     if (
       s.aboard
         ? !Number.isFinite(s.player.x) || !Number.isFinite(s.player.y)
-        : !isWalkable(s.player.x, s.player.y, [], false)
+        : !isWalkable(s.player.x, s.player.y, [], false, isSceneryNode)
     )
       return null;
 

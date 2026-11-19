@@ -527,3 +527,15 @@ test('regrowth timers that have run out are dropped on load', () => {
   game.regrowAt = { [a.id]: 400, [b.id]: 600 };
   assert.deepEqual(restoreGame(serializeGame(game)).regrowAt, { [b.id]: 600 });
 });
+
+// Guards loading a save made on a chopped tree's spot: it must load, not be thrown away.
+test('a save made where a chopped tree stood still loads', () => {
+  const tree = NODES.find(
+    (n) =>
+      n.inScenery && !isWalkable(n.x, n.y - 5) && isWalkable(n.x, n.y - 5, [], false, () => true),
+  );
+  const game = createGame('scout');
+  Object.assign(game.player, { x: tree.x, y: tree.y - 5 });
+  game.regrowAt[tree.id] = game.time + 100;
+  assert.deepEqual(restoreGame(serializeGame(game))?.player, game.player);
+});
