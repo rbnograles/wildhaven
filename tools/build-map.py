@@ -1,13 +1,15 @@
 """Builds the Wildhaven sprite map from assets/world/source/.
 
-Inputs : source/ground/{grass,dirt,jungle,rock,snow,sand,water}.png  seamless ground textures
-         source/objects/<kind>/<name>.png + source/objects.json       one sprite per world object; its
-                                                                      objects.json entry names the kind folder
-         source/places.json                                           regions, spawns, supplies, landmarks, waypoints
+Inputs : source/ground/{grass,dirt,jungle,rock,snow,sand,water,deep}.png  seamless ground textures
+         source/objects/<kind>/<name>.png + source/objects.json            one sprite per world object; its
+                                                                           objects.json entry names the kind folder
+         source/places.json                                                regions, spawns, supplies, landmarks,
+                                                                           waypoints, wrecks (old boats)
 Outputs: map/tileset.png    terrain tiles incl. generated soft transitions (64px, 1px extruded)
-         map/wildhaven.json Tiled-format map: seven tile layers + "objects" layer + a region grid property
+         map/wildhaven.json Tiled-format map: eight tile layers + "objects" layer + region grid and sea properties
          map/overview.webp  small render of the whole map for the minimap and world map
-The game reads collision from the JSON (water tiles + object footprints) and regions from its region grid.
+The home continent sits inside a sea border; water far from any land becomes the "deep" layer.
+The game reads collision from the JSON (water and deep tiles + object footprints) and regions from its region grid.
 Run: python tools/build-map.py [preview.png]
 """
 import json, math, os, random, sys
@@ -17,22 +19,33 @@ from PIL import Image
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'world')
 SRC, OUT = os.path.join(ROOT, 'source'), os.path.join(ROOT, 'map'); os.makedirs(OUT, exist_ok=True)
 PLACES = json.load(open(os.path.join(SRC, 'places.json'), encoding='utf-8'))
-TILE, COLS, ROWS, TEX = 64, 384, 256, 256
-W, H = COLS * TILE, ROWS * TILE
+# The home continent is the old 384x256-tile map. A sea border of SEA tiles is added on every side, so the whole
+# map is 448x320 tiles. Hand-written positions in this script (rivers, fords, islands, the coast, the region layout)
+# are in LAND units, measured from the old map's corner. places.json and the map file are in WORLD units, measured
+# from the new corner: `land()` moves a place PAD units back when it is read, and every tile and object is moved
+# PAD units out when it is written.
+TILE, TEX, SEA = 64, 256, 32
+LAND_COLS, LAND_ROWS = 384, 256
+COLS, ROWS = LAND_COLS + 2 * SEA, LAND_ROWS + 2 * SEA
+PAD = SEA * TILE                                     # 2048 units of sea on each side
+W, H = COLS * TILE, ROWS * TILE                      # the whole map, sea included
+LAND_W, LAND_H = LAND_COLS * TILE, LAND_ROWS * TILE  # the home continent's old map
 
 # Terrains in paint order. A higher terrain is painted over a lower one, so the number is also its layer rank.
-GRASS, DIRT, JUNGLE, ROCK, SNOW, SAND, WATER = range(7)
-OVERLAYS = ['dirt', 'jungle', 'rock', 'snow', 'sand', 'water']   # rank 1..6; grass (rank 0) is the full ground layer
+# DEEP is open sea far from land; it is worked out after everything else (see "deep sea" below).
+GRASS, DIRT, JUNGLE, ROCK, SNOW, SAND, WATER, DEEP = range(8)
+OVERLAYS = ['dirt', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep']   # rank 1..7; grass (rank 0) is the full ground layer
 
 # ---- regions -----------------------------------------------------------------------------
 # The world is an 8x8 grid of blocks, one letter per block. The letters are the `key` of each region in places.json.
 LAYOUT = ['DDDPPSSS', 'DDDPPSSS', 'DDhhhhSS', 'CChhhhLL', 'CChhhhLL', 'CCJJJJLL', 'CJJJJJJL', 'CJJJJJJL']
-BLOCK_W, BLOCK_H = W // 8, H // 8
+BLOCK_W, BLOCK_H = LAND_W // 8, LAND_H // 8
 BASE = {'D': SAND, 'P': GRASS, 'S': SNOW, 'h': GRASS, 'L': GRASS, 'C': ROCK, 'J': JUNGLE}
 REGION_INDEX = {r['key']: i for i, r in enumerate(PLACES['regions'])}
 
 # Says which region a point is in. The point is nudged by a few sine waves before the block grid is read, so the
 # borders wobble like real coastlines instead of running in straight lines. The nudge is never more than 440 units.
+# A point out at sea falls off the 8x8 grid and takes the letter of the nearest block.
 def region_key(x, y):
     wx = x + 300 * math.sin(y / 830 + 1.7) + 140 * math.sin(y / 290 + 0.4)
     wy = y + 300 * math.sin(x / 910 + 0.6) + 140 * math.sin(x / 310 + 2.1)
@@ -51,6 +64,16 @@ def line_dist(pts, x, y):
 # Where the sea starts on one row of the lagoon: everything in the lagoon to the right of this x is sea.
 def coast(y): return 22000 + 450 * math.sin(y / 1700) + 150 * math.sin(y / 430)
 
+# How far a point is inside the island's sea coast: positive on land, negative at sea. The coast follows the old
+# map's edge, pulled in or pushed out by two sine waves (from 220 units in to 520 units out), so it never runs
+# straight. Every place in places.json is at least 900 units inside the old edge, so the coast never reaches one.
+def inland(x, y):
+    edge = min(x, y, LAND_W - x, LAND_H - y)
+    return edge + 150 + 250 * math.sin((x + y) / 1300 + 0.8) + 120 * math.sin((x - y) / 470 + 2.3)
+
+BEACH = 220        # land closer than this to the sea coast is a sand beach
+DEEP_FROM = 1200   # water farther than this from any land is deep sea, where the small boat can't go
+
 RIVERS = [[(17000, 2500), (16200, 4800), (14800, 6400), (14600, 8600), (16200, 9900), (18800, 10300), (22600, 10500)],   # Frostpeak to the lagoon
           [(-200, 8200), (2200, 8600), (3600, 10200), (2600, 12200), (1500, 14000), (1900, 16600)]]                      # through the canyons
 RIVER_HALF = 110
@@ -58,13 +81,18 @@ RIVER_HALF = 110
 FORDS = [(16600, 3650), (14700, 7500), (17500, 10100), (20200, 10375), (2900, 9400), (2050, 13100)]
 BRIDGES = [(14700, 7500), (2900, 9400)]
 DRY_BED = [(8800, 600), (6000, 2300), (3000, 2200), (600, 3800)]          # a walkable dirt riverbed across the desert
-ISLANDS = [(23300, 8000, 330), (23700, 12500, 280), (23000, 14800, 240)]   # scenery only; nothing can reach them
+ISLANDS = [(23300, 8000, 330), (23700, 12500, 280), (23000, 14800, 240)]   # the lagoon's islets: reached by boat, each holds a landmark
 
-SPAWN = {k: tuple(v) for k, v in PLACES['spawns'].items()}
-POOLS = [(l['x'], l['y'] - l['pool'] - 120, l['pool']) for l in PLACES['landmarks'] if 'pool' in l]
+# Moves a WORLD position from places.json into this script's LAND units.
+def land(p): return (p[0] - PAD, p[1] - PAD)
+
+SPAWN = {k: land(v) for k, v in PLACES['spawns'].items()}
+LANDMARKS = [{**l, 'x': l['x'] - PAD, 'y': l['y'] - PAD} for l in PLACES['landmarks']]
+POOLS = [(l['x'], l['y'] - l['pool'] - 120, l['pool']) for l in LANDMARKS if 'pool' in l]
 # Every spot the player must be able to stand on. Water is pushed back from them and scenery is kept off them.
-POINTS = (list(SPAWN.values()) + [tuple(p) for p in PLACES['supplies'].values()]
-          + [(p['x'], p['y']) for p in PLACES['landmarks'] + PLACES['waypoints']])
+# An old boat's `launch` spot is left out on purpose: it must stay water, so the repaired boat can float there.
+POINTS = (list(SPAWN.values()) + [land(p) for p in PLACES['supplies'].values()]
+          + [land((p['x'], p['y'])) for p in PLACES['landmarks'] + PLACES['waypoints'] + PLACES['wrecks']])
 
 # Says what the ground is at one point of the world.
 def terrain(x, y):
@@ -82,10 +110,25 @@ def terrain(x, y):
         if ((x - bx) / 400) ** 2 + ((y - by - 12) / 270) ** 2 < 1 + 0.15 * math.sin(x / 90 + y / 70): t = DIRT   # village clearing
         if math.hypot(x - sx + 30, y - sy + 50) < 150: t = DIRT                                                # scout's camp
         if t == GRASS and math.hypot(x - vx, y - vy) < 520: t = SAND                                          # the survivor's beach
+    shore = inland(x, y)
+    if shore < 0: t = WATER                          # the sea around the island
+    elif shore < BEACH and t != WATER: t = SAND      # its beach; a river still runs across it to the sea
     if t == WATER and any(math.hypot(x - px, y - py) < 130 for px, py in POINTS): t = SAND
     return t
 
-corner = np.array([[terrain(x * TILE, y * TILE) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+corner = np.array([[terrain(x * TILE - PAD, y * TILE - PAD) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+
+# ---- deep sea ----------------------------------------------------------------------------
+# Water more than DEEP_FROM units from any land becomes DEEP. To find "near land", the land map is slid over itself
+# one corner at a time in every direction inside a circle, like pressing a round stamp onto every bit of land.
+reach = DEEP_FROM / TILE; R = int(reach)
+is_land = np.pad(corner != WATER, R)
+near_land = np.zeros(corner.shape, dtype=bool)
+for dy in range(-R, R + 1):
+    for dx in range(-R, R + 1):
+        if dx * dx + dy * dy <= reach * reach:
+            near_land |= is_land[R + dy:R + dy + corner.shape[0], R + dx:R + dx + corner.shape[1]]
+corner[(corner == WATER) & ~near_land] = DEEP
 
 # ---- tileset -----------------------------------------------------------------------------
 tex = {n: np.asarray(Image.open(os.path.join(SRC, 'ground', f'{n}.png')).convert('RGB').resize((TEX, TEX))).astype(float)
@@ -137,7 +180,8 @@ Image.fromarray(sheet).save(os.path.join(OUT, 'tileset.png'))
 # ---- tile layers -------------------------------------------------------------------------
 # A layer only paints a tile when one of the tile's corners is its own terrain. It then covers every corner of
 # its rank or higher, so the terrain below a shoreline runs on underneath the water and no grass shows in the seam.
-# For water (the top rank) that is exactly "which corners are water", which src/world/map.js reads for collision.
+# For water that is exactly "which corners are sea, shallow or deep", which src/world/map.js reads for collision;
+# the deep layer on top says which corners are deep, which the small boat can't enter.
 layers = {'ground': [1 + (ty % 4) * 4 + tx % 4 for ty in range(ROWS) for tx in range(COLS)]}
 for rank, name in enumerate(OVERLAYS, start=1):
     data = []
@@ -150,8 +194,9 @@ for rank, name in enumerate(OVERLAYS, start=1):
 
 # ---- region grid -------------------------------------------------------------------------
 # One digit per 256-unit square, row by row: the index of that square's region in places.json.
+# Sea squares take the region of the land nearest them, because region_key clamps to the edge of its layout.
 REGION_CELL = 256; REGION_COLS, REGION_ROWS = W // REGION_CELL, H // REGION_CELL
-region_grid = ''.join(str(REGION_INDEX[region_key(cx * REGION_CELL + REGION_CELL / 2, cy * REGION_CELL + REGION_CELL / 2)])
+region_grid = ''.join(str(REGION_INDEX[region_key(cx * REGION_CELL + REGION_CELL / 2 - PAD, cy * REGION_CELL + REGION_CELL / 2 - PAD)])
                       for cy in range(REGION_ROWS) for cx in range(REGION_COLS))
 
 # ---- objects -----------------------------------------------------------------------------
@@ -160,8 +205,8 @@ spec = {k: v for k, v in json.load(open(os.path.join(SRC, 'objects.json'))).item
 fixed = [('tent', sx + 137, sy - 160), ('log', sx - 156, sy - 154), ('campfire', sx - 44, sy - 66),
          ('house-a', bx - 305, by - 120), ('house-b', bx + 295, by - 110), ('house-c', bx - 372, by + 310),
          ('workshop', bx + 458, by + 225), ('ship', vx + 325, vy - 20)]
-fixed += [(l['object'], l['x'], l['y'] - 60) for l in PLACES['landmarks'] if 'object' in l]   # the feature stands just north of the spot
-fixed += [('signpost', w['x'], w['y'] - 50) for w in PLACES['waypoints']]
+fixed += [(l['object'], l['x'], l['y'] - 60) for l in LANDMARKS if 'object' in l]   # the feature stands just north of the spot
+fixed += [('signpost', x, y - 50) for x, y in (land((w['x'], w['y'])) for w in PLACES['waypoints'])]
 fixed += [('bridge', x, y) for x, y in BRIDGES]
 
 # Says whether a random tree or rock may go at (x, y): not on a place the player must stand, not on a crossing,
@@ -180,26 +225,32 @@ SCATTER = {
     'C': (0.38, ['boulder', 'cliff-rock', 'rocks-a', 'dead-bush', 'boulder']),
     'J': (0.70, ['jungle-tree', 'jungle-tree', 'fern', 'fern', 'big-oak', 'palm']),
 }
+# What washes up on the sea beach all round the island (the lagoon keeps its own shore, below).
+BEACH_SCATTER = (0.18, ['driftwood', 'driftwood', 'driftwood', 'beach-rock'])
 scattered = []
 STEP = 210
-for gy in range(STEP // 2, H, STEP):
-    for gx in range(STEP // 2, W, STEP):
+# The grid starts ten squares before the old map's corner, so it covers the new coast too. Squares keep the numbers
+# (and so the random seeds) they had before the sea border was added, so scenery on the old land stays where it was.
+for gy in range(STEP // 2 - 10 * STEP, LAND_H + PAD, STEP):
+    for gx in range(STEP // 2 - 10 * STEP, LAND_W + PAD, STEP):
         # Each grid square has its own random seed, so changing one part of the map never reshuffles another part.
         rng = random.Random(gx * 73856093 ^ gy * 19349663)
         x, y = gx + rng.randint(-70, 70), gy + rng.randint(-70, 70)
-        if not (60 < x < W - 60 and 120 < y < H - 30) or not scatter_ok(x, y): continue
+        if not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30) or not scatter_ok(x, y): continue
         ground = terrain(x, y); roll = rng.random()
         if ground in (WATER, DIRT): continue
         k = region_key(x, y)
-        if k == 'h':
+        if k != 'L' and inland(x, y) < BEACH: chance, names = BEACH_SCATTER
+        elif k == 'h':
             grove = math.sin(x / 610 + 1.3) * math.cos(y / 520 + 0.4) > 0.35   # clumps in the open meadow
             chance, names = (0.8, ['oak', 'big-oak', 'pine', 'pines', 'flowers']) if grove else (0.3, ['oak', 'big-oak', 'pine', 'rocks-a', 'rocks-b', 'flowers', 'flowers'])
         elif k == 'L':
-            if ground == SAND: chance, names = (0.14 if x < coast(y) - 60 else 0, ['palm', 'beach-rock'])
+            if ground == SAND: chance, names = (0.14 if x < coast(y) - 60 else 0, ['palm', 'beach-rock', 'driftwood'])
             else: chance, names = 0.28, ['oak', 'palm', 'palm', 'flowers', 'rocks-b']
         else: chance, names = SCATTER[k]
         if roll < chance: scattered.append((rng.choice(names), x, y))
-objects = fixed + scattered
+# Everything above is in LAND units; the map file is in WORLD units.
+objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + scattered]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
@@ -207,6 +258,8 @@ tiled = {
     'tilesets': [{'firstgid': 1, 'name': 'terrain', 'image': 'tileset.png', 'imagewidth': sheet.shape[1], 'imageheight': sheet.shape[0],
                   'tilewidth': TILE, 'tileheight': TILE, 'margin': 1, 'spacing': 2, 'columns': TS_COLS, 'tilecount': len(tiles)}],
     'properties': [{'name': 'firstWaterGid', 'type': 'int', 'value': first['water']},
+                   {'name': 'firstDeepGid', 'type': 'int', 'value': first['deep']},
+                   {'name': 'seaBorder', 'type': 'int', 'value': PAD},
                    {'name': 'regionCell', 'type': 'int', 'value': REGION_CELL},
                    {'name': 'regionCols', 'type': 'int', 'value': REGION_COLS},
                    {'name': 'regionGrid', 'type': 'string', 'value': region_grid}],
@@ -234,6 +287,6 @@ for n, x, y in sorted(objects, key=lambda o: (not spec[o[0]].get('flat', False),
     im = sprites[n]; ox, oy = spec[n]['origin']
     px, py = round(x / S - im.width * ox), round(y / S - im.height * oy)
     if px >= 0 and py >= 0 and px + im.width <= full.width and py + im.height <= full.height: full.alpha_composite(im, (px, py))
-full.convert('RGB').resize((1536, 1024), Image.LANCZOS).save(os.path.join(OUT, 'overview.webp'), quality=85)
+full.convert('RGB').resize((1568, 1120), Image.LANCZOS).save(os.path.join(OUT, 'overview.webp'), quality=85)   # 7:5, the map's own shape
 if len(sys.argv) > 1: full.convert('RGB').save(sys.argv[1])
 print(len(tiles), 'tiles,', len(objects), 'objects,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file')

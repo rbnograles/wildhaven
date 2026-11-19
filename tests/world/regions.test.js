@@ -11,7 +11,7 @@ import {
   regionOf,
   regionAt,
 } from '../../src/world/regions.js';
-import { LANDMARKS, WAYPOINTS, SPAWNS } from '../../src/data/places.js';
+import { LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
 
 // Guards the grid the map builder stored: it must cover the whole world with known regions.
 test('the region grid covers the world and only names known regions', () => {
@@ -31,8 +31,9 @@ test('the region grid covers the world and only names known regions', () => {
 
 // Guards the link between a place and its region: the HUD counts places per region, so a
 // landmark that sits across a border would be counted where the player never sees it.
-test('every landmark and signpost lies inside the region it names', () => {
-  for (const p of [...LANDMARKS, ...WAYPOINTS]) assert.equal(regionOf(p.x, p.y).id, p.region, p.id);
+test('every landmark, signpost and old boat lies inside the region it names', () => {
+  for (const p of [...LANDMARKS, ...WAYPOINTS, ...WRECKS])
+    assert.equal(regionOf(p.x, p.y).id, p.region, p.id);
 });
 
 // Guards the starting regions and the name shown at the top of the screen.

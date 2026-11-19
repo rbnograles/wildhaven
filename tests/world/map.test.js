@@ -58,7 +58,7 @@ test('mapProperty reads a named value from the map file', () => {
 });
 
 // Guards the world's size: the renderer, the minimap and the region grid all assume it.
-test('the world is 384 by 256 tiles of 64 units', () => {
-  assert.equal(WORLD.width, 24576);
-  assert.equal(WORLD.height, 16384);
+test('the world is 448 by 320 tiles of 64 units: the old 384 by 256 map plus a sea border', () => {
+  assert.equal(WORLD.width, 28672);
+  assert.equal(WORLD.height, 20480);
 });

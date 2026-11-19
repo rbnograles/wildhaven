@@ -246,7 +246,7 @@ export function mountLayout(app) {
       <div class="map-surface">
         <canvas
           id="large-map"
-          width="1200"
+          width="1120"
           height="800"
           aria-label="World map with your current position"
         ></canvas

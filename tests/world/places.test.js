@@ -1,33 +1,39 @@
-// Checks the shared places file: the regions, start spots, supplies, landmarks and signposts
-// that both the map builder and the game read. A typo here would put a landmark in the sea or
-// make two things share one save id.
+// Checks the shared places file: the regions, start spots, supplies, landmarks, signposts and
+// old boats that both the map builder and the game read. A typo here would put a landmark in the
+// sea or make two things share one save id.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD, isWalkable } from '../../src/world/map.js';
+import { isWalkable } from '../../src/world/map.js';
 import { CHARACTERS } from '../../src/data/characters.js';
 import { SUPPLIES } from '../../src/data/supplies.js';
 import { nodeBases } from '../../src/world/nodes.js';
 import { GATHER_RANGE } from '../../src/data/balance.js';
-import { REGION_LIST, LANDMARKS, WAYPOINTS, SPAWNS } from '../../src/data/places.js';
+import { REGION_LIST, LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
+import { flood } from './flood.js';
+
+// How many landmarks each region has. The lagoon's three islets add one each.
+const LANDMARKS_PER_REGION = { lagoon: 10 };
 
 // Guards the counts the HUD and map show, and the ids saves are keyed by.
-test('the world has seven regions, 49 landmarks and 14 signposts with unique ids', () => {
+test('the world has seven regions, 52 landmarks, 14 signposts and 4 old boats with unique ids', () => {
   assert.equal(REGION_LIST.length, 7);
-  assert.equal(LANDMARKS.length, 49);
+  assert.equal(LANDMARKS.length, 52);
   assert.equal(WAYPOINTS.length, 14);
+  assert.equal(WRECKS.length, 4);
 
-  const ids = [...REGION_LIST, ...LANDMARKS, ...WAYPOINTS].map((p) => p.id);
+  const ids = [...REGION_LIST, ...LANDMARKS, ...WAYPOINTS, ...WRECKS].map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
 
   for (const region of REGION_LIST) {
-    assert.equal(LANDMARKS.filter((l) => l.region === region.id).length, 7, region.id);
+    const expected = LANDMARKS_PER_REGION[region.id] ?? 7;
+    assert.equal(LANDMARKS.filter((l) => l.region === region.id).length, expected, region.id);
     assert.equal(WAYPOINTS.filter((w) => w.region === region.id).length, 2, region.id);
   }
 });
 
 // Guards against a rebuilt map putting water or scenery where the player has to stand.
-test('every spawn, landmark and signpost is on ground the player can stand on', () => {
+test('every spawn, landmark, signpost and old boat is on ground the player can stand on', () => {
   const solid = nodeBases([]);
   for (const c of CHARACTERS) assert.deepEqual(c.spawn, SPAWNS[c.id]);
   for (const p of [
@@ -36,53 +42,25 @@ test('every spawn, landmark and signpost is on ground the player can stand on', 
     ...WAYPOINTS,
   ])
     assert.ok(isWalkable(p.x, p.y, solid), `${p.id} at ${p.x},${p.y}`);
+  // An old boat's own spot is under its solid hull, so only the map itself is checked there.
+  for (const w of WRECKS) assert.ok(isWalkable(w.x, w.y), `${w.id} at ${w.x},${w.y}`);
 });
 
-// Guards the promise that nothing is cut off by a river, the sea or a wall of trees.
-// It floods outward from the builder's start on a 24-unit grid, like water spreading over the land.
-test('every spawn, landmark, signpost and supply can be reached on foot', () => {
-  const STEP = 24,
-    cols = Math.ceil(WORLD.width / STEP),
-    rows = Math.ceil(WORLD.height / STEP),
-    seen = new Uint8Array(cols * rows),
-    solid = nodeBases([]);
-  const start = Math.floor(SPAWNS.builder.y / STEP) * cols + Math.floor(SPAWNS.builder.x / STEP);
-  const stack = [start];
-  seen[start] = 1;
-
-  while (stack.length) {
-    const i = stack.pop(),
-      cx = i % cols,
-      cy = (i - cx) / cols;
-    for (const [nx, ny] of [
-      [cx + 1, cy],
-      [cx - 1, cy],
-      [cx, cy + 1],
-      [cx, cy - 1],
-    ]) {
-      const n = ny * cols + nx;
-      if (nx < 0 || ny < 0 || nx >= cols || ny >= rows || seen[n]) continue;
-      if (!isWalkable(nx * STEP + STEP / 2, ny * STEP + STEP / 2, solid)) continue;
-      seen[n] = 1;
-      stack.push(n);
-    }
-  }
-
-  /** True if any flooded grid cell lies within `range` units of the point. */
-  const reached = (x, y, range) => {
-    const r = Math.ceil(range / STEP);
-    for (let cy = Math.floor(y / STEP) - r; cy <= Math.floor(y / STEP) + r; cy++)
-      for (let cx = Math.floor(x / STEP) - r; cx <= Math.floor(x / STEP) + r; cx++)
-        if (cx >= 0 && cy >= 0 && cx < cols && cy < rows && seen[cy * cols + cx]) return true;
-    return false;
-  };
+// Guards the promise that nothing is cut off by a river, the sea or a wall of trees. Islet
+// landmarks are left out: they are reached by boat (see the sea test in tests/world/sea.test.js).
+test('every spawn, mainland landmark, signpost, supply and old boat can be reached on foot', () => {
+  const solid = nodeBases([]);
+  const foot = flood(SPAWNS.builder.x, SPAWNS.builder.y, (x, y) => isWalkable(x, y, solid));
+  const islets = ['l-gull-isle', 'l-turtle-isle', 'l-lantern-islet'];
 
   for (const p of [
     ...CHARACTERS.map((c) => ({ id: c.id, ...c.spawn })),
-    ...LANDMARKS,
+    ...LANDMARKS.filter((l) => !islets.includes(l.id)),
     ...WAYPOINTS,
   ])
-    assert.ok(reached(p.x, p.y, STEP), `${p.id} cannot be reached`);
+    assert.ok(foot.reached(p.x, p.y, 24), `${p.id} cannot be reached`);
   for (const s of SUPPLIES)
-    assert.ok(reached(s.x, s.y, GATHER_RANGE - STEP), `${s.id} cannot be gathered`);
+    assert.ok(foot.reached(s.x, s.y, GATHER_RANGE - 24), `${s.id} cannot be gathered`);
+  for (const w of WRECKS)
+    assert.ok(foot.reached(w.x, w.y, GATHER_RANGE - 24), `${w.id} cannot be repaired`);
 });
