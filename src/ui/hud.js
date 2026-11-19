@@ -275,7 +275,8 @@ export function createHud(session) {
       locked = !choice && !camp && !state.aboard && lockedNode(state),
       button = $('interact'),
       label = button.querySelector('span');
-    button.hidden = !choice && !busy && !build.active && !camp && !locked;
+    // The open build menu covers the button's spot (on phones fully), so the button waits until it closes.
+    button.hidden = build.menu || (!choice && !busy && !build.active && !camp && !locked);
     button.classList.toggle('busy', !!busy);
     button.classList.toggle('locked', !busy && !build.active && !!locked);
     button.setAttribute('aria-disabled', String(!!busy));

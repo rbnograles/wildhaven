@@ -1266,9 +1266,10 @@ button.build-slot:hover,
 
 /* ---- In-game: the action button and pop-up messages ---- */
 /* The "E Pick wild berries" button that appears above the item box when a supply is in reach. */
+/* The action button sits just above the tools row over the item box. */
 .interact {
   position: absolute;
-  bottom: 118px;
+  bottom: 148px;
   left: 50%;
   transform: translateX(-50%);
   border: 1px solid #ebeed4;
@@ -1297,7 +1298,7 @@ button.build-slot:hover,
 /* A short message such as "+3 wood". It starts invisible and 10px low. */
 .toast {
   position: absolute;
-  bottom: 205px;
+  bottom: 235px;
   left: 50%;
   transform: translate(-50%, 10px);
   background: #263b31ec;
@@ -1760,7 +1761,7 @@ dialog::backdrop {
     height: 128px;
   }
   .interact {
-    bottom: 100px;
+    bottom: 130px;
   }
 }
 
@@ -1865,12 +1866,12 @@ dialog::backdrop {
   }
   /* The action button and messages sit above the item box. */
   .interact {
-    bottom: 184px;
+    bottom: 214px;
     font-size: 10px;
     max-width: 90vw;
   }
   .toast {
-    bottom: 236px;
+    bottom: 266px;
     font-size: 11px;
   }
   .build-bar {
