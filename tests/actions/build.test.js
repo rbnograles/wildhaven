@@ -134,3 +134,18 @@ test('the player cannot walk through a camp fire', () => {
   game.player = { ...below };
   assert.equal(movePlayer(game, 0, -1, 0.1), false);
 });
+
+// Guards building from the water: in the boat a campfire is refused with a reason (even with the
+// wood and stone, and even on open ground in reach), and nothing is spent.
+test('a campfire cannot be placed while the player is in the boat', () => {
+  const game = createGame('builder');
+  const [spot] = openSpots(game);
+  game.boat = { from: 'wreck-east', x: game.player.x, y: game.player.y, dir: 0 };
+  game.aboard = true;
+
+  const check = checkPlacement(game, spot.x, spot.y);
+  assert.deepEqual(check, { ok: false, reason: 'aboard', message: 'Step ashore to build' });
+  assert.equal(placeCampfire(game, spot.x, spot.y).ok, false);
+  assert.deepEqual(game.camps, []);
+  assert.deepEqual([game.resources.wood, game.resources.stone], [5, 2]);
+});

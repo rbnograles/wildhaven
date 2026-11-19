@@ -67,7 +67,7 @@ Kit tools are not equip mechanics; they only identify the character visually (RE
 2. Spot a marked supply. The nearest one within 95 units highlights and shows "E".
 3. Press E: a 6 s gather animation loops (moving cancels it and awards nothing), then the resources are added.
 4. Keep walking to reach the other starting regions (3 total).
-5. The first objective completes when you have gathered once and discovered three regions. After that the goals card follows the region you are in: places found n / 7 and signposts found n / 2. Free exploration continues.
+5. The first objective completes when you have gathered once and discovered three regions. After that the goals card follows the region you are in: places found n / 7 (n / 10 in the lagoon) and signposts found n / 2. Free exploration continues.
 
 The fixed supplies are finite: 9 one-time supply nodes, all near the three starting places. The other four regions (Sunscar Desert, Frostpeak, Stonewater Canyons, Emerald Jungle) have no fixed supplies yet. Wild flower patches (38) are the one renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Resources have no use yet. README: "Resources currently support gathering and exploration objectives, not crafting."
 
@@ -82,7 +82,7 @@ Two halves, both needed:
 - **Needs list (direction).** The camp asks for things that lie farther out, like Stardew Valley's community-center bundles. This is a new system, not in the original spec. [M2]
 
 **Distance costs** [Review, design rule]
-A camp's useful reach should be about half a daylight round trip. **Numbers not set.** The world is 24,576×16,384 units (diagonal about 29,500, about 100 s to run across). The starting places are 5,100 units apart (Scout to Builder), 9,200 (Builder to Survivor) and 11,500 (Scout to Survivor) in a straight line; rivers and fords make real routes longer. With the planned 240 s of daylight, half a daylight round trip is 60 s each way, or 9,300 units walking and 14,700 running, which is roughly one starting place to the next. Daylight length, any off-path slowdown and warmth duration must be derived from measured walking routes on this map. The 2026-11-19 balance review chose 150 s, 50% and 40 s on the old 6,144×4,096 map; those are **not adopted**. [M2]
+A camp's useful reach should be about half a daylight round trip. **Numbers not set.** The home continent is 24,576×16,384 units (diagonal about 29,500, about 100 s to run across); since slice A1 it sits inside a 2,048-unit sea border. The starting places are 5,100 units apart (Scout to Builder), 9,200 (Builder to Survivor) and 11,500 (Scout to Survivor) in a straight line; rivers and fords make real routes longer. With the planned 240 s of daylight, half a daylight round trip is 60 s each way, or 9,300 units walking and 14,700 running, which is roughly one starting place to the next. Daylight length, any off-path slowdown and warmth duration must be derived from measured walking routes on this map. The 2026-11-19 balance review chose 150 s, 50% and 40 s on the old 6,144×4,096 map; those are **not adopted**. [M2]
 
 **Numbers in the build** [Built 2026-11-19, tunable in `src/data/balance.js`]: a 360 s day (dawn 20 s, day 190 s, dusk 30 s, night 120 s). Away from a fire at night, warmth lasts 60 s and then health 30 s, so a player out all night passes out 90 s after dark. There is no off-path slowdown. These are first values, not yet derived from measured routes.
 
@@ -104,7 +104,7 @@ A camp's useful reach should be about half a daylight round trip. **Numbers not 
 "YOUR FIRST FOOTSTEPS / A place to begin"
 - Gather your first supplies
 - Discover three regions (n / 3)
-- Then, per region: places found n / 7, signposts found n / 2
+- Then, per region: places found n / 7 (n / 10 in the lagoon), signposts found n / 2
 - On completion: "You have found your feet. Keep exploring — this is just the beginning."
 
 **Planned objective chain** [Planned, moved from spec "Progression and failure"]
@@ -123,12 +123,12 @@ A camp's useful reach should be about half a daylight round trip. **Numbers not 
 | --- | --- | --- | --- |
 | D1 | Unfinished business | The camp still has an open need, a fire isn't built yet, the next camp isn't started. Saved per character | [Built] |
 | D1 (daily) | Dawn ritual | Each in-game morning at camp: the needs list updates (later also settlers report and the farm yields). Runs on in-game days only, so it respects "no offline progression" and replaces the old "daily rituals" answer | Needs update [Built]; settlers/farm [M3] |
-| D7 | Fog + hidden finds | 49 landmarks (seven per region) and 14 signposts to find, with per-region and world totals [Built]. The maps fill in as you walk [Built] | [Built] |
+| D7 | Fog + hidden finds | 52 landmarks (seven per region, ten in the lagoon with its islets) and 14 signposts to find, with per-region and world totals [Built]. The maps fill in as you walk [Built] | [Built] |
 | D30 | Settlement tiers | Camp → hamlet → village with visible changes and the name you chose ("this is MY town") | [M3] |
 
 Planned gather tools (base gather 6 s, tools shorten it toward 0.5 s, per the code's balance notes) are a competence hook for D7 as well. [M3]
 
-Today there are seven regions. The starting places are 5,100 to 11,500 units apart, 21 to 47 s at a run in a straight line, so seeing all seven regions and 49 landmarks no longer fits in one short session.
+Today there are seven regions. The starting places are 5,100 to 11,500 units apart, 21 to 47 s at a run in a straight line, so seeing all seven regions and 52 landmarks no longer fits in one short session.
 
 **Replay** [inferred: three characters with separate saves and spawns let a player restart from a different corner of the same world]
 
@@ -231,32 +231,32 @@ Superseded: the spec said "Their broader motivation and preferred art references
 - Frame `dt` is clamped to 0.05 s in the loop and 0.1 s inside `movePlayer`.
 - Collision is checked separately on x and y, so the player slides along obstacles.
 - Blocked: the 42-unit world margin, water (per-tile corner masks, water where the blend is ≥0.35), and each object's solid base (`footprint` in `objects.json`).
-- World: 384×256 tiles at 64 px = 24,576×16,384 units, about 100 s to run across.
+- World: 448×320 tiles at 64 px = 28,672×20,480 units: the 384×256-tile home continent (24,576×16,384 units, about 100 s to run across) inside a 2,048-unit sea border (slice A1). In the boat the player moves over shallow sea only; deep sea blocks it.
 - Directions: 0 = south, 1 = west, 2 = east, 3 = north.
 
 ### 6.2 Gathering [Built]
 - The nearest available node within 95 units can be gathered with E or the gather button. In reach, its sprite glows and an E key cap floats over it.
 - Every gather is a timed action of 6 s (`GATHER_SECONDS`); a progress bar replaces the key cap and the clip loops for the whole time. This length is a design decision: planned gathering tools will shorten it toward 0.5 s. [Built]
 - A fresh movement press cancels the action and awards nothing. Pause and a hidden tab freeze it.
-- Resources are awarded once, when the action finishes, and the sprite fades out. Supply nodes are then gone (slow regrowth is [M2]); flower patches fade back in 180 game-seconds later.
+- Resources are awarded once, when the action finishes, and the sprite fades out. Supply nodes then grow back after two in-game days (6.19); flower patches and beach driftwood fade back in 180 game-seconds later.
 - The pine tree is chopped with the overhead `build` swing until an axe animation exists; other supplies use `gather`.
 
 ### 6.3 Discovery [Built]
 - A region is discovered by standing in it; every spot in the world belongs to exactly one of the seven regions.
-- A landmark is found within 200 units (49 landmarks, seven per region). A signpost is found within 110 units (14, two per region).
+- A landmark is found within 200 units (52 landmarks: seven per region, plus one on each of the three lagoon islets). A signpost is found within 110 units (14, two per region).
 - The HUD and world map show progress for the current region and for the whole world.
 
 ### 6.4 Maps and pause [Built]
-- The minimap shows the area around the player. The world map (M, or click the minimap) dims unexplored regions and marks found places and signposts.
-- Fast travel: any found signpost can be travelled to from the world map.
+- The minimap shows the area around the player. The world map (M, or click the minimap) shows the whole 7:5 world, land and sea border, under the fog of war (6.16), and marks found places, signposts, old boats, the moored boat and camps.
+- Fast travel: any found signpost can be travelled to from the world map. A player who travels arrives on foot and their boat drifts back to its old boat's launch spot, so it is never stranded.
 - The game pauses while the pause, map or reset dialog is open, on Escape or the pause button, and while the tab is hidden.
 
 ### 6.5 Saves [Built]
-- One save per character in browser localStorage (`wildhaven.adventure.v1.<characterId>`, `version: 3`; older saves take the start-fresh path).
-- Saves on gather, discovery, opening pause, hiding the tab, page hide, and every 10 s; manual save in the pause menu.
+- One save per character in browser localStorage (`wildhaven.adventure.v1.<characterId>`, `version: 5`). Version 4 saves (M2, before the sea border) and version 3 saves are upgraded: positions move out by the 2,048-unit sea border and the fog is rebuilt on the bigger grid. Older saves take the start-fresh path.
+- Saves on gather, repair, discovery, signpost travel, boarding, landing, camp actions, passing out, dawn, opening pause, hiding the tab, page hide, and every 10 s; manual save in the pause menu.
 - A stale tab cannot overwrite a newer save. Unreadable saves show "This save could not be read. Start fresh to play."
 - A refresh resumes the character being played.
-- Saved: character, position, facing, resources, collected nodes, flower-patch regrow timers, discovered regions, found landmarks and signposts, elapsed time, distance. Animation state is never saved.
+- Saved: character, position, facing, resources, regrow timers, discovered regions, found landmarks, signposts and old boats, the boat and whether the player is in it, elapsed time, distance, the world clock, meters, tea, camps and fog. Animation state is never saved.
 
 ### 6.6 Animation [Built]
 - In play: idle, walk and run in four directions; gather and build (used for chopping) use east-facing art, mirrored for west.
@@ -292,10 +292,11 @@ Discover and recruit up to three settlers. Each belongs to one camp and works ne
 A second camp can be founded "a meaningful walk from the first" (at least 3,000 units away). Camps appear on both maps (named on the world map) and can be revisited on foot.
 
 ### 6.13 World layout
-- [Built] Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three unreachable islands. The forest campsite, the abandoned village with its workshop, and the shipwreck beach are the three starting places. The new biomes use stand-in art.
+- [Built] Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1. The forest campsite, the abandoned village with its workshop, and the shipwreck beach are the three starting places. The new biomes use stand-in art.
 - [Built] Hills: terraced plateaus with cliff walls in the meadows, Pinefall, the canyons, the desert and Frostpeak (one to three levels; Frostpeak's are the tallest). Each level is climbed by one flight of stairs; walls and level edges block movement. Grass tufts, tall grass, dry grass, snow grass, bare dirt patches and dark forest soil break up open ground. Height has no gameplay effect yet.
 - [Planned] "Traversable forest and meadow connect resource sites, a river crossing, ruins, and at least two viable settlement locations."
-- [Planned] The seven-region map is the home continent of an archipelago of about nine continents. The others are reached by boat (see "Archipelago Direction").
+- [Built] The seven-region map is now an island home in a sea border, and slice A1 is built (see "Archipelago Direction").
+- [Planned] It is the home continent of an archipelago of about nine continents. The others are reached by boat (see "Archipelago Direction").
 
 ### 6.14 Controls
 
@@ -381,7 +382,7 @@ Multiplayer, mobile controls, realistic Earth geography, general world streaming
 | M2 | Loop proof: the 9-item critical path below | Built 2026-11-19 (branch `worktree-m2-loop-proof`); the numbers are first values, still to be tuned | `specs/2026-11-19-m2-loop-proof-design.md`, `plans/2026-11-19-m2-loop-proof.md` |
 | M3 | The rest of the spec plus review additions (10 items below) | Planned [Review] | This document + spec |
 | Later | Towns and cities | Future, **unscoped**: needs its own content list before work starts (Risk 3) | Spec: "towns and cities are later stages" |
-| A1–A4 | Archipelago: island home and a small boat, the ship and open sea, a second continent, the archipelago world map | Planned; A1 has an approved design. Order against M2/M3 and big-world builds 2–4 is open (Open Question 14) | `specs/2026-11-19-archipelago-design.md` |
+| A1–A4 | Archipelago: island home and a small boat, the ship and open sea, a second continent, the archipelago world map | A1 built; A2–A4 planned. Order against M2/M3 and big-world builds 2–4 is open (Open Question 14) | `specs/2026-11-19-archipelago-design.md` |
 
 **M2: loop proof (critical path)** [Review]
 1. Day/night cycle (~6 min, ~4 min daylight; to be retuned by "distance costs")
@@ -422,13 +423,13 @@ In a running browser the player can explore beyond the starting screen, gather a
 
 The sections above were reconciled with this update on 2026-11-19; this list is kept as the change record. Source: `docs/superpowers/specs/2026-11-19-big-world-design.md`.
 
-- **[Built] World.** 384×256 tiles (24,576×16,384 units), about 100 s to run across. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three unreachable islands.
+- **[Built] World.** 448×320 tiles (28,672×20,480 units): the 384×256-tile home continent (24,576×16,384 units, about 100 s to run across) inside a 2,048-unit sea border. Seven regions with real borders: Sunscar Desert, Pinefall Woods, Frostpeak, Hollowstead Meadows, Driftwood Lagoon, Stonewater Canyons, Emerald Jungle. Two rivers with fords and bridges, a dry riverbed, ponds, and a lagoon with three islets, reachable by boat since slice A1.
 - **[Built] Starting places.** Scout in Pinefall Woods, Builder in Hollowstead Meadows, Survivor on the Driftwood Lagoon shore. They are far apart.
-- **[Built] Discovery.** A region is discovered by standing in it. 49 landmarks (seven per region) are found within 200 units; 14 signposts (two per region) within 110.
-- **[Built] Fast travel.** Any found signpost can be travelled to from the world map.
-- **[Built] Objective.** "Your first footsteps" (gather once, discover three regions), then the goals card follows the current region: places found n / 7 and signposts found n / 2. The world map shows totals.
+- **[Built] Discovery.** A region is discovered by standing in it. 52 landmarks (seven per region, ten in the lagoon with its islets) are found within 200 units; 14 signposts (two per region) within 110.
+- **[Built] Fast travel.** Any found signpost can be travelled to from the world map; the boat drifts back to its launch spot.
+- **[Built] Objective.** "Your first footsteps" (gather once, discover three regions), then the goals card follows the current region: places found n / 7 (n / 10 in the lagoon) and signposts found n / 2. The world map shows totals.
 - **[Built] Maps.** The minimap shows the area around the player; the world map dims unexplored regions and marks found places and signposts.
-- **[Built] Saves.** `version: 3`, adding found landmarks and signposts. Older saves take the start-fresh path.
+- **[Built] Saves.** `version: 5` (found landmarks and signposts, survival, camps, fog and the boat). Version 4 and version 3 saves are upgraded; older saves take the start-fresh path.
 - **[Built] Art.** The new biomes use stand-in art derived from existing sprites, each with a prompt file for the real version.
 - **[Planned] Build 2.** Objectives journal, biome-specific supplies and collectibles.
 - **[Planned] Build 3.** Harsh conditions (cold, heat) and gear that counters them; until then every region is freely walkable.
@@ -440,12 +441,12 @@ Retention hook 2 ("new places to find") now has content: the three starts are no
 
 ## Archipelago Direction (2026-11-19)
 
-Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/specs/2026-11-19-archipelago-design.md`. Nothing here is built.
+Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/specs/2026-11-19-archipelago-design.md`. Slice A1 is built; everything else here is planned.
 
 - **[Planned] The full world.** An archipelago of about nine continents and many small islands, with open sea between them. The seven-region map is the home continent; the others are locked. The user's reference map (snowy, volcanic, forest, castle and desert islands around a large south-east continent) is a mood board only; all art stays our own.
 - **[Planned] Unlocking.** Other continents are reached by building or repairing boats. Sailing is free: the player steers the boat on the open sea.
 - **[Planned] Boat tiers.** A small boat for coastal water; a bigger ship for deep water and far continents.
-- **[Planned] Slice A1: island home and a small boat.** The map grows by a 2,048-unit sea border (448×320 tiles), with deep water as the edge. Driftwood regrows on beaches. Four old boats on the coast; one can be repaired for 6 wood + 2 stone. The player boards, sails coastal water and lands. The three lagoon islets become reachable, with one new landmark each (52 in all). Save version 4 migrates version 3 saves instead of resetting them.
+- **[Built] Slice A1: island home and a small boat (2026-11-19).** The map grows by a 2,048-unit sea border (448×320 tiles), with deep water as the edge. Driftwood regrows on beaches. Four old boats on the coast; one can be repaired for 6 wood + 2 stone. The player boards, sails coastal water and lands. The three lagoon islets become reachable, with one new landmark each (52 in all). Merged onto M2, the save is version 5: it upgrades M2's version 4 and the older version 3 saves instead of resetting them. Campfires can't be built from the boat; passing out at sea wakes the player ashore and the boat drifts back to where it was mended; fast-travelling to a signpost does the same.
 - **[Planned] Slice A2.** Repair the big shipwreck into a ship that crosses deep water.
 - **[Planned] Slice A3.** A second continent with its own map, loaded one continent at a time (for example a volcanic island with a new lava biome).
 - **[Planned] Slice A4.** The world map zooms out to the archipelago; unvisited continents stay under fog. This also answers Risk 1 at archipelago scale.
@@ -467,7 +468,7 @@ Decided in a brainstorming session on 2026-11-19. Source: `docs/superpowers/spec
 11. ~~**Fast travel vs the tether.**~~ Decided 2026-11-19: no rule; travel stays free at any hour and the designer accepts the weaker tether (Risk 4).
 12. **Two roadmaps.** The review set M2 (loop proof: night, warmth, campfire, needs list) and M3. The big-world spec plans Build 2 (objectives journal, biome supplies, collectibles), Build 3 (cold and heat with gear) and Build 4 (locals with requests). They overlap (warmth vs harsh conditions, needs list vs requests) and no document orders them against each other.
 13. **Character card names.** The cards say "Hollowstead Village" and "Driftwood Coast"; the regions are Hollowstead Meadows and Driftwood Lagoon.
-14. **Three roadmaps.** Archipelago slices A1–A4 join M2/M3 and big-world builds 2–4 (Question 12). No document orders the three against each other. A1 was chosen as the first archipelago step, but not whether it comes before M2 or build 2. The A1 and M2 specs both claimed save version 4, and M2's fog grid depends on the map size that A1 grows; whichever is built second must adapt (see the A1 spec, "Saves"). **M2 was built first and took version 4**, so A1 writes version 5 and upgrades version 4 saves; M2's fog grid is sized from the map, so a bigger map gets a bigger grid, but saved fog strings of the old length must be rebuilt in that upgrade.
+14. **Three roadmaps.** Archipelago slices A1–A4 join M2/M3 and big-world builds 2–4 (Question 12). No document orders the three against each other. A1 was chosen as the first archipelago step, but not whether it comes before M2 or build 2. The A1 and M2 specs both claimed save version 4, and M2's fog grid depends on the map size that A1 grows; whichever is built second must adapt (see the A1 spec, "Saves"). **M2 was built first and took version 4**, so the merged build writes version 5 and upgrades version 4 saves; M2's fog grid is sized from the map, so a bigger map gets a bigger grid, and saved fog strings of the old length are rebuilt in that upgrade (each seen square moves 8 squares in). The save clash is settled; the order of the three roadmaps is still open.
 
 ---
 

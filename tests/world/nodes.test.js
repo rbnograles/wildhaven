@@ -7,15 +7,19 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import OBJECT_SPECS from '../../assets/world/source/objects.json' with { type: 'json' };
 import { CHARACTERS } from '../../src/data/characters.js';
+import { WRECKS } from '../../src/data/places.js';
 import { RESOURCES, SUPPLIES } from '../../src/data/supplies.js';
 import { GATHER_SECONDS, SUPPLY_REGROW } from '../../src/data/balance.js';
 import { WORLD, isWalkable } from '../../src/world/map.js';
-import { NODES, nodeBases, goneSupplies } from '../../src/world/nodes.js';
+import { NODES, nodeBases, wreckBases, goneSupplies, solidBases } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { gatherTime, finishGather } from '../../src/actions/gather.js';
 import { CLIPS } from '../../src/animation/clips.js';
 
-/** The hand-placed supplies (they grow back after two days), and the wild flower patches. */
+/**
+ * The hand-placed supplies (they grow back after two days), and the wild patches: flowers and
+ * driftwood (they grow back sooner).
+ */
 const supplies = NODES.filter((n) => SUPPLIES.includes(n)),
   wild = NODES.filter((n) => !SUPPLIES.includes(n));
 
@@ -46,14 +50,12 @@ test('every supply is a known, solid, action-backed sprite that takes the full g
   assert.equal(GATHER_SECONDS, 6);
 });
 
-// Guards the flower patches: there are plenty of them, each has its own id, they give herbs,
-// you can walk through them, they grow back, and they are drawn smaller than the player.
-test('wild flower patches are walk-through herb sources drawn smaller than a character', () => {
-  assert.ok(wild.length >= 30);
+// Guards the wild patches: each has its own id, you can walk through them, they are gathered with
+// an action clip, they grow back, and they are drawn smaller than the player.
+test('wild patches are walk-through, regrowing and drawn smaller than a character', () => {
   assert.equal(new Set(NODES.map((n) => n.id)).size, NODES.length);
 
   for (const node of wild) {
-    assert.equal(node.type, 'herbs');
     assert.ok(RESOURCES.includes(node.type));
     assert.equal(OBJECT_SPECS[node.sprite].footprint, undefined, node.id);
     assert.equal(CLIPS[node.clip]?.action, true, node.id);
@@ -65,6 +67,19 @@ test('wild flower patches are walk-through herb sources drawn smaller than a cha
   }
 });
 
+// Guards what each wild patch gives: flowers are the only source of herbs, and driftwood on the
+// beaches gives the wood an old boat's repair needs.
+test('flower patches give herbs and beach driftwood gives wood', () => {
+  const flowers = wild.filter((n) => n.sprite === 'flowers'),
+    driftwood = wild.filter((n) => n.sprite === 'driftwood');
+  assert.ok(flowers.length >= 30);
+  assert.ok(driftwood.length >= 20);
+  assert.equal(flowers.length + driftwood.length, wild.length);
+  for (const n of flowers) assert.equal(n.type, 'herbs', n.id);
+  for (const n of driftwood)
+    assert.deepEqual([n.type, n.amount, n.verb, n.regrow], ['wood', 1, 'Pick up', 180], n.id);
+});
+
 // Guards against a supply, a flower patch or a start spot being cut off by water, trees or
 // another supply's base. It paints every reachable spot like spilled paint spreading out, then
 // checks that each thing to gather has painted ground close enough to gather it from.
@@ -73,7 +88,7 @@ test('every supply and wild patch can be walked to and gathered from each spawn'
   const G = 16,
     cols = Math.ceil(WORLD.width / G),
     rows = Math.ceil(WORLD.height / G),
-    bases = nodeBases([]);
+    bases = [...nodeBases([]), ...wreckBases(null)];
   const seen = new Uint8Array(cols * rows),
     queue = [],
     start = createGame('scout').player;
@@ -151,4 +166,28 @@ test('a gathered supply stops being solid until it grows back', () => {
   assert.deepEqual(goneSupplies(game), ['pine-wood']);
   game.time += 10;
   assert.deepEqual(goneSupplies(game), []);
+});
+
+// Guards the one list of solid things walking, landing, building and waking all share: standing
+// supplies, old boats still on the beach and campfires, and nothing that has gone.
+test('solidBases holds standing supplies, beached old boats and campfires', () => {
+  const game = createGame('scout');
+  /** Counts the solid boxes the game has right now. */
+  const count = () => solidBases(game).length;
+  const all = nodeBases([]).length + wreckBases(null).length;
+  assert.equal(count(), all);
+
+  game.regrowAt['pine-wood'] = game.time + 10; // chopped: no longer solid
+  assert.equal(count(), all - 1);
+
+  game.boat = { from: WRECKS[0].id, x: 0, y: 0, dir: 0 }; // mended: it left the beach
+  assert.equal(count(), all - 2);
+
+  game.camps.push({ id: 'camp-1', name: 'Test Camp', x: 5000, y: 5000, grown: 0, needs: [] });
+  assert.equal(count(), all - 1);
+  assert.ok(
+    solidBases(game).some(
+      ([left, , right, bottom]) => left < 5000 && right > 5000 && bottom === 5000,
+    ),
+  );
 });

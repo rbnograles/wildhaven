@@ -1,5 +1,5 @@
-// The shared list of places in the world: regions, start spots, supply spots, landmarks to find
-// and signposts to travel between. The numbers live in assets/world/source/places.json so that
+// The shared list of places in the world: regions, start spots, supply spots, landmarks to find,
+// signposts to travel between and old boats on the coast. The numbers live in assets/world/source/places.json so that
 // tools/build-map.py (which shapes the land around them) and the game read the very same file.
 
 import PLACES from '../../assets/world/source/places.json' with { type: 'json' };
@@ -40,4 +40,18 @@ export const WAYPOINTS = PLACES.waypoints.map(({ id, region, name, x, y }) => ({
   name,
   x,
   y,
+}));
+
+/**
+ * Old boats lying on the coast; the player can repair one of them into their own boat.
+ * Fields: `id`, `region`, `name`, `x`/`y` (where it lies on the beach) and `launch` (the shallow
+ * water next to it, as `{x, y}`, where the mended boat floats).
+ */
+export const WRECKS = PLACES.wrecks.map(({ id, region, name, x, y, launch }) => ({
+  id,
+  region,
+  name,
+  x,
+  y,
+  launch: spot(launch),
 }));

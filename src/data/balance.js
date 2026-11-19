@@ -24,6 +24,35 @@ export const LANDMARK_RADIUS = 200;
 /** How close the player must walk to a signpost to find it. */
 export const WAYPOINT_RADIUS = 110;
 
+// ---- The sea and boats ----
+
+/**
+ * How close the player must stand to their boat to get in. The boat floats a little off the
+ * beach, so this is wider than the reach for gathering.
+ */
+export const BOARD_RANGE = 160;
+
+/** How far from the boat the player may step ashore when landing. */
+export const LAND_RANGE = 160;
+
+/** What repairing an old boat costs. It is taken from the backpack when the repair finishes. */
+export const REPAIR_COST = { wood: 6, stone: 2 };
+
+// How many seconds repairing an old boat takes: a little longer than a 6 s gather, because it is a bigger job.
+export const REPAIR_SECONDS = 8;
+
+/** How close the player must come to an old boat to find it (and mark it on the map). */
+export const WRECK_RADIUS = 200;
+
+/** How fast the small boat moves, in world units per second. Faster than walking: the sea is wide. */
+export const BOAT_SPEED = 210;
+
+/** How fast the small boat moves while Shift is held, in world units per second. */
+export const BOAT_FAST_SPEED = 300;
+
+/** How far ahead of the boat to look for deep sea when warning that it is too rough. */
+export const DEEP_LOOKOUT = 60;
+
 // ---- Day and night (M2) ----
 
 /** One in-game day in game seconds: dawn, day and dusk give 240 s of light, then 120 s of night. */

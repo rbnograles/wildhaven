@@ -130,3 +130,32 @@ d.polygon(((8, 14), (70, 14), (84, 30), (70, 46), (8, 46)), fill=(190, 150, 96),
 save(sign, obj('signpost'),
      object_prompt('a wooden trail signpost: one upright post carrying a single arrow-shaped plank pointing right',
                    90, 130))
+
+# ---- sea and boats (archipelago slice A1) --------------------------------------------------
+save(recolor(texture('water'), (0.5, 0.62, 0.78), (0, 4, 18)).convert('RGB'), os.path.join(GROUND, 'deep.png'),
+     texture_prompt('deep open sea water in dark teal-blue with slow broad swells and faint lighter wave crests; '
+                    'no foam, rocks, fish or shore'))
+
+# Draws a small rowboat seen from above at a slight angle, bow pointing right. `broken` knocks out three planks,
+# so the beach shows through the holes.
+def rowboat(inside, rim, broken):
+    im = blank(200, 90); d = ImageDraw.Draw(im)
+    d.polygon([(6, 46), (40, 12), (150, 10), (194, 46), (150, 80), (40, 78)], fill=rim, outline=(60, 40, 24))
+    d.polygon([(22, 46), (48, 24), (146, 22), (176, 46), (146, 68), (48, 66)], fill=inside)
+    for x in (78, 122): d.rectangle((x, 24, x + 10, 68), fill=rim)   # two seats across the hull
+    if broken:
+        for x in (58, 100, 140): d.rectangle((x, 30, x + 12, 60), fill=(0, 0, 0, 0))
+    return im
+
+save(rowboat((150, 140, 120), (112, 100, 84), True), obj('old-boat'),
+     object_prompt('an old wooden rowboat lying on a beach, weathered grey planks with several missing, seen from '
+                   'above at a slight angle with the bow pointing right', 200, 90))
+save(rowboat((150, 102, 60), (110, 72, 40), False), obj('rowboat'),
+     object_prompt('a small sturdy wooden rowboat with warm brown planks and two seats, seen from above at a slight '
+                   'angle with the bow pointing right; no water around it', 200, 90))
+drift = blank(150, 70); d = ImageDraw.Draw(drift)
+d.rounded_rectangle((8, 30, 142, 48), 9, fill=(196, 182, 160), outline=(118, 104, 86), width=OUT)
+d.rounded_rectangle((30, 14, 120, 30), 8, fill=(206, 194, 172), outline=(118, 104, 86), width=OUT)
+d.line((96, 48, 118, 62), fill=(150, 136, 116), width=5)
+save(drift, obj('driftwood'),
+     object_prompt('two or three bleached grey driftwood branches lying flat on sand', 150, 70))

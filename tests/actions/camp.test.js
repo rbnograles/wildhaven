@@ -14,6 +14,7 @@ import {
   WAKE_HEALTH,
   WAKE_OFFSET,
 } from '../../src/data/balance.js';
+import { WRECKS } from '../../src/data/places.js';
 import { createGame } from '../../src/game/state.js';
 import { giveToNeed, eat, heal, brewTea, rest, passOut } from '../../src/actions/camp.js';
 
@@ -163,4 +164,35 @@ test('passing out with no camp wakes the player at their spawn', () => {
   assert.equal(passOut(game).camp, null);
   assert.equal(game.player.x, spawn.x);
   assert.equal(game.player.y, spawn.y);
+});
+
+// Guards passing out at sea: the player wakes on foot by their fire, and the empty boat drifts
+// back to its home mooring by the old boat it was mended from.
+test('passing out in the boat wakes the player ashore and sends the boat home', () => {
+  const { game, camp } = campGame();
+  const wreck = WRECKS.find((w) => w.id === 'wreck-east');
+  game.time = 300;
+  game.boat = { from: wreck.id, x: wreck.launch.x + 400, y: wreck.launch.y, dir: 2 };
+  game.aboard = true;
+  Object.assign(game.player, { x: game.boat.x, y: game.boat.y, direction: 2 });
+
+  const result = passOut(game);
+  assert.equal(result.camp, camp);
+  assert.equal(result.boatHome, true);
+  assert.equal(game.aboard, false);
+  assert.ok(Math.hypot(game.player.x - camp.x, game.player.y - camp.y) <= WAKE_OFFSET);
+  assert.deepEqual(game.boat, { from: wreck.id, x: wreck.launch.x, y: wreck.launch.y, dir: 2 });
+});
+
+// Guards passing out on foot with a boat moored somewhere: the boat stays where it was left.
+test('passing out on foot leaves a moored boat where it is', () => {
+  const { game } = campGame();
+  const wreck = WRECKS.find((w) => w.id === 'wreck-east');
+  game.time = 300;
+  game.boat = { from: wreck.id, x: wreck.launch.x + 400, y: wreck.launch.y, dir: 2 };
+  const moored = { ...game.boat };
+
+  assert.equal(passOut(game).boatHome, false);
+  assert.equal(game.aboard, false);
+  assert.deepEqual(game.boat, moored);
 });

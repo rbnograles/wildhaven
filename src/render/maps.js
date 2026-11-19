@@ -1,9 +1,11 @@
 // The maps: the corner minimap and the big world map, painted on plain 2D canvases. They show
-// the overview picture under the fog of war, the places, signposts and camps the player knows
-// about, and the player. The renderer and the map dialog both call `drawMap`.
+// the overview picture under the fog of war, the places, signposts, old boats and camps the player
+// knows about, their own boat, and the player. The renderer and the map dialog both call `drawMap`.
+// The big map covers the whole world, land and sea border (448 by 320 tiles, so 7:5), and its
+// canvas in ui/layout.js has the same shape (1120 by 800).
 
 import { WORLD } from '../world/map.js';
-import { LANDMARKS, WAYPOINTS } from '../data/places.js';
+import { LANDMARKS, WAYPOINTS, WRECKS } from '../data/places.js';
 import { FOG_CELL } from '../data/balance.js';
 import { FOG_GRID, fogCells } from '../world/fog.js';
 
@@ -50,8 +52,9 @@ function fogCanvas(fog) {
  *
  * World positions are shrunk to fit the canvas, like tracing a big map onto a postcard. Parts of
  * the world the player hasn't seen are under fog. Found places are cream dots, found signposts
- * gold diamonds, camps orange dots (named on the big map), and the player is the white arrow,
- * which points the way they are facing.
+ * gold diamonds, found old boats brown squares, the player's moored boat a brown oval, camps
+ * orange dots (named on the big map), and the player is the white arrow, which points the way
+ * they are facing.
  *
  * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
  * @param {HTMLImageElement} overview - The picture of the whole world (overview.webp).
@@ -113,6 +116,22 @@ export function drawMap(ctx, overview, state, w, h, local = false) {
     ctx.lineTo(x, y + 5);
     ctx.lineTo(x - 5, y);
     ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Old boats found on the beach (not the one already mended): small brown squares.
+  ctx.fillStyle = '#9a6b3f';
+  for (const w of WRECKS) {
+    if (!state.wrecks.includes(w.id) || state.boat?.from === w.id) continue;
+    ctx.fillRect(px(w.x) - 3.5, py(w.y) - 3.5, 7, 7);
+    ctx.strokeRect(px(w.x) - 3.5, py(w.y) - 3.5, 7, 7);
+  }
+
+  // The player's boat while they are ashore: a brown oval where it is moored.
+  if (state.boat && !state.aboard) {
+    ctx.beginPath();
+    ctx.ellipse(px(state.boat.x), py(state.boat.y), 7, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }

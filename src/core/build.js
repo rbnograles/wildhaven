@@ -3,7 +3,7 @@
 // stand there; a click or E places it. The rules for where a fire may go live in
 // actions/build.js; this file only drives them.
 
-import { checkPlacement, placeCampfire } from '../actions/build.js';
+import { checkPlacement, placeCampfire, BUILD_ABOARD } from '../actions/build.js';
 import { cancelAction } from '../animation/clips.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -57,22 +57,37 @@ export function setupBuild(session, ui) {
   }
 
   /**
+   * Says whether building is off because the player sits in the boat, and tells them why.
+   *
+   * @returns {boolean} True when the player is aboard, so the menu or build mode must not open.
+   */
+  function refuseAboard() {
+    if (!session.state.aboard) return false;
+    build.menu = false;
+    ui.hud.notify(BUILD_ABOARD);
+    ui.hud.update();
+    return true;
+  }
+
+  /**
    * Opens the build menu, or closes it again (the Build button and B). While a campfire is being
-   * placed, it leaves build mode instead, so B always backs out one step.
+   * placed, it leaves build mode instead, so B always backs out one step. In the boat the menu
+   * stays shut: fires are built on land.
    */
   function toggleMenu() {
     if (session.screen !== 'game' || !session.state) return;
     if (build.active) return cancel();
+    if (!build.menu && refuseAboard()) return;
     build.menu = !build.menu;
     ui.hud.update();
   }
 
   /**
    * Starts placing a campfire (the menu's Campfire option, or 1 while the menu is open).
-   * The menu closes, the ghost appears, and any gathering in progress stops.
+   * The menu closes, the ghost appears, and any gathering in progress stops. Not from the boat.
    */
   function start() {
-    if (session.screen !== 'game' || !session.state) return;
+    if (session.screen !== 'game' || !session.state || refuseAboard()) return;
     build.menu = false;
     cancelAction(session.animator);
     build.active = true;

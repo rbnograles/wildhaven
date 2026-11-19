@@ -3,19 +3,21 @@
 // interact button) and the short pop-up messages called toasts. It only shows the game state; it
 // never changes it.
 import { RESOURCES } from '../data/supplies.js';
-import { CAMPFIRE_COST } from '../data/balance.js';
+import { WRECKS } from '../data/places.js';
+import { CAMPFIRE_COST, REPAIR_COST } from '../data/balance.js';
 import { NODES } from '../world/nodes.js';
 import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
 import { clockLabel, phaseOf } from '../world/clock.js';
 import { nearestCamp, campInReach } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
-import { nearbyNode } from '../actions/gather.js';
+import { missingForRepair, listMissing } from '../actions/boat.js';
+import { chooseInteraction } from '../actions/interact.js';
 import { meterTrends } from '../actions/survive.js';
 import { $ } from './layout.js';
 
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
-const DOING = { Chop: 'Chopping', Pick: 'Picking', Gather: 'Gathering' };
+const DOING = { Chop: 'Chopping', Pick: 'Picking', 'Pick up': 'Picking up', Gather: 'Gathering' };
 
 // How long the controls strip stays up when nobody moves, and how long its fade-out takes.
 const KEY_STRIP_MS = 8000,
@@ -46,6 +48,39 @@ export function describeEvent(event) {
     return `Dawn, day ${event.day}.${needs}`;
   }
   return '';
+}
+
+/**
+ * Words for the interact button when E would do `choice`, e.g. "Board the boat" or "Chop pine tree".
+ *
+ * @param {object} state - The game being played.
+ * @param {{kind: string, target: object}} choice - What chooseInteraction picked.
+ * @returns {string} The button's words.
+ */
+function actionLabel(state, choice) {
+  if (choice.kind === 'land') return 'Step ashore';
+  if (choice.kind === 'board') return 'Board the boat';
+  if (choice.kind === 'repair') {
+    const missing = missingForRepair(state);
+    return Object.keys(missing).length
+      ? `Repair the old boat · need ${listMissing(missing)}`
+      : 'Repair the old boat';
+  }
+  return `${choice.target.verb} ${choice.target.label.toLowerCase()}`;
+}
+
+/**
+ * Words for the interact button while a timed action runs, or null when none is running.
+ *
+ * @param {object} animator - The player's animation state.
+ * @returns {string|null} E.g. "Repairing the old boat… move to stop".
+ */
+function busyLabel(animator) {
+  const target = animator.pending?.target;
+  if (!target) return null;
+  if (WRECKS.some((w) => w.id === target)) return 'Repairing the old boat… move to stop';
+  const node = NODES.find((n) => n.id === target);
+  return node ? `${DOING[node.verb]} ${node.label.toLowerCase()}… move to stop` : null;
 }
 
 /**
@@ -113,7 +148,9 @@ export function createHud(session) {
   }
 
   /**
-   * Fills the goals card: building the first campfire, then the nearest camp's needs.
+   * Fills the goals card with the current goal, the most pressing first: building the first
+   * campfire, then mending an old boat once one has been found (until the player owns a boat),
+   * then the nearest camp's needs.
    *
    * @param {object} state - The game being played.
    */
@@ -131,6 +168,19 @@ export function createHud(session) {
       ]);
       return;
     }
+    if (state.wrecks.length && !state.boat) {
+      // An old boat has been found but not mended: the card becomes the shopping list for the repair.
+      const { wood, stone } = REPAIR_COST;
+      $('quest-label').textContent = 'AN OLD BOAT';
+      $('quest-title').textContent = 'Mend a boat';
+      $('quest-text').textContent =
+        'Repair an old boat to sail the coast. Driftwood washes up on the beaches.';
+      showGoals([
+        { text: 'Wood', have: Math.min(state.resources.wood, wood), want: wood },
+        { text: 'Stone', have: Math.min(state.resources.stone, stone), want: stone },
+      ]);
+      return;
+    }
     $('quest-label').textContent = 'CAMP NEEDS';
     $('quest-title').textContent = camp.name;
     $('quest-text').textContent = 'Meet needs to grow the fire. New needs arrive at dawn.';
@@ -142,24 +192,25 @@ export function createHud(session) {
   /**
    * Shows the interact button and the build bar for what the player can do right now.
    *
-   * The button is "busy" while gathering, "Place campfire" in build mode, the gather verb when a
-   * supply is in reach, and "Open <camp>" beside one of the player's fires.
+   * The button matches what E would do (see core/input.js): "busy" while gathering or repairing,
+   * "Place campfire" in build mode, then step ashore, board, repair or gather (chooseInteraction),
+   * and "Open <camp>" beside one of the player's fires when none of those is in reach.
    *
    * @param {object} state - The game being played.
    */
   function updateActions(state) {
     const { animator, build } = session;
-    const node = nearbyNode(state),
-      busy = NODES.find((n) => n.id === animator.pending?.target),
-      camp = !node && campInReach(state),
+    const choice = chooseInteraction(state),
+      busy = busyLabel(animator),
+      camp = !choice && !state.aboard && campInReach(state),
       button = $('interact'),
       label = button.querySelector('span');
-    button.hidden = !node && !busy && !build.active && !camp;
+    button.hidden = !choice && !busy && !build.active && !camp;
     button.classList.toggle('busy', !!busy);
     button.setAttribute('aria-disabled', String(!!busy));
-    if (busy) label.textContent = `${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
+    if (busy) label.textContent = busy;
     else if (build.active) label.textContent = 'Place campfire';
-    else if (node) label.textContent = `${node.verb} ${node.label.toLowerCase()}`;
+    else if (choice) label.textContent = actionLabel(state, choice);
     else if (camp) label.textContent = `Open ${camp.name}`;
     // The controls strip sits where the action button and build menu appear, so it gives way.
     if (!button.hidden || build.menu) hideKeyStrip();

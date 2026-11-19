@@ -29,7 +29,7 @@ test('world progress counts everything found', () => {
 
   assert.deepEqual(worldProgress(game), {
     regions: { found: 2, total: 7 },
-    places: { found: 2, total: 49 },
+    places: { found: 2, total: 52 },
     signposts: { found: 0, total: 14 },
   });
 });

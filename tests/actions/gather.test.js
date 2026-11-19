@@ -10,8 +10,8 @@ import { createGame } from '../../src/game/state.js';
 import { nearbyNode, isAvailable, beginGather, finishGather } from '../../src/actions/gather.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
-/** The wild flower patches: map scenery that can be picked and grows back quickly. */
-const wild = NODES.filter((n) => n.id.startsWith('flowers-'));
+/** The wild flower patches: herb nodes that grow back after being picked. */
+const wild = NODES.filter((n) => n.sprite === 'flowers');
 
 // Guards against gathering from across the map, against taking the same pine tree twice in a row,
 // and against a chopped tree never coming back (supplies regrow after two in-game days).

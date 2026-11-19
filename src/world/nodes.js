@@ -1,12 +1,14 @@
 // Every spot in the world the player can gather from (a "node"): the hand-placed supplies plus
-// each wild flower patch the map scattered. Also says which nodes can be gathered now and which
-// supplies are still solid.
+// each wild patch (flowers, driftwood) the map scattered. Also says which nodes can be gathered now
+// and works out what is solid: standing supplies, old boats on the beach and campfires.
 
 import { SUPPLIES, WILD } from '../data/supplies.js';
+import { WRECKS } from '../data/places.js';
 import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
+import { campBases } from './camps.js';
 
 // The fixed supplies plus every wild patch the map scattered; a patch's map position is its id
-// (`flowers-<x>-<y>`). Wild patches copy their fields from WILD and their size from objects.json.
+// (`flowers-<x>-<y>`, `driftwood-<x>-<y>`). Wild patches copy their fields from WILD and their size from objects.json.
 export const NODES = [
   ...SUPPLIES,
   ...MAP_OBJECTS.filter((o) => WILD[o.name]).map((o) => ({
@@ -56,3 +58,38 @@ export function nodeBases(gone) {
     return [n.x - halfWidth * n.scale, n.y - depth * n.scale, n.x + halfWidth * n.scale, n.y];
   });
 }
+
+/**
+ * Lists the solid base of every old boat still lying on the beach.
+ *
+ * An old boat is in the way like a fallen log. The one the player repaired has gone to sea, so
+ * its base is left out.
+ *
+ * @param {object|null} boat - The player's boat (`{from, ...}`), or null if they have none.
+ * @returns {number[][]} Boxes as [left, top, right, bottom], ready for `isWalkable`.
+ */
+export function wreckBases(boat) {
+  const [halfWidth, depth] = OBJECT_SPECS['old-boat'].footprint;
+  return WRECKS.filter((w) => w.id !== boat?.from).map((w) => [
+    w.x - halfWidth,
+    w.y - depth,
+    w.x + halfWidth,
+    w.y,
+  ]);
+}
+
+/**
+ * Lists everything solid that isn't part of the map itself: supplies standing right now, old
+ * boats still on the beach and the player's campfires.
+ *
+ * Walking, landing from the boat, placing a fire and waking up all use this one list, so they
+ * agree on what is in the way.
+ *
+ * @param {object} state - The game being played.
+ * @returns {number[][]} Boxes as [left, top, right, bottom], ready for `isWalkable`.
+ */
+export const solidBases = (state) => [
+  ...nodeBases(goneSupplies(state)),
+  ...wreckBases(state.boat),
+  ...campBases(state),
+];

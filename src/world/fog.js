@@ -136,16 +136,58 @@ export function revealAround(state, x, y, radius = FOG_RADIUS) {
  * Uncovers every square whose middle lies in one of the given regions.
  *
  * Used when an old save is upgraded: it knew which regions were visited, not where the player walked.
+ * Squares near the edge of the world can be left covered: an old save never saw the sea border.
  *
  * @param {object} state - Anything with a `fog` string. Its `fog` is replaced.
  * @param {string[]} regionIds - The ids of the regions to uncover.
+ * @param {number} [margin=0] - How far in from the world's edge to start, in world units; squares
+ *   whose middle is closer to the edge than this stay covered.
  */
-export function revealRegions(state, regionIds) {
+export function revealRegions(state, regionIds, margin = 0) {
   const cells = fogCells(state.fog).slice();
   for (let cy = 0; cy < FOG_GRID.rows; cy++)
-    for (let cx = 0; cx < FOG_GRID.cols; cx++)
-      if (regionIds.includes(regionOf((cx + 0.5) * FOG_CELL, (cy + 0.5) * FOG_CELL).id))
-        cells[cy * FOG_GRID.cols + cx] = 1;
+    for (let cx = 0; cx < FOG_GRID.cols; cx++) {
+      const x = (cx + 0.5) * FOG_CELL,
+        y = (cy + 0.5) * FOG_CELL;
+      const inside =
+        x > margin && y > margin && x < WORLD.width - margin && y < WORLD.height - margin;
+      if (inside && regionIds.includes(regionOf(x, y).id)) cells[cy * FOG_GRID.cols + cx] = 1;
+    }
   state.fog = packFog(cells);
   last = { fog: state.fog, cells };
+}
+
+/**
+ * Redraws fog saved on a smaller map onto this map, after the map grew by the same number of
+ * squares on every side (the sea border).
+ *
+ * Like sliding an old sticker sheet into the middle of a bigger frame: every seen square keeps its
+ * place on the land, so it moves `ring` squares right and down, and the new squares around the
+ * edge start unseen.
+ *
+ * @param {*} fog - The old fog string, saved on a grid `ring` squares smaller on every side.
+ * @param {number} ring - How many squares the map grew by on each side; must be a whole number.
+ * @returns {string|null} The fog for this map, or null if the old fog doesn't fit the smaller grid.
+ */
+export function growFog(fog, ring) {
+  const cols = FOG_GRID.cols - 2 * ring,
+    rows = FOG_GRID.rows - 2 * ring;
+  if (
+    !Number.isInteger(ring) ||
+    ring < 0 ||
+    cols < 1 ||
+    rows < 1 ||
+    typeof fog !== 'string' ||
+    fog.length !== Math.ceil((cols * rows) / 4) ||
+    !/^[0-9a-f]*$/.test(fog)
+  )
+    return null;
+
+  const cells = new Uint8Array(FOG_GRID.cols * FOG_GRID.rows);
+  for (let cy = 0; cy < rows; cy++)
+    for (let cx = 0; cx < cols; cx++) {
+      const i = cy * cols + cx;
+      cells[(cy + ring) * FOG_GRID.cols + cx + ring] = (parseInt(fog[i >> 2], 16) >> (i & 3)) & 1;
+    }
+  return packFog(cells);
 }

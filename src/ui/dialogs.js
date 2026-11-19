@@ -5,7 +5,7 @@ import { save, start, leave } from '../core/session.js';
 import { worldProgress } from '../world/progress.js';
 import { travelTo } from '../actions/travel.js';
 import { cancelAction } from '../animation/clips.js';
-import { WAYPOINTS } from '../data/places.js';
+import { WAYPOINTS, WRECKS } from '../data/places.js';
 import { WORLD } from '../world/map.js';
 import { $ } from './layout.js';
 
@@ -64,13 +64,22 @@ export function setupDialogs(session, ui) {
    * @param {string} id - The signpost's id.
    */
   function travel(id) {
-    const post = travelTo(session.state, id);
+    // Remember where the boat floated, so we can tell the player if it drifted home.
+    const boat = session.state.boat && { ...session.state.boat },
+      post = travelTo(session.state, id);
     if (!post) return;
     cancelAction(session.animator);
     session.renderer.resetCamera();
     $('map-dialog').close();
     save(session, ui, true);
-    ui.hud.notify(`Travelled to ${post.name}`);
+    const now = session.state.boat,
+      drifted = boat && (boat.x !== now.x || boat.y !== now.y || boat.dir !== now.dir),
+      boatName = drifted && WRECKS.find((w) => w.id === now.from).name;
+    ui.hud.notify(
+      boatName
+        ? `Travelled to ${post.name} · Your boat drifted back to ${boatName}`
+        : `Travelled to ${post.name}`,
+    );
     ui.hud.update();
   }
 

@@ -272,7 +272,7 @@ export function mountLayout(app) {
         </button>
       </div>
 
-      <!-- The "E" button. It appears when a supply is in reach and shows progress while gathering. -->
+      <!-- The "E" button. It appears when E would do something (gather, repair, board, step ashore, open a camp) and shows progress while gathering or repairing. -->
       <button id="interact" class="interact" hidden><kbd>E</kbd><span></span></button>
 
       <!-- Build mode's bar: what a campfire costs, or why the ghost's spot is refused. ui/hud.js fills it. -->
@@ -281,7 +281,7 @@ export function mountLayout(app) {
       <!-- The controls, shown for a few seconds each time the game opens. ui/hud.js shows and hides it. -->
       <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
         <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
-        ><span><kbd>E</kbd> Gather / camp</span><span><kbd>B</kbd> Build</span
+        ><span><kbd>E</kbd> Gather · Boat</span><span><kbd>B</kbd> Build</span
         ><span><kbd>F</kbd> Eat</span><span><kbd>H</kbd> Heal</span><span><kbd>M</kbd> Map</span
         ><span><kbd>J</kbd> Journal</span><span><kbd>Esc</kbd> Pause</span>
       </div>
@@ -326,7 +326,7 @@ export function mountLayout(app) {
       <div class="map-surface">
         <canvas
           id="large-map"
-          width="1200"
+          width="1120"
           height="800"
           aria-label="World map with your current position"
         ></canvas

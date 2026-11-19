@@ -2,7 +2,8 @@
 // Phaser's own input is disabled; every key and touch goes through here.
 // This file remembers which keys are held down and turns them into "which way to walk".
 
-import { beginGather } from '../actions/gather.js';
+import { beginInteraction } from '../actions/interact.js';
+import { listMissing } from '../actions/boat.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -18,9 +19,10 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  *
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
- * Also handles E to gather or open a camp, B for the build menu (and 1 to pick the campfire in
- * it), F to eat, H to heal, M for the map, J for the journal, Escape to pause (or to leave the
- * build menu or build mode), the mouse over the world, and saving when the tab is hidden.
+ * Also handles E to step ashore, board, repair, gather or open a camp, B for the build menu (and
+ * 1 to pick the campfire in it), F to eat, H to heal, M for the map, J for the journal, Escape to
+ * pause (or to leave the build menu or build mode), the mouse over the world, and saving when the
+ * tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
  * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
@@ -30,35 +32,45 @@ export function setupInput(session, ui) {
   const { keys } = session;
 
   /**
-   * Starts gathering the closest supply. With nothing to gather, E beside one of the player's
-   * fires opens that camp instead; anywhere else it says to move closer.
+   * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
+   * order. With none of those in reach, E beside one of the player's fires opens that camp;
+   * anywhere else it says why nothing happened.
    *
-   * E starts the node's timed action; the supply is awarded when the action runs out (see core/loop.js).
-   * Held movement keys are forgotten so the player doesn't walk off and cancel straight away.
+   * Landing and boarding happen at once and save straight away. Repairing and gathering start a
+   * timed action that core/loop.js finishes. Held movement keys are forgotten so the player
+   * doesn't walk off and cancel straight away.
    */
-  function gather() {
-    const result = beginGather(session.state, session.animator);
+  function use() {
+    const result = beginInteraction(session.state, session.animator);
     if (result.ok) {
       keys.clear();
+      if (result.kind === 'board')
+        ui.hud.notify('In the boat · Row with WASD, and press E by the shore to step ashore');
+      if (result.kind === 'board' || result.kind === 'land') save(session, ui, true);
       ui.hud.update();
       return;
     }
+    if (result.reason === 'missing') {
+      ui.hud.notify(`The old boat needs ${listMissing(result.missing)} more.`);
+      return;
+    }
     if (result.reason !== 'none') return;
-    const camp = campInReach(session.state);
+    // Camps are opened on foot; from the boat, step ashore first.
+    const camp = !session.state.aboard && campInReach(session.state);
     if (camp) ui.camp.openCamp(camp);
-    else ui.hud.notify('Move closer to something you can gather.');
+    else ui.hud.notify('Move closer to something you can use.');
   }
 
-  /** Does what E (or the action button) means right now: place the campfire in build mode, or gather. */
+  /** Does what E (or the action button) means right now: place the campfire in build mode, or `use`. */
   function interact() {
     if (session.screen !== 'game' || ui.dialogs.isPaused()) return;
     if (session.build.active) ui.build.place();
-    else gather();
+    else use();
   }
 
   $('interact').addEventListener('click', interact);
 
-  // Keyboard: Escape pauses, M toggles the map, J the journal, E gathers, and movement keys are remembered.
+  // Keyboard: Escape pauses, M toggles the map, J the journal, E interacts, and movement keys are remembered.
   window.addEventListener('keydown', (event) => {
     if (session.screen !== 'game') return;
     // Typing in a text box (such as naming a camp) is not a game key.
