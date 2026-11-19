@@ -265,3 +265,20 @@ Browser at `http://127.0.0.1:5188` (this worktree's dev server; 1280×800 and th
 - No console errors.
 
 Not checked by hand: the 390 px layout beyond a first look (no layout rule changed), signpost travel while aboard (left for the final fixes), and the far corners of the sea border at night (the camera stops at the world edge and the night layer follows the camera, as in M2).
+
+## Tools and crafting — 2026-11-19
+
+Branch `tools-crafting` (from archipelago A1 at `6f87677`). Automated: `npm test` 187 passing (new: tool kits and wear, recipes and use counts, version 6 saves and the version 5 → 6 upgrade, run-out timers dropped, a save on a chopped tree's spot, the tree and rock nodes and `nodesNear`, walking through a chopped tree and out of a regrown one, no campfire on a chopped tree's spot, the axe rule and `lockedNode`, tool gather times, wear through `finishInteraction`, every craft rule, and the tool ladder for each character), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5181` (this worktree's own Vite server; other sessions held 5173, 5179 and 5180). The pane ran at about 4 fps for most of the session, so the game ran slow (the clamped `dt`); to save walking, test saves on that origin were moved next to a tree or rock and the page reloaded.
+- A new Survivor: the item box showed an Iron slot and the tools row three faded chips. "Gather driftwood" (bare hands, 6 s) gave +4 wood and "Gather beach stones" +2 stone.
+- B opened the build menu with the Tools group: "Stone axe · 3 wood · 2 stone" ready, the pickaxe and hammer costs in red with "Needs 1 stone more" on hover. 2 started "Crafting stone axe… move to stop", then "Stone axe made"; wood 6 → 3, stone 2 → 0, and the axe chip read 25.
+- Beside a `rocks-b` rock without a pickaxe the button read "Mine rocks — needs a pickaxe" (faded, no glow on the rock), and E said "You need a pickaxe. Make one in the Build menu (B)."
+- Beside a palm with the stone axe: glow and E cap on the palm, "Chop palm tree"; E ran "Chopping palm tree… move to stop", then "+2 wood · Palm tree", the palm faded out and the axe chip read 24. Walking north went straight through the palm's spot.
+- The save was version 6 with `tools: {axe: {tier: 'stone', uses: 25}}` after crafting.
+- A new Scout started with the axe chip at 25; beside the Pinefall pine the button read "Chop pine tree" with the glow and E cap. With the build menu open, 3 said "Needs 3 wood and 3 stone more" and changed nothing; the axe entry now offered the iron axe (2 wood · 1 stone · 3 iron).
+- At 390 × 844 the tools row, item box and Build button fit above the touch arrows, and the open build menu fits without scrolling.
+- Two layout problems found and fixed: the action button overlapped the tools row by 5 px (it and the toast now sit 30 px higher), and on phones the button covered the bottom of the taller build menu (it now hides while the menu is open).
+- No console errors, and no "tree and rock nodes without a picture" warning (every tree and rock node found its scenery picture).
+
+Not checked by hand: mining iron in Stonewater Canyons or Frostpeak, forging an iron tool at a camp, a stone tool's 3-uses warning and break toast, the Builder's hammer chip, a chopped tree staying hidden after walking away and back, and a tree growing back (three in-game days). The rules behind each are covered by the unit tests above; the drawing is not.
