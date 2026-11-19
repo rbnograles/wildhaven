@@ -75,6 +75,7 @@ export function startLoop(session, ui) {
         state.elapsed += dt;
         // The world clock: gathered supplies grow back on it, and day and night follow it.
         state.time += dt;
+        ui.build.update(); // keep the build ghost on the pointer
 
         // When a timed action finishes, award the supply it was aimed at (exactly once).
         const done = advanceAnimation(animator, dt, { moving, running });
@@ -105,7 +106,7 @@ export function startLoop(session, ui) {
       }
 
       // Drawing still happens while paused, so the world stays on screen behind the dialog.
-      renderer.draw(state, dt, animator);
+      renderer.draw(state, dt, animator, session.build);
       clock.sinceHud += dt;
       if (clock.sinceHud > HUD_EVERY) {
         ui.hud.update();

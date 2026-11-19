@@ -1,7 +1,8 @@
 // Builds the page the player sees: the character selection screen, the loading screen, the
-// in-game HUD, and the pause, map, journal and reset dialogs. Think of it as the stage set. It is
-// built once when the page loads; after that, other modules only show, hide or relabel its parts.
+// in-game HUD, and the pause, map, journal, reset and camp dialogs. Think of it as the stage set. It
+// is built once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
+import { CAMP_NAME_MAX } from '../data/balance.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
 
@@ -34,6 +35,8 @@ const icons = {
   close: '<path d="m6 6 12 12M6 18 18 6"/>',
   journal:
     '<path d="M3 5.5C5.7 4 9 4 12 6.2 15 4 18.3 4 21 5.5V19c-2.7-1.5-6-1.5-9 .7-3-2.2-6.3-2.2-9-.7Z"/><path d="M12 6.2v13.5"/>',
+  flame:
+    '<path d="M12 21c-3.9 0-6-2.6-6-5.6C6 11 11 9 10 3c3 1.8 5 4.4 5 7.2 1-.6 1.6-1.7 1.8-2.9C18 9 18 11 18 15.4 18 18.4 15.9 21 12 21Z"/>',
 };
 
 /**
@@ -137,7 +140,7 @@ export function mountLayout(app) {
         id="world"
         tabindex="0"
         role="application"
-        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather, M for map, J for journal, Escape to pause."
+        aria-label="Playable world. Use WASD or arrow keys to move, Shift to run, E to gather, B to place a campfire, M for map, J for journal, Escape to pause."
       ></div>
 
       <!-- Top bar: who you are, your resources, and the fullscreen and pause buttons. -->
@@ -199,11 +202,15 @@ export function mountLayout(app) {
       <!-- The "E" button. It appears when a supply is in reach and shows progress while gathering. -->
       <button id="interact" class="interact" hidden><kbd>E</kbd><span></span></button>
 
+      <!-- Build mode's bar: what a campfire costs, or why the ghost's spot is refused. ui/hud.js fills it. -->
+      <div id="build-bar" class="build-bar" role="status" hidden></div>
+
       <!-- The controls, shown for a few seconds each time the game opens. ui/hud.js shows and hides it. -->
       <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
         <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
-        ><span><kbd>E</kbd> Gather</span><span><kbd>M</kbd> Map</span
-        ><span><kbd>J</kbd> Journal</span><span><kbd>Esc</kbd> Pause</span>
+        ><span><kbd>E</kbd> Gather</span><span><kbd>B</kbd> Campfire</span
+        ><span><kbd>M</kbd> Map</span><span><kbd>J</kbd> Journal</span
+        ><span><kbd>Esc</kbd> Pause</span>
       </div>
 
       <!-- Arrow buttons for touch screens. CSS only shows them on narrow screens. -->
@@ -298,5 +305,21 @@ export function mountLayout(app) {
       </p>
       <button id="confirm-reset" class="primary">Start fresh ${icon('arrow')}</button
       ><button id="cancel-reset" class="text-button">Keep my adventure</button>
+    </dialog>
+
+    <!-- Naming a camp just founded. ui/camp.js fills in the suggested name. -->
+    <dialog
+      id="camp-name-dialog"
+      class="pause-dialog camp-name-dialog"
+      aria-labelledby="camp-name-title"
+    >
+      <form method="dialog">
+        <span class="modal-mark">${icon('flame')}</span>
+        <p class="dialog-kicker">A NEW CAMP</p>
+        <h2 id="camp-name-title">Name your camp</h2>
+        <label for="camp-name-input">Camp name</label>
+        <input id="camp-name-input" maxlength="${CAMP_NAME_MAX}" autocomplete="off" required />
+        <button class="primary" value="found">Found camp ${icon('arrow')}</button>
+      </form>
     </dialog>`;
 }

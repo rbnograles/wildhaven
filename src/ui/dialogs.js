@@ -18,12 +18,18 @@ import { $ } from './layout.js';
  *   Helpers the keyboard code and game loop use.
  */
 export function setupDialogs(session, ui) {
-  const dialogs = [$('pause-dialog'), $('map-dialog'), $('journal-dialog'), $('reset-dialog')];
+  const dialogs = [
+    $('pause-dialog'),
+    $('map-dialog'),
+    $('journal-dialog'),
+    $('reset-dialog'),
+    $('camp-name-dialog'),
+  ];
 
   /**
    * Tells whether the game is paused. Any open dialog pauses the game.
    *
-   * @returns {boolean} True while the pause, map, journal or reset dialog is open.
+   * @returns {boolean} True while the pause, map, journal, reset or camp name dialog is open.
    */
   const isPaused = () => dialogs.some((dialog) => dialog.open);
 

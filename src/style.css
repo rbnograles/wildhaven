@@ -1041,6 +1041,32 @@ kbd {
   transform: translate(-50%, 0);
 }
 
+/* ---- In-game: build mode ---- */
+/* The bar under the region name while placing a campfire: the cost, or why the spot is refused. */
+.build-bar {
+  position: absolute;
+  top: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(90vw, 620px);
+  padding: 10px 16px;
+  border-radius: 7px;
+  background: #263b31ec;
+  color: #f8f5e9;
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* A refused spot is told in words and with a red background, so colour is never the only signal. */
+.build-bar.blocked {
+  background: #6b2b22ee;
+}
+
+.build-bar[hidden] {
+  display: none;
+}
+
 /* ---- Dialogs: the shared look, then the pause and "fresh beginning" dialogs ---- */
 dialog {
   background: var(--paper);
@@ -1120,6 +1146,26 @@ dialog::backdrop {
 .pause-dialog .fine-print {
   font-size: 10px;
   margin: 16px 0 0;
+}
+
+/* ---- Dialogs: naming a new camp ---- */
+.camp-name-dialog label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.camp-name-dialog input {
+  width: 100%;
+  box-sizing: border-box;
+  font: 400 22px var(--serif);
+  padding: 10px 12px;
+  border: 1px solid #b8c1aa;
+  border-radius: 7px;
+  background: #fffdf4;
+  color: var(--ink);
 }
 
 /* ---- Dialogs: the big world map ---- */
@@ -1443,6 +1489,10 @@ dialog::backdrop {
   }
   .toast {
     bottom: 238px;
+    font-size: 11px;
+  }
+  .build-bar {
+    top: 215px;
     font-size: 11px;
   }
 

@@ -2,6 +2,7 @@
 // button) and the short pop-up messages called toasts. It only shows the game state; it never
 // changes it.
 import { RESOURCES } from '../data/supplies.js';
+import { CAMPFIRE_COST } from '../data/balance.js';
 import { NODES } from '../world/nodes.js';
 import { regionAt, regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
@@ -80,18 +81,29 @@ export function createHud(session) {
       line('quest-second', 'Signposts found', progress.signposts.found, progress.signposts.total);
     }
 
-    // The interact button: hidden when nothing is in reach, "busy" while an action runs.
+    // The interact button: hidden when there's nothing to do, "busy" while an action runs, and
+    // "Place campfire" in build mode.
     const node = nearbyNode(state),
       busy = NODES.find((n) => n.id === animator.pending?.target),
-      button = $('interact');
-    button.hidden = !node && !busy;
+      { build } = session,
+      button = $('interact'),
+      label = button.querySelector('span');
+    button.hidden = !node && !busy && !build.active;
     button.classList.toggle('busy', !!busy);
     button.setAttribute('aria-disabled', String(!!busy));
-    if (busy)
-      button.querySelector('span').textContent =
-        `${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
-    else if (node)
-      button.querySelector('span').textContent = `${node.verb} ${node.label.toLowerCase()}`;
+    if (busy) label.textContent = `${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
+    else if (build.active) label.textContent = 'Place campfire';
+    else if (node) label.textContent = `${node.verb} ${node.label.toLowerCase()}`;
+
+    // The build bar: what a campfire costs, or why it can't stand where the ghost is.
+    const bar = $('build-bar');
+    bar.hidden = !build.active;
+    if (!build.active) return;
+    const ok = !!build.check?.ok;
+    bar.classList.toggle('blocked', !ok);
+    bar.textContent = ok
+      ? `Campfire · ${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone · Click or E to place · Esc to cancel`
+      : `${build.check?.message ?? 'Choose a spot'} · Esc to cancel`;
   }
 
   /**

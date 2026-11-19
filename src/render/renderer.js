@@ -6,7 +6,9 @@ import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
 import { WILD } from '../data/supplies.js';
+import { FIRE_RADIUS } from '../data/balance.js';
 import { drawMap } from './maps.js';
+import { createLighting } from './lighting.js';
 import { nearbyNode, isAvailable } from '../actions/gather.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress } from '../animation/clips.js';
@@ -51,8 +53,9 @@ const CULL_MARGIN = 640;
  *
  * @param {HTMLElement} container - The page element the game canvas goes into.
  * @param {HTMLCanvasElement} miniCanvas - The small canvas for the minimap in the corner.
- * @returns {Promise<object>} The renderer: `draw(state, dt, animator)` for each frame,
- *   `drawMap(canvas, state)` for the big map, and `resetCamera()` after switching characters.
+ * @returns {Promise<object>} The renderer: `draw(state, dt, animator, build)` for each frame,
+ *   `drawMap(canvas, state)` for the big map, `screenToWorld(clientX, clientY)` for the build
+ *   ghost, and `resetCamera()` after switching characters.
  */
 export async function createRenderer(container, miniCanvas) {
   const mini = miniCanvas.getContext('2d');
@@ -72,15 +75,20 @@ export async function createRenderer(container, miniCanvas) {
 
   // Scene objects filled in by create() below. `snap` makes the next draw skip fade animations.
   // `chunks` maps a chunk key to the scenery images in it; `shown` holds the keys now visible.
+  // `fires` maps "<character>:<camp id>" to that camp's campfire sprite.
   let player,
     shadow,
     supplies,
     cue,
     bar,
+    ghost,
+    ring,
+    lighting,
     webgl = false,
     snap = true,
     shown = new Set();
-  const chunks = new Map();
+  const chunks = new Map(),
+    fires = new Map();
 
   const scene = await new Promise((resolve, reject) => {
     const timer = setTimeout(
@@ -215,6 +223,19 @@ export async function createRenderer(container, miniCanvas) {
         // chosen character's pose; the scout facing south is only the starting picture.
         shadow = this.add.ellipse(0, 0, 38, 14, 0x172e34, 0.22);
         player = this.add.image(0, 0, 'scout-idle', '0-0').setOrigin(0.5, 1);
+
+        // The ghost campfire shown while placing one, and the ring of warmth it would give.
+        // Both sit above the night layer so they stay visible in the dark.
+        ghost = this.add
+          .image(0, 0, 'object-campfire')
+          .setOrigin(...objectSpecs.campfire.origin)
+          .setAlpha(0.75)
+          .setDepth(WORLD.height + 0.75)
+          .setVisible(false);
+        ring = this.add.graphics().setDepth(WORLD.height + 0.74);
+
+        // The night layer and the light around fires (render/lighting.js).
+        lighting = createLighting(this, reducedMotion);
         this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height).setRoundPixels(true);
 
         clearTimeout(timer);
@@ -257,13 +278,16 @@ export async function createRenderer(container, miniCanvas) {
    *
    * The camera follows the player smoothly, like someone filming who walks a step behind.
    * Supplies fade out when gathered, the one in reach glows with an E above it, and while an
-   * action runs a progress bar fills up instead. Last, the player sprite gets this frame's pose.
+   * action runs a progress bar fills up instead. Camp fires are drawn, the player sprite gets this
+   * frame's pose, the build ghost follows the pointer, and the night layer goes over everything.
    *
    * @param {object} state - The game being played.
    * @param {number} dt - Seconds since the last frame.
    * @param {object} animator - The player's animation state (current clip, time, pending action).
+   * @param {object|null} [build=null] - Build mode from the session: when `active`, the ghost is
+   *   drawn at `x`/`y`, coloured by `check.ok`.
    */
-  function draw(state, dt, animator) {
+  function draw(state, dt, animator, build = null) {
     // The game boots while its container is still hidden, so the canvas is sized here once it is on screen.
     const w = container.clientWidth,
       h = container.clientHeight;
@@ -303,6 +327,26 @@ export async function createRenderer(container, miniCanvas) {
     for (const key of next)
       if (!shown.has(key)) for (const image of chunks.get(key)) image.setVisible(true);
     shown = next;
+
+    // Campfires: one sprite per camp, made when the camp is founded. Keys include the character,
+    // so switching characters never reuses another character's fire.
+    const fireKeys = new Set(state.camps.map((camp) => `${state.character}:${camp.id}`));
+    for (const [key, sprite] of fires)
+      if (!fireKeys.has(key)) {
+        sprite.destroy();
+        fires.delete(key);
+      }
+    for (const camp of state.camps) {
+      const key = `${state.character}:${camp.id}`;
+      if (!fires.has(key))
+        fires.set(
+          key,
+          scene.add
+            .image(camp.x, camp.y, 'object-campfire')
+            .setOrigin(...objectSpecs.campfire.origin)
+            .setDepth(camp.y),
+        );
+    }
 
     // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
     const nearest = nearbyNode(state),
@@ -369,6 +413,27 @@ export async function createRenderer(container, miniCanvas) {
       .setDepth(state.player.y);
     shadow.setPosition(state.player.x, state.player.y - 1).setDepth(state.player.y - 0.5);
 
+    // The ghost campfire while placing one: tinted green where it may stand and red where it may
+    // not, with a ring showing how far a new fire's warmth reaches.
+    ring.clear();
+    ghost.setVisible(!!build?.active);
+    if (build?.active) {
+      const ok = !!build.check?.ok;
+      ghost.setPosition(build.x, build.y).setTint(ok ? 0xb6f0a0 : 0xff8a7a);
+      ring.lineStyle(2, ok ? 0xf7f1de : 0xff8a7a, 0.85).strokeCircle(build.x, build.y, FIRE_RADIUS);
+    }
+
+    // Night: the dark layer covers what the camera sees. The camera stops at the world's edge,
+    // so the covered area is kept inside the world the same way.
+    const seenW = view.width / zoom / 2,
+      seenH = view.height / zoom / 2;
+    lighting.draw(state, {
+      x: Math.min(Math.max(camera.x, seenW), WORLD.width - seenW) - seenW,
+      y: Math.min(Math.max(camera.y, seenH), WORLD.height - seenH) - seenH,
+      width: seenW * 2,
+      height: seenH * 2,
+    });
+
     drawMap(mini, overview, state, miniCanvas.width, miniCanvas.height, true);
   }
 
@@ -383,6 +448,19 @@ export async function createRenderer(container, miniCanvas) {
      */
     drawMap: (canvas, state) =>
       drawMap(canvas.getContext('2d'), overview, state, canvas.width, canvas.height),
+
+    /**
+     * Turns a spot on the screen (such as the mouse) into a spot in the world.
+     *
+     * @param {number} clientX - Pixels from the left edge of the page.
+     * @param {number} clientY - Pixels from the top edge of the page.
+     * @returns {{x: number, y: number}} The world position under that spot.
+     */
+    screenToWorld: (clientX, clientY) => {
+      const box = scene.game.canvas.getBoundingClientRect();
+      const point = scene.cameras.main.getWorldPoint(clientX - box.left, clientY - box.top);
+      return { x: point.x, y: point.y };
+    },
 
     /**
      * Makes the next frame jump straight to the player instead of gliding there.
