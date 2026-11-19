@@ -1,5 +1,15 @@
 # Starting character sprites — first pass
 
+## Diagonal locomotion
+
+`diagonal/` contains northeast and southeast walking (four frames) and running (six frames) sheets for all three characters. Northwest and southwest use a horizontal renderer flip, as the existing side-walk does. See `diagonal/README.md` for W+A/W+D/S+A/S+D mappings and `diagonal/manifest.json` for frame rectangles. The game plays them while the player moves diagonally.
+
+## Survival states
+
+The newer `states/dying-v2.png` adds a six-frame collapse ending flat on the back. Individual `<id>/<id>-dying-v2.png` sheets have six uniform 336×320 cells; `states/dying-v2.manifest.json` records their frame layout. This version is new art only and is not registered in gameplay.
+
+`states/` contains seven additional four-frame animation sheets for all three characters: dying, sleeping, waking up, hungry, hunger damage, cold damage, and attack damage. Each sheet has Scout, Builder, and Survivor in rows from top to bottom. See `states/README.md` for playback notes and `states/manifest.json` for measured sheet and cell dimensions. All but dying are used in the game; `states/README.md` says when each one plays.
+
 ## Folder layout
 
 - `scout/`, `builder/` and `survivor/` each hold every sheet the game loads for that character: `<id>-idle-v1.png` (standing), `<id>-side-walk-v2.png` (walking west or east), `<id>-locomotion.png` (walk and run), `<id>-run-v2.png` (run) and `<id>-actions.png` (gather, build, craft, fight, swim). Each folder also has `<id>-side-walk.prompt.txt`, a per-character side-walk prompt whose sheet is not in the repo.

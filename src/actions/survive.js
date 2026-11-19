@@ -10,6 +10,8 @@ import {
   WARM_BY_FIRE,
   WARM_BY_DAY,
   FREEZE_SECONDS,
+  STARVE_SECONDS,
+  STARVE_FLOOR,
   HEAL_BY_FIRE,
   HUNGER_SECONDS,
 } from '../data/balance.js';
@@ -57,6 +59,8 @@ const snowChill = (snow, phase) => {
  * and in daylight, holds at dusk, and drains at night away from a fire (faster on an empty
  * stomach) unless tea holds the cold off. In the snow it drains at every hour, and faster still.
  * Health drains while freezing and refills slowly by a fire for a player who isn't starving.
+ * Starving wears health down too, slowly, and only as far as STARVE_FLOOR: an empty stomach
+ * alone never makes the player pass out.
  *
  * @param {object} state - The game being played. `time`, `meters`, `tea` and camp needs change.
  * @param {number} dt - Seconds of game time to move forward.
@@ -89,6 +93,10 @@ export function tickSurvival(state, dt) {
   if (!warm && cold && meters.warmth <= 0)
     meters.health = clamp(meters.health - (100 / FREEZE_SECONDS) * dt);
   else if (warm && meters.hunger > 0) meters.health = clamp(meters.health + HEAL_BY_FIRE * dt);
+
+  // Starving wears health down slowly, but never below the floor (freezing still can).
+  if (starving && meters.health > STARVE_FLOOR)
+    meters.health = Math.max(STARVE_FLOOR, meters.health - (100 / STARVE_SECONDS) * dt);
 
   // Report each moment once, on the step where it happens.
   const events = [];
@@ -126,12 +134,26 @@ export function skipTo(state, time) {
 }
 
 /**
+ * Says what is draining health, for the word beside the health meter.
+ *
+ * @param {object} state - The game being played.
+ * @param {boolean} freezing - True when the cold is draining health right now.
+ * @returns {string} 'freezing', 'starving' (hungry and still above STARVE_FLOOR) or ''.
+ */
+function healthTrend(state, freezing) {
+  if (freezing) return 'freezing';
+  const { hunger, health } = state.meters;
+  return hunger <= 0 && health > STARVE_FLOOR ? 'starving' : '';
+}
+
+/**
  * Says why each meter is changing, for the small word beside it on the HUD.
  *
  * @param {object} state - The game being played.
  * @returns {{warmth: string, health: string, hunger: string}} Warmth: 'warming' by a fire, 'tea'
  *   while tea holds off the cold, 'snow' while the snow drains it, 'cold' while the night does.
- *   Health: 'freezing'. Hunger: 'starving'. An empty string means there is nothing to say.
+ *   Health: 'freezing', or 'starving' while an empty stomach is wearing it down. Hunger:
+ *   'starving'. An empty string means there is nothing to say.
  */
 export function meterTrends(state) {
   const snow = inSnow(state.player.x, state.player.y),
@@ -143,7 +165,7 @@ export function meterTrends(state) {
   else if (cold) warmth = snow ? 'snow' : 'cold';
   return {
     warmth,
-    health: !warm && cold && state.meters.warmth <= 0 ? 'freezing' : '',
+    health: healthTrend(state, !warm && cold && state.meters.warmth <= 0),
     hunger: state.meters.hunger <= 0 ? 'starving' : '',
   };
 }

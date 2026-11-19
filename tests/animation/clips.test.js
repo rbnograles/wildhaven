@@ -11,6 +11,9 @@ import {
   advanceAnimation,
   cancelAction,
   actionProgress,
+  startSleep,
+  wakeUp,
+  diagonalOf,
   sampleAnimation,
   steadyAnchors,
 } from '../../src/animation/clips.js';
@@ -29,8 +32,15 @@ test('every clip the game plays has its own definition', () => {
     'fight',
     'swim',
     'chop',
+    'sleep',
+    'wake',
+    'hungry',
+    'hurtHunger',
+    'hurtCold',
+    'hurtAttack',
   ]);
-  for (const name of ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop'])
+  const four = ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop', 'sleep', 'wake'];
+  for (const name of [...four, 'hurtHunger', 'hurtCold', 'hurtAttack'])
     assert.equal(CLIPS[name].frames, 4);
   assert.equal(CLIPS.run.frames, 6);
 });
@@ -194,4 +204,156 @@ test('animation state is separate from saved game state', () => {
 
   assert.equal(serializeGame(game), before);
   assert.equal(startAction(a, 'unknown'), false);
+});
+
+// Guards the survival poses: each has its own one-row sheet, faces east and mirrors for west,
+// and the hungry pose never asks for a column the four-frame sheet doesn't have.
+test('survival poses use their own sheets and mirror for west', () => {
+  for (const name of ['sleep', 'wake', 'hungry', 'hurtHunger', 'hurtCold', 'hurtAttack']) {
+    assert.equal(sampleAnimation(name, 0, 2).sheet, name);
+    assert.equal(sampleAnimation(name, 0, 2).row, 0);
+    assert.equal(sampleAnimation(name, 0, 2).flip, false);
+    assert.equal(sampleAnimation(name, 0, 1).flip, true);
+  }
+  for (let step = 0; step < CLIPS.hungry.frames; step++) {
+    const { frame } = sampleAnimation('hungry', step / CLIPS.hungry.fps, 2);
+    assert.ok(frame >= 0 && frame < 4);
+  }
+});
+
+// Guards against a well-fed character rubbing their belly, and against the hungry pose
+// showing while walking (it is a standing pose, so the feet would slide).
+test('a hungry character stands with the hungry pose but walks normally', () => {
+  const a = createAnimator();
+  advanceAnimation(a, 0.1, { hungry: true });
+  assert.equal(a.clip, 'hungry');
+  advanceAnimation(a, 0.1, { hungry: true, moving: true });
+  assert.equal(a.clip, 'walk');
+  advanceAnimation(a, 0.1, {});
+  assert.equal(a.clip, 'idle');
+});
+
+// Guards the flinch: it plays once all the way through (also while walking), then waits its
+// `every` seconds before it may play again, so a freezing character isn't stuck flinching.
+test('a hurt reaction plays once, then waits before it plays again', () => {
+  const a = createAnimator(),
+    length = CLIPS.hurtCold.frames / CLIPS.hurtCold.fps;
+  advanceAnimation(a, 0.05, { hurt: 'hurtCold' });
+  assert.equal(a.clip, 'hurtCold');
+  assert.equal(a.time, 0);
+
+  advanceAnimation(a, length / 2, { hurt: 'hurtCold', moving: true });
+  assert.equal(a.clip, 'hurtCold');
+  advanceAnimation(a, length / 2, { hurt: 'hurtCold', moving: true });
+  assert.equal(a.clip, 'walk');
+  assert.equal(a.reaction, null);
+
+  advanceAnimation(a, 0.5, { hurt: 'hurtCold' });
+  assert.equal(a.clip, 'idle');
+  advanceAnimation(a, CLIPS.hurtCold.every, { hurt: 'hurtCold' });
+  assert.equal(a.clip, 'hurtCold');
+});
+
+// Guards against a flinch stopping a gather halfway (which would lose it), and against clip
+// names that aren't reactions (a typo, or 'walk') being played as one.
+test('a hurt reaction never interrupts a timed action and only reaction clips flinch', () => {
+  const a = createAnimator();
+  startAction(a, 'gather', 'pine-wood', 6);
+  advanceAnimation(a, 1, { hurt: 'hurtCold' });
+  assert.equal(a.clip, 'gather');
+  assert.equal(a.pending.target, 'pine-wood');
+
+  const b = createAnimator();
+  advanceAnimation(b, 0.1, { hurt: 'walk' });
+  assert.equal(b.clip, 'idle');
+  advanceAnimation(b, 0.1, { hurt: 'nonsense' });
+  assert.equal(b.clip, 'idle');
+});
+
+// Guards passing out: the sleeper stays down (no walking, no gathering) until woken, then gets
+// up through the wake action, which finishes without naming a target, so nothing is awarded.
+test('sleep lasts until woken, blocks actions, and waking plays once', () => {
+  const a = createAnimator();
+  startAction(a, 'gather', 'pine-wood', 6);
+  startSleep(a);
+  assert.equal(a.pending, null);
+  assert.equal(advanceAnimation(a, 30, { moving: true, hurt: 'hurtCold' }), null);
+  assert.equal(a.clip, 'sleep');
+  assert.equal(startAction(a, 'gather', 'pine-wood'), false);
+
+  assert.equal(wakeUp(a), true);
+  assert.equal(wakeUp(a), false);
+  assert.equal(a.clip, 'wake');
+  assert.deepEqual(advanceAnimation(a, CLIPS.wake.frames / CLIPS.wake.fps, {}), {
+    clip: 'wake',
+    target: null,
+  });
+  assert.equal(a.clip, 'idle');
+});
+
+// Guards the rest nap: it ends by itself, so a rested player is never left lying down forever.
+test('a timed nap ends by itself and the character gets up', () => {
+  const a = createAnimator();
+  startSleep(a, 2);
+  advanceAnimation(a, 1.5, {});
+  assert.equal(a.clip, 'sleep');
+  advanceAnimation(a, 0.6, {});
+  assert.equal(a.clip, 'wake');
+  assert.equal(a.asleep, 0);
+  assert.equal(wakeUp(createAnimator()), false);
+});
+
+// Guards the two-key directions: W+D must read as north-east, S+A as south-west and so on, and
+// a single key (or none, or a broken number) must never be taken for a diagonal.
+test('two movement keys name a diagonal and one key does not', () => {
+  assert.equal(diagonalOf(1, -1), 'ne');
+  assert.equal(diagonalOf(-1, -1), 'nw');
+  assert.equal(diagonalOf(1, 1), 'se');
+  assert.equal(diagonalOf(-1, 1), 'sw');
+  assert.equal(diagonalOf(0.3, -4), 'ne');
+  for (const [dx, dy] of [
+    [1, 0],
+    [0, -1],
+    [0, 0],
+    [NaN, 1],
+  ])
+    assert.equal(diagonalOf(dx, dy), null);
+});
+
+// Guards against a diagonal walk showing the wrong sheet or facing the wrong way: north and
+// south diagonals have their own sheets, west ones mirror, and run keeps six frames and its hop.
+test('diagonal walking and running use their own sheets and mirror for the west', () => {
+  for (const [diagonal, half, flip] of [
+    ['ne', 'NE', false],
+    ['nw', 'NE', true],
+    ['se', 'SE', false],
+    ['sw', 'SE', true],
+  ]) {
+    const walk = sampleAnimation('walk', 0, 3, undefined, diagonal),
+      run = sampleAnimation('run', 2 / CLIPS.run.fps, 0, undefined, diagonal);
+    assert.deepEqual([walk.sheet, walk.row, walk.flip], ['walk' + half, 0, flip]);
+    assert.deepEqual([run.sheet, run.row, run.flip, run.frame], ['run' + half, 0, flip, 2]);
+    assert.ok(run.lift > 0);
+    assert.equal(walk.lift, 0);
+  }
+
+  // Standing, actions and nonsense diagonals keep their usual pictures.
+  assert.equal(sampleAnimation('idle', 0, 3, undefined, 'ne').sheet, 'idleLoop');
+  assert.equal(sampleAnimation('gather', 0, 2, undefined, 'se').sheet, 'actions');
+  assert.equal(sampleAnimation('walk', 0, 2, undefined, 'up').sheet, 'locomotion');
+});
+
+// Guards against a character who has stopped (or is gathering, or asleep) still being drawn
+// with the diagonal walk from the last step.
+test('the animator keeps a diagonal only while really moving', () => {
+  const a = createAnimator();
+  advanceAnimation(a, 0.1, { moving: true, diagonal: 'ne' });
+  assert.equal(a.diagonal, 'ne');
+  advanceAnimation(a, 0.1, { moving: true });
+  assert.equal(a.diagonal, null);
+  advanceAnimation(a, 0.1, { moving: true, diagonal: 'sw' });
+  advanceAnimation(a, 0.1, { moving: false, diagonal: 'sw' });
+  assert.equal(a.diagonal, null);
+  advanceAnimation(a, 0.1, { moving: true, diagonal: 'sideways' });
+  assert.equal(a.diagonal, null);
 });

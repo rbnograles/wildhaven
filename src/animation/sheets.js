@@ -23,6 +23,36 @@ import survivorWalk from '../../assets/characters/survivor/survivor-locomotion.p
 import scoutActions from '../../assets/characters/scout/scout-actions.png';
 import builderActions from '../../assets/characters/builder/builder-actions.png';
 import survivorActions from '../../assets/characters/survivor/survivor-actions.png';
+import scoutSleep from '../../assets/characters/scout/scout-sleeping.png';
+import builderSleep from '../../assets/characters/builder/builder-sleeping.png';
+import survivorSleep from '../../assets/characters/survivor/survivor-sleeping.png';
+import scoutWake from '../../assets/characters/scout/scout-waking-up.png';
+import builderWake from '../../assets/characters/builder/builder-waking-up.png';
+import survivorWake from '../../assets/characters/survivor/survivor-waking-up.png';
+import scoutHungry from '../../assets/characters/scout/scout-hungry.png';
+import builderHungry from '../../assets/characters/builder/builder-hungry.png';
+import survivorHungry from '../../assets/characters/survivor/survivor-hungry.png';
+import scoutHurtHunger from '../../assets/characters/scout/scout-damage-hunger.png';
+import builderHurtHunger from '../../assets/characters/builder/builder-damage-hunger.png';
+import survivorHurtHunger from '../../assets/characters/survivor/survivor-damage-hunger.png';
+import scoutHurtCold from '../../assets/characters/scout/scout-damage-cold.png';
+import builderHurtCold from '../../assets/characters/builder/builder-damage-cold.png';
+import survivorHurtCold from '../../assets/characters/survivor/survivor-damage-cold.png';
+import scoutHurtAttack from '../../assets/characters/scout/scout-damage-attack.png';
+import builderHurtAttack from '../../assets/characters/builder/builder-damage-attack.png';
+import survivorHurtAttack from '../../assets/characters/survivor/survivor-damage-attack.png';
+import scoutWalkNE from '../../assets/characters/scout/scout-walk-ne.png';
+import builderWalkNE from '../../assets/characters/builder/builder-walk-ne.png';
+import survivorWalkNE from '../../assets/characters/survivor/survivor-walk-ne.png';
+import scoutWalkSE from '../../assets/characters/scout/scout-walk-se.png';
+import builderWalkSE from '../../assets/characters/builder/builder-walk-se.png';
+import survivorWalkSE from '../../assets/characters/survivor/survivor-walk-se.png';
+import scoutRunNE from '../../assets/characters/scout/scout-run-ne.png';
+import builderRunNE from '../../assets/characters/builder/builder-run-ne.png';
+import survivorRunNE from '../../assets/characters/survivor/survivor-run-ne.png';
+import scoutRunSE from '../../assets/characters/scout/scout-run-se.png';
+import builderRunSE from '../../assets/characters/builder/builder-run-se.png';
+import survivorRunSE from '../../assets/characters/survivor/survivor-run-se.png';
 import { CHARACTERS } from '../data/characters.js';
 import { sampleAnimation, steadyAnchors } from './clips.js';
 
@@ -33,7 +63,12 @@ import { sampleAnimation, steadyAnchors } from './clips.js';
  * size the others. `idleLoop` is standing still and breathing (4 rows: south, west, east, north).
  * `chop` is swinging the axe (one row, facing east). `profile` is walking west or east
  * (one row). `locomotion` is walking and running, `run` is the newer run (3 rows: south, east,
- * north), and `actions` is gathering and the other actions.
+ * north), and `actions` is gathering and the other actions. The survival sheets are one row each,
+ * facing east: `sleep` (lying down, breathing), `wake` (getting up), `hungry` (hand on belly) and
+ * the flinches `hurtHunger`, `hurtCold` and `hurtAttack`. They are cut from the all-character
+ * pictures in assets/characters/states/ by tools/split-character-sheets.py. `walkNE`, `walkSE`,
+ * `runNE` and `runSE` are walking and running diagonally (one row each, heading north-east or
+ * south-east, mirrored for the west diagonals), cut by the same tool from assets/characters/diagonal/.
  *
  * `url` is the image file. `edges` are the y positions where one row of frames ends and the
  * next begins, top to bottom. Measured transparent gutters, rather than assumed equal rows,
@@ -50,6 +85,16 @@ const SOURCES = {
     locomotion: { url: scoutWalk, edges: [0, 228, 447, 663, 889, 1112, 1331, 1547, 1774] },
     run: { url: scoutRun, edges: [0, 290, 579, 887], steady: true, columns: 6 },
     actions: { url: scoutActions, edges: [0, 295, 592, 852, 1153, 1402] },
+    sleep: { url: scoutSleep, edges: [0, 362] },
+    wake: { url: scoutWake, edges: [0, 362] },
+    hungry: { url: scoutHungry, edges: [0, 418], steady: true },
+    hurtHunger: { url: scoutHurtHunger, edges: [0, 418] },
+    hurtCold: { url: scoutHurtCold, edges: [0, 418], steady: true },
+    hurtAttack: { url: scoutHurtAttack, edges: [0, 362] },
+    walkNE: { url: scoutWalkNE, edges: [0, 418], steady: true },
+    walkSE: { url: scoutWalkSE, edges: [0, 418], steady: true },
+    runNE: { url: scoutRunNE, edges: [0, 341], steady: true, columns: 6 },
+    runSE: { url: scoutRunSE, edges: [0, 341], steady: true, columns: 6 },
   },
   builder: {
     idle: { url: builderIdle, edges: [0, 418] },
@@ -59,6 +104,16 @@ const SOURCES = {
     locomotion: { url: builderWalk, edges: [0, 228, 446, 667, 891, 1109, 1332, 1552, 1774] },
     run: { url: builderRun, edges: [0, 292, 579, 887], steady: true, columns: 6 },
     actions: { url: builderActions, edges: [0, 308, 627, 890, 1190, 1402] },
+    sleep: { url: builderSleep, edges: [0, 362] },
+    wake: { url: builderWake, edges: [0, 362] },
+    hungry: { url: builderHungry, edges: [0, 418], steady: true },
+    hurtHunger: { url: builderHurtHunger, edges: [0, 418] },
+    hurtCold: { url: builderHurtCold, edges: [0, 418], steady: true },
+    hurtAttack: { url: builderHurtAttack, edges: [0, 362] },
+    walkNE: { url: builderWalkNE, edges: [0, 418], steady: true },
+    walkSE: { url: builderWalkSE, edges: [0, 418], steady: true },
+    runNE: { url: builderRunNE, edges: [0, 342], steady: true, columns: 6 },
+    runSE: { url: builderRunSE, edges: [0, 342], steady: true, columns: 6 },
   },
   survivor: {
     idle: { url: survivorIdle, edges: [0, 418] },
@@ -68,8 +123,24 @@ const SOURCES = {
     locomotion: { url: survivorWalk, edges: [0, 241, 456, 675, 902, 1119, 1331, 1554, 1774] },
     run: { url: survivorRun, edges: [0, 294, 583, 887], steady: true, columns: 6 },
     actions: { url: survivorActions, edges: [0, 298, 602, 883, 1188, 1402] },
+    sleep: { url: survivorSleep, edges: [0, 362] },
+    wake: { url: survivorWake, edges: [0, 362] },
+    hungry: { url: survivorHungry, edges: [0, 418], steady: true },
+    hurtHunger: { url: survivorHurtHunger, edges: [0, 418] },
+    hurtCold: { url: survivorHurtCold, edges: [0, 418], steady: true },
+    hurtAttack: { url: survivorHurtAttack, edges: [0, 362] },
+    walkNE: { url: survivorWalkNE, edges: [0, 418], steady: true },
+    walkSE: { url: survivorWalkSE, edges: [0, 418], steady: true },
+    runNE: { url: survivorRunNE, edges: [0, 341], steady: true, columns: 6 },
+    runSE: { url: survivorRunSE, edges: [0, 341], steady: true, columns: 6 },
   },
 };
+
+/**
+ * How tall the first pose of each standing survival sheet is, as a share of standing straight.
+ * `loadCharacterSheets` uses it to size those sheets, so a hunched pose isn't stretched to full height.
+ */
+const STOOP = { hungry: 1, hurtHunger: 0.97, hurtCold: 0.97, hurtAttack: 0.97 };
 
 /**
  * Loads one image file and waits until it is ready to draw.
@@ -229,6 +300,17 @@ export function loadCharacterSheets() {
       atlas.idleLoop.referenceHeight = atlas.idleLoop.frames[0][0].height / standing;
       atlas.chop.referenceHeight = atlas.chop.frames[0][0].height / (standing * 0.97);
 
+      // The survival sheets were painted at their own sizes too. The standing ones are sized by
+      // their first pose, a little shorter than standing straight where the body is hunched.
+      // Getting up is sized by its last pose, which stands straight, and sleeping so that the
+      // sleeper is as long on the ground as the lying pose that getting up starts from.
+      for (const [name, hunch] of Object.entries(STOOP))
+        atlas[name].referenceHeight = atlas[name].frames[0][0].height / (standing * hunch);
+      atlas.wake.referenceHeight = atlas.wake.frames[0][3].height / standing;
+      atlas.sleep.referenceHeight =
+        (atlas.sleep.frames[0][0].width * atlas.wake.referenceHeight) /
+        atlas.wake.frames[0][0].width;
+
       atlas.idle.referenceHeight = atlases.scout.idle.referenceHeight;
       atlas.profile.referenceHeight = atlases.scout.profile.referenceHeight;
     }
@@ -253,15 +335,17 @@ export function loadCharacterSheets() {
  * @param {number} time - Seconds the clip has been playing.
  * @param {number} direction - Facing: 0 south, 1 west, 2 east, 3 north.
  * @param {boolean} [loop] - Start the clip over at the end. Defaults to the clip's own setting.
+ * @param {string|null} [diagonal=null] - 'ne', 'nw', 'se' or 'sw' while walking or running diagonally.
  * @returns {{sheet: object, key: string, name: string, frame: object, flip: boolean, lift: number}}
  *   The sheet, its texture key, the frame's `row-column` name and box, whether to mirror it, and its lift.
  */
-export function resolvePose(sheets, characterId, clip, time, direction, loop) {
-  const sample = sampleAnimation(clip, time, direction, loop);
+export function resolvePose(sheets, characterId, clip, time, direction, loop, diagonal = null) {
+  const sample = sampleAnimation(clip, time, direction, loop, diagonal);
   const character = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
 
-  // Walking sideways uses the side-walk sheet; everything else uses the clip's own sheet.
-  const profile = clip === 'walk' && (direction === 1 || direction === 2);
+  // Walking sideways uses the side-walk sheet; everything else (a diagonal walk included, which
+  // `sampleAnimation` has already pointed at its own sheet) uses the sheet the sample names.
+  const profile = sample.sheet === 'locomotion' && (direction === 1 || direction === 2);
   const sheetName = profile ? 'profile' : sample.sheet;
   const sheet = sheets.atlases[character.id][sheetName];
 
@@ -299,8 +383,9 @@ export async function loadCharacterPainter() {
      * @param {number} y - Where the feet go, down.
      * @param {number} [height=105] - How tall to draw the character, in pixels.
      * @param {boolean} [loop] - Start the clip over at the end. Defaults to the clip's own setting.
+     * @param {string|null} [diagonal=null] - 'ne', 'nw', 'se' or 'sw' for a diagonal walk or run.
      */
-    draw(ctx, characterId, clip, time, direction, x, y, height = 105, loop) {
+    draw(ctx, characterId, clip, time, direction, x, y, height = 105, loop, diagonal = null) {
       const { sheet, frame, flip, lift } = resolvePose(
         sheets,
         characterId,
@@ -308,6 +393,7 @@ export async function loadCharacterPainter() {
         time,
         direction,
         loop,
+        diagonal,
       );
       const scale = height / sheet.referenceHeight;
 

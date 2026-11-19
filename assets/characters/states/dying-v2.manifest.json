@@ -1,0 +1,387 @@
+{
+  "version": 1,
+  "generator": "built-in image_gen",
+  "source": "dying-v2.png",
+  "sourceSize": [
+    1774,
+    887
+  ],
+  "columns": 6,
+  "rows": 3,
+  "fps": 6,
+  "loop": false,
+  "holdLast": true,
+  "facing": "east",
+  "cellSize": [
+    336,
+    320
+  ],
+  "anchor": [
+    0.5,
+    0.95
+  ],
+  "packing": "Original pixels copied without resizing, centered horizontally and bottom-aligned at y=304 in each 336x320 cell. Source grid is not uniform; use the exact sourceRect entries.",
+  "integration": "Art only; not registered in gameplay",
+  "characters": [
+    {
+      "id": "scout",
+      "file": "../scout/scout-dying-v2.png",
+      "frames": [
+        {
+          "index": 0,
+          "sourceRect": [
+            64,
+            15,
+            129,
+            280
+          ],
+          "cellRect": [
+            0,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            103,
+            24
+          ]
+        },
+        {
+          "index": 1,
+          "sourceRect": [
+            307,
+            41,
+            179,
+            254
+          ],
+          "cellRect": [
+            336,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            78,
+            50
+          ]
+        },
+        {
+          "index": 2,
+          "sourceRect": [
+            545,
+            80,
+            219,
+            210
+          ],
+          "cellRect": [
+            672,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            58,
+            94
+          ]
+        },
+        {
+          "index": 3,
+          "sourceRect": [
+            803,
+            123,
+            281,
+            163
+          ],
+          "cellRect": [
+            1008,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            27,
+            141
+          ]
+        },
+        {
+          "index": 4,
+          "sourceRect": [
+            1127,
+            164,
+            290,
+            130
+          ],
+          "cellRect": [
+            1344,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            23,
+            174
+          ]
+        },
+        {
+          "index": 5,
+          "sourceRect": [
+            1448,
+            188,
+            312,
+            105
+          ],
+          "cellRect": [
+            1680,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            12,
+            199
+          ]
+        }
+      ]
+    },
+    {
+      "id": "builder",
+      "file": "../builder/builder-dying-v2.png",
+      "frames": [
+        {
+          "index": 0,
+          "sourceRect": [
+            43,
+            301,
+            159,
+            281
+          ],
+          "cellRect": [
+            0,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            88,
+            23
+          ]
+        },
+        {
+          "index": 1,
+          "sourceRect": [
+            280,
+            336,
+            205,
+            246
+          ],
+          "cellRect": [
+            336,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            65,
+            58
+          ]
+        },
+        {
+          "index": 2,
+          "sourceRect": [
+            522,
+            374,
+            217,
+            204
+          ],
+          "cellRect": [
+            672,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            59,
+            100
+          ]
+        },
+        {
+          "index": 3,
+          "sourceRect": [
+            781,
+            396,
+            290,
+            180
+          ],
+          "cellRect": [
+            1008,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            23,
+            124
+          ]
+        },
+        {
+          "index": 4,
+          "sourceRect": [
+            1111,
+            450,
+            308,
+            130
+          ],
+          "cellRect": [
+            1344,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            14,
+            174
+          ]
+        },
+        {
+          "index": 5,
+          "sourceRect": [
+            1443,
+            463,
+            322,
+            116
+          ],
+          "cellRect": [
+            1680,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            7,
+            188
+          ]
+        }
+      ]
+    },
+    {
+      "id": "survivor",
+      "file": "../survivor/survivor-dying-v2.png",
+      "frames": [
+        {
+          "index": 0,
+          "sourceRect": [
+            39,
+            595,
+            142,
+            284
+          ],
+          "cellRect": [
+            0,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            97,
+            20
+          ]
+        },
+        {
+          "index": 1,
+          "sourceRect": [
+            259,
+            628,
+            207,
+            250
+          ],
+          "cellRect": [
+            336,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            64,
+            54
+          ]
+        },
+        {
+          "index": 2,
+          "sourceRect": [
+            497,
+            678,
+            233,
+            196
+          ],
+          "cellRect": [
+            672,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            51,
+            108
+          ]
+        },
+        {
+          "index": 3,
+          "sourceRect": [
+            763,
+            702,
+            296,
+            171
+          ],
+          "cellRect": [
+            1008,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            20,
+            133
+          ]
+        },
+        {
+          "index": 4,
+          "sourceRect": [
+            1111,
+            747,
+            305,
+            129
+          ],
+          "cellRect": [
+            1344,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            15,
+            175
+          ]
+        },
+        {
+          "index": 5,
+          "sourceRect": [
+            1441,
+            772,
+            325,
+            103
+          ],
+          "cellRect": [
+            1680,
+            0,
+            336,
+            320
+          ],
+          "contentOffset": [
+            5,
+            201
+          ]
+        }
+      ]
+    }
+  ]
+}

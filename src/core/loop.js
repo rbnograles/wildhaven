@@ -7,11 +7,11 @@ import { movePlayer } from '../actions/move.js';
 import { finishInteraction } from '../actions/interact.js';
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
-import { tickSurvival } from '../actions/survive.js';
+import { tickSurvival, meterTrends } from '../actions/survive.js';
 import { passOut } from '../actions/camp.js';
-import { advanceAnimation, cancelAction } from '../animation/clips.js';
+import { advanceAnimation, cancelAction, startSleep, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
-import { REPAIR_COST } from '../data/balance.js';
+import { REPAIR_COST, HUNGRY_BELOW } from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
 import { revealAround } from '../world/fog.js';
 import { inSnow } from '../world/regions.js';
@@ -51,9 +51,26 @@ const FOUND = {
 };
 
 /**
+ * Picks the flinch to show for what is hurting the player right now.
+ *
+ * Freezing comes first, because it drains health fastest. Starving drains it slowly, and its
+ * cramp keeps showing at the health floor as a reminder to eat. Seated in the boat there is no flinch.
+ *
+ * @param {object} state - The game being played.
+ * @returns {string|null} A reaction clip name (`hurtCold` or `hurtHunger`), or null.
+ */
+function hurtClip(state) {
+  if (state.aboard) return null;
+  const trends = meterTrends(state);
+  if (trends.health === 'freezing') return 'hurtCold';
+  return trends.hunger === 'starving' ? 'hurtHunger' : null;
+}
+
+/**
  * Handles one frame's survival news.
  *
- * Passing out ends the night at once and shows its own screen. Anything else becomes a toast,
+ * Passing out ends the night at once and shows its own screen, with the character lying asleep
+ * behind it until the screen is closed. Anything else becomes a toast,
  * and a new day saves the game.
  *
  * @param {object} session - The shared session.
@@ -66,6 +83,7 @@ function handleSurvival(session, ui, events) {
     cancelAction(session.animator);
     ui.build.cancel();
     const result = passOut(session.state);
+    startSleep(session.animator);
     session.renderer.resetCamera();
     ui.camp.showPassOut(result);
     ui.hud.update();
@@ -124,7 +142,10 @@ export function startLoop(session, ui) {
           ui.hud.update();
         }
 
-        moving = !animator.pending && movePlayer(state, dx, dy, dt, running);
+        // Nobody walks while busy with an action or lying asleep.
+        const free = !animator.pending && !(animator.asleep > 0);
+        const from = { x: state.player.x, y: state.player.y };
+        moving = free && movePlayer(state, dx, dy, dt, running);
         // The first real step hides the controls strip.
         if (moving) ui.hud.hideKeyStrip();
         state.elapsed += dt;
@@ -140,7 +161,15 @@ export function startLoop(session, ui) {
 
         // When a timed action finishes, hand out what it was aimed at (exactly once): supplies, a
         // mended boat or a crafted tool.
-        const done = advanceAnimation(animator, dt, { moving, running });
+        const done = advanceAnimation(animator, dt, {
+          moving,
+          running,
+          // The diagonal pictures follow where the player really went, so sliding along a wall
+          // with two keys held shows the straight walk, not a diagonal one.
+          diagonal: diagonalOf(state.player.x - from.x, state.player.y - from.y),
+          hungry: !state.aboard && state.meters.hunger < HUNGRY_BELOW,
+          hurt: hurtClip(state),
+        });
         const finished = done?.target ? finishInteraction(state, done.target) : null;
         if (finished) {
           ui.hud.notify(describeFinish(finished));

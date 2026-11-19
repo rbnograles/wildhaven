@@ -15,6 +15,7 @@ import { fireRadius } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { nameCamp } from '../actions/build.js';
 import { giveToNeed, eat, heal, brewTea, rest } from '../actions/camp.js';
+import { startSleep, wakeUp, NAP_SECONDS } from '../animation/clips.js';
 import { save } from '../core/session.js';
 import { describeEvent } from './hud.js';
 import { $ } from './layout.js';
@@ -215,7 +216,10 @@ export function setupCamp(session, ui) {
   const useHerbs = () =>
     attempt(heal, REFUSED.heal, `You use ${HEAL_HERBS} herbs. +${HEAL_HEALTH} health`);
 
-  /** Rests until dawn, closes the camp dialog, and tells the player about the new day. */
+  /**
+   * Rests until dawn, closes the camp dialog, and tells the player about the new day.
+   * The night is skipped at once; the character is shown asleep for a moment, then gets up.
+   */
   function restNight() {
     const result = rest(session.state);
     if (!result.ok) {
@@ -223,6 +227,7 @@ export function setupCamp(session, ui) {
       return;
     }
     $('camp-dialog').close();
+    startSleep(session.animator, NAP_SECONDS);
     ui.hud.notify(['You rest by the fire.', ...result.events.map(describeEvent)].join(' '));
     refresh();
   }
@@ -272,6 +277,9 @@ export function setupCamp(session, ui) {
   $('slot-herbs').addEventListener('click', useHerbs);
   $('camp-rest').addEventListener('click', restNight);
   $('passout-close').addEventListener('click', () => $('passout-dialog').close());
+
+  // However the pass-out screen closes (its button or Escape), the sleeper gets up.
+  $('passout-dialog').addEventListener('close', () => wakeUp(session.animator));
 
   return { openNaming, openCamp, showPassOut, eatFood, useHerbs };
 }
