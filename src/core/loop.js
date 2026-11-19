@@ -7,6 +7,7 @@ import { finishGather } from '../actions/gather.js';
 import { discover } from '../actions/discover.js';
 import { advanceAnimation, cancelAction } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
+import { REPAIR_COST } from '../data/balance.js';
 import { save } from './session.js';
 import { logFinds } from './playtest.js';
 
@@ -28,6 +29,9 @@ const FOUND = {
     hasJournalPage(id) ? `Found ${name} Â· New page in your journal (J)` : `Found ${name}`,
   // Walking up to a signpost.
   waypoint: ({ name }) => `Signpost found: ${name}`,
+  // Coming close to an old boat on the beach, and what mending it costs.
+  wreck: ({ name }) =>
+    `Found ${name} · Repair it with ${REPAIR_COST.wood} wood and ${REPAIR_COST.stone} stone`,
 };
 
 /**

@@ -5,8 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame } from '../../src/game/state.js';
 import { discover } from '../../src/actions/discover.js';
-import { SPAWNS, LANDMARKS, WAYPOINTS } from '../../src/data/places.js';
-import { LANDMARK_RADIUS, WAYPOINT_RADIUS } from '../../src/data/balance.js';
+import { SPAWNS, LANDMARKS, WAYPOINTS, WRECKS } from '../../src/data/places.js';
+import { LANDMARK_RADIUS, WAYPOINT_RADIUS, WRECK_RADIUS } from '../../src/data/balance.js';
 
 // Guards against a region being "discovered" again on every frame while the player stands in it,
 // and checks that walking into a second region adds it alongside the first.
@@ -54,4 +54,19 @@ test('a signpost is found once when the player walks up to it', () => {
     [{ kind: 'waypoint', id: 'h-wp-east', name: 'East Meadow Signpost' }],
   );
   assert.deepEqual(game.waypoints, ['h-wp-east']);
+});
+
+// Guards the old-boat finds: each is found once, from up to WRECK_RADIUS away, so the map can mark it.
+test('an old boat is found once when the player comes within its radius', () => {
+  const game = createGame('survivor'),
+    wreck = WRECKS.find((w) => w.id === 'wreck-east');
+  /** The old-boat finds among everything discover() reports this time. */
+  const wreckFinds = () => discover(game).filter((f) => f.kind === 'wreck');
+
+  Object.assign(game.player, { x: wreck.x, y: wreck.y + WRECK_RADIUS + 10 });
+  assert.deepEqual(wreckFinds(), []);
+  game.player.y = wreck.y + WRECK_RADIUS - 10;
+  assert.deepEqual(wreckFinds(), [{ kind: 'wreck', id: wreck.id, name: wreck.name }]);
+  assert.deepEqual(game.wrecks, [wreck.id]);
+  assert.deepEqual(wreckFinds(), []);
 });

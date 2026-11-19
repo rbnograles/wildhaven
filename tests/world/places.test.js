@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { isWalkable } from '../../src/world/map.js';
 import { CHARACTERS } from '../../src/data/characters.js';
 import { SUPPLIES } from '../../src/data/supplies.js';
-import { nodeBases } from '../../src/world/nodes.js';
+import { nodeBases, wreckBases } from '../../src/world/nodes.js';
 import { GATHER_RANGE } from '../../src/data/balance.js';
 import { REGION_LIST, LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
 import { flood } from './flood.js';
@@ -34,7 +34,7 @@ test('the world has seven regions, 52 landmarks, 14 signposts and 4 old boats wi
 
 // Guards against a rebuilt map putting water or scenery where the player has to stand.
 test('every spawn, landmark, signpost and old boat is on ground the player can stand on', () => {
-  const solid = nodeBases([]);
+  const solid = [...nodeBases([]), ...wreckBases(null)];
   for (const c of CHARACTERS) assert.deepEqual(c.spawn, SPAWNS[c.id]);
   for (const p of [
     ...CHARACTERS.map((c) => ({ id: c.id, ...c.spawn })),
@@ -49,7 +49,7 @@ test('every spawn, landmark, signpost and old boat is on ground the player can s
 // Guards the promise that nothing is cut off by a river, the sea or a wall of trees. Islet
 // landmarks are left out: they are reached by boat (see the sea test in tests/world/sea.test.js).
 test('every spawn, mainland landmark, signpost, supply and old boat can be reached on foot', () => {
-  const solid = nodeBases([]);
+  const solid = [...nodeBases([]), ...wreckBases(null)];
   const foot = flood(SPAWNS.builder.x, SPAWNS.builder.y, (x, y) => isWalkable(x, y, solid));
   const islets = ['l-gull-isle', 'l-turtle-isle', 'l-lantern-islet'];
 

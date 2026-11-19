@@ -32,3 +32,12 @@ export const BOARD_RANGE = 160;
 
 /** How far from the boat the player may step ashore when landing. */
 export const LAND_RANGE = 160;
+
+/** What repairing an old boat costs. It is taken from the backpack when the repair finishes. */
+export const REPAIR_COST = { wood: 6, stone: 2 };
+
+// How many seconds repairing an old boat takes: a little longer than a 6 s gather, because it is a bigger job.
+export const REPAIR_SECONDS = 8;
+
+/** How close the player must come to an old boat to find it (and mark it on the map). */
+export const WRECK_RADIUS = 200;

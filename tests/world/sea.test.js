@@ -8,7 +8,7 @@ import { WORLD, SEA_BORDER, isWalkable, isDeep, isSailable } from '../../src/wor
 import { CHARACTERS } from '../../src/data/characters.js';
 import { LANDMARKS, WRECKS, SPAWNS } from '../../src/data/places.js';
 import { BOARD_RANGE, LAND_RANGE } from '../../src/data/balance.js';
-import { nodeBases } from '../../src/world/nodes.js';
+import { nodeBases, wreckBases } from '../../src/world/nodes.js';
 import { flood } from './flood.js';
 
 // Guards the build-time fact the save migration uses to move old positions onto the bigger map.
@@ -43,7 +43,7 @@ test('a boat floats by each old boat, but never on land or on broken numbers', (
 // Guards the boat's whole journey: from the beach the player can reach each boat, one shallow sea
 // joins every old boat, and each islet has a beach within landing reach of that sea.
 test('one shallow sea joins every old boat and reaches each islet', () => {
-  const solid = nodeBases([]);
+  const solid = [...nodeBases([]), ...wreckBases(null)];
   const foot = flood(SPAWNS.builder.x, SPAWNS.builder.y, (x, y) => isWalkable(x, y, solid));
   for (const w of WRECKS)
     assert.ok(

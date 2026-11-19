@@ -1,9 +1,18 @@
 // The "move" action: walking and running around the world without passing through water,
-// trees, buildings or supplies that haven't been gathered yet.
+// trees, buildings, old boats or supplies that haven't been gathered yet.
 
 import { isWalkable, blocks } from '../world/map.js';
-import { nodeBases } from '../world/nodes.js';
+import { solidBases } from '../world/nodes.js';
 import { WALK_SPEED, RUN_SPEED, MAX_MOVE_DT } from '../data/balance.js';
+
+/**
+ * Says which way something faces when it heads along (dx, dy): mostly sideways or mostly up/down.
+ *
+ * @param {number} dx - Sideways movement: negative is west.
+ * @param {number} dy - Up/down movement: negative is north.
+ * @returns {number} 0 south, 1 west, 2 east or 3 north.
+ */
+export const facing = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : dy < 0 ? 3 : 0);
 
 /**
  * Moves the player one small step in the direction the keys point.
@@ -30,10 +39,10 @@ export function movePlayer(state, dx, dy, dt, running = false) {
   const { x, y } = state.player;
 
   // Face the way the player is mostly moving (0 south, 1 west, 2 east, 3 north).
-  state.player.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : dy < 0 ? 3 : 0;
+  state.player.direction = facing(dx, dy);
 
-  // A save made before a supply moved may stand inside its base; let the player walk out instead of trapping them.
-  const bases = nodeBases(state.collected).filter((base) => !blocks([base], x, y));
+  // A save made before a supply or old boat moved may stand inside its base; let the player walk out instead of trapping them.
+  const bases = solidBases(state).filter((base) => !blocks([base], x, y));
 
   // Try the x and y parts separately, so a wall in one direction still lets the player slide along it.
   if (isWalkable(x + dx, y, bases)) state.player.x += dx;

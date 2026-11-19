@@ -10,7 +10,7 @@ import { CHARACTERS } from '../../src/data/characters.js';
 import { RESOURCES } from '../../src/data/supplies.js';
 import { GATHER_SECONDS } from '../../src/data/balance.js';
 import { WORLD, isWalkable } from '../../src/world/map.js';
-import { NODES, nodeBases } from '../../src/world/nodes.js';
+import { NODES, nodeBases, wreckBases } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { gatherTime, finishGather } from '../../src/actions/gather.js';
 import { CLIPS } from '../../src/animation/clips.js';
@@ -84,7 +84,7 @@ test('every supply and wild patch can be walked to and gathered from each spawn'
   const G = 16,
     cols = Math.ceil(WORLD.width / G),
     rows = Math.ceil(WORLD.height / G),
-    bases = nodeBases([]);
+    bases = [...nodeBases([]), ...wreckBases(null)];
   const seen = new Uint8Array(cols * rows),
     queue = [],
     start = createGame('scout').player;
