@@ -23,3 +23,12 @@ export const LANDMARK_RADIUS = 200;
 
 /** How close the player must walk to a signpost to find it. */
 export const WAYPOINT_RADIUS = 110;
+
+/**
+ * How close the player must stand to their boat to get in. The boat floats a little off the
+ * beach, so this is wider than the reach for gathering.
+ */
+export const BOARD_RANGE = 160;
+
+/** How far from the boat the player may step ashore when landing. */
+export const LAND_RANGE = 160;
