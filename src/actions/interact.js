@@ -47,12 +47,18 @@ export function chooseInteraction(state) {
  *
  * @param {object} state - The game being played.
  * @param {object} animator - The player's animation state.
+ * @param {string} [id] - Id of a node the player clicked. With it, only that node is gathered
+ *   (never from the boat) and the usual order is skipped: the click chose the target.
  * @returns {{ok: boolean, kind?: string, reason?: string, missing?: object, node?: object, wreck?: object}}
  *   `ok` with the `kind` done or started; otherwise `reason` is 'busy' (an action is running, or
  *   the character is asleep), 'none' or 'missing'.
  */
-export function beginInteraction(state, animator) {
+export function beginInteraction(state, animator, id) {
   if (animator.pending || animator.asleep > 0) return { ok: false, reason: 'busy' };
+  if (id) {
+    if (state.aboard) return { ok: false, reason: 'none' };
+    return { ...beginGather(state, animator, id), kind: 'gather' };
+  }
   const choice = chooseInteraction(state);
   if (!choice) return { ok: false, reason: 'none' };
 

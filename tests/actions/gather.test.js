@@ -14,6 +14,7 @@ import {
   beginGather,
   finishGather,
   gatherTime,
+  aimState,
 } from '../../src/actions/gather.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
@@ -181,4 +182,38 @@ test('map trees and iron rocks can be gathered with the right tool', () => {
     assert.equal(game.resources[node.type], before + node.amount, sprite);
   }
   assert.ok(game.resources.iron >= 1);
+});
+
+// Guards the mouse badge and the click: a click must only chop the tree it points at, and only
+// when the player stands beside it with an axe, or a click could gather from across the screen.
+test('a clicked tree is chopped only when it is in reach and the player has its tool', () => {
+  const game = createGame('survivor'),
+    tree = NODES.find((n) => n.inScenery && n.tool === 'axe'),
+    animator = createAnimator();
+  game.player.x = tree.x;
+  game.player.y = tree.y + 60;
+
+  // No axe yet: the badge says locked and a click starts nothing.
+  assert.equal(aimState(game, tree), 'locked');
+  assert.equal(beginGather(game, animator, tree.id).ok, false);
+
+  // With an axe but far away, the tree is only pointed at.
+  game.tools.axe = { tier: 'stone', uses: 5 };
+  game.player.y = tree.y + 400;
+  assert.equal(aimState(game, tree), 'far');
+  assert.equal(beginGather(game, animator, tree.id).ok, false);
+
+  // Beside it, the click starts the chop on that very tree.
+  game.player.y = tree.y + 60;
+  assert.equal(aimState(game, tree), 'ready');
+  const started = beginGather(game, animator, tree.id);
+  assert.equal(started.ok, true);
+  assert.equal(animator.pending.target, tree.id);
+
+  // A chopped tree, and any tree seen from the boat, gives no badge at all.
+  game.regrowAt[tree.id] = game.time + 10;
+  assert.equal(aimState(game, tree), null);
+  delete game.regrowAt[tree.id];
+  game.aboard = true;
+  assert.equal(aimState(game, tree), null);
 });

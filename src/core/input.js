@@ -4,7 +4,7 @@
 
 import { beginInteraction } from '../actions/interact.js';
 import { listMissing } from '../actions/boat.js';
-import { lockedNode } from '../actions/gather.js';
+import { lockedNode, aimState } from '../actions/gather.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
@@ -23,15 +23,17 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
  * Also handles E to step ashore, board, repair, gather or open a camp, B for the build menu (and
  * 1 to pick the campfire in it, 2 to 4 to craft a tool), F to eat, H to heal, M for the map, J for the journal, Escape to
- * pause (or to leave the build menu or build mode), the mouse over the world, and saving when the
- * tab is hidden.
+ * pause (or to leave the build menu or build mode), the mouse over the world (a click on a tree or
+ * rock in reach chops or mines it), and saving when the tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
  * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
- * @returns {{moveIntent: Function}} An object whose `moveIntent()` reports the current direction.
+ * @returns {{moveIntent: Function, hover: Function}} `moveIntent()` reports the current direction
+ *   and `hover()` the tree or rock under the mouse.
  */
 export function setupInput(session, ui) {
   const { keys } = session;
+  const world = $('world');
 
   /**
    * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
@@ -80,6 +82,56 @@ export function setupInput(session, ui) {
   }
 
   $('interact').addEventListener('click', interact);
+
+  /**
+   * Finds the tree or rock under the mouse and what a click on it would do.
+   *
+   * The frame loop asks every frame, because the camera moves under a still mouse. Nothing is
+   * aimed at while placing a campfire, with the build menu open, or while a dialog is up. When
+   * two pictures overlap under the mouse, one in reach wins over one that is merely in front. The
+   * mouse also turns into a pointing hand over a tree or rock a click would work on.
+   *
+   * @returns {{node: object, state: string}|null} The node and its aimState ('ready', 'far' or
+   *   'locked'), or null when the mouse is over nothing that needs a tool.
+   */
+  function hover() {
+    const { state, renderer, pointer, build } = session;
+    let aim = null;
+    if (pointer && state && renderer && !build.active && !build.menu && !ui.dialogs.isPaused()) {
+      // Where pictures overlap, one a click can work on beats one that is only in front.
+      const aims = renderer
+        .nodesAt(pointer.x, pointer.y, state)
+        .map((node) => ({ node, state: aimState(state, node) }))
+        .filter((a) => a.state);
+      aim = aims.find((a) => a.state === 'ready') ?? aims[0] ?? null;
+    }
+    world.style.cursor = aim?.state === 'ready' ? 'pointer' : '';
+    return aim;
+  }
+
+  /**
+   * Does what a click on the tree or rock under the mouse means.
+   *
+   * In reach with the right tool, the click starts chopping or mining that very one, like E. With
+   * no tool it says which to make, and from too far it says to walk closer.
+   *
+   * @param {{node: object, state: string}} aim - What `hover` found under the mouse.
+   */
+  function clickNode({ node, state: how }) {
+    if (how === 'locked') {
+      ui.hud.notify(`You need ${toolInfo(node.tool).aName}. Make one in the Build menu (B).`);
+      return;
+    }
+    if (how === 'far') {
+      ui.hud.notify(`Walk closer to ${node.verb.toLowerCase()} the ${node.label.toLowerCase()}.`);
+      return;
+    }
+    const result = beginInteraction(session.state, session.animator, node.id);
+    if (!result.ok) return;
+    // Held movement keys are forgotten, so the player doesn't walk off and cancel straight away.
+    keys.clear();
+    ui.hud.update();
+  }
 
   // Keyboard: Escape pauses, M toggles the map, J the journal, E interacts, and movement keys are remembered.
   window.addEventListener('keydown', (event) => {
@@ -173,15 +225,24 @@ export function setupInput(session, ui) {
   window.addEventListener('pagehide', () => save(session, ui, true));
 
   // The mouse over the world is remembered so the build ghost can follow it. In build mode a
-  // click (or a tap) on the world places the campfire there.
-  const world = $('world');
+  // click (or a tap) on the world places the campfire there; otherwise a click on a tree or rock
+  // chops or mines it (see clickNode).
   world.addEventListener('pointermove', (event) => {
     session.pointer = { x: event.clientX, y: event.clientY };
   });
   world.addEventListener('pointerleave', () => (session.pointer = null));
+  // A lifted finger is no longer pointing at anything, so its badge goes away.
+  world.addEventListener('pointerup', (event) => {
+    if (event.pointerType === 'touch') session.pointer = null;
+  });
   world.addEventListener('pointerdown', (event) => {
     session.pointer = { x: event.clientX, y: event.clientY };
-    if (!session.build.active || event.button !== 0) return;
+    if (event.button !== 0 || session.screen !== 'game') return;
+    if (!session.build.active) {
+      const aim = hover();
+      if (aim) clickNode(aim);
+      return;
+    }
     // Stop the click from also focusing the world afterwards, which would pull the keyboard out
     // of the camp name box that placing the fire opens.
     event.preventDefault();
@@ -218,5 +279,5 @@ export function setupInput(session, ui) {
     return { dx, dy, running: keys.has('shift') };
   }
 
-  return { moveIntent };
+  return { moveIntent, hover };
 }

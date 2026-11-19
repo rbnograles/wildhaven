@@ -2491,6 +2491,27 @@ dialog::backdrop {
   opacity: 0.75;
 }
 
+/* The missing tool's painted picture sits on the button's key cap in place of the E, with a red */
+/* bar across it: "you don't have this yet". */
+.interact.locked[data-tool='axe'] kbd,
+.interact.locked[data-tool='pickaxe'] kbd {
+  height: 28px;
+  color: transparent;
+  background: center / 24px 24px no-repeat;
+}
+
+.interact.locked[data-tool='axe'] kbd {
+  background-image:
+    linear-gradient(45deg, transparent 46%, #d9503f 46% 54%, transparent 54%),
+    url('../assets/ui/game/tool-axe-stone.png');
+}
+
+.interact.locked[data-tool='pickaxe'] kbd {
+  background-image:
+    linear-gradient(45deg, transparent 46%, #d9503f 46% 54%, transparent 54%),
+    url('../assets/ui/game/tool-pickaxe-stone.png');
+}
+
 .interact.busy {
   cursor: default;
 }
