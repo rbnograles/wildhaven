@@ -28,5 +28,8 @@
   "cactus": { "kind": "plants", "origin": [0.5, 0.97], "footprint": [22, 16] },
   "sandstone-ruin": { "kind": "buildings", "origin": [0.5, 0.97], "footprint": [120, 50] },
   "bridge": { "kind": "props", "origin": [0.5, 0.5], "flat": true },
-  "signpost": { "kind": "props", "origin": [0.5, 0.97], "footprint": [14, 10] }
+  "signpost": { "kind": "props", "origin": [0.5, 0.97], "footprint": [14, 10] },
+  "driftwood": { "kind": "props", "origin": [0.5, 0.7], "flat": true, "scale": 0.6 },
+  "old-boat": { "kind": "props", "origin": [0.5, 0.78], "footprint": [70, 26] },
+  "rowboat": { "kind": "props", "origin": [0.5, 0.55] }
 }
