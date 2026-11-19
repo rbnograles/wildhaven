@@ -1099,10 +1099,11 @@ dialog::backdrop {
 }
 
 /* A region name pinned to its spot on the map. The script sets left and top; */
-/* translate(-50%, 18px) centres the label and moves it just below the region's dot. */
+/* translate(-50%, -50%) centres the label on the region. It ignores clicks so buttons under it still work. */
 .map-label {
   position: absolute;
-  transform: translate(-50%, 18px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
   color: #f9f6e8;
   background: #273d2fe8;
   padding: 4px 8px;
@@ -1282,7 +1283,7 @@ dialog::backdrop {
   .map-label {
     font-size: 7px;
     padding: 3px 4px;
-    transform: translate(-50%, 10px);
+    transform: translate(-50%, -50%);
   }
   .map-footer {
     font-size: 9px;

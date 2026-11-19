@@ -6,7 +6,7 @@ import { CHARACTERS } from '../data/characters.js';
 import { SUPPLIES, RESOURCES } from '../data/supplies.js';
 import { isWalkable } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
-import { LOCATIONS } from '../world/regions.js';
+import { REGIONS } from '../world/regions.js';
 
 /**
  * Makes a brand-new adventure for a character, standing at their starting spot.
@@ -86,7 +86,7 @@ export function restoreGame(json) {
     // The gathered and discovered lists may only hold real ids, each listed once.
     for (const [list, allowed] of [
       [s.collected, SUPPLIES],
-      [s.discovered, LOCATIONS],
+      [s.discovered, REGIONS],
     ]) {
       if (
         !Array.isArray(list) ||

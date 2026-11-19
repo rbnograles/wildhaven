@@ -51,10 +51,11 @@ export function createHud(session) {
     // Resources, region and quest progress.
     for (const resource of RESOURCES) $(resource).textContent = state.resources[resource];
     $('region-name').textContent = regionAt(state.player);
-    $('discovery-count').textContent = `${state.discovered.length} / 3`;
+    const regions = Math.min(state.discovered.length, 3);
+    $('discovery-count').textContent = `${regions} / 3`;
     $('quest-gather').classList.toggle('complete', hasGathered(state));
-    $('quest-explore').classList.toggle('complete', state.discovered.length === 3);
-    if (hasGathered(state) && state.discovered.length === 3)
+    $('quest-explore').classList.toggle('complete', regions === 3);
+    if (hasGathered(state) && regions === 3)
       $('quest-text').textContent =
         'You have found your feet. Keep exploring — this is just the beginning.';
     else

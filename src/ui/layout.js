@@ -3,7 +3,7 @@
 // once when the page loads; after that, other modules only show, hide or relabel its parts.
 import { CHARACTERS } from '../data/characters.js';
 import { WORLD } from '../world/map.js';
-import { LOCATIONS } from '../world/regions.js';
+import { REGIONS } from '../world/regions.js';
 
 /**
  * Finds an element on the page by its id.
@@ -176,9 +176,7 @@ export function mountLayout(app) {
         <p id="quest-text">Gather supplies and follow the paths to discover the world.</p>
         <ul>
           <li id="quest-gather">Gather your first supplies</li>
-          <li id="quest-explore">
-            Discover the three starting regions <b id="discovery-count">1 / 3</b>
-          </li>
+          <li id="quest-explore">Discover three regions <b id="discovery-count">1 / 3</b></li>
         </ul>
       </aside>
 
@@ -242,7 +240,7 @@ export function mountLayout(app) {
           height="800"
           aria-label="World map with your current position"
         ></canvas
-        >${LOCATIONS.map(
+        >${REGIONS.map(
           (l) =>
             /* HTML */ `<span
               class="map-label"

@@ -1,23 +1,23 @@
-// Checks region discovery: walking into one of the three starting regions marks it as found.
+// Checks discovery: walking into a region marks it as found, exactly once.
 // The HUD and the world map count found regions, so each one must be counted exactly once.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame } from '../../src/game/state.js';
 import { discover } from '../../src/actions/discover.js';
+import { SPAWNS } from '../../src/data/places.js';
 
 // Guards against a region being "discovered" again on every frame while the player stands in it,
 // and checks that walking into a second region adds it alongside the first.
-test('locations are discovered once when entered', () => {
+test('a region is discovered once, when the player first stands in it', () => {
   const game = createGame('survivor');
-  assert.equal(discover(game).length, 1);
-  assert.equal(discover(game).length, 0);
 
-  // Teleport the survivor to the builder's start, which is inside a different region.
-  const builder = createGame('builder');
-  game.player.x = builder.player.x;
-  game.player.y = builder.player.y;
+  const first = discover(game).filter((f) => f.kind === 'region');
+  assert.deepEqual(first, [{ kind: 'region', id: 'lagoon', name: 'Driftwood Lagoon' }]);
+  assert.equal(discover(game).filter((f) => f.kind === 'region').length, 0);
 
-  assert.equal(discover(game).length, 1);
-  assert.equal(game.discovered.length, 2);
+  // Teleport the survivor to the scout's start, which is in a different region.
+  Object.assign(game.player, SPAWNS.scout);
+  assert.equal(discover(game).filter((f) => f.kind === 'region')[0].id, 'pinefall');
+  assert.deepEqual(game.discovered, ['lagoon', 'pinefall']);
 });

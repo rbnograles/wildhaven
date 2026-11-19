@@ -4,7 +4,6 @@
 
 import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
-import { LOCATIONS } from '../world/regions.js';
 import { NODES } from '../world/nodes.js';
 import { WILD } from '../data/supplies.js';
 import { nearbyNode, isAvailable } from '../actions/gather.js';
@@ -250,11 +249,10 @@ export async function createRenderer(container, miniCanvas) {
   }
 
   /**
-   * Paints a small picture of the whole world with region dots and the player's position.
+   * Paints a small picture of the whole world with the player's position.
    *
    * Used for both the corner minimap and the big map dialog. World positions are shrunk to fit
-   * the canvas, like tracing a big map onto a postcard. Discovered regions get a light dot,
-   * undiscovered ones a dark dot, and the player is the white dot.
+   * the canvas, like tracing a big map onto a postcard. The player is the white dot.
    *
    * @param {CanvasRenderingContext2D} ctx - The 2D canvas to paint on.
    * @param {object} state - The game being played (player position, discovered regions).
@@ -264,18 +262,6 @@ export async function createRenderer(container, miniCanvas) {
   function drawMap(ctx, state, w, h) {
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(overview, 0, 0, w, h);
-
-    for (const loc of LOCATIONS) {
-      const x = (loc.x / WORLD.width) * w,
-        y = (loc.y / WORLD.height) * h;
-      ctx.fillStyle = state.discovered.includes(loc.id) ? '#f7ecc5' : '#273f32';
-      ctx.strokeStyle = '#fff6d7';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
 
     const x = (state.player.x / WORLD.width) * w,
       y = (state.player.y / WORLD.height) * h;
