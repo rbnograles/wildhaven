@@ -233,3 +233,13 @@ Browser at `http://127.0.0.1:5173` (another chat's dev server on this folder; 10
 - No console errors.
 
 Not checked by hand: the canyon kit in game (checked in an offline full-resolution render only), frame rate (the hidden pane is throttled; about 160 sprites are on screen at once), and the 390 px layout (no layout changed).
+
+## Main (hills) merged into the M2 branch — 2026-11-19
+
+Merge of `main` at 1267180 into `worktree-m2-loop-proof`. The map was rebuilt from main's `build-map.py` with the Scout's campfire left out: compared with main's `wildhaven.json`, the only difference is that one campfire object, and every tile layer and the tileset are identical. Automated: `npm test` 124 passing (the M2 tests and main's cliff tests together), `npm run build` and `npm run format:check` pass.
+
+Browser at `http://127.0.0.1:5180`, Builder:
+- Hollowstead village and the Ember Ho fire draw as before, with the new bottom bar.
+- At the foot of the meadow-hill stairs (10880, 6492) at night: the cliff wall and stairs draw, the night layer covers them, and the player's small light shows; the warmth meter showed "Tea 18s".
+- Build mode with the ghost over the cliff wall: red ring and "Something is in the way" (cliffs count as blocked for a fire's base).
+- No console errors after a clean reload.
