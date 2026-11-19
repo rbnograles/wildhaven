@@ -2,7 +2,8 @@
 // Phaser's own input is disabled; every key and touch goes through here.
 // This file remembers which keys are held down and turns them into "which way to walk".
 
-import { beginGather } from '../actions/gather.js';
+import { beginInteraction } from '../actions/interact.js';
+import { listMissing } from '../actions/boat.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -17,7 +18,7 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  *
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
- * Also handles E to gather, M for the map, J for the journal, Escape to pause, and saving when
+ * Also handles E to gather, repair or board, M for the map, J for the journal, Escape to pause, and saving when
  * the tab is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
@@ -28,23 +29,29 @@ export function setupInput(session, ui) {
   const { keys } = session;
 
   /**
-   * Starts gathering the closest supply, or says to move closer if nothing is in reach.
+   * Does what E means right now (step ashore, board, repair or gather), or says why nothing happened.
    *
-   * E starts the node's timed action; the supply is awarded when the action runs out (see core/loop.js).
-   * Held movement keys are forgotten so the player doesn't walk off and cancel straight away.
+   * Landing and boarding happen at once and save straight away. Repairing and gathering start a
+   * timed action that core/loop.js finishes. Held movement keys are forgotten so the player
+   * doesn't walk off and cancel straight away.
    */
-  function gather() {
+  function interact() {
     if (session.screen !== 'game' || ui.dialogs.isPaused()) return;
-    const result = beginGather(session.state, session.animator);
+    const result = beginInteraction(session.state, session.animator);
     if (result.ok) {
       keys.clear();
+      if (result.kind === 'board')
+        ui.hud.notify('In the boat · Row with WASD, and press E by the shore to step ashore');
+      if (result.kind === 'board' || result.kind === 'land') save(session, ui, true);
       ui.hud.update();
-    } else if (result.reason === 'none') ui.hud.notify('Move closer to something you can gather.');
+    } else if (result.reason === 'missing')
+      ui.hud.notify(`The old boat needs ${listMissing(result.missing)} more.`);
+    else if (result.reason === 'none') ui.hud.notify('Move closer to something you can use.');
   }
 
-  $('interact').addEventListener('click', gather);
+  $('interact').addEventListener('click', interact);
 
-  // Keyboard: Escape pauses, M toggles the map, J the journal, E gathers, and movement keys are remembered.
+  // Keyboard: Escape pauses, M toggles the map, J the journal, E interacts, and movement keys are remembered.
   window.addEventListener('keydown', (event) => {
     if (session.screen !== 'game') return;
     const key = event.key.toLowerCase();
@@ -79,7 +86,7 @@ export function setupInput(session, ui) {
 
     if (key === 'e' && !event.repeat) {
       event.preventDefault();
-      gather();
+      interact();
     }
   });
 

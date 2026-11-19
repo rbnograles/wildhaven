@@ -1,9 +1,10 @@
 // The frame loop: the heartbeat of the game.
-// About 60 times a second it moves the player, runs the current animation, hands out gathered
-// supplies, checks for newly discovered regions, autosaves, and asks the renderer to draw.
+// About 60 times a second it moves the player (or their boat), runs the current animation, hands out
+// gathered supplies, checks for newly discovered regions, autosaves, and asks the renderer to draw.
 
 import { movePlayer } from '../actions/move.js';
-import { finishGather } from '../actions/gather.js';
+import { finishInteraction } from '../actions/interact.js';
+import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { advanceAnimation, cancelAction } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
@@ -15,9 +16,11 @@ import { logFinds } from './playtest.js';
 // MAX_FRAME_DT: the longest step (seconds) one frame may simulate, so a slow frame can't jump ahead.
 // AUTOSAVE_EVERY: seconds of play between automatic saves.
 // HUD_EVERY: seconds between HUD refreshes; the numbers don't need redrawing every frame.
+// DEEP_WARN_MS: real milliseconds between two "too rough" warnings while the boat pushes at deep water.
 const MAX_FRAME_DT = 0.05,
   AUTOSAVE_EVERY = 10,
-  HUD_EVERY = 0.12;
+  HUD_EVERY = 0.12,
+  DEEP_WARN_MS = 4000;
 
 // The words for each kind of find, used in the pop-up message. Each takes the find
 // (`{kind, id, name}`) from discover().
@@ -46,6 +49,9 @@ const FOUND = {
  */
 export function startLoop(session, ui) {
   const { clock } = session;
+
+  // When the last "too rough" warning was shown, so it isn't repeated every frame.
+  let warnedDeepAt = -Infinity;
 
   /**
    * Runs one frame: update the game, then draw it.
@@ -78,15 +84,23 @@ export function startLoop(session, ui) {
         if (moving) ui.hud.hideKeyStrip();
         state.elapsed += dt;
 
-        // When a timed action finishes, award the supply it was aimed at (exactly once).
+        // Rowing into deep water: say why the boat won't go on, but not every frame.
+        if (deepAhead(state, dx, dy) && now - warnedDeepAt > DEEP_WARN_MS) {
+          ui.hud.notify('Too rough for a small boat.');
+          warnedDeepAt = now;
+        }
+
+        // When a timed action finishes, hand out what it was aimed at (exactly once): supplies or a mended boat.
         const done = advanceAnimation(animator, dt, { moving, running });
-        if (done?.target) {
-          const node = finishGather(state, done.target);
-          if (node) {
-            ui.hud.notify(`+${node.amount} ${node.type} · ${node.label}`);
-            ui.hud.update();
-            save(session, ui, true);
-          }
+        const finished = done?.target ? finishInteraction(state, done.target) : null;
+        if (finished) {
+          ui.hud.notify(
+            finished.kind === 'repair'
+              ? 'Boat repaired · Walk to the water’s edge and press E to board'
+              : `+${finished.node.amount} ${finished.node.type} · ${finished.node.label}`,
+          );
+          ui.hud.update();
+          save(session, ui, true);
         }
 
         const found = discover(state);

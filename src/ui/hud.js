@@ -2,10 +2,14 @@
 // button) and the short pop-up messages called toasts. It only shows the game state; it never
 // changes it.
 import { RESOURCES } from '../data/supplies.js';
+import { WRECKS } from '../data/places.js';
+import { REPAIR_COST } from '../data/balance.js';
 import { NODES } from '../world/nodes.js';
 import { regionAt, regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
-import { nearbyNode, hasGathered } from '../actions/gather.js';
+import { hasGathered } from '../actions/gather.js';
+import { missingForRepair, listMissing } from '../actions/boat.js';
+import { chooseInteraction } from '../actions/interact.js';
 import { $ } from './layout.js';
 
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
@@ -14,6 +18,39 @@ const DOING = { Chop: 'Chopping', Pick: 'Picking', 'Pick up': 'Picking up', Gath
 // How long the controls strip stays up when nobody moves, and how long its fade-out takes.
 const KEY_STRIP_MS = 8000,
   KEY_STRIP_FADE_MS = 600;
+
+/**
+ * Words for the interact button when E would do `choice`, e.g. "Board the boat" or "Chop pine tree".
+ *
+ * @param {object} state - The game being played.
+ * @param {{kind: string, target: object}} choice - What chooseInteraction picked.
+ * @returns {string} The button's words.
+ */
+function actionLabel(state, choice) {
+  if (choice.kind === 'land') return 'Step ashore';
+  if (choice.kind === 'board') return 'Board the boat';
+  if (choice.kind === 'repair') {
+    const missing = missingForRepair(state);
+    return Object.keys(missing).length
+      ? `Repair the old boat · need ${listMissing(missing)}`
+      : 'Repair the old boat';
+  }
+  return `${choice.target.verb} ${choice.target.label.toLowerCase()}`;
+}
+
+/**
+ * Words for the interact button while a timed action runs, or null when none is running.
+ *
+ * @param {object} animator - The player's animation state.
+ * @returns {string|null} E.g. "Repairing the old boat… move to stop".
+ */
+function busyLabel(animator) {
+  const target = animator.pending?.target;
+  if (!target) return null;
+  if (WRECKS.some((w) => w.id === target)) return 'Repairing the old boat… move to stop';
+  const node = NODES.find((n) => n.id === target);
+  return node ? `${DOING[node.verb]} ${node.label.toLowerCase()}… move to stop` : null;
+}
 
 /**
  * Builds the HUD helpers for one game session.
@@ -44,7 +81,8 @@ export function createHud(session) {
    * Refreshes every HUD panel so it matches the current game.
    *
    * Like updating a scoreboard: it copies the resource counts, the region name and the goals card
-   * (the starting goals, then the current region's progress) onto the screen, and shows the interact button when a supply is in reach.
+   * (the starting goals, a found old boat's repair list, then the current region's progress) onto the
+   * screen, and shows the interact button when E would do something.
    */
   function update() {
     const { state, animator } = session;
@@ -70,6 +108,24 @@ export function createHud(session) {
       $('quest-text').textContent = 'Gather supplies and set out to discover the world.';
       line('quest-first', 'Gather your first supplies', hasGathered(state) ? 1 : 0, 1);
       line('quest-second', 'Discover three regions', regions, 3);
+    } else if (state.wrecks.length && !state.boat) {
+      // An old boat has been found but not mended: the card becomes the shopping list for the repair.
+      $('quest-label').textContent = 'AN OLD BOAT';
+      $('quest-title').textContent = 'Mend a boat';
+      $('quest-text').textContent =
+        'Repair an old boat to sail the coast. Driftwood washes up on the beaches.';
+      line(
+        'quest-first',
+        'Wood',
+        Math.min(state.resources.wood, REPAIR_COST.wood),
+        REPAIR_COST.wood,
+      );
+      line(
+        'quest-second',
+        'Stone',
+        Math.min(state.resources.stone, REPAIR_COST.stone),
+        REPAIR_COST.stone,
+      );
     } else {
       const region = regionOf(state.player.x, state.player.y),
         progress = regionProgress(state, region.id);
@@ -80,18 +136,14 @@ export function createHud(session) {
       line('quest-second', 'Signposts found', progress.signposts.found, progress.signposts.total);
     }
 
-    // The interact button: hidden when nothing is in reach, "busy" while an action runs.
-    const node = nearbyNode(state),
-      busy = NODES.find((n) => n.id === animator.pending?.target),
+    // The interact button: what E would do now, or "busy" while a timed action runs.
+    const choice = chooseInteraction(state),
+      busy = busyLabel(animator),
       button = $('interact');
-    button.hidden = !node && !busy;
+    button.hidden = !choice && !busy;
     button.classList.toggle('busy', !!busy);
     button.setAttribute('aria-disabled', String(!!busy));
-    if (busy)
-      button.querySelector('span').textContent =
-        `${DOING[busy.verb]} ${busy.label.toLowerCase()}… move to stop`;
-    else if (node)
-      button.querySelector('span').textContent = `${node.verb} ${node.label.toLowerCase()}`;
+    button.querySelector('span').textContent = busy ?? (choice ? actionLabel(state, choice) : '');
   }
 
   /**
