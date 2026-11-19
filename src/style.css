@@ -450,9 +450,13 @@ button:active {
 }
 
 /* Short phones still keep room at the bottom of the details for the dots. */
+/* The details reach higher here, so the arrows move up to stay clear of a long name. */
 @media (max-height: 560px) and (max-width: 699px) {
   .departure {
     padding-bottom: 52px;
+  }
+  .realm-step {
+    top: 25%;
   }
 }
 
