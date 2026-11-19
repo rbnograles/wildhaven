@@ -2,7 +2,7 @@
 // Any of them being open counts as paused, so the world stands still behind it.
 // This file also wires up their buttons and the fullscreen button.
 import { save, start, leave } from '../core/session.js';
-import { REGIONS } from '../world/regions.js';
+import { worldProgress } from '../world/progress.js';
 import { $ } from './layout.js';
 
 /**
@@ -59,8 +59,10 @@ export function setupDialogs(session, ui) {
 
     session.keys.clear();
     session.renderer.drawMap($('large-map'), session.state);
+    const { regions, places, signposts } = worldProgress(session.state);
     $('map-discovered').textContent =
-      `${session.state.discovered.length} of ${REGIONS.length} regions discovered`;
+      `${regions.found} of ${regions.total} regions · ${places.found} of ${places.total} places · ` +
+      `${signposts.found} of ${signposts.total} signposts`;
     $('map-dialog').showModal();
   }
 

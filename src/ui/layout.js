@@ -169,14 +169,14 @@ export function mountLayout(app) {
         <span class="region-rule"></span>
       </div>
 
-      <!-- The starting goals. ui/hud.js ticks them off. -->
+      <!-- The goals card. ui/hud.js fills it: the starting goals first, then the current region's progress. -->
       <aside class="quest hud-panel">
-        <span class="quest-label">YOUR FIRST FOOTSTEPS</span>
-        <h2>A place to begin</h2>
-        <p id="quest-text">Gather supplies and follow the paths to discover the world.</p>
+        <span class="quest-label" id="quest-label"></span>
+        <h2 id="quest-title"></h2>
+        <p id="quest-text"></p>
         <ul>
-          <li id="quest-gather">Gather your first supplies</li>
-          <li id="quest-explore">Discover three regions <b id="discovery-count">1 / 3</b></li>
+          <li id="quest-first"></li>
+          <li id="quest-second"></li>
         </ul>
       </aside>
 

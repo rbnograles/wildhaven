@@ -3,7 +3,8 @@
 // changes it.
 import { RESOURCES } from '../data/supplies.js';
 import { NODES } from '../world/nodes.js';
-import { regionAt } from '../world/regions.js';
+import { regionAt, regionOf } from '../world/regions.js';
+import { regionProgress } from '../world/progress.js';
 import { nearbyNode, hasGathered } from '../actions/gather.js';
 import { $ } from './layout.js';
 
@@ -42,8 +43,8 @@ export function createHud(session) {
   /**
    * Refreshes every HUD panel so it matches the current game.
    *
-   * Like updating a scoreboard: it copies the resource counts, the region name and the quest
-   * progress onto the screen, and shows the interact button when a supply is in reach.
+   * Like updating a scoreboard: it copies the resource counts, the region name and the goals card
+   * (the starting goals, then the current region's progress) onto the screen, and shows the interact button when a supply is in reach.
    */
   function update() {
     const { state, animator } = session;
@@ -51,15 +52,33 @@ export function createHud(session) {
     // Resources, region and quest progress.
     for (const resource of RESOURCES) $(resource).textContent = state.resources[resource];
     $('region-name').textContent = regionAt(state.player);
-    const regions = Math.min(state.discovered.length, 3);
-    $('discovery-count').textContent = `${regions} / 3`;
-    $('quest-gather').classList.toggle('complete', hasGathered(state));
-    $('quest-explore').classList.toggle('complete', regions === 3);
-    if (hasGathered(state) && regions === 3)
-      $('quest-text').textContent =
-        'You have found your feet. Keep exploring — this is just the beginning.';
-    else
-      $('quest-text').textContent = 'Gather supplies and follow the paths to discover the world.';
+    /**
+     * Fills one line of the goals card: its words, its count, and whether it is ticked off.
+     * The count is a number we made ourselves, so putting it in with innerHTML is safe.
+     */
+    const line = (id, text, found, total) => {
+      $(id).innerHTML = `${text} <b>${found} / ${total}</b>`;
+      $(id).classList.toggle('complete', found >= total);
+    };
+
+    // The starting goals come first. Once both are done, the card follows the region the player is in.
+    const regions = Math.min(state.discovered.length, 3),
+      started = hasGathered(state) && regions === 3;
+    if (!started) {
+      $('quest-label').textContent = 'YOUR FIRST FOOTSTEPS';
+      $('quest-title').textContent = 'A place to begin';
+      $('quest-text').textContent = 'Gather supplies and set out to discover the world.';
+      line('quest-first', 'Gather your first supplies', hasGathered(state) ? 1 : 0, 1);
+      line('quest-second', 'Discover three regions', regions, 3);
+    } else {
+      const region = regionOf(state.player.x, state.player.y),
+        progress = regionProgress(state, region.id);
+      $('quest-label').textContent = 'EXPLORING';
+      $('quest-title').textContent = region.name;
+      $('quest-text').textContent = 'Find every place and signpost in this region.';
+      line('quest-first', 'Places found', progress.places.found, progress.places.total);
+      line('quest-second', 'Signposts found', progress.signposts.found, progress.signposts.total);
+    }
 
     // The interact button: hidden when nothing is in reach, "busy" while an action runs.
     const node = nearbyNode(state),
