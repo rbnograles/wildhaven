@@ -9,7 +9,8 @@ import { SPAWNS } from './places.js';
  * Fields: `id` is the save and lookup key, and also names the character's sprite folder
  * (assets/characters/<id>/); `name`/`shortName` are display names; `location` names the starting region; `tagline`,
  * `description` and `kit` are selection-screen text; `spawn` is the world position where play
- * begins; `resources` is what is in the backpack at the start.
+ * begins; `resources` is what is in the backpack at the start; `tools` lists the stone tools in
+ * the kit (the Scout's hatchet is a stone axe, the Builder's hammer a stone hammer).
  */
 export const CHARACTERS = [
   {
@@ -23,6 +24,7 @@ export const CHARACTERS = [
     kit: 'Hatchet · Field pack · 3 food',
     spawn: SPAWNS.scout,
     resources: { wood: 0, stone: 0, food: 3 },
+    tools: ['axe'],
   },
   {
     id: 'builder',
@@ -35,6 +37,7 @@ export const CHARACTERS = [
     kit: 'Hammer · Work gloves · 5 wood',
     spawn: SPAWNS.builder,
     resources: { wood: 5, stone: 2, food: 2 },
+    tools: ['hammer'],
   },
   {
     id: 'survivor',
@@ -47,6 +50,7 @@ export const CHARACTERS = [
     kit: 'Salvaged satchel · Rope · 4 food',
     spawn: SPAWNS.survivor,
     resources: { wood: 2, stone: 0, food: 4 },
+    tools: [],
   },
 ];
 
