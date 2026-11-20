@@ -12,6 +12,7 @@ import {
   TOOL_WEAR_WARNING,
 } from '../data/balance.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
+import { GEAR, GEAR_IDS, gearInfo } from '../data/gear.js';
 import { NODES } from '../world/nodes.js';
 import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
@@ -23,6 +24,7 @@ import { chooseInteraction } from '../actions/interact.js';
 import { lockedNode } from '../actions/gather.js';
 import { canCraft, nextTier, toolName, CRAFT_PREFIX } from '../actions/craft.js';
 import { meterTrends } from '../actions/survive.js';
+import { canMake, madeWords } from '../actions/gear.js';
 import { $ } from './layout.js';
 
 // How many pop-up messages can show at once above the player card; an older one makes room.
@@ -45,8 +47,11 @@ const DOING = {
  */
 const costWords = (cost) =>
   Object.entries(cost)
-    .map(([type, n]) => `${n} ${type}`)
+    .map(([type, n]) => `${n} ${RESOURCE_NAMES[type] ?? type}`)
     .join(' · ');
+
+// What a gear row says in place of its cost while the player already has that gear.
+const HAVE_WORDS = { torch: 'Burning', coat: 'Worn', boat: 'Owned' };
 
 /**
  * Gives words a capital first letter, such as "Stone axe".
@@ -60,9 +65,11 @@ const capital = (words) => words[0].toUpperCase() + words.slice(1);
 const KEY_STRIP_MS = 8000,
   KEY_STRIP_FADE_MS = 600;
 
-// The word shown beside a meter for each cause meterTrends gives (tea also shows its seconds left).
+// The word shown beside a meter for each cause meterTrends gives (a torch and tea also show their
+// seconds left).
 const TREND_WORDS = {
   warming: 'By the fire',
+  torch: 'Torch',
   tea: 'Tea',
   cold: 'Cold',
   snow: 'Snow',
@@ -82,6 +89,7 @@ export function describeEvent(event) {
   if (event.kind === 'freezing') return "You're freezing. Your health is dropping.";
   if (event.kind === 'starving')
     return "You're starving. Your health is dropping. Eat something (F).";
+  if (event.kind === 'torchOut') return 'Your torch burned out.';
   if (event.kind === 'dawn') {
     const needs = event.camps.length ? ` New needs at ${event.camps.join(', ')}.` : '';
     return `Dawn, day ${event.day}.${needs}`;
@@ -114,6 +122,7 @@ export function describeFinish(finished) {
     return 'Boat repaired · Walk to the water’s edge and press E to board';
   if (finished.kind === 'craft') {
     if (!finished.ok) return finished.message;
+    if (finished.gear) return madeWords(finished);
     const made = `${capital(toolName(finished.tool, finished.tier))} made`;
     return [made, wearWords('hammer', finished.wear)].filter(Boolean).join(' · ');
   }
@@ -160,6 +169,7 @@ function busyLabel(state, animator) {
   if (!target) return null;
   if (target.startsWith(CRAFT_PREFIX)) {
     const tool = target.slice(CRAFT_PREFIX.length);
+    if (GEAR_IDS.includes(tool)) return `Making ${gearInfo(tool).name}… move to stop`;
     return `Crafting ${toolName(tool, nextTier(state, tool) ?? 'iron')}… move to stop`;
   }
   if (WRECKS.some((w) => w.id === target)) return 'Repairing the old boat… move to stop';
@@ -225,7 +235,11 @@ export function createHud(session) {
       meter.setAttribute('aria-valuenow', String(value));
       meter.classList.toggle('low', value <= 25);
       meter.querySelector('.meter-tag').textContent =
-        trend === 'tea' ? `Tea ${Math.ceil(state.tea)}s` : (TREND_WORDS[trend] ?? '');
+        trend === 'tea'
+          ? `Tea ${Math.ceil(state.tea)}s`
+          : trend === 'torch'
+            ? `Torch ${Math.ceil(state.torch)}s`
+            : (TREND_WORDS[trend] ?? '');
     }
   }
 
@@ -385,6 +399,18 @@ export function createHud(session) {
         : 'Owned';
       // The tier tells the stylesheet which painted picture to show: the stone tool or the iron one.
       option.dataset.tier = check.tier ?? 'iron';
+      option.classList.toggle('short', check.reason === 'cost');
+      option.disabled = check.reason === 'owned';
+      option.title = check.ok ? '' : check.message;
+    }
+
+    // Gear: its name, and its cost or why it can't be made twice ("Burning", "Worn", "Owned").
+    for (const { id, name } of GEAR) {
+      const option = $(`make-${id}`),
+        check = canMake(state, id);
+      option.querySelector('.gear-name').textContent = capital(name);
+      option.querySelector('.gear-cost').textContent =
+        check.reason === 'owned' ? HAVE_WORDS[id] : costWords(check.cost);
       option.classList.toggle('short', check.reason === 'cost');
       option.disabled = check.reason === 'owned';
       option.title = check.ok ? '' : check.message;

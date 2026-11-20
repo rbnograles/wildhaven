@@ -5,6 +5,8 @@
 
 import { checkPlacement, placeCampfire, BUILD_ABOARD } from '../actions/build.js';
 import { beginCraft } from '../actions/craft.js';
+import { beginMake } from '../actions/gear.js';
+import { GEAR } from '../data/gear.js';
 import { TOOLS } from '../data/tools.js';
 import { cancelAction } from '../animation/clips.js';
 import { save } from './session.js';
@@ -27,8 +29,9 @@ const FACING = [
  * @param {object} session - The shared session; its `build` record and `pointer` are used here.
  * @param {object} ui - The other UI parts (`hud`, `camp`).
  * @returns {{toggleMenu: Function, start: Function, cancel: Function, place: Function,
- *   update: Function, craft: Function}} Ways to open or close the menu, start placing a campfire,
- *   leave building, place the fire, move the ghost each frame, and start crafting a tool.
+ *   update: Function, craft: Function, make: Function}} Ways to open or close the menu, start
+ *   placing a campfire, leave building, place the fire, move the ghost each frame, and start
+ *   crafting a tool or making a piece of gear.
  */
 export function setupBuild(session, ui) {
   const { build } = session;
@@ -117,6 +120,24 @@ export function setupBuild(session, ui) {
   }
 
   /**
+   * Starts making a piece of gear (the menu's Gear entries, or 5 to 8 while the menu is open).
+   *
+   * It works like crafting a tool: the menu closes, any gathering stops, and the action starts for
+   * the game loop to finish. Gear that can't be made yet changes nothing, and a toast says why.
+   *
+   * @param {string} id - Which gear: 'torch', 'coat', 'grip' or 'boat'.
+   */
+  function make(id) {
+    if (session.screen !== 'game' || !session.state || refuseAboard()) return;
+    build.menu = false;
+    cancelAction(session.animator);
+    const result = beginMake(session.state, session.animator, id);
+    if (result.ok) session.keys.clear();
+    else ui.hud.notify(result.message);
+    ui.hud.update();
+  }
+
+  /**
    * Places the campfire at the ghost, if it may stand there, then asks for the camp's name.
    *
    * A refused spot changes nothing and says why. The fire is paid for and placed before the name
@@ -142,6 +163,7 @@ export function setupBuild(session, ui) {
   $('build-button').addEventListener('click', toggleMenu);
   $('build-campfire').addEventListener('click', start);
   for (const { id } of TOOLS) $(`craft-${id}`).addEventListener('click', () => craft(id));
+  for (const { id } of GEAR) $(`make-${id}`).addEventListener('click', () => make(id));
 
-  return { toggleMenu, start, cancel, place, update, craft };
+  return { toggleMenu, start, cancel, place, update, craft, make };
 }

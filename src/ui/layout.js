@@ -18,6 +18,7 @@ import { TOOLS } from '../data/tools.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
 import { RESOURCES } from '../data/supplies.js';
+import { GEAR } from '../data/gear.js';
 
 // How many of the item box's ten painted slots are still empty: all but one per resource.
 const SPARE_SLOTS = 10 - RESOURCES.length;
@@ -287,6 +288,15 @@ export function mountLayout(app) {
                   ${icon(t.icon)}<span class="build-option-text"
                     ><b class="craft-name"></b><small>${t.use}</small></span
                   ><span class="build-cost craft-cost"></span><kbd>${t.key}</kbd>
+                </button>`,
+            ).join('')}
+            <p class="build-menu-title">GEAR</p>
+            ${GEAR.map(
+              (g) =>
+                /* HTML */ `<button id="make-${g.id}" class="build-option gear-option">
+                  ${icon(g.icon)}<span class="build-option-text"
+                    ><b class="gear-name"></b><small>${g.use}</small></span
+                  ><span class="build-cost gear-cost"></span><kbd>${g.key}</kbd>
                 </button>`,
             ).join('')}
           </div>

@@ -3,6 +3,7 @@
 // loop finishes it (`finishRepair`), so the cost is paid exactly once.
 
 import { WRECKS } from '../data/places.js';
+import { RESOURCE_NAMES } from '../data/supplies.js';
 import {
   GATHER_RANGE,
   REPAIR_COST,
@@ -15,6 +16,10 @@ import { isWalkable, isDeep } from '../world/map.js';
 import { solidBases } from '../world/nodes.js';
 import { startAction } from '../animation/clips.js';
 import { facing } from './move.js';
+
+// What `boat.from` holds for a boat the player built themselves (actions/gear.js) instead of
+// mending an old one. Such a boat also carries `home`: the water it was launched on.
+export const BUILT = 'built';
 
 /** How far a spot is from the player, in world units. */
 const distance = (state, p) => Math.hypot(p.x - state.player.x, p.y - state.player.y);
@@ -60,7 +65,7 @@ export function missingForRepair(state) {
  */
 export const listMissing = (missing) =>
   Object.entries(missing)
-    .map(([type, count]) => `${count} ${type}`)
+    .map(([type, count]) => `${count} ${RESOURCE_NAMES[type] ?? type}`)
     .join(' and ');
 
 /**
@@ -130,7 +135,8 @@ function homeMooring(wreck) {
 }
 
 /**
- * Sends the player's boat back to its home mooring, by the old boat it was repaired from.
+ * Sends the player's boat back to its home mooring: by the old boat it was repaired from, or the
+ * water it was launched on if the player built it.
  *
  * Used when the player is taken away from the boat (for example passing out at sea and waking
  * by a fire): nobody is rowing, so the boat drifts home, like a stray dinghy washing back to its
@@ -143,7 +149,10 @@ export function sendBoatHome(state) {
   state.aboard = false;
   if (!state.boat) return false;
 
-  const home = homeMooring(WRECKS.find((w) => w.id === state.boat.from));
+  const built = state.boat.from === BUILT && state.boat.home;
+  const home = built
+    ? { from: BUILT, home: built, x: built.x, y: built.y, dir: built.dir }
+    : homeMooring(WRECKS.find((w) => w.id === state.boat.from));
   const { x, y, dir } = state.boat;
   if (x === home.x && y === home.y && dir === home.dir) return false;
   state.boat = home;

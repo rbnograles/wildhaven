@@ -10,6 +10,8 @@ import {
   START_TIME,
   SUPPLY_REGROW,
   TEA_SECONDS,
+  TORCH_SECONDS,
+  GRIP_MAX,
   MAX_GROWN,
   CAMP_NAME_MAX,
   MAX_CAMPS,
@@ -17,6 +19,7 @@ import {
   TOOL_USES,
 } from '../data/balance.js';
 import { TOOL_IDS } from '../data/tools.js';
+import { BUILT } from '../actions/boat.js';
 import { isWalkable, isSailable, SEA_BORDER } from '../world/map.js';
 import { NODES, isSceneryNode } from '../world/nodes.js';
 import { REGIONS } from '../world/regions.js';
@@ -24,10 +27,11 @@ import { emptyFog, isFogString, revealAround, revealRegions, growFog } from '../
 import { startingTools } from '../world/tools.js';
 
 /**
- * The save format this code writes. Version 7 is version 6 (iron and tools) plus the three finds:
- * feathers, pine cones and antlers. Version 3 to 6 saves are upgraded when loaded (see `upgrade`).
+ * The save format this code writes. Version 8 is version 7 (the three finds) plus the gear made
+ * from them: a burning torch, a feather coat, and a boat the player built themselves. Version 3
+ * to 7 saves are upgraded when loaded (see `upgrade`).
  */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /** The three survival meters. Each is a number from 0 to 100. */
 const METERS = ['health', 'hunger', 'warmth'];
@@ -74,6 +78,8 @@ export function createGame(characterId) {
     time: START_TIME,
     meters: { health: 100, hunger: 100, warmth: 100 },
     tea: 0,
+    torch: 0,
+    coat: false,
     camps: [],
     fog: emptyFog(),
   };
@@ -180,7 +186,7 @@ const isTools = (tools) =>
         (t.tier === 'stone' &&
           Number.isSafeInteger(t.uses) &&
           t.uses >= 1 &&
-          t.uses <= TOOL_USES[id])),
+          t.uses <= TOOL_USES[id] * GRIP_MAX)),
   );
 
 /**
@@ -373,7 +379,7 @@ function addTools(s) {
 function addFinds(s) {
   return {
     ...s,
-    version: SAVE_VERSION,
+    version: 7,
     resources: isPlainObject(s.resources)
       ? { ...s.resources, feather: 0, pinecone: 0, antler: 0 }
       : s.resources,
@@ -381,11 +387,40 @@ function addFinds(s) {
 }
 
 /**
+ * Brings a version 7 save (the finds, before anything was made from them) up to version 8.
+ *
+ * Version 7 had no torch and no coat: the torch starts unlit and the coat not worn.
+ *
+ * @param {object} s - The parsed version 7 save.
+ * @returns {object} The same adventure in the version 8 shape.
+ */
+function addGear(s) {
+  return { ...s, version: SAVE_VERSION, torch: 0, coat: false };
+}
+
+/**
+ * Says whether a saved boat's origin is real: an old boat's id, or 'built' with the water it was
+ * launched on (`home`: a position and a direction).
+ *
+ * @param {object} boat - The saved boat.
+ * @returns {boolean} True when the origin can be trusted.
+ */
+const isBoatOrigin = (boat) =>
+  WRECKS.some((w) => w.id === boat.from) ||
+  (boat.from === BUILT &&
+    isPlainObject(boat.home) &&
+    Number.isFinite(boat.home.x) &&
+    Number.isFinite(boat.home.y) &&
+    [0, 1, 2, 3].includes(boat.home.dir));
+
+/**
  * Works out where a loaded player and boat should be, mending spots a rebuilt map took away.
  *
  * Aboard, the boat sits right under the player. A boat (or a player in it) left on a spot that is
  * no longer sea goes back to the water by the old boat it was repaired from, and the player is set
- * ashore on that beach. Positions that are still fine are kept as they are.
+ * ashore on that beach. A boat the player built goes back to the water it was launched on, and a
+ * player who was in it to their character's start; if even that water is gone, so is the boat.
+ * Positions that are still fine are kept as they are.
  *
  * @param {object} s - The checked save.
  * @returns {{player: object, boat: object|null, aboard: boolean}} Fresh objects for the restored game.
@@ -394,16 +429,23 @@ function placeBoat(s) {
   const player = { x: s.player.x, y: s.player.y, direction: s.player.direction };
   if (!s.boat) return { player, boat: null, aboard: false };
 
+  // A mended boat's home is its old boat's launch spot; a built boat carries its own.
   const wreck = WRECKS.find((w) => w.id === s.boat.from);
+  const origin = wreck
+    ? { from: wreck.id }
+    : { from: BUILT, home: { x: s.boat.home.x, y: s.boat.home.y, dir: s.boat.home.dir } };
   const boat = s.aboard
-    ? { from: wreck.id, x: player.x, y: player.y, dir: player.direction }
-    : { from: wreck.id, x: s.boat.x, y: s.boat.y, dir: s.boat.dir };
+    ? { ...origin, x: player.x, y: player.y, dir: player.direction }
+    : { ...origin, x: s.boat.x, y: s.boat.y, dir: s.boat.dir };
   if (isSailable(boat.x, boat.y)) return { player, boat, aboard: s.aboard };
 
-  // The sea moved: float the boat at its launch spot again, and bring a player who was in it ashore.
-  boat.x = wreck.launch.x;
-  boat.y = wreck.launch.y;
-  if (s.aboard) Object.assign(player, { x: wreck.x, y: wreck.y });
+  // The sea moved: float the boat at its home again, and bring a player who was in it ashore.
+  const home = wreck ? wreck.launch : origin.home;
+  const ashore = wreck ?? CHARACTERS.find((c) => c.id === s.character).spawn;
+  if (s.aboard) Object.assign(player, { x: ashore.x, y: ashore.y });
+  if (!isSailable(home.x, home.y)) return { player, boat: null, aboard: false };
+  boat.x = home.x;
+  boat.y = home.y;
   return { player, boat, aboard: false };
 }
 
@@ -411,17 +453,19 @@ function placeBoat(s) {
  * Picks the upgrades an older save needs, if any, and runs them in order.
  *
  * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
- * every version 5 save then gains its tools, and every version 6 save its pockets for the finds.
+ * every version 5 save then gains its tools, every version 6 save its pockets for the finds, and
+ * every version 7 save its (unlit) torch and (unworn) coat.
  *
  * @param {*} parsed - The parsed save.
- * @returns {*} The save in the version 7 shape (still to be checked), or the save unchanged.
+ * @returns {*} The save in the version 8 shape (still to be checked), or the save unchanged.
  */
 function upgrade(parsed) {
   let s = parsed;
   if (s?.version === 3) s = upgradeV3(s);
   else if (s?.version === 4) s = addSeaBorder(s);
   if (s?.version === 5) s = addTools(s);
-  return s?.version === 6 ? addFinds(s) : s;
+  if (s?.version === 6) s = addFinds(s);
+  return s?.version === 7 ? addGear(s) : s;
 }
 
 /**
@@ -450,7 +494,7 @@ export function restoreGame(json) {
     )
       return null;
 
-    // A boat came from a real old boat, sits at a real position and faces a real direction.
+    // A boat came from a real old boat (or was built), sits at a real position and faces a real direction.
     // Being aboard needs a boat.
     const { boat } = s;
     if (
@@ -458,7 +502,7 @@ export function restoreGame(json) {
       (s.aboard && !boat) ||
       (boat !== null &&
         (typeof boat !== 'object' ||
-          !WRECKS.some((w) => w.id === boat.from) ||
+          !isBoatOrigin(boat) ||
           !Number.isFinite(boat.x) ||
           !Number.isFinite(boat.y) ||
           ![0, 1, 2, 3].includes(boat.dir)))
@@ -491,6 +535,15 @@ export function restoreGame(json) {
 
     // Tools: only known tools, each iron or a stone one with uses left.
     if (!isTools(s.tools)) return null;
+
+    // The torch has at most one torch's time left, and the coat is either worn or not.
+    if (
+      !Number.isFinite(s.torch) ||
+      s.torch < 0 ||
+      s.torch > TORCH_SECONDS ||
+      typeof s.coat !== 'boolean'
+    )
+      return null;
 
     // The discovered and found lists may only hold real ids, each listed once.
     for (const [list, allowed] of [
@@ -567,6 +620,8 @@ export function restoreGame(json) {
       time: s.time,
       meters: Object.fromEntries(METERS.map((k) => [k, meters[k]])),
       tea,
+      torch: s.torch,
+      coat: s.coat,
       camps: camps.map(copyCamp),
       fog: s.fog,
     };

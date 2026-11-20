@@ -148,7 +148,7 @@ test('all characters begin at distinct, walkable locations with their own identi
 test('a new game starts on the morning of day 1 with full meters, on foot, and the fog lifted around the spawn', () => {
   const game = createGame('scout');
   assert.equal(game.version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 7);
+  assert.equal(SAVE_VERSION, 8);
   assert.equal(game.time, START_TIME);
   assert.deepEqual(game.meters, { health: 100, hunger: 100, warmth: 100 });
   assert.equal(game.tea, 0);
@@ -224,7 +224,12 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
     (g) => (g.tools = { axe: { tier: 'gold' } }),
     (g) => (g.tools = { axe: { tier: 'stone', uses: 0 } }),
     (g) => (g.tools = { axe: { tier: 'stone', uses: 1.5 } }),
-    (g) => (g.tools = { hammer: { tier: 'stone', uses: TOOL_USES.hammer + 1 } }),
+    // An antler grip can take a stone tool up to twice a new one's uses, and no further.
+    (g) => (g.tools = { hammer: { tier: 'stone', uses: TOOL_USES.hammer * 2 + 1 } }),
+    (g) => (g.torch = -1),
+    (g) => (g.torch = 9999),
+    (g) => (g.coat = 'yes'),
+    (g) => (g.boat = { from: 'built', x: 100, y: 100, dir: 0 }), // a built boat with no home
     (g) => (g.resources.iron = -1),
     (g) => (g.camps = {}),
     (g) => g.camps.push({ ...campAt(g), id: 'tent' }),
@@ -560,4 +565,14 @@ test('a version 6 save gains empty slots for feathers, pine cones and antlers', 
     [9, 0, 0, 0],
   );
   assert.deepEqual(loaded.tools, game.tools);
+});
+
+// Guards saves made before gear existed: a version 7 save has no torch or coat, and must load with
+// the torch unlit and the coat not worn instead of being thrown away.
+test('a version 7 save gains an unlit torch and no coat', () => {
+  const { torch, coat, ...game } = createGame('scout');
+  game.resources.feather = 4;
+  const loaded = restoreGame(JSON.stringify({ ...game, version: 7 }), 'scout');
+  assert.equal(loaded.version, SAVE_VERSION);
+  assert.deepEqual([loaded.torch, loaded.coat, loaded.resources.feather], [0, false, 4]);
 });

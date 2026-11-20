@@ -260,6 +260,30 @@ export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10 };
 // GATHER_SECONDS; this is how tools shorten gathering, as GATHER_SECONDS always promised.
 export const TOOL_SECONDS = { stone: 5, iron: 3 };
 
+// ---- Gear made from the finds ----
+
+// What each piece of gear costs (data/gear.js lists them). The boat's recipe is a first pass: it
+// will also need nails once those exist.
+export const GEAR_RECIPES = {
+  torch: { wood: 1, pinecone: 2 },
+  coat: { feather: 10, antler: 2 },
+  grip: { antler: 1 },
+  boat: { wood: 30, iron: 6 },
+};
+
+/** Seconds a torch burns. It burns down by day too, like a real one. One torch at a time. */
+export const TORCH_SECONDS = 90;
+
+/** How many times wider the glow around the player is at night while a torch burns. */
+export const TORCH_LIGHT = 2.2;
+
+/** How much of the usual cold gets through a feather coat: half. */
+export const COAT_COLD = 0.5;
+
+// An antler grip gives a stone tool a new tool's worth of uses back, but never more than this many
+// times a new tool's uses in all.
+export const GRIP_MAX = 2;
+
 /** Uses left when the game warns that a stone tool is wearing out. */
 export const TOOL_WEAR_WARNING = 3;
 

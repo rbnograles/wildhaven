@@ -6,6 +6,8 @@ import { WRECKS } from '../data/places.js';
 import { wearTool } from '../world/tools.js';
 import { nearbyNode, beginGather, finishGather, dropFrom } from './gather.js';
 import { finishCraft, CRAFT_PREFIX } from './craft.js';
+import { finishMake } from './gear.js';
+import { GEAR_IDS } from '../data/gear.js';
 import {
   nearbyWreck,
   beginRepair,
@@ -84,8 +86,14 @@ export function beginInteraction(state, animator, id) {
  *   finishCraft), even when its last check failed.
  */
 export function finishInteraction(state, target, roll = Math.random) {
-  if (target.startsWith(CRAFT_PREFIX))
-    return { kind: 'craft', ...finishCraft(state, target.slice(CRAFT_PREFIX.length)) };
+  if (target.startsWith(CRAFT_PREFIX)) {
+    // A craft is a tool, or a piece of gear (torch, coat, grip, boat); both report as 'craft'.
+    const id = target.slice(CRAFT_PREFIX.length);
+    return {
+      kind: 'craft',
+      ...(GEAR_IDS.includes(id) ? finishMake(state, id) : finishCraft(state, id)),
+    };
+  }
   if (WRECKS.some((w) => w.id === target)) {
     const wreck = finishRepair(state, target);
     return wreck ? { kind: 'repair', wreck } : null;

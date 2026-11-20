@@ -6,6 +6,7 @@ import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
 import { darknessAt, NIGHT_DARK } from '../world/clock.js';
 import { fireRadius } from '../world/camps.js';
+import { TORCH_LIGHT } from '../data/balance.js';
 
 // The night's colour (a blue so deep it is almost black), the glow around the player (world
 // units), the light picture's size (pixels), and how far past the screen edge the dark layer
@@ -106,7 +107,8 @@ export function createLighting(scene, reducedMotion) {
         .setAlpha((0.45 * darkness) / NIGHT_DARK)
         .setVisible(true);
     });
-    stamp.setScale((PLAYER_LIGHT * 2) / LIGHT_SIZE);
+    // A burning torch widens the glow around the player.
+    stamp.setScale((PLAYER_LIGHT * 2 * (state.torch > 0 ? TORCH_LIGHT : 1)) / LIGHT_SIZE);
     layer.erase(stamp, state.player.x - left, state.player.y - 40 - top);
     layer.render();
   }

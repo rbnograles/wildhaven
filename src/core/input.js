@@ -7,6 +7,7 @@ import { listMissing, missingForRepair } from '../actions/boat.js';
 import { lockedNode, aimState } from '../actions/gather.js';
 import { beginApproach, beginPlacing } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
+import { GEAR } from '../data/gear.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -23,7 +24,7 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  * Held keys go into `session.keys`, like names written on a whiteboard: pressing a key writes it,
  * letting go erases it. The frame loop reads the whiteboard each frame through `moveIntent`.
  * Also handles E to step ashore, board, repair, gather or open a camp, B for the build menu (and
- * 1 to pick the campfire in it, 2 to 4 to craft a tool), F to eat, H to heal, M for the map, J for the journal, Escape to
+ * 1 to pick the campfire in it, 2 to 4 to craft a tool, 5 to 8 to make gear), F to eat, H to heal, M for the map, J for the journal, Escape to
  * pause (or to leave the build menu or build mode), the mouse over the world (a click on a tree or
  * rock chops or mines it, walking there first when it is out of reach), and saving when the tab
  * is hidden.
@@ -220,6 +221,14 @@ export function setupInput(session, ui) {
     if (tool && !event.repeat && session.build.menu) {
       event.preventDefault();
       ui.build.craft(tool.id);
+      return;
+    }
+
+    // With the build menu open, 5 to 8 make the torch, the coat, the grip and the boat.
+    const gear = GEAR.find((g) => g.key === key);
+    if (gear && !event.repeat && session.build.menu) {
+      event.preventDefault();
+      ui.build.make(gear.id);
       return;
     }
 

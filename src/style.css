@@ -1791,6 +1791,24 @@ button.slot:hover {
   --picture: url('../assets/world/source/objects/props/campfire.png');
 }
 
+/* Gear has no painted pictures of its own yet: each row borrows the find it is made from, and the */
+/* boat the rowboat that floats in the world. */
+#make-torch {
+  --picture: url('../assets/ui/game/item-pinecone.png');
+}
+
+#make-coat {
+  --picture: url('../assets/ui/game/item-feather.png');
+}
+
+#make-grip {
+  --picture: url('../assets/ui/game/item-antler.png');
+}
+
+#make-boat {
+  --picture: url('../assets/world/source/objects/props/rowboat.png');
+}
+
 #craft-axe {
   --picture: url('../assets/ui/game/tool-axe-stone.png');
 }

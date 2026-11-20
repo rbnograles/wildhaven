@@ -380,3 +380,10 @@ Changing jobs, same day at `http://127.0.0.1:5181`, Scout's save moved to the vi
 - Builder at `127.0.0.1`, continuing a version 6 save: it loaded as version 7 with nothing lost; the item box shows feather, pine cone and antler slots (faded at 0), and the journal button shows the painted notebook. No console errors.
 - A loose rock west of Hollowstead shows the E cap and "Pick up loose rock". A feather south-west of the village shows "Pick up feather"; picking it up raised the feather slot from 0 to 1 and the feather faded out. (The player was moved beside each by editing the verification save.)
 - Not checked in the browser: a tree dropping a cone or feather (covered by `tests/actions/interact.test.js`), and pine cones and antlers on the ground.
+
+## 2026-11-20: gear (torch, feather coat, antler grip, built rowboat)
+
+- Survivor, new game at `127.0.0.1`, given 40 of every resource and stood on the Pinefall beach by editing the verification save. B opens the build menu with a Gear group under Tools (the menu scrolls at 800x600): Torch "1 wood · 2 pine cone", Feather coat "10 feather · 2 antler" (hover: "Sew the coat beside your campfire"), Antler grip "1 antler", Rowboat "30 wood · 6 iron". No console errors.
+- Key 8: "Making rowboat… move to stop", then the boat floated beside the player, wood went 40 to 10 and iron 40 to 34, the save held `from: 'built'` with its `home`, the button read "Board the boat", and the menu row read "Owned".
+- Key 5: "Making torch… move to stop", then pine cones went 40 to 38, wood 10 to 9, and the save held 87 s of torch.
+- Key 7 started "Making antler grip… move to stop"; its finish was not seen (the next key press called it off). The grip, the coat, the torch's night glow and warmth, and a built boat drifting home are covered by `tests/actions/gear.test.js`, not checked in the browser.

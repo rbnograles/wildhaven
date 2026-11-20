@@ -267,7 +267,7 @@ export function setupCamp(session, ui) {
     session.renderer.resetCamera();
 
     const news = [
-      boatHome ? 'Your boat drifted back to where you mended it.' : '',
+      boatHome ? 'Your boat drifted back to its home water.' : '',
       dawn?.camps.length ? `New needs at ${dawn.camps.join(', ')}.` : '',
     ].filter(Boolean);
     if (news.length) ui.hud.notify(news.join(' '));

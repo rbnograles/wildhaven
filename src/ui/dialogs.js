@@ -74,7 +74,8 @@ export function setupDialogs(session, ui) {
     save(session, ui, true);
     const now = session.state.boat,
       drifted = boat && (boat.x !== now.x || boat.y !== now.y || boat.dir !== now.dir),
-      boatName = drifted && WRECKS.find((w) => w.id === now.from).name;
+      // A boat the player built has no old boat to name: it goes back to where it was launched.
+      boatName = drifted && (WRECKS.find((w) => w.id === now.from)?.name ?? 'where you built it');
     ui.hud.notify(
       boatName
         ? `Travelled to ${post.name} · Your boat drifted back to ${boatName}`

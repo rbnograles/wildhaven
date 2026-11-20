@@ -4,6 +4,7 @@
 
 import {
   WARMTH_SECONDS,
+  COAT_COLD,
   STARVING_COLD,
   SNOW_COLD,
   SNOW_NIGHT_COLD,
@@ -57,20 +58,25 @@ const snowChill = (snow, phase) => {
  *
  * Think of the meters as three buckets. Hunger always drips out slowly. Warmth fills up by a fire
  * and in daylight, holds at dusk, and drains at night away from a fire (faster on an empty
- * stomach) unless tea holds the cold off. In the snow it drains at every hour, and faster still.
+ * stomach) unless a burning torch or tea holds the cold off (the torch first, so the tea is
+ * saved). In the snow it drains at every hour, and faster still. A feather coat halves the drain.
+ * A torch burns down all the time, lit or not needed.
  * Health drains while freezing and refills slowly by a fire for a player who isn't starving.
  * Starving wears health down too, slowly, and only as far as STARVE_FLOOR: an empty stomach
  * alone never makes the player pass out.
  *
- * @param {object} state - The game being played. `time`, `meters`, `tea` and camp needs change.
+ * @param {object} state - The game being played. `time`, `meters`, `tea`, `torch` and camp needs
+ *   change.
  * @param {number} dt - Seconds of game time to move forward.
  * @returns {object[]} What happened in this step: `{kind: 'dusk'}`, `{kind: 'night'}`,
- *   `{kind: 'freezing'}`, `{kind: 'starving'}`, `{kind: 'dawn', day, camps}` or `{kind: 'passout'}`.
+ *   `{kind: 'freezing'}`, `{kind: 'starving'}`, `{kind: 'torchOut'}`, `{kind: 'dawn', day, camps}`
+ *   or `{kind: 'passout'}`.
  */
 export function tickSurvival(state, dt) {
   if (!(dt > 0)) return [];
   const { meters } = state;
   const before = { phase: phaseOf(state.time), day: dayOf(state.time), ...meters };
+  const torch = state.torch > 0; // lit at the start of this step
   state.time += dt;
   const phase = phaseOf(state.time),
     warm = byFire(state),
@@ -83,11 +89,20 @@ export function tickSurvival(state, dt) {
 
   // Warmth: up by a fire, up in daylight, steady at dusk, down in the cold (at night anywhere,
   // and at every hour in the snow, where it also falls faster) unless tea holds it off.
-  const chill = (100 / WARMTH_SECONDS) * (starving ? STARVING_COLD : 1) * snowChill(snow, phase);
+  const chill =
+    (100 / WARMTH_SECONDS) *
+    (starving ? STARVING_COLD : 1) *
+    snowChill(snow, phase) *
+    (state.coat ? COAT_COLD : 1);
   if (warm) meters.warmth = clamp(meters.warmth + WARM_BY_FIRE * dt);
-  else if (cold && state.tea > 0) state.tea = Math.max(0, state.tea - dt);
+  else if (cold && torch) {
+    // The torch in hand keeps the cold off, and the tea is not touched.
+  } else if (cold && state.tea > 0) state.tea = Math.max(0, state.tea - dt);
   else if (cold) meters.warmth = clamp(meters.warmth - chill * dt);
   else if (phase !== 'dusk') meters.warmth = clamp(meters.warmth + WARM_BY_DAY * dt);
+
+  // The torch burns down whether or not it is needed.
+  if (torch) state.torch = Math.max(0, state.torch - dt);
 
   // Health: down while freezing, slowly up by a fire for a fed player.
   if (!warm && cold && meters.warmth <= 0)
@@ -104,6 +119,7 @@ export function tickSurvival(state, dt) {
     events.push({ kind: phase });
   if (before.warmth > 0 && meters.warmth <= 0) events.push({ kind: 'freezing' });
   if (before.hunger > 0 && meters.hunger <= 0) events.push({ kind: 'starving' });
+  if (torch && state.torch <= 0) events.push({ kind: 'torchOut' });
   if (dayOf(state.time) > before.day) events.push(startDay(state));
   if (before.health > 0 && meters.health <= 0) events.push({ kind: 'passout' });
   return events;
@@ -150,8 +166,8 @@ function healthTrend(state, freezing) {
  * Says why each meter is changing, for the small word beside it on the HUD.
  *
  * @param {object} state - The game being played.
- * @returns {{warmth: string, health: string, hunger: string}} Warmth: 'warming' by a fire, 'tea'
- *   while tea holds off the cold, 'snow' while the snow drains it, 'cold' while the night does.
+ * @returns {{warmth: string, health: string, hunger: string}} Warmth: 'warming' by a fire, 'torch'
+ *   or 'tea' while one of them holds off the cold, 'snow' while the snow drains it, 'cold' while the night does.
  *   Health: 'freezing', or 'starving' while an empty stomach is wearing it down. Hunger:
  *   'starving'. An empty string means there is nothing to say.
  */
@@ -161,6 +177,7 @@ export function meterTrends(state) {
     warm = byFire(state);
   let warmth = '';
   if (warm) warmth = 'warming';
+  else if (cold && state.torch > 0) warmth = 'torch';
   else if (cold && state.tea > 0) warmth = 'tea';
   else if (cold) warmth = snow ? 'snow' : 'cold';
   return {
