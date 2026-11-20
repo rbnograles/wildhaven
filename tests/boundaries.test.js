@@ -13,7 +13,8 @@ const SRC = new URL('../src/', import.meta.url);
 
 /**
  * Every pure module, as a path inside src/: all the .js files in data/, world/, actions/ and
- * game/ (including any subfolders), plus animation/clips.js (the one animation file with no drawing code in it).
+ * game/ (including any subfolders), plus animation/clips.js (the one animation file with no drawing code in it) and the world
+ * editor's model and lookups (editor/model.js, editor/lookups.js), which its tests load in Node.
  */
 const PURE = [
   ...['data', 'world', 'actions', 'game'].flatMap((dir) =>
@@ -23,6 +24,8 @@ const PURE = [
       .map((f) => `${dir}/${f}`),
   ),
   'animation/clips.js',
+  'editor/model.js',
+  'editor/lookups.js',
 ];
 
 /**

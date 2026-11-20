@@ -380,3 +380,17 @@ Changing jobs, same day at `http://127.0.0.1:5181`, Scout's save moved to the vi
 - Builder at `127.0.0.1`, continuing a version 6 save: it loaded as version 7 with nothing lost; the item box shows feather, pine cone and antler slots (faded at 0), and the journal button shows the painted notebook. No console errors.
 - A loose rock west of Hollowstead shows the E cap and "Pick up loose rock". A feather south-west of the village shows "Pick up feather"; picking it up raised the feather slot from 0 to 1 and the feather faded out. (The player was moved beside each by editing the verification save.)
 - Not checked in the browser: a tree dropping a cone or feather (covered by `tests/actions/interact.test.js`), and pine cones and antlers on the ground.
+
+## 2026-11-20: world editor (places)
+
+Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server), pane 800 px wide.
+
+- The page loads the world picture with 82 place markers, the launch markers and region borders; the list has 82 rows and Problems says "No problems found."
+- Clicking a landmark fills the form. Dragging it off the map shows the "outside the world" error and disables Save; Ctrl+Z puts it back in one step.
+- "+ Landmark" then a click on the meadows made `h-new-1`, "New place", region meadows; the Delete key removed it.
+- Arrow right nudged Sunken Colonnade from x 7648 to 7656. Save said "Saved.", the page did not reload (undo stayed enabled), and `git diff --stat` showed 1 insertion, 1 deletion.
+- Endpoints by curl: a wrong shape gives 400 with the reasons, a wrong hash gives 409 "conflict", text that is not JSON gives 400; the file was untouched each time. A simulated 409 in the page asked to reload and dropped the edit.
+- Rebuild with unchanged places: about 40 s, the log streamed, the page reloaded once and showed "Rebuild passed." with the log kept; the rebuilt map files were identical to the committed ones.
+- Rebuild with Oasis Signpost moved into the sea (y 300): `build-map.py` crashed in `path_tile`, the log showed the traceback and "RESULT: fail", status "Rebuild FAILED: see the log." It left `tileset.png` changed; restoring `places.json` and rebuilding brought it back.
+- `npm run build`: no editor file in `dist/`.
+- Not checked in the browser: the blocked-ground overlay, dragging an old boat's launch point, a renamed id clashing with another, a moved landmark being found at its new spot in the game, and the rebuild log when Python is missing. The first fix after loading (a draw before the places arrived threw an error) was confirmed by the markers drawing; the console buffer still showed the earlier message.

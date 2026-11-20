@@ -408,6 +408,18 @@ function placeBoat(s) {
 }
 
 /**
+ * Keeps only the found ids the game still has.
+ *
+ * A place can be deleted or renamed in the world editor. A save that found it earlier is still a
+ * good save, so the stale id is quietly left out, like crossing a closed shop off an old list.
+ *
+ * @param {string[]} ids - The found ids read from a save.
+ * @param {{id: string}[]} places - The places the game has now.
+ * @returns {string[]} A fresh list with the unknown ids removed.
+ */
+const stillThere = (ids, places) => ids.filter((id) => places.some((p) => p.id === id));
+
+/**
  * Picks the upgrades an older save needs, if any, and runs them in order.
  *
  * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
@@ -458,12 +470,21 @@ export function restoreGame(json) {
       (s.aboard && !boat) ||
       (boat !== null &&
         (typeof boat !== 'object' ||
-          !WRECKS.some((w) => w.id === boat.from) ||
+          typeof boat.from !== 'string' ||
           !Number.isFinite(boat.x) ||
           !Number.isFinite(boat.y) ||
           ![0, 1, 2, 3].includes(boat.dir)))
     )
       return null;
+
+    // An old boat can be deleted in the world editor. Its rowboat then has no launch spot to go
+    // back to, so the boat is removed, and a player who was in it starts from their spawn.
+    if (boat !== null && !WRECKS.some((w) => w.id === boat.from)) {
+      const { spawn } = CHARACTERS.find((c) => c.id === s.character);
+      if (s.aboard) Object.assign(s.player, { x: spawn.x, y: spawn.y });
+      s.boat = null;
+      s.aboard = false;
+    }
 
     // On foot the player must stand somewhere walkable. Aboard, any real position will do here:
     // placeBoat brings them ashore if the map no longer has sea there. Cliffs are left out of the
@@ -492,21 +513,18 @@ export function restoreGame(json) {
     // Tools: only known tools, each iron or a stone one with uses left.
     if (!isTools(s.tools)) return null;
 
-    // The discovered and found lists may only hold real ids, each listed once.
-    for (const [list, allowed] of [
-      [s.discovered, REGIONS],
-      [s.landmarks, LANDMARKS],
-      [s.waypoints, WAYPOINTS],
-      [s.wrecks, WRECKS],
-    ]) {
+    // The discovered and found lists are short lists of ids, each listed once. A region must be
+    // real. A found place the map no longer has is allowed here and dropped below (`stillThere`).
+    for (const list of [s.discovered, s.landmarks, s.waypoints, s.wrecks]) {
       if (
         !Array.isArray(list) ||
-        list.length > allowed.length ||
+        list.length > 1000 ||
         new Set(list).size !== list.length ||
-        !list.every((id) => allowed.some((a) => a.id === id))
+        !list.every((id) => typeof id === 'string')
       )
         return null;
     }
+    if (!s.discovered.every((id) => REGIONS.some((r) => r.id === id))) return null;
 
     // Time played, distance travelled and the world clock must be real, non-negative numbers.
     if (![s.elapsed, s.distance, s.time].every((n) => Number.isFinite(n) && n >= 0)) return null;
@@ -557,9 +575,9 @@ export function restoreGame(json) {
       tools: copyTools(s.tools),
       regrowAt: Object.fromEntries(timers),
       discovered: [...s.discovered],
-      landmarks: [...s.landmarks],
-      waypoints: [...s.waypoints],
-      wrecks: [...s.wrecks],
+      landmarks: stillThere(s.landmarks, LANDMARKS),
+      waypoints: stillThere(s.waypoints, WAYPOINTS),
+      wrecks: stillThere(s.wrecks, WRECKS),
       boat: placed.boat,
       aboard: placed.aboard,
       elapsed: s.elapsed,
