@@ -9,9 +9,6 @@ import { createAnimator } from '../animation/clips.js';
 import { discover } from '../actions/discover.js';
 import { hasJournalPage } from '../world/journal.js';
 import { resetVillagers } from '../world/npcs.js';
-import { resetAnimals } from '../world/animals.js';
-import { resetWolves } from '../world/wolves.js';
-import { resetRepel } from '../actions/wolves.js';
 import { createRenderer } from '../render/renderer.js';
 import { logStart, logFinds } from './playtest.js';
 import { $ } from '../ui/layout.js';
@@ -35,8 +32,7 @@ export const tabStorage = (() => {
  *
  * @returns {object} The new session: selected character, game state, animator, renderer, save
  *   session, last save failure, current screen, load counter, held keys, frame clock, building
- *   (`build`: whether something is being placed and what (`kind`: 'campfire' or a camp building),
- *   whether the build menu is open, the ghost's spot
+ *   (`build`: whether a fire is being placed, whether the build menu is open, the ghost's spot
  *   and its placement check; never saved), the mouse
  *   position over the world (`pointer`, or null) and the tree or rock under the mouse (`hover`:
  *   `{node, state}` with the state from aimState, or null; worked out every frame, never saved),
@@ -54,7 +50,7 @@ export function createSession() {
     loadId: 0,
     keys: new Set(),
     clock: { last: 0, sinceSave: 0, sinceHud: 0 },
-    build: { active: false, menu: false, kind: 'campfire', x: 0, y: 0, check: null },
+    build: { active: false, menu: false, x: 0, y: 0, check: null },
     pointer: null,
     hover: null,
     walk: null,
@@ -161,9 +157,6 @@ export async function start(session, ui, fresh = false) {
     Object.assign(session.build, { active: false, menu: false });
     // The villagers' strolls are not saved: each time a game opens they start again from home.
     resetVillagers();
-    resetAnimals();
-    resetWolves();
-    resetRepel();
 
     // Fill in the HUD and switch to the game screen.
     const c = CHARACTERS.find((c) => c.id === state.character);

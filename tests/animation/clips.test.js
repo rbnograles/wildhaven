@@ -44,7 +44,6 @@ test('every clip the game plays has its own definition', () => {
     'hurtHunger',
     'hurtCold',
     'hurtAttack',
-    'repel',
     'collapse',
   ]);
   const four = ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop', 'sleep', 'wake'];

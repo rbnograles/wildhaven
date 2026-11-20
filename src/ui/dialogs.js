@@ -7,7 +7,6 @@ import { travelTo } from '../actions/travel.js';
 import { cancelAction } from '../animation/clips.js';
 import { WAYPOINTS, WRECKS } from '../data/places.js';
 import { WORLD } from '../world/map.js';
-import { MINI_VIEWS, miniZoom, stepMiniZoom } from '../render/maps.js';
 import { $ } from './layout.js';
 
 /**
@@ -27,14 +26,13 @@ export function setupDialogs(session, ui) {
     $('camp-name-dialog'),
     $('camp-dialog'),
     $('passout-dialog'),
-    $('chest-dialog'),
   ];
 
   /**
    * Tells whether the game is paused. Any open dialog pauses the game.
    *
-   * @returns {boolean} True while the pause, map, journal, reset, camp name, camp, pass-out or
-   *   chest dialog is open.
+   * @returns {boolean} True while the pause, map, journal, reset, camp name, camp or pass-out
+   *   dialog is open.
    */
   const isPaused = () => dialogs.some((dialog) => dialog.open);
 
@@ -138,43 +136,9 @@ export function setupDialogs(session, ui) {
   });
   $('return').addEventListener('click', () => leave(session, ui));
 
-  /**
-   * Zooms the corner minimap one step and greys out the button that can go no further.
-   *
-   * The keyboard goes back to the game afterwards, so the next key press moves the player
-   * instead of pressing the zoom button again.
-   *
-   * @param {number} step - -1 to zoom in, 1 to zoom out, 0 to only refresh the buttons.
-   */
-  function zoomMinimap(step) {
-    if (step) stepMiniZoom(step);
-    $('minimap-in').disabled = miniZoom() === 0;
-    $('minimap-out').disabled = miniZoom() === MINI_VIEWS.length - 1;
-    if (step && session.screen === 'game' && !isPaused()) $('world').focus();
-  }
-
   // Map buttons.
   $('open-map').addEventListener('click', toggleMap);
   $('close-map').addEventListener('click', toggleMap);
-
-  // Minimap zoom: the two small buttons, and the mouse wheel anywhere over the round map.
-  // The wheel listener is not passive so it can stop the page from scrolling under the mouse.
-  // A touchpad sends dozens of wheel events for one swipe, so a step is taken at most every
-  // 180 ms; otherwise one swipe would always jump from the nearest view to the farthest.
-  let lastWheel = 0;
-  $('minimap-in').addEventListener('click', () => zoomMinimap(-1));
-  $('minimap-out').addEventListener('click', () => zoomMinimap(1));
-  document.querySelector('.minimap').addEventListener(
-    'wheel',
-    (event) => {
-      event.preventDefault();
-      if (!event.deltaY || event.timeStamp - lastWheel < 180) return;
-      lastWheel = event.timeStamp;
-      zoomMinimap(event.deltaY < 0 ? -1 : 1);
-    },
-    { passive: false },
-  );
-  zoomMinimap(0);
 
   // "Start fresh?" buttons.
   $('cancel-reset').addEventListener('click', () => $('reset-dialog').close());

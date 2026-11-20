@@ -48,14 +48,3 @@ test('a stone tool warns once, then breaks; an iron tool never wears', () => {
   assert.equal(toolTier(state, 'pickaxe'), 'iron');
   assert.equal(wearTool(state, 'hammer'), null); // not owned: nothing happens
 });
-
-// Guards heavy work: a big rock takes several uses at once, the warning still comes when that
-// step jumps past the warning line, and a tool with fewer uses left than the work costs breaks.
-test('heavy work takes several uses, still warns once and breaks a nearly worn tool', () => {
-  const state = { tools: { pickaxe: { tier: 'stone', uses: TOOL_WEAR_WARNING + 2 } } };
-  assert.equal(wearTool(state, 'pickaxe', 3), 'warn');
-  assert.equal(state.tools.pickaxe.uses, TOOL_WEAR_WARNING - 1);
-  assert.equal(wearTool(state, 'pickaxe', 1), null); // already warned
-  assert.equal(wearTool(state, 'pickaxe', 3), 'broke');
-  assert.equal(state.tools.pickaxe, undefined);
-});

@@ -1,0 +1,74 @@
+- main [ref=e2]:
+  - heading "Wildhaven · Sprite source review" [level=1] [ref=e3]
+  - paragraph [ref=e4]: 33 selected sheets. Choose a sheet and row, then play or scrub its frames. These are generated source images; final runtime crops, pivots, and gameplay connections are separate work.
+  - navigation [ref=e5]:
+    - generic [ref=e6]:
+      - text: Sheet
+      - combobox "Sheet" [ref=e7]:
+        - option "tent-sleeping-padded"
+        - option "deer-states"
+        - option "boar-states"
+        - option "rabbit-states"
+        - option "wolf-dying" [selected]
+        - option "snow-ocean-bank-clean"
+        - option "iron-copper"
+        - option "cave-entrances"
+        - option "players-repel"
+        - option "shelter-construction-clean"
+        - option "stockpile-chest-states-clean"
+        - option "settlement-centres"
+        - option "dropped-haul"
+        - option "players-rowing-north"
+        - option "players-rowing-south"
+        - option "ship-sailing-directions"
+        - option "settlers-idle"
+        - option "settlers-walk-east"
+        - option "settlers-walk-south"
+        - option "settlers-walk-north"
+        - option "settlers-carry"
+        - option "settlers-deposit"
+        - option "settlers-chop"
+        - option "settlers-mine"
+        - option "settlers-sow"
+        - option "settlers-tend"
+        - option "settlers-harvest"
+        - option "players-sow"
+        - option "players-tend"
+        - option "players-harvest"
+        - option "wheat-growth"
+        - option "pinefall-keepsakes"
+        - option "wolf-states-clean"
+    - generic [ref=e8]:
+      - text: Row
+      - combobox "Row" [ref=e9]:
+        - option "1. dying" [selected]
+    - generic [ref=e10]:
+      - text: Speed
+      - combobox "Speed" [ref=e11]:
+        - option "2 fps"
+        - option "4 fps" [selected]
+        - option "6 fps"
+        - option "8 fps"
+    - generic [ref=e12]:
+      - text: Backdrop
+      - combobox "Backdrop" [ref=e13]:
+        - option "Meadow" [selected]
+        - option "Snow / light"
+        - option "Dark"
+    - button "Pause" [active] [ref=e29]
+    - button "Restart" [ref=e15]
+  - generic "Selected sprite frame" [ref=e17]
+  - navigation [ref=e18]:
+    - generic [ref=e19]:
+      - text: Frame
+      - slider "Frame" [ref=e20]: "2"
+    - status [ref=e21]: 3 / 6
+    - link "Open PNG" [ref=e22] [cursor=pointer]:
+      - /url: ../../assets/creatures/wolf/wolf-dying.png
+    - link "Prompt" [ref=e23] [cursor=pointer]:
+      - /url: ../../assets/creatures/wolf/wolf-dying.prompt.txt
+  - status [ref=e24]: 2172 × 724 px · 6 columns × 1 rows
+  - group [ref=e25]:
+    - generic "Full source sheet" [ref=e26] [cursor=pointer]
+    - img "Full selected sprite sheet" [ref=e28]
+  - paragraph [ref=e27]: Rows and columns use the nominal source grid. Death clips stop on the final frame. Static object states are stepped manually. Transparent backgrounds are composited over the selected color. West-facing animal poses can be mirrored from east; north/south animal poses are not included.

@@ -2,29 +2,19 @@
 // fire's warmth reaches, which fire is closest, whether the player is warm, what a new camp is
 // called) without changing anything.
 
-import {
-  FIRE_RADIUS,
-  FIRE_GROWTH,
-  CAMP_REACH,
-  CAMP_NAME_MAX,
-  CENTRE_WARMTH,
-} from '../data/balance.js';
+import { FIRE_RADIUS, FIRE_GROWTH, CAMP_REACH, CAMP_NAME_MAX } from '../data/balance.js';
 import { OBJECT_SPECS } from './map.js';
 import { regionOf } from './regions.js';
 
 /**
  * Says how far a camp's fire keeps the player warm.
  *
- * A new fire warms a small circle; every need the camp has had met makes the circle bigger, and so
- * does each tier of its camp centre (CENTRE_WARMTH).
+ * A new fire warms a small circle; every need the camp has had met makes the circle bigger.
  *
- * @param {{grown: number, buildings?: object[]}} camp - The camp.
+ * @param {{grown: number}} camp - The camp.
  * @returns {number} The warmth radius in world units.
  */
-export const fireRadius = (camp) =>
-  FIRE_RADIUS +
-  FIRE_GROWTH * camp.grown +
-  CENTRE_WARMTH * (camp.buildings?.find((b) => b.kind === 'centre')?.tier ?? 0);
+export const fireRadius = (camp) => FIRE_RADIUS + FIRE_GROWTH * camp.grown;
 
 /**
  * Measures the distance from a camp's fire to a spot.
@@ -74,17 +64,15 @@ export function campInReach(state) {
 /**
  * Gives the solid base of a campfire standing at a spot, as a box.
  *
- * The box comes from the campfire sprite's footprint in objects.json, grown by its `scale` (a fire
- * is drawn one tile wide), like every map object's.
+ * The box comes from the campfire sprite's footprint in objects.json, like every map object's.
  *
  * @param {number} x - World x of the fire (the middle of its base).
  * @param {number} y - World y of the fire (the bottom edge of its base).
  * @returns {number[]} The box as [left, top, right, bottom].
  */
 export function fireBase(x, y) {
-  const [halfWidth, depth] = OBJECT_SPECS.campfire.footprint,
-    s = OBJECT_SPECS.campfire.scale ?? 1;
-  return [x - halfWidth * s, y - depth * s, x + halfWidth * s, y];
+  const [halfWidth, depth] = OBJECT_SPECS.campfire.footprint;
+  return [x - halfWidth, y - depth, x + halfWidth, y];
 }
 
 /**

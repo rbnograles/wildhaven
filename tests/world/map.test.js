@@ -3,7 +3,6 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import MAP from '../../assets/world/map/wildhaven.json' with { type: 'json' };
 import {
   WORLD,
   OBSTACLES,
@@ -93,25 +92,9 @@ test('surfaceAt tells sand, snow and earth apart on dry land', () => {
   assert.ok(snowyAsSnow / snowy > 0.8, `${snowyAsSnow} of ${snowy}`);
 });
 
-// Guards the footpaths between the villages, starting places and signposts: a piece in a river, on
-// a hill or under a tree would be a path nobody can follow. The map builder lays turned path pieces;
-// a map brought in from Tiled has a `paths` tile layer instead, and every square of it is checked.
+// Guards the footpaths the map builder lays between the starting places and the signposts: a piece
+// in a river, on a hill or under a tree would be a path nobody can follow.
 test('every piece of footpath lies on dry, level ground with nothing solid on it', () => {
-  const tiles = MAP.layers.find((l) => l.name === 'paths' && l.type === 'tilelayer');
-  if (tiles) {
-    const squares = tiles.data.flatMap((gid, i) => (gid ? [i] : []));
-    assert.ok(squares.length > 500, `${squares.length} path squares`);
-    for (const i of squares) {
-      const x = (i % MAP.width) * MAP.tilewidth + 32,
-        y = Math.floor(i / MAP.width) * MAP.tileheight + 32,
-        where = `the path square at ${x},${y}`;
-      assert.ok(isDryLand(x, y), `${where} is in water`);
-      assert.equal(elevationAt(x, y), '0', `${where} is on a hill`);
-      assert.ok(!hitsObstacle(x, y), `${where} is under something solid`);
-    }
-    return;
-  }
-
   const pieces = MAP_OBJECTS.filter((o) => o.name.startsWith('path-'));
   assert.ok(pieces.length > 500, `${pieces.length} pieces`);
 

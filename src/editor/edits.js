@@ -76,18 +76,6 @@ export function landmarkLock(obj, places) {
 }
 
 /**
- * Reads an object's own size from its `scale` property (a map brought in from Tiled has one; see
- * objectScale in world/map.js, which is not imported here: the editor's server loads this file, and
- * importing the map would make the dev server restart every time a rebuild writes the map).
- *
- * @param {object} o - A map object.
- * @returns {number} Its size factor, 1 when it has none.
- */
-const scaleOf = (o) =>
-  (Array.isArray(o.properties) ? o.properties.find((p) => p.name === 'scale')?.value : undefined) ??
-  1;
-
-/**
  * Works out the map's objects as the script generated them, before any hand edit.
  *
  * After a rebuild the map file already has the added objects in it and lacks the removed ones.
@@ -108,15 +96,7 @@ export function baseObjects(mapObjects, builtEdits, builtStale) {
   for (const o of mapObjects) {
     const key = keyOf(o);
     if (extra.get(key) > 0) extra.set(key, extra.get(key) - 1);
-    else
-      base.push({
-        name: o.name,
-        x: o.x,
-        y: o.y,
-        rotation: o.rotation ?? 0,
-        scale: scaleOf(o),
-        own: false,
-      });
+    else base.push({ name: o.name, x: o.x, y: o.y, rotation: o.rotation ?? 0, own: false });
   }
 
   // Put back what the build left out, unless it is still there or never matched anything.

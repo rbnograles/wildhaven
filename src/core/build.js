@@ -1,14 +1,11 @@
-// Building: the build menu above the item box, crafting tools from it, and placing a campfire or a
-// camp building (tent, chest, wheat bed, camp centre) with the mouse (or in front of the player).
-// While placing, a ghost follows the pointer and shows whether it may stand there; a click or E
-// places it. A campfire goes down at once; a building starts a timed job the game loop finishes. The
-// rules live in actions/build.js, actions/building.js and actions/craft.js; this file only drives them.
+// Building: the build menu above the item box, crafting tools from it, and placing a campfire with
+// the mouse (or in front of the player). While placing, a ghost campfire follows the pointer and
+// shows whether it may stand there; a click or E places it. The rules for where a fire may go live
+// in actions/build.js and the crafting rules in actions/craft.js; this file only drives them.
 
 import { checkPlacement, placeCampfire, BUILD_ABOARD } from '../actions/build.js';
 import { beginCraft } from '../actions/craft.js';
 import { beginMake } from '../actions/gear.js';
-import { checkBuilding, beginBuilding, checkRaise, beginRaise } from '../actions/building.js';
-import { BUILDINGS, buildingInfo } from '../data/buildings.js';
 import { GEAR } from '../data/gear.js';
 import { TOOLS } from '../data/tools.js';
 import { cancelAction } from '../animation/clips.js';
@@ -31,10 +28,10 @@ const FACING = [
  *
  * @param {object} session - The shared session; its `build` record and `pointer` are used here.
  * @param {object} ui - The other UI parts (`hud`, `camp`).
- * @returns {{toggleMenu: Function, start: Function, building: Function, cancel: Function,
- *   place: Function, update: Function, craft: Function, make: Function}} Ways to open or close the
- *   menu, start placing a campfire, pick a camp building, leave building, place what is being
- *   placed, move the ghost each frame, and start crafting a tool or making a piece of gear.
+ * @returns {{toggleMenu: Function, start: Function, cancel: Function, place: Function,
+ *   update: Function, craft: Function, make: Function}} Ways to open or close the menu, start
+ *   placing a campfire, leave building, place the fire, move the ghost each frame, and start
+ *   crafting a tool or making a piece of gear.
  */
 export function setupBuild(session, ui) {
   const { build } = session;
@@ -61,10 +58,7 @@ export function setupBuild(session, ui) {
     const [fx, fy] = FACING[player.direction];
     build.x = Math.round(spot ? spot.x : player.x + fx * AHEAD);
     build.y = Math.round(spot ? spot.y : player.y + fy * AHEAD);
-    build.check =
-      build.kind === 'campfire'
-        ? checkPlacement(session.state, build.x, build.y)
-        : checkBuilding(session.state, build.kind, build.x, build.y);
+    build.check = checkPlacement(session.state, build.x, build.y);
   }
 
   /**
@@ -94,41 +88,16 @@ export function setupBuild(session, ui) {
   }
 
   /**
-   * Starts placing a campfire (the menu's Campfire option, or 1 while the menu is open) or a camp
-   * building. The menu closes, the ghost appears, and any gathering in progress stops. Not from the boat.
-   *
-   * @param {string} [kind='campfire'] - What to place: 'campfire', or a building's kind.
+   * Starts placing a campfire (the menu's Campfire option, or 1 while the menu is open).
+   * The menu closes, the ghost appears, and any gathering in progress stops. Not from the boat.
    */
-  function start(kind = 'campfire') {
+  function start() {
     if (session.screen !== 'game' || !session.state || refuseAboard()) return;
     build.menu = false;
     cancelAction(session.animator);
-    build.kind = kind;
     build.active = true;
     update();
     ui.hud.update();
-  }
-
-  /**
-   * Picks a camp building from the menu (its option, or its key while the menu is open).
-   *
-   * A camp centre in a camp that already has one is raised a tier where it stands, with no ghost:
-   * the job starts at once, or a toast says why it can't. Anything else is placed with the ghost.
-   *
-   * @param {string} kind - The building's kind.
-   */
-  function building(kind) {
-    if (session.screen !== 'game' || !session.state || refuseAboard()) return;
-    if (kind === 'centre' && checkRaise(session.state).reason !== 'none') {
-      build.menu = false;
-      cancelAction(session.animator);
-      const result = beginRaise(session.state, session.animator);
-      if (result.ok) session.keys.clear();
-      else if (result.message) ui.hud.notify(result.message);
-      ui.hud.update();
-      return;
-    }
-    start(kind);
   }
 
   /**
@@ -169,27 +138,14 @@ export function setupBuild(session, ui) {
   }
 
   /**
-   * Places what is being placed at the ghost, if it may stand there.
+   * Places the campfire at the ghost, if it may stand there, then asks for the camp's name.
    *
-   * A campfire goes down at once and the camp's name is asked (the fire is paid for and placed
-   * before, so closing the name box never undoes the camp). A building starts its timed job, paid
-   * when it is done. A refused spot changes nothing and says why.
+   * A refused spot changes nothing and says why. The fire is paid for and placed before the name
+   * is asked, so closing the name box never undoes the camp.
    */
   function place() {
     if (!build.active) return;
     update();
-    if (build.kind !== 'campfire') {
-      const job = beginBuilding(session.state, session.animator, build.kind, build.x, build.y);
-      if (!job.ok) {
-        if (job.message) ui.hud.notify(job.message);
-        return;
-      }
-      build.active = false;
-      session.keys.clear();
-      ui.hud.notify(`Building the ${buildingInfo(build.kind).name}… move to stop`);
-      ui.hud.update();
-      return;
-    }
     const result = placeCampfire(session.state, build.x, build.y);
     if (!result.ok) {
       ui.hud.notify(result.message);
@@ -205,10 +161,9 @@ export function setupBuild(session, ui) {
   // The Build button opens the menu; the menu's Campfire option starts placing one, and each tool
   // entry starts crafting it.
   $('build-button').addEventListener('click', toggleMenu);
-  $('build-campfire').addEventListener('click', () => start());
-  for (const { id } of BUILDINGS) $(`build-${id}`).addEventListener('click', () => building(id));
+  $('build-campfire').addEventListener('click', start);
   for (const { id } of TOOLS) $(`craft-${id}`).addEventListener('click', () => craft(id));
   for (const { id } of GEAR) $(`make-${id}`).addEventListener('click', () => make(id));
 
-  return { toggleMenu, start, building, cancel, place, update, craft, make };
+  return { toggleMenu, start, cancel, place, update, craft, make };
 }

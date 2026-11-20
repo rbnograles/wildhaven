@@ -4,7 +4,13 @@
 // state; it never changes it.
 import { RESOURCES, RESOURCE_NAMES } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
-import { CAMPFIRE_COST, REPAIR_COST, DAY_SECONDS, PHASES } from '../data/balance.js';
+import {
+  CAMPFIRE_COST,
+  REPAIR_COST,
+  DAY_SECONDS,
+  PHASES,
+  TOOL_WEAR_WARNING,
+} from '../data/balance.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { GEAR, GEAR_IDS, gearInfo } from '../data/gear.js';
 import { NODES } from '../world/nodes.js';
@@ -19,18 +25,6 @@ import { lockedNode } from '../actions/gather.js';
 import { canCraft, nextTier, toolName, CRAFT_PREFIX } from '../actions/craft.js';
 import { meterTrends } from '../actions/survive.js';
 import { canMake, madeWords } from '../actions/gear.js';
-import {
-  BUILDING_PREFIX,
-  FARM_PREFIX,
-  readBuildTarget,
-  checkRaise,
-  costOf,
-} from '../actions/building.js';
-import { BUILDINGS, buildingInfo } from '../data/buildings.js';
-import { campAt, centreOf } from '../world/buildings.js';
-import { HUNT_PREFIX } from '../actions/animals.js';
-import { animalById } from '../world/animals.js';
-import { ANIMALS } from '../data/animals.js';
 import { $ } from './layout.js';
 
 // How many pop-up messages can show at once above the player card; an older one makes room.
@@ -58,9 +52,6 @@ const costWords = (cost) =>
 
 // What a gear row says in place of its cost while the player already has that gear.
 const HAVE_WORDS = { torch: 'Burning', coat: 'Worn', boat: 'Owned' };
-
-// The camp centre's three tiers, by tier number less one.
-const CENTRE_NAMES = ['pavilion', 'small hall', 'big hall'];
 
 /**
  * Gives words a capital first letter, such as "Stone axe".
@@ -114,8 +105,7 @@ export function describeEvent(event) {
  * @returns {string} The words, or '' when there is nothing to say.
  */
 function wearWords(tool, wear) {
-  // A big rock takes several uses at once, so the count left is not always the same number.
-  if (wear === 'warn') return `Your stone ${tool} is almost worn out`;
+  if (wear === 'warn') return `Stone ${tool}: ${TOOL_WEAR_WARNING} uses left`;
   if (wear === 'broke') return `Your stone ${tool} broke`;
   return '';
 }
@@ -128,29 +118,6 @@ function wearWords(tool, wear) {
  * @returns {string} The message.
  */
 export function describeFinish(finished) {
-  if (finished.built) {
-    if (!finished.ok) return finished.message ?? 'Nothing was built';
-    if (finished.raised)
-      return `${finished.camp.name}: the camp centre is now a ${CENTRE_NAMES[finished.raised - 1]}`;
-    return buildingInfo(finished.kind).made;
-  }
-  if (finished.kind === 'hunt' && finished.animal === 'wolf')
-    return ['The wolf is down · Its pack is whole again at dusk', wearWords('axe', finished.wear)]
-      .filter(Boolean)
-      .join(' · ');
-  if (finished.kind === 'hunt')
-    return [
-      `+${finished.food} food${finished.antler ? ' · +1 antler' : ''} · You hunted a ${finished.animal}`,
-      wearWords('axe', finished.wear),
-    ]
-      .filter(Boolean)
-      .join(' · ');
-  if (finished.kind === 'farm')
-    return finished.what === 'sow'
-      ? 'Wheat sown · Tend it once as each stage grows to hurry it'
-      : finished.what === 'tend'
-        ? 'Wheat tended · It grows faster now'
-        : `+${finished.food} food · Wheat harvested`;
   if (finished.kind === 'repair')
     return 'Boat repaired · Walk to the water’s edge and press E to board';
   if (finished.kind === 'craft') {
@@ -180,19 +147,6 @@ export function describeFinish(finished) {
  */
 function actionLabel(state, choice) {
   if (choice.kind === 'land') return 'Step ashore';
-  if (choice.kind === 'chest') return 'Open the chest';
-  if (choice.kind === 'sleep') return 'Sleep in the tent';
-  if (choice.kind === 'hunt' && choice.target.den)
-    return state.tools.axe ? 'Fight the wolf' : 'Fight the wolf — needs an axe';
-  if (choice.kind === 'hunt') {
-    const name = ANIMALS[choice.target.kind].name;
-    return state.tools.axe ? `Hunt the ${name}` : `Hunt the ${name} — needs an axe`;
-  }
-  if (choice.kind === 'farm') {
-    const { job } = choice;
-    if (!job.ok) return job.message;
-    return { sow: 'Sow wheat', tend: 'Tend the wheat', harvest: 'Harvest the wheat' }[job.what];
-  }
   if (choice.kind === 'board') return 'Board the boat';
   if (choice.kind === 'repair') {
     const missing = missingForRepair(state);
@@ -219,21 +173,6 @@ function busyLabel(state, animator) {
     return `Crafting ${toolName(tool, nextTier(state, tool) ?? 'iron')}… move to stop`;
   }
   if (WRECKS.some((w) => w.id === target)) return 'Repairing the old boat… move to stop';
-  if (target.startsWith(BUILDING_PREFIX)) {
-    const job = readBuildTarget(target);
-    return job.kind === 'raise'
-      ? 'Raising the camp centre… move to stop'
-      : `Building the ${buildingInfo(job.kind).name}… move to stop`;
-  }
-  if (target.startsWith(HUNT_PREFIX + 'wolf-')) return 'Fighting the wolf… move to stop';
-  if (target.startsWith(HUNT_PREFIX)) {
-    const animal = animalById(target.slice(HUNT_PREFIX.length));
-    return `Hunting the ${animal ? ANIMALS[animal.kind].name : 'animal'}… move to stop`;
-  }
-  if (target.startsWith(FARM_PREFIX)) {
-    const what = target.split(':')[2];
-    return `${{ sow: 'Sowing', tend: 'Tending', harvest: 'Harvesting' }[what]} wheat… move to stop`;
-  }
   const node = NODES.find((n) => n.id === target);
   return node ? `${DOING[node.verb]} ${node.label.toLowerCase()}… move to stop` : null;
 }
@@ -411,8 +350,7 @@ export function createHud(session) {
     button.dataset.tool = !busy && !build.active && locked ? locked.tool : '';
     button.setAttribute('aria-disabled', String(!!busy));
     if (busy) label.textContent = busy;
-    else if (build.active)
-      label.textContent = `Place ${build.kind === 'campfire' ? 'campfire' : buildingInfo(build.kind).name}`;
+    else if (build.active) label.textContent = 'Place campfire';
     else if (choice) label.textContent = actionLabel(state, choice);
     else if (camp) label.textContent = `Open ${camp.name}`;
     else if (locked)
@@ -428,12 +366,8 @@ export function createHud(session) {
     if (!build.active) return;
     const ok = !!build.check?.ok;
     bar.classList.toggle('blocked', !ok);
-    const what =
-      build.kind === 'campfire'
-        ? `Campfire · ${costWords(CAMPFIRE_COST)}`
-        : `${capital(buildingInfo(build.kind).name)} · ${costWords(costOf(build.kind))}`;
     bar.textContent = ok
-      ? `${what} · Click or E to place · Esc to cancel`
+      ? `Campfire · ${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone · Click or E to place · Esc to cancel`
       : `${build.check?.message ?? 'Choose a spot'} · Esc to cancel`;
   }
 
@@ -468,32 +402,6 @@ export function createHud(session) {
       option.classList.toggle('short', check.reason === 'cost');
       option.disabled = check.reason === 'owned';
       option.title = check.ok ? '' : check.message;
-    }
-
-    // Camp buildings: the name and cost, for the camp the player stands in. A camp centre in a camp
-    // that has one offers its next tier instead ("Raise to small hall").
-    const camp = campAt(state, state.player.x, state.player.y);
-    for (const { id, name } of BUILDINGS) {
-      const option = $(`build-${id}`);
-      let title = capital(name),
-        cost = costOf(id),
-        why = camp ? '' : 'Build it within the warmth of your fire',
-        done = false;
-      if (id === 'centre' && camp && centreOf(camp)) {
-        const raise = checkRaise(state);
-        done = raise.reason === 'top';
-        title = done ? 'Camp centre' : `Raise to ${CENTRE_NAMES[centreOf(camp).tier]}`;
-        cost = raise.cost ?? cost;
-        why = raise.ok ? '' : raise.message;
-      }
-      option.querySelector('.building-name').textContent = title;
-      option.querySelector('.building-cost').textContent = done ? 'Big hall' : costWords(cost);
-      option.classList.toggle(
-        'short',
-        Object.entries(cost).some(([type, n]) => state.resources[type] < n),
-      );
-      option.disabled = done;
-      option.title = why;
     }
 
     // Gear: its name, and its cost or why it can't be made twice ("Burning", "Worn", "Owned").

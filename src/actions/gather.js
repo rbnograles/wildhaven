@@ -4,15 +4,7 @@
 // twice. A gathered node is gone until it grows back.
 
 import { NODES, nodesNear, isAvailable } from '../world/nodes.js';
-import {
-  GATHER_RANGE,
-  GATHER_SECONDS,
-  PICKUP_SECONDS,
-  TOOL_SECONDS,
-  SIZE_SECONDS,
-  SIZE_WEAR,
-  DROP_CHANCE,
-} from '../data/balance.js';
+import { GATHER_RANGE, GATHER_SECONDS, TOOL_SECONDS, DROP_CHANCE } from '../data/balance.js';
 import { TREE_DROPS } from '../data/supplies.js';
 import { toolTier, hasTool } from '../world/tools.js';
 import { startAction } from '../animation/clips.js';
@@ -20,10 +12,8 @@ import { startAction } from '../animation/clips.js';
 /**
  * Says how many seconds gathering from a node takes.
  *
- * Picking berries or flowers takes the full GATHER_SECONDS, but a loose thing on the ground (a
- * small stone, sticks) is just picked up, which is much quicker. A node that needs a tool (a tree,
- * a rock) is quicker with a stone tool and quicker still with an iron one: better tools, faster
- * work. A bigger rock takes longer than a small one with the same pickaxe.
+ * Bare-hand gathers take the full GATHER_SECONDS. A node that needs a tool (a tree, a rock) is
+ * quicker with a stone tool and quicker still with an iron one: better tools, faster work.
  *
  * @param {object} state - The game being played.
  * @param {object} node - The supply, wild patch, tree or rock being gathered.
@@ -31,20 +21,8 @@ import { startAction } from '../animation/clips.js';
  */
 export function gatherTime(state, node) {
   const tier = node.tool && toolTier(state, node.tool);
-  if (tier) return TOOL_SECONDS[tier] * SIZE_SECONDS[(node.size ?? 1) - 1];
-  return node.quick ? PICKUP_SECONDS : GATHER_SECONDS;
+  return tier ? TOOL_SECONDS[tier] : GATHER_SECONDS;
 }
-
-/**
- * Says how many uses of a stone tool gathering a node costs.
- *
- * Breaking a big boulder is harder on a pickaxe than chipping a small rock. Trees, logs and the
- * fixed supplies have no size, so they cost one use.
- *
- * @param {object} node - The tree or rock being gathered.
- * @returns {number} Uses to take off the tool: 1, 2 or 3.
- */
-export const toolWear = (node) => SIZE_WEAR[(node.size ?? 1) - 1];
 
 /** True when the node is close enough to the player to gather it. */
 const inReach = (state, n) => Math.hypot(n.x - state.player.x, n.y - state.player.y) < GATHER_RANGE;

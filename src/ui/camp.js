@@ -38,8 +38,7 @@ const REFUSED = {
  * @param {object} session - The shared session (game state, held keys, screen).
  * @param {object} ui - The other UI parts (`hud`, `dialogs`).
  * @returns {{openNaming: Function, openCamp: Function, showPassOut: Function, eatFood: Function,
- *   useHerbs: Function, restNight: Function}} Ways to open each dialog, the F and H key actions,
- *   and the rest that E at a tent starts.
+ *   useHerbs: Function}} Ways to open each dialog, and the F and H key actions.
  */
 export function setupCamp(session, ui) {
   // The camp being named while the name box is open, and the camp whose dialog is open.
@@ -220,42 +219,28 @@ export function setupCamp(session, ui) {
   /**
    * Rests until dawn, closes the camp dialog, and tells the player about the new day.
    * The night is skipped at once; the character is shown asleep for a moment, then gets up.
-   *
-   * @param {object} [camp] - The camp to rest at: the tent's camp when E was pressed at a tent. Left
-   *   out (the camp dialog's Rest button), it is the camp whose fire the player stands beside.
    */
-  function restNight(camp) {
-    const result = camp ? rest(session.state, camp) : rest(session.state);
+  function restNight() {
+    const result = rest(session.state);
     if (!result.ok) {
       ui.hud.notify(REFUSED.rest[result.reason]);
       return;
     }
     $('camp-dialog').close();
     startSleep(session.animator, NAP_SECONDS);
-    ui.hud.notify(
-      [
-        result.tent ? 'You sleep in the tent.' : 'You rest by the fire.',
-        ...result.events.map(describeEvent),
-      ].join(' '),
-    );
+    ui.hud.notify(['You rest by the fire.', ...result.events.map(describeEvent)].join(' '));
     refresh();
   }
 
   /**
    * Shows the pass-out screen over the spot where the player fell: what happened, and where they
    * will wake. Nothing in the game changes until the screen is closed (see `getUp`).
-   *
-   * @param {'cold'|'wolves'} [cause='cold'] - What brought the player down.
    */
-  function showPassOut(cause = 'cold') {
+  function showPassOut() {
     // `passOut` wakes the player at the same camp: the one nearest to where they fell.
     const camp = nearestCamp(session.state);
-    $('passout-title').textContent =
-      cause === 'wolves' ? 'The wolves brought you down.' : 'The cold caught you.';
     $('passout-text').textContent = [
-      cause === 'wolves'
-        ? 'The pack wore you down. Press R to drive wolves back, and keep to fires and villages at night.'
-        : 'You got too cold away from a fire.',
+      'You got too cold away from a fire.',
       camp
         ? `You will wake at ${camp.name} at midday.`
         : 'You will wake where you started, at midday. Build a campfire so you have somewhere warm to return to.',
@@ -310,11 +295,11 @@ export function setupCamp(session, ui) {
   // The item box's food and herbs slots do the same as F and H.
   $('slot-food').addEventListener('click', eatFood);
   $('slot-herbs').addEventListener('click', useHerbs);
-  $('camp-rest').addEventListener('click', () => restNight());
+  $('camp-rest').addEventListener('click', restNight);
   $('passout-close').addEventListener('click', () => $('passout-dialog').close());
 
   // However the pass-out screen closes (its button or Escape), the player wakes by a fire.
   $('passout-dialog').addEventListener('close', getUp);
 
-  return { openNaming, openCamp, showPassOut, eatFood, useHerbs, restNight };
+  return { openNaming, openCamp, showPassOut, eatFood, useHerbs };
 }

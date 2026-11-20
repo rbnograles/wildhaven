@@ -1029,34 +1029,17 @@ button.slot:hover {
 /* With the Tools group the menu is tall, so on a short screen it scrolls instead of running off the top. */
 .build-menu {
   position: absolute;
-  /* Beside the Build button, its bottom level with the item box's, so it covers the edge of the */
-  /* world and not the middle, where the character is. */
-  left: calc(100% + 12px);
-  bottom: 0;
-  width: 380px;
-  /* Over the minimap while it is open: on most screens the two meet at the bottom right. */
-  z-index: 5;
-  /* Tall enough for most of the list; past that it scrolls. */
-  max-height: max(180px, calc(100svh - 200px));
+  right: 0;
+  bottom: calc(100% + 10px);
+  width: 340px;
+  /* The room left between the region's banner (top) and the item box (bottom); past that it scrolls. */
+  max-height: max(180px, calc(100svh - 440px));
   overflow-y: auto;
   padding: 12px;
 }
 
 .build-menu[hidden] {
   display: none;
-}
-
-/* Where the screen is too narrow for the menu beside the Build button, it keeps to the right edge */
-/* above the minimap instead, still clear of the middle. Phones have their own place for it (below). */
-@media (min-width: 701px) and (max-width: 1299px) {
-  .build-menu {
-    position: fixed;
-    left: auto;
-    right: 16px;
-    bottom: 220px;
-    width: 360px;
-    max-height: max(180px, calc(100svh - 320px));
-  }
 }
 
 .build-menu-title {
@@ -1467,68 +1450,21 @@ button.slot:hover {
 }
 
 /* ---- In-game HUD: the round minimap in the bottom right ---- */
-/* The round map is a button that opens the big world map. The box around it also holds the two */
-/* small zoom buttons, because a button may not sit inside another button. */
+/* The whole minimap is a round button that opens the big world map. The cream ring is its frame. */
 .minimap {
   position: relative;
   width: 160px;
   height: 160px;
+  padding: 0;
+  border: 4px solid #f8f5e9;
   border-radius: 50%;
   background: #263b31;
+  box-shadow: 0 3px 20px #1f311b40;
   transition: transform 0.2s;
 }
 
 .minimap:hover {
   transform: translateY(-3px);
-}
-
-/* The map button fills the round box and has no look of its own: the canvas is its face. */
-.minimap-map {
-  display: block;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  box-shadow: none;
-}
-
-/* The + and - zoom buttons, stacked on the wooden ring at the map's left edge. They sit above */
-/* the ring picture (z-index), and borrow the item box's dark slot like the other small buttons. */
-.minimap-zoom {
-  position: absolute;
-  z-index: 2;
-  left: -17px;
-  top: 50%;
-  display: grid;
-  gap: 3px;
-  transform: translateY(-50%);
-}
-
-.minimap-zoom button {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: url('../assets/ui/game/item-slot.png') center / 100% 100% no-repeat;
-  box-shadow: none;
-  color: #f7ecc5;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.minimap-zoom button:hover:not(:disabled) {
-  filter: brightness(1.25);
-}
-
-/* A zoom button that can go no further is faded. */
-.minimap-zoom button:disabled {
-  opacity: 0.45;
 }
 
 /* The square map canvas is clipped into the circle. */
@@ -1873,23 +1809,6 @@ button.slot:hover {
   --picture: url('../assets/world/source/objects/props/rowboat.png');
 }
 
-/* The camp buildings show their finished pictures: a tent, a closed chest, a ripe wheat bed, the pavilion. */
-#build-tent {
-  --picture: url('../assets/world/source/objects/buildings/tent.png');
-}
-
-#build-chest {
-  --picture: url('../assets/world/source/objects/props/chest-closed.png');
-}
-
-#build-farm {
-  --picture: url('../assets/world/source/objects/plants/wheat-4.png');
-}
-
-#build-centre {
-  --picture: url('../assets/world/source/objects/buildings/centre-1.png');
-}
-
 #craft-axe {
   --picture: url('../assets/ui/game/tool-axe-stone.png');
 }
@@ -1987,6 +1906,8 @@ button.slot:hover {
 /* reaches about a sixth of the map's width past it on the right and below, so the margin keeps */
 /* the whole ring on screen instead of cut off by the screen's edge. */
 .minimap {
+  border: 0;
+  box-shadow: none;
   margin: 0 22px 14px 0;
 }
 
@@ -2266,11 +2187,6 @@ dialog::backdrop {
   padding: 8px 12px;
 }
 
-/* The chest window: the counts on the left, then Put all in and Take all side by side. */
-.chest-rows li span {
-  flex: 1;
-}
-
 .camp-note {
   font-size: 11px;
   color: var(--muted);
@@ -2298,97 +2214,6 @@ dialog::backdrop {
 .camp-dialog button:disabled {
   opacity: 0.55;
   cursor: default;
-}
-
-/* ---- Dialogs in the painted HUD ---- */
-/* Every window opened during play wears the HUD's painted pieces (assets/ui/game/), so it reads as */
-/* part of the game and not as a plain web page: the goals card's wooden frame and cream paper round */
-/* the window, the item box's dark slot for the main button and the close cross, and the build */
-/* menu's paper for the quieter buttons. This is a repo rule: a new in-game window gets the */
-/* `hud-window` class (see CLAUDE.md, Code Style). The frame is a border picture, as on the journal. */
-.hud-window {
-  border: 28px solid transparent;
-  border-image: url('../assets/ui/game/hud-goals.png') 40 fill / 28px stretch;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  /* A drop shadow follows the frame's notched corners; a box shadow would be a plain rectangle. */
-  filter: drop-shadow(0 14px 36px #14251e99);
-  color: #3d2c18;
-}
-
-/* The frame is thick, so the plain dialogs' wide padding is trimmed to keep the same inner room. */
-.pause-dialog.hud-window {
-  padding: 8px 16px 6px;
-}
-
-.camp-dialog.hud-window {
-  padding: 4px 10px 8px;
-}
-
-.hud-window .dialog-kicker,
-.hud-window p,
-.hud-window .camp-fire,
-.hud-window .camp-note,
-.hud-window label,
-.hud-window small,
-.hud-window .modal-mark {
-  color: #7a552e;
-}
-
-/* The main button: a dark slot with gold words, like the HUD's own buttons. */
-.hud-window .primary {
-  border: 9px solid transparent;
-  border-image: url('../assets/ui/game/item-slot.png') 26 fill / 9px stretch;
-  border-radius: 0;
-  background: none;
-  color: #ffd166;
-}
-
-.hud-window .primary:hover {
-  background: none;
-  filter: brightness(1.2);
-}
-
-/* The quieter buttons: a sheet of the build menu's paper. */
-.hud-window .secondary {
-  border: 12px solid transparent;
-  border-image: url('../assets/ui/game/hud-popup.png') 40 fill / 12px stretch;
-  border-radius: 0;
-  background: none;
-  color: #3d2c18;
-}
-
-.hud-window .secondary:hover {
-  background: none;
-  filter: brightness(1.06);
-}
-
-/* The close cross: a dark slot with a cream cross, like the journal's. */
-.hud-window .icon-button {
-  padding: 5px;
-  border: 9px solid transparent;
-  border-image: url('../assets/ui/game/item-slot.png') 26 fill / 9px stretch;
-  border-radius: 0;
-  background: none;
-  color: #f7ecc5;
-}
-
-.hud-window .icon-button:hover {
-  background: none;
-  filter: brightness(1.2);
-}
-
-/* Lines between rows, and the name box, in the paper's brown instead of the plain grey-green. */
-.hud-window .camp-needs,
-.hud-window .camp-needs li {
-  border-color: #cdb284;
-}
-
-.hud-window input {
-  border-color: #b9955f;
-  background: #fff8e6;
-  color: #3d2c18;
 }
 
 /* ---- Dialogs: the big world map ---- */
@@ -2453,47 +2278,29 @@ dialog::backdrop {
   display: none;
 }
 
-/* A herd's dot on the maps is tan (deer), white (rabbits) or brown (boars); the legend shows the deer one. */
-.legend-herd {
-  color: #d9a066;
-}
-
-/* A wolf den's dot: dark grey with a red rim on the maps; the key shows it red. */
-.legend-den {
-  color: #b3312c;
-}
-
 /* The orange dot for camps in the map's key. */
 .legend-camp {
   color: #f08a3c;
 }
 
 /* A found signpost on the map: a round button centred on its spot. The script sets left and top. */
-/* It is see-through, so the gold signpost badge painted on the map shows through it; hovering */
-/* brightens the badge and rings it. */
 .map-waypoint {
   position: absolute;
   transform: translate(-50%, -50%);
   width: 26px;
   height: 26px;
   padding: 0;
-  border: 0;
+  border: 2px solid #294c3b;
   border-radius: 50%;
-  background: none;
-  box-shadow: none;
+  background: #ffd166;
   cursor: pointer;
 }
 
 .map-waypoint:hover,
 .map-waypoint:focus-visible {
-  background: #fff6d755;
+  background: #fff1b8;
   outline: 2px solid #fff6d7;
   outline-offset: 2px;
-}
-
-/* The gold dot for signposts in the map's key. */
-.legend-signpost {
-  color: #ffd166;
 }
 
 .map-footer {
@@ -2609,192 +2416,6 @@ dialog::backdrop {
 .journal-page.blank h3,
 .journal-page.blank p {
   color: var(--muted);
-}
-
-/* The journal's two tabs. The chosen one is underlined in moss green, like a bookmark. */
-.journal-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.journal-tabs button {
-  padding: 8px 14px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -1px;
-  background: none;
-  font: 600 13px var(--sans, inherit);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.journal-tabs button[aria-selected='true'] {
-  color: inherit;
-  border-bottom-color: var(--moss);
-}
-
-/* The Controls tab: groups two to a row, each a small card with a key column and a words column. */
-/* Newspaper columns, not a grid, so a short group doesn't leave a hole beside a tall one. */
-.journal-controls {
-  columns: 2;
-  column-gap: 10px;
-}
-
-.control-group {
-  break-inside: avoid;
-  margin-bottom: 10px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fbf9f1;
-}
-
-.control-group h3 {
-  margin: 0 0 4px;
-  font: 400 18px var(--serif);
-}
-
-.control-note {
-  margin: 0 0 6px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.control-group dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 12px;
-  align-items: center;
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.control-group dt {
-  display: flex;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.control-group dd {
-  margin: 0;
-}
-
-/* ---- Dialogs: the field journal, painted ---- */
-/* The journal wears the HUD's painted pieces, so it reads as part of the game and not as a plain */
-/* web dialog: the goals card's wooden frame and cream paper around the whole book, the build */
-/* menu's paper for each page and note, and the item box's dark slot and count plate for the */
-/* close button, the tabs, the keepsake frames and the keys. No art was made just for it. */
-/* The frame is a border picture, so it stays put while the pages scroll inside it. */
-.journal-dialog {
-  padding: 6px 10px 4px;
-  border: 28px solid transparent;
-  border-image: url('../assets/ui/game/hud-goals.png') 40 fill / 28px stretch;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  /* A drop shadow follows the frame's notched corners; a box shadow would be a plain rectangle. */
-  filter: drop-shadow(0 14px 36px #14251e99);
-  color: #3d2c18;
-  /* A thin wood-brown scroll bar, so a white one doesn't sit on the paper. */
-  scrollbar-width: thin;
-  scrollbar-color: #8a6237 transparent;
-}
-
-.journal-dialog .dialog-kicker,
-.journal-dialog .map-footer,
-.journal-intro,
-.control-note {
-  color: #7a552e;
-}
-
-/* The close button: a dark slot with a cream cross, like the buttons at the top right of the HUD. */
-.journal-dialog .icon-button {
-  padding: 5px;
-  border: 9px solid transparent;
-  border-image: url('../assets/ui/game/item-slot.png') 26 fill / 9px stretch;
-  border-radius: 0;
-  background: none;
-  color: #f7ecc5;
-}
-
-.journal-dialog .icon-button:hover {
-  background: none;
-  filter: brightness(1.2);
-}
-
-/* The tabs: two dark slots. The one being read is bright with gold words; the other is dimmed. */
-.journal-tabs {
-  gap: 6px;
-  border-bottom: 0;
-}
-
-.journal-tabs button {
-  margin-bottom: 0;
-  padding: 1px 12px 2px;
-  border: 9px solid transparent;
-  border-image: url('../assets/ui/game/item-slot.png') 26 fill / 9px stretch;
-  border-radius: 0;
-  color: #f7ecc5;
-  opacity: 0.6;
-}
-
-.journal-tabs button:hover {
-  opacity: 0.85;
-}
-
-.journal-tabs button[aria-selected='true'] {
-  color: #ffd166;
-  opacity: 1;
-}
-
-/* The trail clue, each page and each group of controls: a sheet of the build menu's paper. */
-.journal-trail,
-.journal-page,
-.control-group {
-  padding: 2px 6px;
-  border: 16px solid transparent;
-  border-image: url('../assets/ui/game/hud-popup.png') 40 fill / 16px stretch;
-  border-radius: 0;
-  background: none;
-}
-
-/* The moss or gold edge the plain note had is gone, so the kicker carries that colour instead. */
-.journal-trail .dialog-kicker {
-  color: var(--moss);
-}
-
-.journal-trail.complete .dialog-kicker {
-  color: #a87a12;
-}
-
-/* A page not found yet is faded, so the empty ones read as "still to find". */
-.journal-page.blank {
-  opacity: 0.55;
-}
-
-.journal-page.blank h3,
-.journal-page.blank p {
-  color: inherit;
-}
-
-/* The keepsake sits in a dark item slot, like something kept in the item box. */
-.keepsake-frame {
-  border: 0;
-  border-radius: 0;
-  background: url('../assets/ui/game/item-slot.png') center / 100% 100% no-repeat;
-  color: #f7ecc5;
-}
-
-/* Keys are drawn on the little count plate, as they are everywhere else in the HUD. */
-.journal-dialog kbd {
-  border: 0;
-  padding: 4px 7px 5px;
-  background: url('../assets/ui/game/item-badge.png') center / 100% 100% no-repeat;
-  color: #f7ecc5;
-  font-weight: 700;
 }
 
 /* ---- Touch controls ---- */
@@ -2914,10 +2535,6 @@ dialog::backdrop {
   /* A phone has little room between the banner and the item box, so the rows drop their small */
   /* print and the menu is kept shorter; it scrolls by touch when it must. */
   .build-menu {
-    /* No room beside the Build button on a phone: the menu opens above the item box instead. */
-    left: auto;
-    right: 0;
-    bottom: calc(100% + 10px);
     width: 270px;
     max-height: max(180px, calc(100svh - 590px));
   }
@@ -2932,6 +2549,7 @@ dialog::backdrop {
     bottom: 18px;
     width: 100px;
     height: 100px;
+    border-width: 3px;
   }
   .minimap-key {
     display: none;
@@ -3043,9 +2661,6 @@ dialog::backdrop {
   }
   .journal-pages {
     grid-template-columns: 1fr;
-  }
-  .journal-controls {
-    columns: 1;
   }
   .journal-trail p {
     font-size: 15px;
