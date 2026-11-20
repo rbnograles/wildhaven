@@ -14,6 +14,13 @@ export const KINDS = ['grass', 'dirt', 'soil', 'jungle', 'rock', 'snow', 'sand',
 /** The side of one box (one map tile) in world units. */
 export const BOX = 64;
 
+/**
+ * How many boxes from the map's edge must stay sea. Water within 1,200 units of land is shallow,
+ * and the outer sea has to stay deep so the small boat can't sail off the world; 20 boxes is
+ * just over that. tools/build-map.py refuses land painted nearer the edge (its EDGE_SEA).
+ */
+export const EDGE_SEA = 20;
+
 /** The kind the Eraser paints. */
 export const ERASER = 'water';
 
@@ -97,7 +104,7 @@ export function groundAt(terrain, base, row, col) {
  *
  * A box is painted by setting its four corners. A corner that is given the ground the map build
  * would have made there anyway needs no override, so its entry is removed: the file only ever
- * holds real changes.
+ * holds real changes. Land is never painted within `EDGE_SEA` boxes of the map's edge.
  *
  * @param {object} editor - The editing session.
  * @param {number} col - The column of the box under the pointer.
@@ -105,7 +112,7 @@ export function groundAt(terrain, base, row, col) {
  * @param {number} size - The brush's side in boxes: 1, 3 or 5.
  * @param {string} kind - One of `KINDS`.
  * @param {{rows: number, cols: number, kindAt: Function}} base - The generated ground, and the
- *   size of the map in boxes.
+ *   size of the map in boxes. An optional `edge` replaces `EDGE_SEA` (the tests use a tiny map).
  * @param {boolean} [record] - False for the later moves of one stroke, so the stroke is one undo step.
  */
 export function paintBoxes(editor, col, row, size, kind, base, record = true) {
@@ -117,6 +124,10 @@ export function paintBoxes(editor, col, row, size, kind, base, record = true) {
   // Boxes col-half..col+half own corners col-half..col+half+1 (and the same for rows).
   for (let r = Math.max(0, row - half); r <= Math.min(base.rows, row + half + 1); r++)
     for (let c = Math.max(0, col - half); c <= Math.min(base.cols, col + half + 1); c++) {
+      // Land stays out of the strip of sea round the edge of the map.
+      const edge = Math.min(r, base.rows - r, c, base.cols - c);
+      if (kind !== ERASER && edge < (base.edge ?? EDGE_SEA)) continue;
+
       if (base.kindAt(r, c) === kind) delete ground[`${r},${c}`];
       else ground[`${r},${c}`] = kind;
     }

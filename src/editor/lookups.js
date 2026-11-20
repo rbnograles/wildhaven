@@ -14,8 +14,10 @@ import {
   mapProperty,
 } from '../world/map.js';
 import { regionOf } from '../world/regions.js';
+import MAP from '../../assets/world/map/wildhaven.json' with { type: 'json' };
 import { JOURNALS } from '../data/journal.js';
 import { WILD, HARVEST } from '../data/supplies.js';
+import { KINDS } from './terrain.js';
 
 /**
  * Builds the `world` object that `checkPlaces` reads, from the game's own modules.
@@ -84,5 +86,29 @@ export function objectLookups() {
         HARVEST[name] && 'chop or mine',
         WILD[name] && 'pick up',
       ].filter(Boolean),
+  };
+}
+
+/**
+ * Reads the ground the map build generated at each tile corner, before any hand painting.
+ *
+ * @returns {{rows: number, cols: number, kindAt: Function}} The map's size in boxes, and
+ *   `kindAt(row, col)`: the generated ground kind at a corner ('grass' for a map older than
+ *   this feature, which has no record).
+ */
+export function groundLookups() {
+  let digits = '';
+  try {
+    digits = mapProperty('baseGround');
+  } catch {
+    // An older map has no record of its ground.
+  }
+
+  const cols = MAP.width;
+  return {
+    rows: MAP.height,
+    cols,
+    // The ground kind the build made at one corner.
+    kindAt: (row, col) => KINDS[Number(digits[row * (cols + 1) + col] ?? 0)],
   };
 }

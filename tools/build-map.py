@@ -15,7 +15,7 @@ The home continent sits inside a sea border; water far from any land becomes the
 The game reads collision from the JSON (water and deep tiles, the elevation grid and object footprints) and regions
 from its region grid. Run: python tools/build-map.py [preview.png]
 """
-import heapq, json, math, os, random, sys
+import hashlib, heapq, json, math, os, random, sys
 import numpy as np
 from PIL import Image
 
@@ -39,6 +39,34 @@ LAND_W, LAND_H = LAND_COLS * TILE, LAND_ROWS * TILE  # the home continent's old 
 # the two top ranks, so `>= WATER` means "any river, pool or sea".
 GRASS, DIRT, SOIL, JUNGLE, ROCK, SNOW, SAND, WATER, DEEP = range(9)
 OVERLAYS = ['dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep']   # rank 1..8; grass (rank 0) is the full ground layer
+
+# ---- hand-painted ground -----------------------------------------------------------------
+# assets/world/source/terrain.json holds ground a person painted in the world editor: runs of tile CORNERS
+# ([row, first column, last column, kind], in map corner rows and columns) that take the place of whatever the
+# rules below would put there. `terrain()` asks these first, so the banks, the deep sea, the scatter and the hills
+# all follow a painted coast by themselves. "water" is what the editor's eraser paints.
+TERRAIN_KINDS = {'grass': GRASS, 'dirt': DIRT, 'soil': SOIL, 'jungle': JUNGLE, 'rock': ROCK, 'snow': SNOW, 'sand': SAND, 'water': WATER}
+EDGE_SEA = 20   # how many tiles from the map edge must stay sea (the same number as in src/editor/terrain.js)
+terrain_path = os.path.join(SRC, 'terrain.json')
+terrain_bytes = open(terrain_path, 'rb').read().replace(b'\r\n', b'\n') if os.path.exists(terrain_path) else b''
+try: terrain_file = json.loads(terrain_bytes) if terrain_bytes else {}
+except ValueError as e: sys.exit(f'terrain.json is not valid JSON: {e}')
+
+# Reads the "ground" runs of terrain.json into {(row, column): kind}. A wrong run stops the build with a plain message.
+def read_paint(runs):
+    paint = {}
+    if not isinstance(runs, list): sys.exit('terrain.json: "ground" must be a list')
+    for run in runs:
+        ok = (isinstance(run, list) and len(run) == 4 and all(type(v) is int for v in run[:3]) and run[3] in TERRAIN_KINDS
+              and 0 <= run[0] <= ROWS and 0 <= run[1] <= run[2] <= COLS)
+        if not ok: sys.exit(f'terrain.json: bad run in "ground": {run}')
+        # Land may not be painted close to the map's edge: the sea there must stay deep, or the small boat could
+        # sail off the world (water within DEEP_FROM = 1200 units of land is shallow). EDGE_SEA is that, in tiles.
+        if run[3] != 'water' and (min(run[0], ROWS - run[0], run[1], COLS - run[2]) < EDGE_SEA):
+            sys.exit(f'terrain.json: land is painted within {EDGE_SEA} tiles of the map edge, where the sea must stay deep: {run}')
+        for c in range(run[1], run[2] + 1): paint[(run[0], c)] = TERRAIN_KINDS[run[3]]
+    return paint
+PAINT = read_paint(terrain_file.get('ground', []) if isinstance(terrain_file, dict) else None)
 
 # ---- regions -----------------------------------------------------------------------------
 # The world is an 8x8 grid of blocks, one letter per block. The letters are the `key` of each region in places.json.
@@ -101,7 +129,7 @@ POINTS = (list(SPAWN.values()) + [land(p) for p in PLACES['supplies'].values()]
           + [land((p['x'], p['y'])) for p in PLACES['landmarks'] + PLACES['waypoints'] + PLACES['wrecks']])
 
 # Says what the ground is at one point of the world.
-def terrain(x, y):
+def generated_terrain(x, y):
     k = region_key(x, y); t = BASE[k]
     if k == 'D' and line_dist(DRY_BED, x, y) < 90: t = DIRT
     if k == 'L':
@@ -123,13 +151,26 @@ def terrain(x, y):
     if t == WATER and any(math.hypot(x - px, y - py) < 130 for px, py in POINTS): t = SAND
     return t
 
+# The ground at the LAND point (x, y): the kind painted by hand on the nearest tile corner if there is one, else
+# what the rules above generate. Painted water within 130 units of a place still becomes sand, the same safety
+# rule the generated ground has, so a place can never be drowned by the eraser.
+def terrain(x, y):
+    t = PAINT.get((round((y + PAD) / TILE), round((x + PAD) / TILE)))
+    if t is None: return generated_terrain(x, y)
+    if t == WATER and any(math.hypot(x - px, y - py) < 130 for px, py in POINTS): t = SAND
+    return t
+
 # Says whether a grassy spot is bare forest soil instead: patches of it under the Pinefall pines, and the middle
 # of each grove in the meadows (the same wave pattern that groups the meadow's trees, see the scatter below).
 def is_soil(k, x, y):
     if k == 'P': return math.sin(x / 520 + 0.8) * math.cos(y / 470 + 2.2) + 0.3 * math.sin(x / 150 + y / 190) > 0.5
     return k == 'h' and math.sin(x / 610 + 1.3) * math.cos(y / 520 + 0.4) > 0.7
 
-corner = np.array([[terrain(x * TILE - PAD, y * TILE - PAD) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+# The generated ground at every tile corner, kept as it is for the world editor (map property `baseGround`), and
+# the same grid with the hand-painted corners laid over it, which everything below uses.
+base_corner = np.array([[generated_terrain(x * TILE - PAD, y * TILE - PAD) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+corner = base_corner.copy()
+for (r, c) in PAINT: corner[r, c] = terrain(c * TILE - PAD, r * TILE - PAD)
 
 # ---- deep sea ----------------------------------------------------------------------------
 # Water more than DEEP_FROM units from any land becomes DEEP. To find "near land", the land map is slid over itself
@@ -800,6 +841,8 @@ def path_tile(x, y):
     c, r = int((x + PAD) // TILE), int((y + PAD) // TILE)
     if path_open[r, c]: return c, r
     rows_, cols_ = np.nonzero(path_open[r - 6:r + 7, c - 6:c + 7])
+    # No tile a path may start from within six tiles: say which place it is instead of crashing on an empty list.
+    if not len(rows_): sys.exit(f'No dry, level ground for a footpath near the place at world ({round(x + PAD)}, {round(y + PAD)}): move the place, or change the ground around it')
     best = np.argmin(np.hypot(rows_ - 6, cols_ - 6))
     return int(c - 6 + cols_[best]), int(r - 6 + rows_[best])
 
@@ -1076,6 +1119,10 @@ tiled = {
                    {'name': 'regionCols', 'type': 'int', 'value': REGION_COLS},
                    {'name': 'regionGrid', 'type': 'string', 'value': region_grid},
                    {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())},
+                   # The world editor reads these two: the generated ground at every tile corner (one digit per corner,
+                   # row by row, before any hand painting), and a fingerprint of the terrain.json this map was built from.
+                   {'name': 'baseGround', 'type': 'string', 'value': ''.join(str(v) for v in base_corner.ravel())},
+                   {'name': 'terrainHash', 'type': 'string', 'value': hashlib.sha256(terrain_bytes).hexdigest()},
                    # The world editor reads this to list removals in edits.json that matched nothing.
                    {'name': 'staleEdits', 'type': 'string', 'value': json.dumps([{'name': n, 'x': x, 'y': y} for n, x, y in stale_edits])}],
     'layers': [{'id': i + 1, 'name': n, 'type': 'tilelayer', 'x': 0, 'y': 0, 'width': COLS, 'height': ROWS, 'opacity': 1, 'visible': True, 'data': layers[n]}

@@ -29,10 +29,15 @@ const places = () => ({
   wrecks: [],
 });
 
-/** A pretend generated world of 10 by 10 boxes: grass on the left, water from column 6 on. */
+/**
+ * A pretend generated world of 10 by 10 boxes: grass on the left, water from column 6 on.
+ * `edge: 0` switches off the strip of sea that must stay round a real map, which would cover
+ * all of a map this small; one test below checks that rule on its own.
+ */
 const base = {
   rows: 10,
   cols: 10,
+  edge: 0,
   // Grass up to corner column 5, water beyond.
   kindAt: (row, col) => (col <= 5 ? 'grass' : 'water'),
 };
@@ -82,6 +87,19 @@ test('a brush at the edge of the map stays inside the corner grid', () => {
   paintBoxes(editor, 9, 9, 3, 'rock', base);
   assert.ok('10,10' in editor.terrain.ground);
   assert.equal('11,11' in editor.terrain.ground, false);
+});
+
+// Guards the deep outer sea: land painted near the map's edge would make that sea shallow and
+// let the small boat sail off the world, so the brush leaves those corners alone. Erasing is fine.
+test('land is not painted within the strip of sea round the edge of the map', () => {
+  const real = { rows: 320, cols: 448, kindAt: () => 'water' };
+  const editor = session();
+
+  paintBoxes(editor, 5, 150, 1, 'sand', real);
+  assert.deepEqual(editor.terrain.ground, {});
+
+  paintBoxes(editor, 19, 150, 1, 'sand', real);
+  assert.deepEqual(Object.keys(editor.terrain.ground).sort(), ['150,20', '151,20']);
 });
 
 // Guards the file against noise: painting the ground that is already there is not an override,
