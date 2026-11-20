@@ -124,7 +124,7 @@ function v4Save(changes = {}) {
  */
 function v5Save(characterId, changes = {}) {
   const { tools, ...game } = createGame(characterId);
-  const { iron, ...resources } = game.resources;
+  const { iron, feather, pinecone, antler, ...resources } = game.resources;
   return JSON.stringify({ ...game, version: 5, resources, ...changes });
 }
 
@@ -148,7 +148,7 @@ test('all characters begin at distinct, walkable locations with their own identi
 test('a new game starts on the morning of day 1 with full meters, on foot, and the fog lifted around the spawn', () => {
   const game = createGame('scout');
   assert.equal(game.version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 6);
+  assert.equal(SAVE_VERSION, 7);
   assert.equal(game.time, START_TIME);
   assert.deepEqual(game.meters, { health: 100, hunger: 100, warmth: 100 });
   assert.equal(game.tea, 0);
@@ -538,4 +538,26 @@ test('a save made where a chopped tree stood still loads', () => {
   Object.assign(game.player, { x: tree.x, y: tree.y - 5 });
   game.regrowAt[tree.id] = game.time + 100;
   assert.deepEqual(restoreGame(serializeGame(game))?.player, game.player);
+});
+
+// Guards saves made before the finds existed: a version 6 backpack has no feathers, pine cones or
+// antlers, and must load with an empty slot for each instead of being thrown away.
+test('a version 6 save gains empty slots for feathers, pine cones and antlers', () => {
+  const game = createGame('builder');
+  game.resources.wood = 9;
+  const { feather, pinecone, antler, ...resources } = game.resources;
+  const old = JSON.stringify({ ...game, version: 6, resources });
+
+  const loaded = restoreGame(old, 'builder');
+  assert.equal(loaded.version, SAVE_VERSION);
+  assert.deepEqual(
+    [
+      loaded.resources.wood,
+      loaded.resources.feather,
+      loaded.resources.pinecone,
+      loaded.resources.antler,
+    ],
+    [9, 0, 0, 0],
+  );
+  assert.deepEqual(loaded.tools, game.tools);
 });

@@ -49,6 +49,16 @@ const pngSize = (name) => {
 // Guards against a supply pointing at a sprite that doesn't exist, having no solid base, or
 // using an animation that isn't an action. Also pins the 6-second gather time on purpose:
 // future tools are meant to shorten it, so it shouldn't be lowered as a quick "fix".
+/** The finds the map scatters: sprite name → the resource one gives. */
+const FINDS = {
+  feather: 'feather',
+  'pine-cone': 'pinecone',
+  antler: 'antler',
+  'mossy-stone': 'stone',
+  'grey-rock': 'stone',
+  'flat-stone': 'stone',
+};
+
 test('every supply is a known, solid, action-backed sprite that takes the full gather time', () => {
   for (const node of supplies) {
     assert.ok(OBJECT_SPECS[node.sprite]?.footprint, node.id);
@@ -84,14 +94,20 @@ test('flowers give herbs, driftwood and sticks give wood, small stones give ston
     driftwood = wild.filter((n) => n.sprite === 'driftwood'),
     pebbles = wild.filter((n) => n.sprite === 'pebbles'),
     berries = wild.filter((n) => n.sprite === 'wild-berries'),
-    sticks = wild.filter((n) => n.sprite === 'sticks');
+    sticks = wild.filter((n) => n.sprite === 'sticks'),
+    finds = wild.filter((n) => FINDS[n.sprite]);
   assert.ok(flowers.length >= 30);
   assert.ok(driftwood.length >= 20);
   assert.ok(pebbles.length >= 400);
   assert.ok(berries.length >= 200);
   assert.ok(sticks.length >= 250);
   assert.equal(
-    flowers.length + driftwood.length + pebbles.length + berries.length + sticks.length,
+    flowers.length +
+      driftwood.length +
+      pebbles.length +
+      berries.length +
+      sticks.length +
+      finds.length,
     wild.length,
   );
   for (const n of sticks)
@@ -262,5 +278,16 @@ test('nodesNear finds every node close to a spot', () => {
         .map((n) => n.id)
         .sort();
     assert.deepEqual(close(nodesNear(x, y)), close(NODES), node.id);
+  }
+});
+
+// Guards the finds scattered for bare hands: each kind must be on the map in fair numbers and give
+// the resource its name promises (the three loose stones all give plain stone).
+test('feathers, pine cones and antlers give their own resource, and loose stones give stone', () => {
+  for (const [sprite, type] of Object.entries(FINDS)) {
+    const nodes = wild.filter((n) => n.sprite === sprite);
+    assert.ok(nodes.length >= 15, `${sprite}: ${nodes.length}`);
+    for (const n of nodes)
+      assert.deepEqual([n.type, n.amount, n.tool, n.regrow], [type, 1, undefined, 180], n.id);
   }
 });

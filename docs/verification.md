@@ -374,3 +374,9 @@ Changing jobs, same day at `http://127.0.0.1:5181`, Scout's save moved to the vi
 - `python tools/build-map.py preview.png`: 754 pieces of path join the three starts and the fourteen signposts; in the preview the routes go round every hill, cross the rivers only at fords and bridges, and merge into shared trunks.
 - Builder, new game at `127.0.0.1`: the painted dirt path runs into Hollowstead Square from the north, turned along its curve, under the character and the villagers; the small boulder and log supplies are clear of it. No console errors.
 - Not checked in the browser: the cobble paths in the desert, canyons and snow, and a path under a bridge.
+
+## 2026-11-20: finds (feather, pine cone, antler) and the journal's notebook
+
+- Builder at `127.0.0.1`, continuing a version 6 save: it loaded as version 7 with nothing lost; the item box shows feather, pine cone and antler slots (faded at 0), and the journal button shows the painted notebook. No console errors.
+- A loose rock west of Hollowstead shows the E cap and "Pick up loose rock". A feather south-west of the village shows "Pick up feather"; picking it up raised the feather slot from 0 to 1 and the feather faded out. (The player was moved beside each by editing the verification save.)
+- Not checked in the browser: a tree dropping a cone or feather (covered by `tests/actions/interact.test.js`), and pine cones and antlers on the ground.

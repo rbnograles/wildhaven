@@ -83,6 +83,9 @@ export const NPC_REST_MAX = 9;
 /** The solid ground under a villager's feet, as [half width, depth] in world units. */
 export const NPC_BASE = [16, 12];
 
+/** The chance that a chopped map tree also drops a find (a pine cone or a feather): 2 in 10. */
+export const DROP_CHANCE = 0.2;
+
 /** How close the player must come to a landmark to find it. */
 export const LANDMARK_RADIUS = 200;
 

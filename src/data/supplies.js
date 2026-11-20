@@ -152,6 +152,56 @@ export const WILD = {
     clip: 'gather',
     regrow: 180,
   },
+  // The finds: a feather, a pine cone or an antler is a resource of its own (nothing uses them yet);
+  // the three loose stones are just stone that looks different.
+  feather: {
+    type: 'feather',
+    amount: 1,
+    label: 'Feather',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
+  'pine-cone': {
+    type: 'pinecone',
+    amount: 1,
+    label: 'Pine cone',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
+  antler: {
+    type: 'antler',
+    amount: 1,
+    label: 'Antler',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
+  'mossy-stone': {
+    type: 'stone',
+    amount: 1,
+    label: 'Mossy stone',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
+  'grey-rock': {
+    type: 'stone',
+    amount: 1,
+    label: 'Loose rock',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
+  'flat-stone': {
+    type: 'stone',
+    amount: 1,
+    label: 'Flat stone',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
   sticks: {
     type: 'wood',
     amount: 2,
@@ -241,4 +291,30 @@ export const HARVEST = {
  * Every kind of resource the backpack can hold. Saves must have a whole number for each one.
  * Iron is only mined from iron-streaked rocks, with a pickaxe.
  */
-export const RESOURCES = ['wood', 'stone', 'food', 'herbs', 'iron'];
+export const RESOURCES = [
+  'wood',
+  'stone',
+  'food',
+  'herbs',
+  'iron',
+  'feather',
+  'pinecone',
+  'antler',
+];
+
+// The words for a resource in a message, where its key is not how you would say it.
+// A resource that is not listed here is called by its key ("wood", "stone").
+export const RESOURCE_NAMES = { pinecone: 'pine cone' };
+
+// What can fall out of a tree when it is chopped down: the map tree's sprite name → the resource.
+// A pine drops a cone; a leafy tree drops a feather from a bird that nested in it. A fallen log
+// drops nothing. How often is DROP_CHANCE in data/balance.js.
+export const TREE_DROPS = {
+  pine: 'pinecone',
+  pines: 'pinecone',
+  'snowy-pine': 'pinecone',
+  oak: 'feather',
+  'big-oak': 'feather',
+  'jungle-tree': 'feather',
+  palm: 'feather',
+};

@@ -4,7 +4,7 @@
 
 import { WRECKS } from '../data/places.js';
 import { wearTool } from '../world/tools.js';
-import { nearbyNode, beginGather, finishGather } from './gather.js';
+import { nearbyNode, beginGather, finishGather, dropFrom } from './gather.js';
 import { finishCraft, CRAFT_PREFIX } from './craft.js';
 import {
   nearbyWreck,
@@ -75,12 +75,15 @@ export function beginInteraction(state, animator, id) {
  * @param {object} state - The game being played.
  * @param {string} target - The id the action was aimed at: an old boat's, a node's, or
  *   `craft:<tool>` for a craft.
- * @returns {{kind: string, wreck?: object, node?: object, wear?: string|null}|null} What was
+ * @param {() => number} [roll] - Gives a number from 0 to 1, for the find a chopped tree may drop;
+ *   tests pass their own.
+ * @returns {{kind: string, wreck?: object, node?: object, wear?: string|null, drop?: string}|null} What was
  *   finished, or null if nothing was awarded. After a gather, `wear` is 'warn' or 'broke' when a
- *   stone tool is wearing out (see wearTool). A craft always gives `{kind: 'craft', ok, ...}` (see
+ *   stone tool is wearing out (see wearTool), and `drop` is the resource a chopped tree also
+ *   dropped, when it did. A craft always gives `{kind: 'craft', ok, ...}` (see
  *   finishCraft), even when its last check failed.
  */
-export function finishInteraction(state, target) {
+export function finishInteraction(state, target, roll = Math.random) {
   if (target.startsWith(CRAFT_PREFIX))
     return { kind: 'craft', ...finishCraft(state, target.slice(CRAFT_PREFIX.length)) };
   if (WRECKS.some((w) => w.id === target)) {
@@ -90,5 +93,8 @@ export function finishInteraction(state, target) {
   const node = finishGather(state, target);
   if (!node) return null;
   // A gather that needed a tool wears it a little; only stone tools wear out.
-  return { kind: 'gather', node, wear: node.tool ? wearTool(state, node.tool) : null };
+  const finished = { kind: 'gather', node, wear: node.tool ? wearTool(state, node.tool) : null };
+  // A chopped tree sometimes drops a find as well; `drop` is only there when one fell.
+  const drop = dropFrom(state, node, roll);
+  return drop ? { ...finished, drop } : finished;
 }

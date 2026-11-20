@@ -106,3 +106,25 @@ test('chopping wears a stone axe, and the last use still pays before it breaks',
   assert.equal(game.resources.wood, 2 + pine.amount);
   assert.equal(game.tools.axe, undefined);
 });
+
+// Guards the find a chopped tree may drop: only a map tree drops one, only when the dice say so
+// (2 in 10), a pine gives a cone and a leafy tree a feather, and the supply pine drops nothing.
+test('a chopped map tree sometimes drops a pine cone or a feather', () => {
+  const game = createGame('scout'); // the scout carries an axe
+  const pine = NODES.find((n) => n.inScenery && n.sprite === 'pine'),
+    oak = NODES.find((n) => n.inScenery && n.sprite === 'oak');
+
+  // A low roll drops the find; a high one doesn't.
+  Object.assign(game.player, { x: pine.x - 60, y: pine.y });
+  assert.equal(finishInteraction(game, pine.id, () => 0.1).drop, 'pinecone');
+  assert.equal(game.resources.pinecone, 1);
+
+  Object.assign(game.player, { x: oak.x - 60, y: oak.y });
+  assert.equal('drop' in finishInteraction(game, oak.id, () => 0.9), false);
+  assert.equal(game.resources.feather, 0);
+
+  // The hand-placed pine supply is not a map tree, so it never drops one.
+  const supply = NODES.find((n) => n.id === 'pine-wood');
+  Object.assign(game.player, { x: supply.x - 60, y: supply.y });
+  assert.equal('drop' in finishInteraction(game, 'pine-wood', () => 0), false);
+});

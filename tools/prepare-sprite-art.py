@@ -12,6 +12,7 @@ Inputs : source/animations/<name>.png              tree, rock, fire and water-ri
          source/effects/footprints.png             six boot prints: left and right, in soil, sand and snow
          source/originals/props/sticks.png         the painted pile of sticks
          source/paths/path-dirt.png, path-cobblestone.png   the painted path modules (only the straight piece is used)
+         assets/items/keepsakes/pinefall-keepsakes.png      seven small finds: notebook, feather, pine cone, stones, antler
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
@@ -22,6 +23,8 @@ Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
          assets/world/effects/footprints.png, footprints.json   the boot prints the player leaves, and their cell size
          source/objects/props/path-<kind>-<a|b>.png  short pieces of path the map builder lays end to end
+         source/objects/<kind>/<find>.png          the finds lying in the world (feather, pine-cone, antler, three stones)
+         assets/ui/game/item-<find>.png, icon-journal.png   the finds' item-box pictures and the journal button's notebook
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
 Run: python tools/prepare-sprite-art.py, then python tools/build-map.py
@@ -371,3 +374,28 @@ for sheet_name, sprite_name in PATH_SHEETS.items():
         # Saved at twice its game size (objects.json scales it by 0.5), so it stays sharp when turned.
         save(shrink(piece, 2 * PATH_WIDTH / piece.shape[0]), os.path.join(SRC, 'objects', 'props', f'{sprite_name}-{letter}.png'), source)
     print(f'{sprite_name}: pieces {round(length * PATH_WIDTH / strip.shape[0])} units long, {PATH_WIDTH} wide')
+
+# ---- the finds: small things lying about the world, and the journal's notebook ------------------------
+# The sheet has four columns and two rows of equal cells, one painted thing in each (the last cell is empty).
+# Each entry says where the thing is (column, row) and what is made from it:
+#   world = (kind folder, sprite name, longest side in pixels): the picture lying on the ground, saved at twice
+#           its game size (objects.json scales it by 0.5) so it stays sharp;
+#   ui    = the file name in assets/ui/game/ of its 96-pixel picture for the item box or a HUD button.
+FINDS = [
+    (0, 0, None, 'icon-journal'),                           # the leather notebook: the journal button's picture
+    (1, 0, ('props', 'feather', 84), 'item-feather'),
+    (2, 0, ('props', 'pine-cone', 64), 'item-pinecone'),
+    (3, 0, ('rocks', 'mossy-stone', 84), None),             # the three stones all give plain stone, so they
+    (0, 1, ('props', 'antler', 88), 'item-antler'),         # need no item-box picture of their own
+    (1, 1, ('rocks', 'grey-rock', 80), None),
+    (2, 1, ('rocks', 'flat-stone', 88), None),
+]
+source = os.path.join(ROOT, 'items', 'keepsakes', 'pinefall-keepsakes.png')
+finds_sheet = load(source)
+cell_h, cell_w = finds_sheet.shape[0] // 2, finds_sheet.shape[1] // 4
+for col, row, world, ui in FINDS:
+    art = trimmed(finds_sheet[row * cell_h:(row + 1) * cell_h, col * cell_w:(col + 1) * cell_w])
+    if world:
+        kind, name, size = world
+        save(shrink(art, size / max(art.shape[:2])), os.path.join(SRC, 'objects', kind, name + '.png'), source)
+    if ui: save(shrink(art, 96 / max(art.shape[:2])), os.path.join(UI, ui + '.png'), source)

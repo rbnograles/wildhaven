@@ -2,7 +2,7 @@
 // meters, the item box and tools row, the build menu and build bar, region name and progress,
 // goals card, interact button) and the short pop-up messages called toasts. It only shows the game
 // state; it never changes it.
-import { RESOURCES } from '../data/supplies.js';
+import { RESOURCES, RESOURCE_NAMES } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
 import {
   CAMPFIRE_COST,
@@ -117,8 +117,14 @@ export function describeFinish(finished) {
     const made = `${capital(toolName(finished.tool, finished.tier))} made`;
     return [made, wearWords('hammer', finished.wear)].filter(Boolean).join(' · ');
   }
-  const { node, wear } = finished;
-  return [`+${node.amount} ${node.type} · ${node.label}`, wearWords(node.tool, wear)]
+  const { node, wear, drop } = finished;
+  /** The word for a resource in a message: "pine cone", not its key "pinecone". */
+  const named = (resource) => RESOURCE_NAMES[resource] ?? resource;
+  return [
+    `+${node.amount} ${named(node.type)} · ${node.label}`,
+    drop && `+1 ${named(drop)} fell out`,
+    wearWords(node.tool, wear),
+  ]
     .filter(Boolean)
     .join(' · ');
 }

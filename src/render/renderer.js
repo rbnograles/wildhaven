@@ -66,15 +66,18 @@ const toolUrls = Object.fromEntries(
   ).map(([path, url]) => [path.match(/tool-([\w-]+)\.png$/)[1], url]),
 );
 
-// Resource name ("wood", "stone", "food", "herbs") → the URL of its painted item picture, for the
+// Resource name ("wood", "stone", "food", "herbs", "feather", "pinecone", "antler") → the URL of its painted item picture, for the
 // badge over something picked by hand (berries, small stones, flowers, driftwood) under the mouse.
 const itemUrls = Object.fromEntries(
   Object.entries(
-    import.meta.glob('../../assets/ui/game/item-{wood,stone,food,herbs}.png', {
-      eager: true,
-      query: '?url',
-      import: 'default',
-    }),
+    import.meta.glob(
+      '../../assets/ui/game/item-{wood,stone,food,herbs,feather,pinecone,antler}.png',
+      {
+        eager: true,
+        query: '?url',
+        import: 'default',
+      },
+    ),
   ).map(([path, url]) => [path.match(/item-([\w-]+)\.png$/)[1], url]),
 );
 

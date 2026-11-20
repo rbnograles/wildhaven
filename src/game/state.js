@@ -24,10 +24,10 @@ import { emptyFog, isFogString, revealAround, revealRegions, growFog } from '../
 import { startingTools } from '../world/tools.js';
 
 /**
- * The save format this code writes. Version 6 is the archipelago's version 5 plus iron and tools.
- * Version 3, 4 and 5 saves are upgraded when loaded (see `upgrade`).
+ * The save format this code writes. Version 7 is version 6 (iron and tools) plus the three finds:
+ * feathers, pine cones and antlers. Version 3 to 6 saves are upgraded when loaded (see `upgrade`).
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /** The three survival meters. Each is a number from 0 to 100. */
 const METERS = ['health', 'hunger', 'warmth'];
@@ -355,9 +355,28 @@ function addSeaBorder(s) {
 function addTools(s) {
   return {
     ...s,
-    version: SAVE_VERSION,
+    version: 6,
     resources: isPlainObject(s.resources) ? { ...s.resources, iron: 0 } : s.resources,
     tools: startingTools(s.character),
+  };
+}
+
+/**
+ * Brings a version 6 save (tools, before the finds) up to version 7.
+ *
+ * Version 6 had no feathers, pine cones or antlers. The backpack gets an empty slot for each, like
+ * sewing three new pockets onto it. Anything odd is left alone, for restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 6 save.
+ * @returns {object} The same adventure in the version 7 shape.
+ */
+function addFinds(s) {
+  return {
+    ...s,
+    version: SAVE_VERSION,
+    resources: isPlainObject(s.resources)
+      ? { ...s.resources, feather: 0, pinecone: 0, antler: 0 }
+      : s.resources,
   };
 }
 
@@ -392,16 +411,17 @@ function placeBoat(s) {
  * Picks the upgrades an older save needs, if any, and runs them in order.
  *
  * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
- * and every version 5 save then gains its tools.
+ * every version 5 save then gains its tools, and every version 6 save its pockets for the finds.
  *
  * @param {*} parsed - The parsed save.
- * @returns {*} The save in the version 6 shape (still to be checked), or the save unchanged.
+ * @returns {*} The save in the version 7 shape (still to be checked), or the save unchanged.
  */
 function upgrade(parsed) {
   let s = parsed;
   if (s?.version === 3) s = upgradeV3(s);
   else if (s?.version === 4) s = addSeaBorder(s);
-  return s?.version === 5 ? addTools(s) : s;
+  if (s?.version === 5) s = addTools(s);
+  return s?.version === 6 ? addFinds(s) : s;
 }
 
 /**

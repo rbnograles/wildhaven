@@ -966,6 +966,38 @@ for gy in range(STICK_STEP // 2 - 9 * STICK_STEP, LAND_H + PAD, STICK_STEP):
                 or (np.hypot(crowded_xy[:, 0] - x, crowded_xy[:, 1] - y) < 110).any() or on_path(x, y, PATH_DETAIL)): continue
         sticks.append(('sticks', x, y))
 
+# Finds: small things lying about for bare hands (WILD in src/data/supplies.js): feathers, pine cones and antlers,
+# which are resources of their own, and three kinds of loose stone, which give plain stone. Another separate pass
+# with its own seeds. Per region: the chance a grid square gets one, and what it can be (a name listed twice is twice
+# as likely). Pine cones lie where pines grow, antlers where deer would roam, and the dry regions get only stones.
+FINDS = {
+    'P': (0.6, ['pine-cone', 'pine-cone', 'pine-cone', 'feather', 'antler', 'mossy-stone']),   # high: the forest is so thick that few squares have room
+    'S': (0.22, ['pine-cone', 'pine-cone', 'antler', 'grey-rock']),
+    'h': (0.12, ['feather', 'feather', 'antler', 'flat-stone', 'grey-rock']),
+    'L': (0.1, ['feather', 'feather', 'flat-stone']),
+    'J': (0.14, ['feather', 'feather', 'mossy-stone', 'mossy-stone']),
+    'C': (0.12, ['grey-rock', 'flat-stone', 'feather']),
+    'D': (0.06, ['grey-rock', 'flat-stone']),
+}
+FIND_STEP = 250
+busy_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered + pebbles + berries + sticks], float)
+finds = []
+for gy in range(FIND_STEP // 2 - 9 * FIND_STEP, LAND_H + PAD, FIND_STEP):
+    for gx in range(FIND_STEP // 2 - 9 * FIND_STEP, LAND_W + PAD, FIND_STEP):
+        rng = random.Random(gx * 83492791 ^ gy * 2971215073 ^ 0xf1d5)
+        x, y = gx + rng.randint(-95, 95), gy + rng.randint(-95, 95)
+        k, ground, roll = region_key(x, y), terrain(x, y), rng.random()
+        chance, names = FINDS[k]
+        name = rng.choice(names)
+        if (roll >= chance or not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30)
+                or ground in (WATER, DIRT) or inland(x, y) < BEACH or (k == 'L' and x > coast(y) - 60)
+                or not on_flat(x, y, 60) or near_water(x, y, 60)
+                or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
+                or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
+                or (np.hypot(busy_xy[:, 0] - x, busy_xy[:, 1] - y) < 90).any() or on_path(x, y, PATH_DETAIL)): continue
+        finds.append((name, x, y))
+
 # Water ripples: small looping animations on open water, so rivers, pools and the sea are never perfectly still.
 # The renderer plays each one from its sheet in assets/world/animations/ (made by tools/prepare-sprite-art.py).
 # Another separate pass with its own seeds. Per kind of water (see water_kind): the sprite, how far it reaches
@@ -996,7 +1028,7 @@ for gy in range(RIPPLE_STEP // 2 - PAD, LAND_H + PAD, RIPPLE_STEP):
                 or (kind != 1 and dry_near(x, y, rx, ry)) or any(math.hypot(x - bx_, y - by_) < 300 for bx_, by_ in BRIDGES)): continue
         ripples.append((name, x, y))
 # Everything above is in LAND units; the map file is in WORLD units.
-objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + sticks + ripples]
+objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + sticks + finds + ripples]
 # The pieces of path come last and are the only objects that are turned: `rotation` is in degrees, clockwise.
 path_objects = [(n, x + PAD, y + PAD, turn) for n, x, y, turn in paths]
 

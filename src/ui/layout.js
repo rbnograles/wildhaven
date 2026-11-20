@@ -6,6 +6,10 @@ import woodIconUrl from '../../assets/ui/game/item-wood.png';
 import stoneIconUrl from '../../assets/ui/game/item-stone.png';
 import foodIconUrl from '../../assets/ui/game/item-food.png';
 import herbsIconUrl from '../../assets/ui/game/item-herbs.png';
+import featherIconUrl from '../../assets/ui/game/item-feather.png';
+import pineconeIconUrl from '../../assets/ui/game/item-pinecone.png';
+import antlerIconUrl from '../../assets/ui/game/item-antler.png';
+import journalIconUrl from '../../assets/ui/game/icon-journal.png';
 import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
 import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
 import warmthIconUrl from '../../assets/ui/game/status-icon-warmth.png';
@@ -205,8 +209,9 @@ export function mountLayout(app) {
             class="journal-button hud-panel"
             aria-label="Open field journal"
           >
-            ${icon('journal')}<span class="journal-label">Journal</span><kbd>J</kbd
-            ><span id="journal-dot" class="journal-dot" hidden></span></button
+            <img class="journal-icon" src="${journalIconUrl}" alt="" /><span class="journal-label"
+              >Journal</span
+            ><kbd>J</kbd><span id="journal-dot" class="journal-dot" hidden></span></button
           ><button id="fullscreen" class="icon-button hud-panel" aria-label="Toggle fullscreen">
             ${icon('expand')}</button
           ><button id="pause" class="icon-button hud-panel" aria-label="Pause game">
@@ -310,6 +315,15 @@ export function mountLayout(app) {
               ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
                 <img src="${herbsIconUrl}" alt="" /><b id="herbs">0</b
                 ><span class="slot-label">Herbs</span><kbd>H</kbd></button
+              ><span class="slot" title="Feathers"
+                ><img src="${featherIconUrl}" alt="" /><b id="feather">0</b
+                ><span class="slot-label">Feathers</span></span
+              ><span class="slot" title="Pine cones"
+                ><img src="${pineconeIconUrl}" alt="" /><b id="pinecone">0</b
+                ><span class="slot-label">Pine cones</span></span
+              ><span class="slot" title="Antlers"
+                ><img src="${antlerIconUrl}" alt="" /><b id="antler">0</b
+                ><span class="slot-label">Antlers</span></span
               >${'<span class="slot spare" aria-hidden="true"></span>'.repeat(SPARE_SLOTS)}
             </div>
             <button

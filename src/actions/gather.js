@@ -4,7 +4,8 @@
 // twice. A gathered node is gone until it grows back.
 
 import { NODES, nodesNear, isAvailable } from '../world/nodes.js';
-import { GATHER_RANGE, GATHER_SECONDS, TOOL_SECONDS } from '../data/balance.js';
+import { GATHER_RANGE, GATHER_SECONDS, TOOL_SECONDS, DROP_CHANCE } from '../data/balance.js';
+import { TREE_DROPS } from '../data/supplies.js';
 import { toolTier, hasTool } from '../world/tools.js';
 import { startAction } from '../animation/clips.js';
 
@@ -147,4 +148,22 @@ export function finishGather(state, id = nearbyNode(state)?.id) {
   state.regrowAt[node.id] = state.time + node.regrow;
   state.resources[node.type] += node.amount;
   return node;
+}
+
+/**
+ * Rolls for the find a chopped tree may drop, and puts it in the backpack if it falls.
+ *
+ * Like shaking a tree and sometimes having a cone land at your feet: only the map's own trees
+ * drop anything (TREE_DROPS says what), and only DROP_CHANCE of the time.
+ *
+ * @param {object} state - The game being played. Its resources grow by one when something drops.
+ * @param {object} node - The node that was just gathered.
+ * @param {() => number} [roll] - Gives a number from 0 to 1; tests pass their own to load the dice.
+ * @returns {string|null} The resource that dropped, or null when nothing did.
+ */
+export function dropFrom(state, node, roll = Math.random) {
+  const drop = node.inScenery && TREE_DROPS[node.sprite];
+  if (!drop || roll() >= DROP_CHANCE) return null;
+  state.resources[drop] += 1;
+  return drop;
 }
