@@ -149,8 +149,8 @@ function followWalk(session, ui, dt, running) {
     how = aimState(state, walk.node);
 
   if (how !== 'far') {
-    // In reach of something picked by hand: first step to the spot beside it, so the bending
-    // picture reaches toward it. If something blocks that short step, gather from here instead.
+    // In reach: first step to the spot beside it, so the working picture (bending, chopping,
+    // mining, hammering) reaches toward it. If something blocks that short step, work from here.
     if (how === 'ready') {
       if (!walk.placing) session.walk = beginPlacing(state, walk.node) ?? walk;
       const placing = session.walk.placing && session.walk;
@@ -161,8 +161,10 @@ function followWalk(session, ui, dt, running) {
       if (push) return push;
     }
 
+    // An old boat is no node (it gives no resource): E's usual order picks its repair.
     session.walk = null;
-    if (how === 'ready' && beginInteraction(state, animator, walk.node.id).ok) ui.hud.update();
+    const id = walk.node.type ? walk.node.id : undefined;
+    if (how === 'ready' && beginInteraction(state, animator, id).ok) ui.hud.update();
     return null;
   }
 

@@ -88,9 +88,9 @@ test('a node in reach needs no path, and there is no walk from the boat', () => 
   assert.deepEqual(planApproach(game, node), []);
 });
 
-// Guards the gathering pose: the bending picture faces east or west, so before picking something
-// by hand the player must end up beside it (not above or below), in reach, on free ground.
-test('a hand-picked patch is gathered from a spot beside it, a tree from anywhere in reach', () => {
+// Guards the working pose: every working picture faces east or west, so before picking, chopping
+// or mining the player must end up beside the thing (not above or below), in reach, on free ground.
+test('patches, trees and rocks are all worked on from a spot beside them', () => {
   const game = createGame('scout'),
     free = footing(game);
   let checked = 0;
@@ -116,10 +116,21 @@ test('a hand-picked patch is gathered from a spot beside it, a tree from anywher
   }
   assert.ok(checked >= 20, 'most patches have a spot beside them');
 
-  const tree = NODES.find((n) => n.inScenery);
-  game.player.x = tree.x;
-  game.player.y = tree.y + 60;
-  assert.equal(standSpot(game, tree), null);
+  // Trees and rocks get a spot too: clear of the solid base, level with its foot, and in reach.
+  let solid = 0;
+  for (const node of NODES.filter((n) => n.inScenery).slice(0, 300)) {
+    game.player.x = node.x;
+    game.player.y = node.y + 60;
+    if (!free(game.player.x, game.player.y)) continue;
+    const spot = standSpot(game, node);
+    if (!spot) continue;
+
+    assert.ok(free(spot.x, spot.y), `${node.id}: blocked spot`);
+    assert.ok(apart(spot, node) < GATHER_RANGE, `${node.id}: spot out of reach`);
+    assert.ok(Math.abs(spot.x - node.x) > Math.abs(spot.y - node.y), `${node.id}: not beside`);
+    solid += 1;
+  }
+  assert.ok(solid >= 50, 'most trees and rocks have a spot beside them');
 });
 
 // Guards against the player overshooting a path spot and turning back and forth for ever: a spot

@@ -3,7 +3,7 @@
 // This file remembers which keys are held down and turns them into "which way to walk".
 
 import { beginInteraction, chooseInteraction } from '../actions/interact.js';
-import { listMissing } from '../actions/boat.js';
+import { listMissing, missingForRepair } from '../actions/boat.js';
 import { lockedNode, aimState } from '../actions/gather.js';
 import { beginApproach, beginPlacing } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
@@ -38,12 +38,13 @@ export function setupInput(session, ui) {
   const world = $('world');
 
   /**
-   * Sends the player to the spot beside a hand-picked node in reach, if they aren't there yet.
+   * Sends the player to the spot beside a node or old boat in reach, if they aren't there yet.
    *
-   * The walk is only a step or two; the frame loop follows it and starts the gathering on
-   * arrival. Held movement keys are forgotten, because a held key would call the walk off.
+   * The walk is only a step or two; the frame loop follows it and starts the work (picking,
+   * chopping, mining, mending) on arrival. Held movement keys are forgotten, because a held key
+   * would call the walk off.
    *
-   * @param {object} node - The node about to be gathered.
+   * @param {object} node - The node about to be gathered, or an old boat with its `sprite` name.
    * @returns {boolean} True if the step was started, so the caller should not gather yet.
    */
   function stepBeside(node) {
@@ -67,9 +68,16 @@ export function setupInput(session, ui) {
    * doesn't walk off and cancel straight away.
    */
   function use() {
-    // Something to pick by hand: step beside it first; the frame loop starts the picking there.
+    // Something to gather or mend: step beside it first; the frame loop starts the work there.
+    // A repair the backpack can't pay for skips the step, so E says at once what is missing.
     const choice = chooseInteraction(session.state);
     if (choice?.kind === 'gather' && stepBeside(choice.target)) return;
+    if (
+      choice?.kind === 'repair' &&
+      !Object.keys(missingForRepair(session.state)).length &&
+      stepBeside({ ...choice.target, sprite: 'old-boat' })
+    )
+      return;
 
     const result = beginInteraction(session.state, session.animator);
     if (result.ok) {
