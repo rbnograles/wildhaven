@@ -11,7 +11,7 @@ import {
   CAMP_REACH,
   CAMP_NAME_MAX,
 } from '../../src/data/balance.js';
-import { isWalkable } from '../../src/world/map.js';
+import { isWalkable, OBJECT_SPECS } from '../../src/world/map.js';
 import { createGame } from '../../src/game/state.js';
 import {
   fireRadius,
@@ -76,12 +76,14 @@ test('a camp can be opened only from close by', () => {
   assert.equal(campInReach(game), null);
 });
 
-// Guards the fire's solid base: it blocks walking like a tree, sized by the campfire footprint.
+// Guards the fire's solid base: it blocks walking like a tree, sized by the campfire footprint
+// (30 wide each side and 45 deep) times the fire's draw scale.
 test('a camp fire is solid, sized by the campfire footprint', () => {
   const game = createGame('scout'),
-    { x, y } = game.player;
+    { x, y } = game.player,
+    s = OBJECT_SPECS.campfire.scale ?? 1;
   addCamp(game, 'camp-1', 'Pinefall Camp', x, y + 30);
-  assert.deepEqual(fireBase(x, y + 30), [x - 30, y + 30 - 45, x + 30, y + 30]);
+  assert.deepEqual(fireBase(x, y + 30), [x - 30 * s, y + 30 - 45 * s, x + 30 * s, y + 30]);
   assert.deepEqual(campBases(game), [fireBase(x, y + 30)]);
   assert.ok(isWalkable(x, y));
   assert.equal(isWalkable(x, y, campBases(game)), false);

@@ -2,3 +2,9 @@ node_modules/
 dist/
 .vite/
 *.log
+
+# Local only: browser-tool snapshots, Python caches, and the dated Tiled backups the map scripts write.
+.playwright-cli/
+output/playwright/
+__pycache__/
+assets/world/tiled/backups/

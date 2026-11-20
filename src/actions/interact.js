@@ -1,13 +1,24 @@
 // What the E key (and the on-screen interact button) does right now. Several things share the
 // key, so this file picks one in a fixed order and does it: step ashore, board the boat, repair
-// an old boat, or gather a supply. It also finishes timed actions, crafting a tool included.
+// an old boat, open a chest or work a wheat bed at a camp, or gather a supply. It also finishes
+// timed actions: crafting a tool, putting up a building and farming included.
 
 import { WRECKS } from '../data/places.js';
 import { wearTool } from '../world/tools.js';
-import { nearbyNode, beginGather, finishGather, dropFrom } from './gather.js';
+import { nearbyNode, beginGather, finishGather, dropFrom, toolWear } from './gather.js';
 import { finishCraft, CRAFT_PREFIX } from './craft.js';
 import { finishMake } from './gear.js';
 import { GEAR_IDS } from '../data/gear.js';
+import { nearbyBuilding } from '../world/buildings.js';
+import { huntable, beginHunt, finishHunt, HUNT_PREFIX } from './animals.js';
+import {
+  BUILDING_PREFIX,
+  FARM_PREFIX,
+  finishBuilding,
+  beginFarm,
+  farmJob,
+  finishFarm,
+} from './building.js';
 import {
   nearbyWreck,
   beginRepair,
@@ -37,6 +48,13 @@ export function chooseInteraction(state) {
   if (canBoard(state)) return { kind: 'board', target: state.boat };
   const wreck = nearbyWreck(state);
   if (wreck) return { kind: 'repair', target: wreck };
+  // An animal in reach comes before the supplies round it: it will not stay long.
+  const animal = huntable(state);
+  if (animal) return { kind: 'hunt', target: animal };
+  // A chest or wheat bed at a camp comes before the supplies round it: it was built to be used.
+  const near = nearbyBuilding(state, ['chest', 'farm']);
+  if (near?.building.kind === 'chest') return { kind: 'chest', target: near.building };
+  if (near) return { kind: 'farm', target: near.building, job: farmJob(state, near.building) };
   const node = nearbyNode(state);
   return node ? { kind: 'gather', target: node } : null;
 }
@@ -67,16 +85,21 @@ export function beginInteraction(state, animator, id) {
   if (choice.kind === 'land') return { ok: disembark(state), kind: 'land' };
   if (choice.kind === 'board') return { ok: board(state), kind: 'board' };
   if (choice.kind === 'repair') return { ...beginRepair(state, animator), kind: 'repair' };
+  if (choice.kind === 'hunt') return { ...beginHunt(state, animator, choice.target), kind: 'hunt' };
+  // Opening a chest is not a timed action: the caller opens the chest window.
+  if (choice.kind === 'chest') return { ok: true, kind: 'chest', chest: choice.target };
+  if (choice.kind === 'farm') return { ...beginFarm(state, animator, choice.target), kind: 'farm' };
   return { ...beginGather(state, animator), kind: 'gather' };
 }
 
 /**
- * Hands out the result of a timed action when it finishes: a mended boat, gathered supplies or a
- * crafted tool.
+ * Hands out the result of a timed action when it finishes: a mended boat, gathered supplies, a
+ * crafted tool, a building put up (or a camp centre raised), or a wheat bed sown, tended or reaped.
  *
  * @param {object} state - The game being played.
- * @param {string} target - The id the action was aimed at: an old boat's, a node's, or
- *   `craft:<tool>` for a craft.
+ * @param {string} target - The id the action was aimed at: an old boat's, a node's,
+ *   `craft:<tool>` for a craft, `building:...` for a building, or `farm:...` for a wheat bed.
+ *   A building reports `{kind: <its kind>, built: true, ok, ...}` (see finishBuilding).
  * @param {() => number} [roll] - Gives a number from 0 to 1, for the find a chopped tree may drop;
  *   tests pass their own.
  * @returns {{kind: string, wreck?: object, node?: object, wear?: string|null, drop?: string}|null} What was
@@ -94,14 +117,22 @@ export function finishInteraction(state, target, roll = Math.random) {
       ...(GEAR_IDS.includes(id) ? finishMake(state, id) : finishCraft(state, id)),
     };
   }
+  if (target.startsWith(BUILDING_PREFIX)) return { ...finishBuilding(state, target), built: true };
+  if (target.startsWith(HUNT_PREFIX)) return finishHunt(state, target, roll);
+  if (target.startsWith(FARM_PREFIX)) {
+    const done = finishFarm(state, target);
+    return done ? { kind: 'farm', ...done } : null;
+  }
   if (WRECKS.some((w) => w.id === target)) {
     const wreck = finishRepair(state, target);
     return wreck ? { kind: 'repair', wreck } : null;
   }
   const node = finishGather(state, target);
   if (!node) return null;
-  // A gather that needed a tool wears it a little; only stone tools wear out.
-  const finished = { kind: 'gather', node, wear: node.tool ? wearTool(state, node.tool) : null };
+  // A gather that needed a tool wears it a little, and a bigger rock wears it more; only stone
+  // tools wear out.
+  const wear = node.tool ? wearTool(state, node.tool, toolWear(node)) : null;
+  const finished = { kind: 'gather', node, wear };
   // A chopped tree sometimes drops a find as well; `drop` is only there when one fell.
   const drop = dropFrom(state, node, roll);
   return drop ? { ...finished, drop } : finished;

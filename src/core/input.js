@@ -8,6 +8,8 @@ import { lockedNode, aimState } from '../actions/gather.js';
 import { beginApproach, beginPlacing } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { GEAR } from '../data/gear.js';
+import { BUILDINGS } from '../data/buildings.js';
+import { repel } from '../actions/wolves.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -81,6 +83,17 @@ export function setupInput(session, ui) {
       return;
 
     const result = beginInteraction(session.state, session.animator);
+    if (result.ok && result.kind === 'chest') {
+      keys.clear();
+      ui.chest.open(result.chest);
+      return;
+    }
+    // A wheat bed with nothing to do right now (no seed, or tended and growing) says why, and so
+    // does a hunt without an axe.
+    if (!result.ok && (result.kind === 'farm' || result.kind === 'hunt')) {
+      if (result.message) ui.hud.notify(result.message);
+      return;
+    }
     if (result.ok) {
       keys.clear();
       if (result.kind === 'board')
@@ -224,6 +237,14 @@ export function setupInput(session, ui) {
       return;
     }
 
+    // With the build menu open, 9, 0, - and = pick the tent, the chest, the wheat bed and the centre.
+    const camp = BUILDINGS.find((b) => b.key === key);
+    if (camp && !event.repeat && session.build.menu) {
+      event.preventDefault();
+      ui.build.building(camp.id);
+      return;
+    }
+
     // With the build menu open, 5 to 8 make the torch, the coat, the grip and the boat.
     const gear = GEAR.find((g) => g.key === key);
     if (gear && !event.repeat && session.build.menu) {
@@ -241,6 +262,21 @@ export function setupInput(session, ui) {
     if (key === 'h' && !event.repeat) {
       event.preventDefault();
       ui.camp.useHerbs();
+      return;
+    }
+
+    // R drives back any wolves close by (the repel shove), once every few seconds.
+    if (key === 'r' && !event.repeat && !ui.dialogs.isPaused()) {
+      event.preventDefault();
+      const result = repel(session.state, session.animator);
+      if (result.ok) {
+        keys.clear();
+        if (result.pushed)
+          ui.hud.notify(
+            `You drove back ${result.pushed === 1 ? 'a wolf' : `${result.pushed} wolves`}`,
+          );
+      }
+      ui.hud.update();
       return;
     }
 

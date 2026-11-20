@@ -445,3 +445,13 @@ Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server).
 - Hill tools in the editor: Raise on a block at the plateau's edge was refused with "next-door boxes may differ by one level only"; a Raise drag on flat ground made a strip of level-1 blocks shown tinted with "1" and a dark band where the wall will hang; Stairs on its south edge added a flight (pale, with steps); Lower inside the first hill showed dark "0" tiles and four warnings about walls without room, which Undo cleared.
 - Save, then Rebuild from the page: 27 flights, "RESULT: pass", back in Terrain mode; the new L-shaped hill showed real cliff edges, walls and stairs, and the tint was gone.
 - Not checked: a second level on top of a hand-made hill, removing a generated flight, the Cliff art choice (canyon, snow), a hill raised on water (the build should stop with one line), walking up hand-made stairs in the game, and a hill with no stairs failing the rebuild.
+
+## Wolves and the painted HUD windows (2026-11-20)
+
+Checked in the `wildhaven` preview at 127.0.0.1 with the Builder, at night beside den-0 (Hollowstead Meadows, 16288, 7902), with a torch and an iron axe:
+- The pack ran at the player through a pine grove; one wolf caught in a pocket of trees found its way out once chasing planned a path (`findPath`). A bite showed the toast "A wolf bit you · Press R …" and the button "Fight the wolf".
+- R pushed the nearest wolf 140 units back and stunned it for 2.5 s. E beside a wolf played the axe swing ("Fighting the wolf… move to stop") and the wolf lay down and faded.
+- Standing still among the pack, the player went from full health to 0 in about 30 game seconds, not at once. The pass-out screen said "The wolves brought you down."; from the cold alone it still says "The cold caught you.".
+- The pass-out and pause windows wear the painted HUD (wooden frame, dark slot button, paper buttons), at desktop size and at 375 px wide.
+- Phaser's "no frame -1" warnings for the campfire and deer are gone (a negative first-frame `dt`).
+- Not checked: the den and night-wolf markers on the big map (too small to read in the hidden pane), the camp, naming and chest windows in their new frame, and dens in the desert, canyons and jungle.

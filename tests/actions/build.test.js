@@ -69,6 +69,7 @@ test('a placed campfire founds a named camp and charges the cost once', () => {
     feather: 0,
     pinecone: 0,
     antler: 0,
+    copper: 0,
   });
   assert.equal(game.camps.length, 1);
   assert.equal(result.camp.id, 'camp-1');

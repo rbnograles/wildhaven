@@ -1,7 +1,9 @@
 // The field journal dialog: one page per named place in a region, with the keepsake found there
 // and a clue to the next place on the trail. Pages are read from the places already found, so
-// this file only shows them. It also keeps the "new page" dot on the HUD's journal button.
+// this file only shows them. A second tab lists what every key and button does. It also keeps
+// the "new page" dot on the HUD's journal button.
 import { JOURNALS } from '../data/journal.js';
+import { CONTROLS } from '../data/controls.js';
 import { readJournal } from '../world/journal.js';
 import { regionOf } from '../world/regions.js';
 import { objectUrls } from '../render/renderer.js';
@@ -91,6 +93,57 @@ export function setupJournal(session, ui) {
   }
 
   /**
+   * Builds one group of the controls list: a title, an optional line of small print, and a row
+   * per key with what it does.
+   *
+   * @param {object} group - A group from `CONTROLS`: `{ title, note, rows }`.
+   * @returns {HTMLElement} The finished group, ready to add to the Controls tab.
+   */
+  function controlGroup(group) {
+    const section = document.createElement('section');
+    section.className = 'control-group';
+
+    const title = document.createElement('h3');
+    title.textContent = group.title;
+    section.append(title);
+
+    if (group.note) {
+      const note = document.createElement('p');
+      note.className = 'control-note';
+      note.textContent = group.note;
+      section.append(note);
+    }
+
+    const list = document.createElement('dl');
+    for (const row of group.rows) {
+      const keys = document.createElement('dt');
+      const does = document.createElement('dd');
+      for (const name of row.keys) {
+        const cap = document.createElement('kbd');
+        cap.textContent = name;
+        keys.append(cap);
+      }
+      does.textContent = row.does;
+      list.append(keys, does);
+    }
+    section.append(list);
+
+    return section;
+  }
+
+  /**
+   * Shows one of the journal's two tabs and hides the other.
+   *
+   * @param {'places' | 'controls'} tab - Which tab to show.
+   */
+  function showTab(tab) {
+    for (const name of ['places', 'controls']) {
+      $(`journal-${name}`).hidden = name !== tab;
+      $(`journal-tab-${name}`).setAttribute('aria-selected', String(name === tab));
+    }
+  }
+
+  /**
    * Shows or hides the dot on the journal button. It shows while this character has pages they
    * haven't opened the journal to read yet.
    */
@@ -116,11 +169,17 @@ export function setupJournal(session, ui) {
     session.keys.clear();
     const journal = readJournal(session.state, journalRegion());
     render(journal);
+    showTab('places');
     $('journal-dialog').showModal();
     seen.set(session.state, pagesFound());
     refreshDot();
     logJournalOpen(session, journal);
   }
+
+  // The controls never change while the game runs, so their list is built once.
+  $('journal-controls').replaceChildren(...CONTROLS.map(controlGroup));
+  $('journal-tab-places').addEventListener('click', () => showTab('places'));
+  $('journal-tab-controls').addEventListener('click', () => showTab('controls'));
 
   $('open-journal').addEventListener('click', toggleJournal);
   $('close-journal').addEventListener('click', toggleJournal);

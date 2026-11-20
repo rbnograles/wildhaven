@@ -25,13 +25,14 @@ import { NODES, isSceneryNode } from '../world/nodes.js';
 import { REGIONS } from '../world/regions.js';
 import { emptyFog, isFogString, revealAround, revealRegions, growFog } from '../world/fog.js';
 import { startingTools } from '../world/tools.js';
+import { BUILDING_IDS } from '../data/buildings.js';
 
 /**
- * The save format this code writes. Version 8 is version 7 (the three finds) plus the gear made
- * from them: a burning torch, a feather coat, and a boat the player built themselves. Version 3
- * to 7 saves are upgraded when loaded (see `upgrade`).
+ * The save format this code writes. Version 10 is version 9 (copper in the backpack) plus the
+ * buildings at each camp: tents, chests and what is in them, wheat beds and how their crop is
+ * growing, and the camp centre's tier. Version 3 to 9 saves are upgraded when loaded (see `upgrade`).
  */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 10;
 
 /** The three survival meters. Each is a number from 0 to 100. */
 const METERS = ['health', 'hunger', 'warmth'];
@@ -115,6 +116,50 @@ const isNeed = (n) =>
     n.kind === 'signpost');
 
 /**
+ * Checks one building at a camp from a save: an id like "b-4", a known kind, a spot on dry land,
+ * and the fields its kind keeps: a chest's contents (whole, non-negative numbers of known
+ * resources), a wheat bed's crop (a stage from 0 to 3, the time its next stage comes or null, and
+ * whether it was tended), a camp centre's tier (1 to 3).
+ *
+ * @param {*} b - The building read from a save.
+ * @returns {boolean} True if the game can use it.
+ */
+const isBuilding = (b) =>
+  !!b &&
+  typeof b.id === 'string' &&
+  /^b-\d+$/.test(b.id) &&
+  BUILDING_IDS.includes(b.kind) &&
+  isWalkable(b.x, b.y, [], false) &&
+  (b.kind !== 'chest' ||
+    (isPlainObject(b.contents) &&
+      Object.entries(b.contents).every(
+        ([type, n]) => RESOURCES.includes(type) && Number.isInteger(n) && n >= 0,
+      ))) &&
+  (b.kind !== 'farm' ||
+    (isPlainObject(b.crop) &&
+      Number.isInteger(b.crop.stage) &&
+      b.crop.stage >= 0 &&
+      b.crop.stage <= 3 &&
+      (b.crop.readyAt === null || Number.isFinite(b.crop.readyAt)) &&
+      typeof b.crop.tended === 'boolean')) &&
+  (b.kind !== 'centre' || (Number.isInteger(b.tier) && b.tier >= 1 && b.tier <= 3));
+
+/**
+ * Copies a checked building, keeping only the fields its kind uses.
+ *
+ * @param {object} b - A building that passed `isBuilding`.
+ * @returns {object} A fresh building object.
+ */
+function copyBuilding(b) {
+  const out = { id: b.id, kind: b.kind, x: b.x, y: b.y };
+  if (b.kind === 'chest') out.contents = { ...b.contents };
+  if (b.kind === 'farm')
+    out.crop = { stage: b.crop.stage, readyAt: b.crop.readyAt, tended: b.crop.tended };
+  if (b.kind === 'centre') out.tier = b.tier;
+  return out;
+}
+
+/**
  * Checks one camp from a save: an id like "camp-3", a tidy name, a spot on dry land, a growth
  * count in range and exactly three needs. Like the player's spot, cliffs are left out of the
  * land check, so a camp built before a hill was added on that spot still loads.
@@ -136,7 +181,9 @@ const isCamp = (c) =>
   c.grown <= MAX_GROWN &&
   Array.isArray(c.needs) &&
   c.needs.length === 3 &&
-  c.needs.every(isNeed);
+  c.needs.every(isNeed) &&
+  Array.isArray(c.buildings) &&
+  c.buildings.every(isBuilding);
 
 /**
  * Copies a checked need, keeping only the fields its kind uses.
@@ -164,6 +211,7 @@ const copyCamp = (c) => ({
   y: c.y,
   grown: c.grown,
   needs: c.needs.map(copyNeed),
+  buildings: c.buildings.map(copyBuilding),
 });
 
 /** Says whether a value is a plain object (not null, not a list), like a saved `regrowAt`. */
@@ -395,7 +443,43 @@ function addFinds(s) {
  * @returns {object} The same adventure in the version 8 shape.
  */
 function addGear(s) {
-  return { ...s, version: SAVE_VERSION, torch: 0, coat: false };
+  return { ...s, version: 8, torch: 0, coat: false };
+}
+
+/**
+ * Brings a version 8 save (gear, before copper) up to version 9.
+ *
+ * Version 8 had no copper: the backpack gets an empty copper pocket. Anything odd is left alone,
+ * for restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 8 save.
+ * @returns {object} The same adventure in the version 9 shape.
+ */
+function addCopper(s) {
+  return {
+    ...s,
+    version: 9,
+    resources: isPlainObject(s.resources) ? { ...s.resources, copper: 0 } : s.resources,
+  };
+}
+
+/**
+ * Brings a version 9 save (copper, before camp buildings) up to version 10.
+ *
+ * Version 9 camps had no buildings: each gets an empty list. Anything odd is left alone, for
+ * restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 9 save.
+ * @returns {object} The same adventure in the version 10 shape.
+ */
+function addBuildings(s) {
+  return {
+    ...s,
+    version: SAVE_VERSION,
+    camps: Array.isArray(s.camps)
+      ? s.camps.map((c) => (isPlainObject(c) ? { ...c, buildings: [] } : c))
+      : s.camps,
+  };
 }
 
 /**
@@ -466,10 +550,11 @@ const stillThere = (ids, places) => ids.filter((id) => places.some((p) => p.id =
  *
  * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
  * every version 5 save then gains its tools, every version 6 save its pockets for the finds, and
- * every version 7 save its (unlit) torch and (unworn) coat.
+ * every version 7 save its (unlit) torch and (unworn) coat, every version 8 save its copper, and
+ * every version 9 save an empty list of buildings at each camp.
  *
  * @param {*} parsed - The parsed save.
- * @returns {*} The save in the version 8 shape (still to be checked), or the save unchanged.
+ * @returns {*} The save in the version 10 shape (still to be checked), or the save unchanged.
  */
 function upgrade(parsed) {
   let s = parsed;
@@ -477,7 +562,9 @@ function upgrade(parsed) {
   else if (s?.version === 4) s = addSeaBorder(s);
   if (s?.version === 5) s = addTools(s);
   if (s?.version === 6) s = addFinds(s);
-  return s?.version === 7 ? addGear(s) : s;
+  if (s?.version === 7) s = addGear(s);
+  if (s?.version === 8) s = addCopper(s);
+  return s?.version === 9 ? addBuildings(s) : s;
 }
 
 /**
@@ -601,12 +688,14 @@ export function restoreGame(json) {
     )
       return null;
 
-    // Camps: a short list of well-formed camps, each id used once.
+    // Camps: a short list of well-formed camps, each id used once, and each building id used once.
     if (
       !Array.isArray(camps) ||
       camps.length > MAX_CAMPS ||
       !camps.every(isCamp) ||
-      new Set(camps.map((c) => c.id)).size !== camps.length
+      new Set(camps.map((c) => c.id)).size !== camps.length ||
+      new Set(camps.flatMap((c) => c.buildings.map((b) => b.id))).size !==
+        camps.reduce((n, c) => n + c.buildings.length, 0)
     )
       return null;
 

@@ -1,0 +1,240 @@
+[
+  {
+    "file": "assets/characters/states/tent-sleeping",
+    "cols": 4,
+    "rows": [
+      "scout sleep",
+      "builder sleep",
+      "survivor sleep"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png",
+      "assets/world/source/objects/buildings/tent.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Strict identity reference: attached player sheet. Rows top to bottom: Scout woman brown bun green cape orange scarf; Builder blond bearded man ochre shirt leather apron; Survivor dark tousled hair stubble worn blue coat red scarf. Exactly FOUR columns x THREE rows. Each cell shows the SAME complete patched olive canvas tent from reference, front three-quarter view, flap tied open wide enough to clearly see ONE character lying asleep INSIDE on a cream bedroll, head resting on pillow near entrance, legs extending into tent under blanket. Character fully inside tent, not lying outside. Same tent geometry, ropes, pegs, storage crate, size and placement in all twelve frames. Four subtle sequential breathing phases: relaxed, slight inhale, full inhale, exhale. Eyes closed in all frames. Hands resting near chest, visible recognizable face and upper clothing; backpacks removed and tucked inside beside bedroll. Tent stable, only blanket chest and shoulders move slightly. No Zzz or sleep symbols."
+  },
+  {
+    "file": "assets/creatures/deer/deer-states",
+    "cols": 4,
+    "rows": [
+      "idle",
+      "walk",
+      "run",
+      "dying"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Exactly FOUR columns x FOUR rows, sixteen sprites of ONE identical deer. A tan woodland deer with small branching antlers, cream chest and rump, slender dark hooves. Facing RIGHT/east in every frame, full animal silhouette including ears/tail/antlers always visible. Row1 four subtle idle breathing/ear-twitch frames. Row2 four-phase walk cycle: left foreleg forward/right hind forward, passing, opposite leg pair forward, passing. Row3 four-phase running gallop cycle with unmistakable changing leg positions, extension, airborne, contraction, landing. Row4 NON-LOOPING non-graphic dying: standing weakened/head lowered; knees folding; rolling onto side; lying motionless on side eyes closed, legs relaxed. No blood, wounds, weapon, hunter, effects, ground or grass. Same anatomy, markings, body size in every frame. Leg poses must genuinely alternate across movement frames, no repeated single pose. On death row keep ground baseline consistent as body collapses."
+  },
+  {
+    "file": "assets/creatures/boar/boar-states",
+    "cols": 4,
+    "rows": [
+      "idle",
+      "walk",
+      "run",
+      "dying"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Exactly FOUR columns x FOUR rows, sixteen sprites of ONE identical boar. A stout dark umber wild boar with short curved ivory tusks, coarse mane, cloven hooves, short curled tail. Facing RIGHT/east in every frame, full animal silhouette including ears/tail/antlers always visible. Row1 four subtle idle breathing/ear-twitch frames. Row2 four-phase walk cycle: left foreleg forward/right hind forward, passing, opposite leg pair forward, passing. Row3 four-phase running gallop cycle with unmistakable changing leg positions, extension, airborne, contraction, landing. Row4 NON-LOOPING non-graphic dying: standing weakened/head lowered; knees folding; rolling onto side; lying motionless on side eyes closed, legs relaxed. No blood, wounds, weapon, hunter, effects, ground or grass. Same anatomy, markings, body size in every frame. Leg poses must genuinely alternate across movement frames, no repeated single pose. On death row keep ground baseline consistent as body collapses."
+  },
+  {
+    "file": "assets/creatures/rabbit/rabbit-states",
+    "cols": 4,
+    "rows": [
+      "idle",
+      "walk",
+      "run",
+      "dying"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Exactly FOUR columns x FOUR rows, sixteen sprites of ONE identical rabbit. A small brown woodland rabbit with cream belly, long upright ears, white tail. Facing RIGHT/east in every frame, full animal silhouette including ears/tail/antlers always visible. Row1 four subtle idle breathing/ear-twitch frames. Row2 four-phase walk cycle: left foreleg forward/right hind forward, passing, opposite leg pair forward, passing. Row3 four-phase bounding hop cycle with unmistakable changing leg positions, extension, airborne, contraction, landing. Row4 NON-LOOPING non-graphic dying: standing weakened/head lowered; knees folding; rolling onto side; lying motionless on side eyes closed, legs relaxed. No blood, wounds, weapon, hunter, effects, ground or grass. Same anatomy, markings, body size in every frame. Leg poses must genuinely alternate across movement frames, no repeated single pose. On death row keep ground baseline consistent as body collapses."
+  },
+  {
+    "file": "assets/creatures/wolf/wolf-dying",
+    "cols": 6,
+    "rows": [
+      "dying"
+    ],
+    "refs": [
+      "assets/creatures/wolf/wolf-states.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Use reference for identical wolf identity ONLY, do not copy gray background haze. EXACTLY SIX columns x ONE horizontal row. Six sequential non-graphic death animation frames of same grey-brown wolf pale chest dark back amber eyes bushy tail facing RIGHT: 1 stagger with head lowered; 2 front knees bend; 3 chest lowers to ground; 4 body tips onto side; 5 settles legs relaxed; 6 lies motionless on side with eyes closed. No blood, wounds, attacker or symbols. Body scale constant, ground contact baseline same across all frames; full tail visible, no clipping. True transparent background and gutters."
+  },
+  {
+    "file": "assets/world/source/shorelines/snow-ocean-bank",
+    "cols": 3,
+    "rows": [
+      "straight horizontal / straight vertical / convex",
+      "concave / S curve / rounded tip"
+    ],
+    "refs": [
+      "assets/world/source/shorelines/ocean-bank.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Exactly THREE columns x TWO rows, six isolated modular SNOWY SEASHORE BANK segments matching reference shoreline construction. A narrow band of snow-covered coastal earth with blue-gray ice crust, damp dark gravel at waterline, delicate ivory seafoam, tiny turquoise wet edge. NO broad water surface, NO floating island slabs. Transparent on BOTH inland and sea sides of each band so it overlays ground/water textures. Reading order: straight horizontal bank land above water below; straight vertical bank land left water right; convex rounded outside corner land upper left; concave inside corner opening lower right; gentle S curve; short rounded bank tip. Constant band width and detail scale. Near top-down orthographic surface, soft white snow with muted blue shadow, no plants or people, no visible thick sidewall. All six pieces separate and fully contained with generous transparent gutters."
+  },
+  {
+    "file": "assets/items/ores/iron-copper",
+    "cols": 2,
+    "rows": [
+      "loose iron / loose copper",
+      "iron ore node / copper ore node"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Exactly TWO columns x TWO rows, FOUR separate resource sprites. Top left: small cluster of three raw IRON chunks, heavy angular blue-gray metal exposed in dark stone with restrained rusty brown flecks, no blue magical crystals. Top right: small cluster of three raw COPPER chunks, clearly orange-red metallic seams within brown stone with slight turquoise verdigris. Bottom left: harvestable rounded dark gray rock node with visible iron-gray metallic seams and rusty freckles. Bottom right: corresponding rounded ore rock node with copper-orange veins and slight green oxidation. Raw natural ore not ingots or jewelry. Upper two are inventory/pickup chunks, lower two are larger world mineable rocks; each clearly distinct silhouette. No ground, sparkles, tools or text."
+  },
+  {
+    "file": "assets/world/source/landmarks/cave-entrances",
+    "cols": 3,
+    "rows": [
+      "forest cave / snow cave / canyon cave"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Exactly THREE columns x ONE row, three complete freestanding cave entrance sprites for top-down RPG scenery, same scale, each three character heights. 1 forest cave: natural gray-brown rocky arch, deep dark opening, moss and small ferns tucked into crevices. 2 snow cave: same natural rocky arched opening with thick snow cap and a few short blue icicles along upper lip, dark entrance visible. 3 canyon cave: warm ochre layered sandstone arched entrance, weathered edges, small dry grass tufts. Opening faces camera slightly right, clear flat walkable threshold, thick rock rim and dark interior depth. No landscape background, no ground slab extending outside base, no characters, doors, torches, signs or text. Entrances are natural caves not buildings, shadows only within cave opening."
+  },
+  {
+    "file": "assets/characters/states/players-repel",
+    "cols": 4,
+    "rows": [
+      "scout repel",
+      "builder repel",
+      "survivor repel"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "prompt": "Use case: stylized-concept. Wildhaven production sprite source sheet, warm hand-painted illustrated 2D RPG, clean dark-brown outlines, earthy ochre and moss palette, elevated three-quarter orthographic game camera, same illustrated style as attached references. Genuine transparent alpha in ALL empty space and gutters, no gray haze, no floor shadows, no backdrop, no labels, no grid, no text. Each complete sprite centered in its equal cell with 10 percent empty margin. Uniform scale and ground anchors between frames. Strict identity reference: attached player sheet. Rows top to bottom: Scout woman brown bun green cape orange scarf; Builder blond bearded man ochre shirt leather apron; Survivor dark tousled hair stubble worn blue coat red scarf. Exactly FOUR columns x THREE rows. Four sequential frames per character, all facing RIGHT. Non-graphic defensive wildlife-repel gesture, empty hands: 1 feet braced hands close to chest; 2 lift both arms wide above shoulders to appear larger; 3 emphatic forward open-palm shoo gesture, torso leaning forward; 4 recover to braced ready stance. Determined faces, consistent clothes and proportions, no weapons, effects or animals. Full fingers and boots within cell. Stable grounded feet except one small forward step at frame3."
+  },
+  {
+    "file": "assets/world/source/settlement/shelter-construction",
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png",
+      "assets/world/source/objects/buildings/tent.png"
+    ],
+    "cols": 4,
+    "rows": [
+      "foundation / frame / roof / finished"
+    ]
+  },
+  {
+    "file": "assets/world/source/settlement/stockpile-chest-states",
+    "refs": [
+      "assets/world/source/originals/props/storage-chest.png"
+    ],
+    "cols": 4,
+    "rows": [
+      "closed / half open / empty / stocked"
+    ]
+  },
+  {
+    "file": "assets/world/source/settlement/settlement-centres",
+    "refs": [
+      "assets/world/source/originals/buildings/house-repaired.png",
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 3,
+    "rows": [
+      "camp / hamlet / village"
+    ]
+  },
+  {
+    "file": "assets/items/dropped-haul",
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png"
+    ],
+    "cols": 2,
+    "rows": [
+      "world bundle / map icon"
+    ]
+  },
+  {
+    "file": "assets/characters/rowing/players-rowing-north",
+    "cols": 4,
+    "rows": [
+      "scout rowing",
+      "builder rowing",
+      "survivor rowing"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png",
+      "assets/characters/scout/scout-rowing.png"
+    ],
+    "prompt": "Use case: stylized-concept. Production sprite sheet for Wildhaven, match warm hand-painted outlined 2D RPG reference art and elevated orthographic camera. Genuine transparent alpha empty space, no haze, glow, shadow, backdrop, text or grid. Equal rectangular cells, ALL silhouettes inside cells with generous empty margins. Fixed scale and anchor between frames. Exactly FOUR columns x THREE rows, twelve full boat-and-character sprites. Rows top to bottom: brown bun Scout woman green cape orange scarf; blond bearded Builder man ochre shirt leather apron; dark-haired Survivor man worn blue coat red scarf. Same small wooden rowboat as reference, two oars, central seat, pointed bow and broad stern. All twelve hulls now point UP/north/away from screen, NOT sideways. Elevated near-top-down view showing boat deck clearly. Rower sits on central bench facing DOWN/south, face visible, rowing backwards toward bow. Four sequential oar stroke phases across each row: reach forward, catch, pull back, recover. Paired oars sweep symmetrically on opposite sides with distinctly changing angles. Boat hull stays identical orientation, position and size in every frame, only oars arms and torso move. No water, wakes, characters standing, extra people or objects. Both complete oar blades visible in every cell."
+  },
+  {
+    "file": "assets/characters/rowing/players-rowing-south",
+    "cols": 4,
+    "rows": [
+      "scout rowing",
+      "builder rowing",
+      "survivor rowing"
+    ],
+    "refs": [
+      "assets/characters/originals/starting-characters-idle-v1.png",
+      "assets/characters/scout/scout-rowing.png"
+    ],
+    "prompt": "Use case: stylized-concept. Production sprite sheet for Wildhaven, match warm hand-painted outlined 2D RPG reference art and elevated orthographic camera. Genuine transparent alpha empty space, no haze, glow, shadow, backdrop, text or grid. Equal rectangular cells, ALL silhouettes inside cells with generous empty margins. Fixed scale and anchor between frames. Exactly FOUR columns x THREE rows, twelve full boat-and-character sprites. Rows top to bottom: brown bun Scout woman green cape orange scarf; blond bearded Builder man ochre shirt leather apron; dark-haired Survivor man worn blue coat red scarf. Same small wooden rowboat as reference, two oars, central seat, pointed bow and broad stern. All twelve hulls now point DOWN/south/toward screen, NOT sideways. Elevated near-top-down view showing boat deck clearly. Rower sits on central bench facing UP/north, back visible, rowing backwards toward bow. Four sequential oar stroke phases across each row: reach forward, catch, pull back, recover. Paired oars sweep symmetrically on opposite sides with distinctly changing angles. Boat hull stays identical orientation, position and size in every frame, only oars arms and torso move. No water, wakes, characters standing, extra people or objects. Both complete oar blades visible in every cell."
+  },
+  {
+    "file": "assets/world/source/settlement/ship-sailing-directions",
+    "cols": 3,
+    "rows": [
+      "north",
+      "east",
+      "south"
+    ],
+    "refs": [
+      "assets/world/source/originals/buildings/ship-repaired.png"
+    ],
+    "prompt": "Use case: stylized-concept. Production sprite sheet for Wildhaven, match warm hand-painted outlined 2D RPG reference art and elevated orthographic camera. Genuine transparent alpha empty space, no haze, glow, shadow, backdrop, text or grid. Equal rectangular cells, ALL silhouettes inside cells with generous empty margins. Fixed scale and anchor between frames. Exactly THREE columns x THREE rows. Nine sprites of ONE repaired wooden sailing ship identical in design to reference: single mast, single cream square sail, ochre plank hull with muted green weathering, raised stern cabin, pointed bow with bowsprit. Rows are directions: top row bow points UP/north away from camera; middle row bow points RIGHT/east; bottom row bow points DOWN/south toward camera. Each row has THREE subtle sail-billowing loop frames, hull and mast fixed within that row. High elevated orthographic game camera, deck visible. Full mast rigging sail hull and bowsprit contained in each cell. No ocean or foam, no characters. Direction must be represented by actual hull orientation, not merely changing sail. West can be mirrored from east."
+  },
+  {
+    "file": "assets/creatures/wolf/wolf-states-clean",
+    "cols": 4,
+    "rows": [
+      "idle",
+      "walk",
+      "warning",
+      "attack",
+      "retreat"
+    ],
+    "refs": [
+      "assets/creatures/wolf/wolf-states.png"
+    ],
+    "prompt": "Use case: background-extraction. Edit the supplied wolf sprite sheet. Remove ALL gray/white haze and cloudy backdrop between and behind the wolves, replacing with genuine fully transparent alpha. Preserve exactly the 4 columns by 5 rows, all twenty wolves, their exact poses, fur, outlines, size and placement. No painted background, no shadows, no glow. Only the animal silhouettes should remain visible; transparent gutters and canvas corners."
+  },
+  {
+    "file": "assets/world/source/shorelines/snow-ocean-bank-clean",
+    "cols": 3,
+    "rows": [
+      "horizontal / vertical / convex",
+      "concave / curve / tip"
+    ],
+    "refs": [
+      "assets/world/source/shorelines/snow-ocean-bank.png"
+    ],
+    "prompt": "Use case: background-extraction. Edit the supplied snowy shoreline sheet. Remove ALL broad gray/white haze, background, glow and shadows from outside the six narrow shoreline strips. Replace with genuinely fully transparent alpha on BOTH sides of every strip and all gutters. Preserve the six original snow/ice/gravel/foam shoreline shapes, exact locations, scale, material detail, 3-column 2-row layout. Keep white snow opaque within the strip. Only snow-covered shoreline strips should remain; no water plane or backdrop."
+  },
+  {
+    "file": "assets/characters/states/tent-sleeping-padded",
+    "cols": 4,
+    "rows": [
+      "scout sleep",
+      "builder sleep",
+      "survivor sleep"
+    ],
+    "refs": [
+      "assets/characters/states/tent-sleeping.png"
+    ],
+    "prompt": "Use case: precise-object-edit. Correct spacing ONLY in this 4-column 3-row sleeping-in-tent animation sprite sheet. Keep all twelve tent-and-sleeping-character drawings, identities, breathing phases, style and detail. Recompose into strict equal 4 columns x3 rows with each full tent occupying only 75 percent of cell width, centered. Add generous fully transparent gutters and outside margins; no tent pole or rope touches another cell or canvas edge. Restore any tiny clipped leftmost tent edge. Same size and baseline of tent across all frames. Genuine transparent alpha, no background or shadow. Do not add or remove a character, change tent design or alter sleeping poses."
+  }
+]

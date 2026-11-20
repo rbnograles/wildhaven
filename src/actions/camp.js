@@ -11,6 +11,7 @@ import {
   TEA_SECONDS,
   WAKE_HEALTH,
   WAKE_OFFSET,
+  TENT_REST_HUNGER,
 } from '../data/balance.js';
 import { isWalkable } from '../world/map.js';
 import { solidBases } from '../world/nodes.js';
@@ -90,20 +91,30 @@ export function brewTea(state) {
 /**
  * Rests at a camp through the night, waking rested at dawn.
  *
- * Only from dusk onwards, so it can't be used to skip the day.
+ * Only from dusk onwards, so it can't be used to skip the day. With a tent at the camp the player
+ * sleeps sheltered, and the night costs only TENT_REST_HUNGER of the hunger it would.
  *
  * @param {object} state - The game being played. The clock jumps; health and warmth fill up.
- * @returns {{ok: boolean, events?: object[], reason?: string}} The events of the skipped time on
- *   success; otherwise `reason` 'away' (not at a camp) or 'day' (too early to sleep).
+ * @returns {{ok: boolean, events?: object[], tent?: boolean, reason?: string}} The events of the
+ *   skipped time and whether a tent sheltered the sleep, on success; otherwise `reason` 'away' (not
+ *   at a camp) or 'day' (too early to sleep).
  */
 export function rest(state) {
   if (!campInReach(state)) return { ok: false, reason: 'away' };
   const phase = phaseOf(state.time);
   if (phase !== 'dusk' && phase !== 'night') return { ok: false, reason: 'day' };
 
+  // A tent at the camp shelters the sleep: the night costs only part of its hunger.
+  const camp = campInReach(state),
+    tent = camp.buildings?.some((b) => b.kind === 'tent'),
+    hungerBefore = state.meters.hunger;
   const events = skipTo(state, nextDawn(state.time));
+  if (tent) {
+    const spent = hungerBefore - state.meters.hunger;
+    state.meters.hunger = Math.min(100, state.meters.hunger + spent * (1 - TENT_REST_HUNGER));
+  }
   Object.assign(state.meters, { health: 100, warmth: 100 });
-  return { ok: true, events };
+  return { ok: true, events, tent: !!tent };
 }
 
 /**

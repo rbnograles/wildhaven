@@ -58,6 +58,7 @@ const campAt = (game) => ({
     { kind: 'place', region: 'frostpeak', done: false },
     { kind: 'signpost', done: false },
   ],
+  buildings: [],
 });
 
 /**
@@ -148,7 +149,7 @@ test('all characters begin at distinct, walkable locations with their own identi
 test('a new game starts on the morning of day 1 with full meters, on foot, and the fog lifted around the spawn', () => {
   const game = createGame('scout');
   assert.equal(game.version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 8);
+  assert.equal(SAVE_VERSION, 10);
   assert.equal(game.time, START_TIME);
   assert.deepEqual(game.meters, { health: 100, hunger: 100, warmth: 100 });
   assert.equal(game.tea, 0);
@@ -176,6 +177,24 @@ test('save restores character, coordinates and progress without sharing mutable 
   original.meters.warmth = 12.5;
   original.tea = 7;
   original.camps.push(campAt(original));
+  original.camps[0].buildings = [
+    { id: 'b-1', kind: 'tent', x: original.player.x + 120, y: original.player.y },
+    {
+      id: 'b-2',
+      kind: 'chest',
+      x: original.player.x - 120,
+      y: original.player.y,
+      contents: { wood: 4 },
+    },
+    {
+      id: 'b-3',
+      kind: 'farm',
+      x: original.player.x,
+      y: original.player.y + 120,
+      crop: { stage: 1, readyAt: 1300, tended: true },
+    },
+    { id: 'b-4', kind: 'centre', x: original.player.x, y: original.player.y - 160, tier: 2 },
+  ];
 
   const restored = restoreGame(serializeGame(original));
   assert.deepEqual(restored, original);
@@ -574,6 +593,44 @@ test('a version 7 save gains an unlit torch and no coat', () => {
   const loaded = restoreGame(JSON.stringify({ ...game, version: 7 }), 'scout');
   assert.equal(loaded.version, SAVE_VERSION);
   assert.deepEqual([loaded.torch, loaded.coat, loaded.resources.feather], [0, false, 4]);
+});
+
+// Guards saves made before copper existed: a version 8 save has no copper, and must load with an
+// empty copper pocket and everything else kept.
+test('a version 8 save gains an empty copper pocket', () => {
+  const game = createGame('scout');
+  delete game.resources.copper;
+  game.resources.iron = 3;
+  const loaded = restoreGame(JSON.stringify({ ...game, version: 8 }), 'scout');
+  assert.equal(loaded.version, SAVE_VERSION);
+  assert.deepEqual([loaded.resources.copper, loaded.resources.iron], [0, 3]);
+});
+
+// Guards saves made before camp buildings existed: a version 9 save's camps have none, and must
+// load with an empty list instead of being thrown away.
+test('a version 9 save gains an empty list of buildings at each camp', () => {
+  const game = createGame('builder');
+  const { buildings, ...camp } = campAt(game);
+  const loaded = restoreGame(JSON.stringify({ ...game, version: 9, camps: [camp] }), 'builder');
+  assert.equal(loaded.version, SAVE_VERSION);
+  assert.deepEqual(loaded.camps[0].buildings, []);
+});
+
+// Guards camp buildings in a save: a building of an unknown kind, a chest holding something that
+// is not a resource, or two buildings sharing an id make the save unreadable, not half-loaded.
+test('a save with a broken camp building is refused', () => {
+  const game = createGame('builder');
+  const camp = campAt(game);
+  const spot = { x: game.player.x + 120, y: game.player.y };
+  for (const buildings of [
+    [{ id: 'b-1', kind: 'castle', ...spot }],
+    [{ id: 'b-1', kind: 'chest', ...spot, contents: { gold: 3 } }],
+    [
+      { id: 'b-1', kind: 'tent', ...spot },
+      { id: 'b-1', kind: 'chest', ...spot, contents: {} },
+    ],
+  ])
+    assert.equal(restoreGame(JSON.stringify({ ...game, camps: [{ ...camp, buildings }] })), null);
 });
 
 // Guards saves against the world editor: deleting or renaming one place must not throw away

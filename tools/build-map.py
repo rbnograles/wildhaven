@@ -1062,17 +1062,18 @@ for gy in range(STICK_STEP // 2 - 9 * STICK_STEP, LAND_H + PAD, STICK_STEP):
                 or (np.hypot(crowded_xy[:, 0] - x, crowded_xy[:, 1] - y) < 110).any() or on_path(x, y, PATH_DETAIL)): continue
         sticks.append(('sticks', x, y))
 
-# Finds: small things lying about for bare hands (WILD in src/data/supplies.js): feathers, pine cones and antlers,
-# which are resources of their own, and three kinds of loose stone, which give plain stone. Another separate pass
-# with its own seeds. Per region: the chance a grid square gets one, and what it can be (a name listed twice is twice
-# as likely). Pine cones lie where pines grow, antlers where deer would roam, and the dry regions get only stones.
+# Finds: small things lying about for bare hands (WILD in src/data/supplies.js): antlers, a resource of their own,
+# and three kinds of loose stone, which give plain stone. Feathers and pine cones are never scattered: they only drop
+# from chopped trees. Another separate pass with its own seeds. Per region: the chance a grid square gets one, and
+# what it can be (a name listed twice is twice as likely). Antlers lie where deer would roam; the dry regions get
+# only stones.
 FINDS = {
-    'P': (0.6, ['pine-cone', 'pine-cone', 'pine-cone', 'feather', 'antler', 'mossy-stone']),   # high: the forest is so thick that few squares have room
-    'S': (0.22, ['pine-cone', 'pine-cone', 'antler', 'grey-rock']),
-    'h': (0.12, ['feather', 'feather', 'antler', 'flat-stone', 'grey-rock']),
-    'L': (0.1, ['feather', 'feather', 'flat-stone']),
-    'J': (0.14, ['feather', 'feather', 'mossy-stone', 'mossy-stone']),
-    'C': (0.12, ['grey-rock', 'flat-stone', 'feather']),
+    'P': (0.6, ['antler', 'mossy-stone']),   # high: the forest is so thick that few squares have room
+    'S': (0.22, ['antler', 'grey-rock']),
+    'h': (0.12, ['antler', 'flat-stone', 'grey-rock']),
+    'L': (0.1, ['flat-stone']),
+    'J': (0.14, ['mossy-stone']),
+    'C': (0.12, ['grey-rock', 'flat-stone']),
     'D': (0.06, ['grey-rock', 'flat-stone']),
 }
 FIND_STEP = 250

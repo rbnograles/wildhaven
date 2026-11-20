@@ -2,7 +2,7 @@
 // grow back, the trees and rocks a tool can harvest, and the resource types the backpack holds.
 
 import { SUPPLY_SPOTS } from './places.js';
-import { SUPPLY_REGROW, HARVEST_REGROW } from './balance.js';
+import { SUPPLY_REGROW, HARVEST_REGROW, ROCK_YIELD, SIZE_SHRINK, SIZE_GROW } from './balance.js';
 
 /**
  * The fixed supplies. Each one can be gathered, and grows back SUPPLY_REGROW game-seconds (two
@@ -129,7 +129,8 @@ export const SUPPLIES = [
 
 // Wild scenery the map scatters (tools/build-map.py) that can be harvested where it stands and grows back `regrow`
 // game-seconds later. world/nodes.js turns each map patch into a node; the renderer draws it from NODES instead of from the map.
-// The key is the sprite name in the map; the fields mean the same as in SUPPLIES. Flowers grow inland; driftwood
+// The key is the sprite name in the map; the fields mean the same as in SUPPLIES, plus `quick`: a loose thing
+// that is just picked up off the ground, which takes PICKUP_SECONDS instead of GATHER_SECONDS. Flowers grow inland; driftwood
 // washes up on the sea beaches, so there is always wood for mending a boat. Pebbles are small stones lying all
 // over the land, picked up with bare hands, so there is always stone for a first campfire and pickaxe.
 // Wild berries are small bushes in the green regions, so food is not only at the three big berry bushes.
@@ -149,32 +150,19 @@ export const WILD = {
     amount: 1,
     label: 'Small stones',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
-  // The finds: a feather, a pine cone or an antler is a resource of its own (nothing uses them yet);
-  // the three loose stones are just stone that looks different.
-  feather: {
-    type: 'feather',
-    amount: 1,
-    label: 'Feather',
-    verb: 'Pick up',
-    clip: 'gather',
-    regrow: 180,
-  },
-  'pine-cone': {
-    type: 'pinecone',
-    amount: 1,
-    label: 'Pine cone',
-    verb: 'Pick up',
-    clip: 'gather',
-    regrow: 180,
-  },
+  // The finds: an antler is a resource of its own; the three loose stones are just stone that
+  // looks different. Feathers and pine cones never lie on the ground: they only drop, now and then,
+  // from a chopped tree (TREE_DROPS below).
   antler: {
     type: 'antler',
     amount: 1,
     label: 'Antler',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
@@ -183,6 +171,7 @@ export const WILD = {
     amount: 1,
     label: 'Mossy stone',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
@@ -191,6 +180,7 @@ export const WILD = {
     amount: 1,
     label: 'Loose rock',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
@@ -199,6 +189,7 @@ export const WILD = {
     amount: 1,
     label: 'Flat stone',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
@@ -207,6 +198,7 @@ export const WILD = {
     amount: 2,
     label: 'Sticks',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
@@ -215,6 +207,7 @@ export const WILD = {
     amount: 1,
     label: 'Driftwood',
     verb: 'Pick up',
+    quick: true,
     clip: 'gather',
     regrow: 180,
   },
@@ -246,16 +239,20 @@ const tree = (label, amount) => ({
 });
 
 /**
- * Makes the HARVEST entry for a rock: mined with a pickaxe for stone or iron.
+ * Makes the HARVEST entry for a rock: mined with a pickaxe for stone, iron or copper.
+ *
+ * The rock's size decides the rest: a bigger rock gives more (ROCK_YIELD), takes longer to mine
+ * and wears a stone pickaxe more (SIZE_SECONDS and SIZE_WEAR in data/balance.js).
  *
  * @param {string} label - The rock's name on the interact button, such as 'Boulder'.
- * @param {string} type - What it gives: 'stone' or 'iron'.
- * @param {number} amount - How much one mining gives.
- * @returns {object} The entry, with the same fields as SUPPLIES plus `tool`.
+ * @param {string} type - What it gives: 'stone', 'iron' or 'copper'.
+ * @param {number} size - How big the rock is: 1 small, 2 medium, 3 large.
+ * @returns {object} The entry, with the same fields as SUPPLIES plus `tool` and `size`.
  */
-const rock = (label, type, amount) => ({
+const rock = (label, type, size) => ({
   type,
-  amount,
+  size,
+  amount: ROCK_YIELD[type][size - 1],
   label,
   verb: 'Mine',
   clip: 'build',
@@ -279,17 +276,42 @@ export const HARVEST = {
   'jungle-tree': tree('Jungle tree', 10),
   // A fallen log is wood like a tree, so it is chopped with an axe too, not picked up by hand.
   log: tree('Fallen log', 4),
+  // The last number is the rock's size (1 small, 2 medium, 3 large), which follows how big its
+  // picture is: the beach rock is the smallest, the boulder and the canyon's cliff rock the biggest.
   'rocks-a': rock('Rocks', 'stone', 2),
   'rocks-b': rock('Rocks', 'stone', 2),
-  'beach-rock': rock('Beach rock', 'stone', 2),
-  boulder: rock('Boulder', 'stone', 10),
-  'cliff-rock': rock('Iron-streaked rock', 'iron', 1),
-  'ice-rock': rock('Iron-streaked rock', 'iron', 1),
+  'beach-rock': rock('Beach rock', 'stone', 1),
+  boulder: rock('Boulder', 'stone', 3),
+  'cliff-rock': rock('Iron-streaked rock', 'iron', 3),
+  // The ore rocks the Tiled map places (tools/arrange-tiled-world.py): iron and copper, mined like stone.
+  'iron-ore': rock('Iron ore', 'iron', 2),
+  'copper-ore': rock('Copper ore', 'copper', 2),
+  'ice-rock': rock('Iron-streaked rock', 'iron', 2),
 };
 
 /**
+ * Fits a rock's entry to the size the map really draws it at.
+ *
+ * A rock shrunk or stretched by hand in the map editor changes size class with its picture: a
+ * boulder drawn small is mined like a medium rock, and gives what a medium rock gives. Trees and
+ * rocks drawn at their usual size come back unchanged.
+ *
+ * @param {object} entry - A HARVEST entry.
+ * @param {number} scale - How many times its usual size the map draws this one (1 is usual).
+ * @returns {object} The entry to use for that object: the same one, or a copy with its `size`
+ *   and `amount` changed.
+ */
+export function sizedHarvest(entry, scale) {
+  if (!entry.size) return entry;
+
+  const step = scale < SIZE_SHRINK ? -1 : scale > SIZE_GROW ? 1 : 0;
+  const size = Math.min(3, Math.max(1, entry.size + step));
+  return size === entry.size ? entry : { ...entry, size, amount: ROCK_YIELD[entry.type][size - 1] };
+}
+
+/**
  * Every kind of resource the backpack can hold. Saves must have a whole number for each one.
- * Iron is only mined from iron-streaked rocks, with a pickaxe.
+ * Iron is only mined from iron-streaked rocks and iron ore, and copper from copper ore, with a pickaxe.
  */
 export const RESOURCES = [
   'wood',
@@ -300,6 +322,7 @@ export const RESOURCES = [
   'feather',
   'pinecone',
   'antler',
+  'copper',
 ];
 
 // The words for a resource in a message, where its key is not how you would say it.

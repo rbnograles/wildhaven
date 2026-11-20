@@ -2,15 +2,16 @@
 // each wild patch (flowers, driftwood, sticks), tree and rock the map scattered. Also says which nodes can
 // be gathered now and works out what is solid: standing supplies, old boats on the beach and campfires.
 
-import { SUPPLIES, WILD, HARVEST } from '../data/supplies.js';
+import { SUPPLIES, WILD, HARVEST, sizedHarvest } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
-import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
+import { MAP_OBJECTS, OBJECT_SPECS, objectScale } from './map.js';
 import { campBases } from './camps.js';
+import { buildingBases } from './buildings.js';
 import { npcBases } from './npcs.js';
 
 // The fixed supplies plus every wild patch, tree and rock the map scattered; a map node's position
 // is its id (`flowers-<x>-<y>`, `pine-<x>-<y>`). Map nodes copy their fields from WILD or HARVEST and
-// their size from objects.json. Trees and rocks are marked `inScenery`: the renderer draws them with
+// their size from objects.json and the object's own size (objectScale). Trees and rocks are marked `inScenery`: the renderer draws them with
 // the map's scenery, and their solid base is the map's own (see world/map.js), not a supply base.
 export const NODES = [
   ...SUPPLIES,
@@ -18,9 +19,10 @@ export const NODES = [
     id: `${o.name}-${o.x}-${o.y}`,
     x: o.x,
     y: o.y,
-    ...(WILD[o.name] ?? HARVEST[o.name]),
+    // A rock drawn smaller or bigger than usual is mined as a smaller or bigger rock.
+    ...(WILD[o.name] ?? sizedHarvest(HARVEST[o.name], objectScale(o))),
     sprite: o.name,
-    scale: OBJECT_SPECS[o.name].scale ?? 1,
+    scale: (OBJECT_SPECS[o.name].scale ?? 1) * objectScale(o),
     inScenery: !!HARVEST[o.name],
   })),
 ];
@@ -125,7 +127,7 @@ export function wreckBases(boat) {
 
 /**
  * Lists everything solid that isn't part of the map itself: supplies standing right now, old
- * boats still on the beach, the player's campfires and the villagers.
+ * boats still on the beach, the player's campfires and camp buildings, and the villagers.
  *
  * Walking, landing from the boat, placing a fire and waking up all use this one list, so they
  * agree on what is in the way.
@@ -137,5 +139,6 @@ export const solidBases = (state) => [
   ...nodeBases(goneSupplies(state)),
   ...wreckBases(state.boat),
   ...campBases(state),
+  ...buildingBases(state),
   ...npcBases(),
 ];

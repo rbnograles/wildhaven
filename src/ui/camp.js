@@ -235,12 +235,18 @@ export function setupCamp(session, ui) {
   /**
    * Shows the pass-out screen over the spot where the player fell: what happened, and where they
    * will wake. Nothing in the game changes until the screen is closed (see `getUp`).
+   *
+   * @param {'cold'|'wolves'} [cause='cold'] - What brought the player down.
    */
-  function showPassOut() {
+  function showPassOut(cause = 'cold') {
     // `passOut` wakes the player at the same camp: the one nearest to where they fell.
     const camp = nearestCamp(session.state);
+    $('passout-title').textContent =
+      cause === 'wolves' ? 'The wolves brought you down.' : 'The cold caught you.';
     $('passout-text').textContent = [
-      'You got too cold away from a fire.',
+      cause === 'wolves'
+        ? 'The pack wore you down. Press R to drive wolves back, and keep to fires and villages at night.'
+        : 'You got too cold away from a fire.',
       camp
         ? `You will wake at ${camp.name} at midday.`
         : 'You will wake where you started, at midday. Build a campfire so you have somewhere warm to return to.',
