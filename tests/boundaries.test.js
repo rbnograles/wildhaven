@@ -26,6 +26,7 @@ const PURE = [
   'animation/clips.js',
   'editor/model.js',
   'editor/lookups.js',
+  'editor/edits.js',
 ];
 
 /**

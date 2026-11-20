@@ -60,10 +60,19 @@ const copy = (value) => structuredClone(value);
  * pile of earlier copies for undo, and remembers the text that was last saved.
  *
  * @param {object} places - The parsed places file.
- * @returns {{places: object, past: object[], future: object[], saved: string}} The session.
+ * @returns {object} The session: `places`, `edits` (the hand edits to the map's objects, filled in
+ *   by `loadEdits` in edits.js), `past` and `future` (undo steps, each `{places, edits}`), and the
+ *   saved text of each file.
  */
 export function createEditor(places) {
-  return { places: copy(places), past: [], future: [], saved: writePlaces(places) };
+  return {
+    places: copy(places),
+    edits: { removed: [], added: [] },
+    past: [],
+    future: [],
+    saved: writePlaces(places),
+    savedEdits: '',
+  };
 }
 
 /**
@@ -112,12 +121,13 @@ export function listPlaces(places) {
 }
 
 /**
- * Puts the places as they are now on the undo pile, before an edit changes them.
+ * Puts the places and the object edits as they are now on the undo pile, before an edit changes
+ * them. edits.js calls this too, so both kinds of edit share one history.
  *
  * @param {object} editor - The editing session.
  */
-function remember(editor) {
-  editor.past.push(copy(editor.places));
+export function remember(editor) {
+  editor.past.push(copy({ places: editor.places, edits: editor.edits }));
   if (editor.past.length > HISTORY) editor.past.shift();
   editor.future = [];
 }
@@ -262,8 +272,8 @@ export function setField(editor, ref, field, value) {
  */
 export function undo(editor) {
   if (!editor.past.length) return false;
-  editor.future.push(editor.places);
-  editor.places = editor.past.pop();
+  editor.future.push({ places: editor.places, edits: editor.edits });
+  ({ places: editor.places, edits: editor.edits } = editor.past.pop());
   return true;
 }
 
@@ -275,8 +285,8 @@ export function undo(editor) {
  */
 export function redo(editor) {
   if (!editor.future.length) return false;
-  editor.past.push(editor.places);
-  editor.places = editor.future.pop();
+  editor.past.push({ places: editor.places, edits: editor.edits });
+  ({ places: editor.places, edits: editor.edits } = editor.future.pop());
   return true;
 }
 
