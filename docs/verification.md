@@ -401,3 +401,18 @@ Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server), pane
 - Rebuild with Oasis Signpost moved into the sea (y 300): `build-map.py` crashed in `path_tile`, the log showed the traceback and "RESULT: fail", status "Rebuild FAILED: see the log." It left `tileset.png` changed; restoring `places.json` and rebuilding brought it back.
 - `npm run build`: no editor file in `dist/`.
 - Not checked in the browser: the blocked-ground overlay, dragging an old boat's launch point, a renamed id clashing with another, a moved landmark being found at its new spot in the game, and the rebuild log when Python is missing. The first fix after loading (a draw before the places arrived threw an error) was confirmed by the markers drawing; the console buffer still showed the earlier message.
+
+## 2026-11-20: world editor (objects)
+
+Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server), pane 800 px wide.
+
+- Places mode still loads: 82 rows, markers, "No problems found."
+- Zooming in past 0.25 swaps the overview for the real tiles and sprites: hills with their stairs, trees, rocks, tufts and a house, in the game's draw order, with no seams between chunks. Seventeen zoom steps, the first sharp frame included, took about 180 ms.
+- Objects mode: clicking an oak framed it and the form read "oak, generated, solid, chop or mine". Dragging it changed x and y and the form read "placed by hand"; Ctrl+Z put it back in one step and Save was disabled again.
+- A boulder was selected and removed with the Delete key.
+- Arming `pine` in the palette and clicking twice placed two pines with dashed outlines; Escape disarmed.
+- A Shift+drag box (sent as pointer events with the Shift key, because the pane's drag tool does not hold Shift) selected 23 objects and the form offered "Delete these objects".
+- Save wrote `edits.json` with one removed `rocks-a` and two added pines, one per line, and the page did not reload.
+- Rebuild: "1 objects removed by hand, 2 added by hand, 0 stale edits", "RESULT: pass"; after the reload the editor was still in Objects mode and the out-of-date note was gone. The map file then held both pines and not the boulder.
+- `python tools/build-map.py` with an empty edits file: same 9,012 objects, tileset and overview unchanged; with a locked sprite in the file it stopped with one plain line and no traceback.
+- Not checked in the browser: the dashed outline and deleting a hand-placed object after a rebuild (the logic is covered by `tests/editor/edits.test.js`), the warnings for water, paths and places, clicking a locked sprite, the stale-edits button, and chopping a hand-placed pine in the game.
