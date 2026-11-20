@@ -198,10 +198,9 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
     (g) => (g.version = 2),
     (g) => (g.version = 3), // a version 3 label on a save with no `collected` list
     (g) => (g.version = 4), // a version 4 label on fog already sized for the bigger map
-    (g) => (g.landmarks = ['nowhere']),
+    (g) => (g.landmarks = [5]),
     (g) => (g.landmarks = ['h-oak', 'h-oak']),
     (g) => (g.waypoints = undefined),
-    (g) => (g.waypoints = ['h-oak']),
     (g) => (g.discovered = ['scout']),
     (g) => (g.character = 'ghost'),
     (g) => (g.player.x = -100),
@@ -248,10 +247,10 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
         needs: [{ kind: 'place', region: 'moon', done: false }, ...campAt(g).needs.slice(1)],
       }),
     (g) => g.camps.push(campAt(g), campAt(g)), // the same id twice
-    (g) => (g.wrecks = ['nowhere']),
+    (g) => (g.wrecks = 'wreck-east'),
     (g) => (g.wrecks = undefined),
     (g) => (g.boat = undefined),
-    (g) => (g.boat = { from: 'nowhere', x: east.launch.x, y: east.launch.y, dir: 2 }),
+    (g) => (g.boat = { from: 7, x: east.launch.x, y: east.launch.y, dir: 2 }),
     (g) => (g.boat = { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: 7 }),
     (g) => (g.boat = { from: 'wreck-east', x: NaN, y: east.launch.y, dir: 2 }),
     (g) => (g.aboard = 'yes'),
@@ -560,4 +559,38 @@ test('a version 6 save gains empty slots for feathers, pine cones and antlers', 
     [9, 0, 0, 0],
   );
   assert.deepEqual(loaded.tools, game.tools);
+});
+
+// Guards saves against the world editor: deleting or renaming one place must not throw away
+// a whole save that had found it. The stale id is dropped and everything else is kept.
+test('a save that found a place the map no longer has loads without that place', () => {
+  const game = createGame('builder');
+  game.landmarks = ['h-oak', 'gone-landmark'];
+  game.waypoints = ['gone-signpost'];
+  game.wrecks = ['wreck-east', 'gone-boat'];
+
+  const back = restoreGame(serializeGame(game));
+
+  assert.deepEqual(back.landmarks, ['h-oak']);
+  assert.deepEqual(back.waypoints, []);
+  assert.deepEqual(back.wrecks, ['wreck-east']);
+});
+
+// Guards the rowboat of a deleted old boat: it has no launch spot to drift back to, so it is
+// removed, and a player who was sitting in it wakes at their start instead of in the sea.
+test('a boat from an old boat the map no longer has is removed, and its rower goes to spawn', () => {
+  const moored = createGame('survivor');
+  moored.boat = { from: 'gone-boat', x: east.launch.x, y: east.launch.y, dir: 2 };
+  const onFoot = restoreGame(serializeGame(moored));
+  assert.deepEqual([onFoot.boat, onFoot.aboard], [null, false]);
+  assert.deepEqual([onFoot.player.x, onFoot.player.y], [moored.player.x, moored.player.y]);
+
+  const rowing = createGame('survivor');
+  const spawn = { x: rowing.player.x, y: rowing.player.y };
+  rowing.boat = { from: 'gone-boat', x: east.launch.x, y: east.launch.y, dir: 2 };
+  rowing.aboard = true;
+  Object.assign(rowing.player, east.launch);
+  const ashore = restoreGame(serializeGame(rowing));
+  assert.deepEqual([ashore.boat, ashore.aboard], [null, false]);
+  assert.deepEqual([ashore.player.x, ashore.player.y], [spawn.x, spawn.y]);
 });
