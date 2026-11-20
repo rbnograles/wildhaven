@@ -8,7 +8,8 @@ import { regionOf } from '../world/regions.js';
 import * as model from './model.js';
 import * as edits from './edits.js';
 import * as terrain from './terrain.js';
-import { gameLookups, objectLookups, groundLookups } from './lookups.js';
+import * as hills from './hills.js';
+import { gameLookups, objectLookups, groundLookups, hillLookups } from './lookups.js';
 import { loadFile, saveFile, rebuild } from './api.js';
 import { createView } from './view.js';
 import { createPanel } from './panel.js';
@@ -29,6 +30,10 @@ const LOOK_ZOOM = 0.6;
 const world = gameLookups();
 const objectWorld = objectLookups();
 const ground = groundLookups();
+const hillWorld = hillLookups();
+
+/** The terrain tools that change hills; the others paint ground. */
+const HILL_TOOLS = ['raise', 'lower', 'stairs'];
 
 /** Everything the page knows: the editing session, the selections and a few flags. */
 const app = {
@@ -44,8 +49,13 @@ const app = {
   turn: 0,
   tool: null,
   brush: 1,
+  kit: 'auto',
   builtGround: {},
+  builtLevels: {},
+  builtStairs: { added: [], removed: [] },
   pending: {},
+  pendingLevels: {},
+  pendingStairs: { added: [], removed: [] },
   staleEdits: [],
   busy: false,
   status: '',
@@ -102,11 +112,38 @@ const view = createView(document.getElementById('map'), {
   tool: () => app.tool,
   // The brush's side in boxes.
   brush: () => app.brush,
-  // A box was clicked or dragged over with a ground picked; only the first box of a stroke is an undo step.
+  // A cell was clicked or dragged over with a tool picked; only the first cell of a stroke is an
+  // undo step. Ground tools paint boxes; the hill tools raise or lower a block or toggle stairs.
   paint: (col, row, first) => {
-    terrain.paintBoxes(app.editor, col, row, app.brush, app.tool, ground, first);
+    if (!HILL_TOOLS.includes(app.tool)) {
+      terrain.paintBoxes(app.editor, col, row, app.brush, app.tool, ground, first);
+      return refresh();
+    }
+
+    // Stairs are one click each: dragging on does nothing more.
+    if (app.tool === 'stairs' && !first) return;
+    const kit = app.kit === 'auto' ? hillWorld.kitFor(row, col) : app.kit;
+    const why =
+      app.tool === 'stairs'
+        ? hills.toggleStairs(app.editor, col, row, hillWorld)
+        : hills.changeLevel(
+            app.editor,
+            col,
+            row,
+            app.tool === 'raise' ? 1 : -1,
+            kit,
+            hillWorld,
+            first,
+          );
+    app.status = why ?? '';
     refresh();
   },
+  // The hill tiles the built map does not show yet, 'row,col' to their new level.
+  levels: () => app.pendingLevels,
+  // How high a tile is now, hand edits included.
+  levelAt: (row, col) => hills.levelAt(app.editor.terrain, hillWorld, row, col),
+  // The flights of stairs added and removed by hand that the built map does not show yet.
+  stairs: () => app.pendingStairs,
   lockedWhy,
   // A marker (or empty map, with null) was clicked.
   select: (ref) => {
@@ -223,6 +260,11 @@ const panel = createPanel(document, {
     app.tool = app.tool === kind ? null : kind;
     refresh();
   },
+  // The cliff art for new hills was changed ('auto' follows the region).
+  kit: (name) => {
+    app.kit = name;
+    refresh();
+  },
   // The brush size was changed.
   brush: (size) => {
     app.brush = size;
@@ -267,6 +309,22 @@ function removeChosen() {
   });
 }
 
+/**
+ * Says whether a map tile touches water, hand-painted ground included.
+ *
+ * @param {number} row - The tile's row.
+ * @param {number} col - The tile's column.
+ * @returns {boolean} True when any of its four corners is water.
+ */
+function isWet(row, col) {
+  return [
+    [row, col],
+    [row, col + 1],
+    [row + 1, col],
+    [row + 1, col + 1],
+  ].some(([r, c]) => terrain.groundAt(app.editor.terrain, ground, r, c) === 'water');
+}
+
 /** Says whether anything differs from what is on disk. */
 const isDirty = () =>
   model.isDirty(app.editor) || edits.isEditsDirty(app.editor) || terrain.isTerrainDirty(app.editor);
@@ -282,6 +340,8 @@ function refresh() {
 
   // Preview only the painted boxes the built map does not show yet.
   app.pending = terrain.pendingGround(app.editor.terrain.ground, app.builtGround, ground);
+  app.pendingLevels = hills.pendingLevels(app.editor.terrain.levels, app.builtLevels, hillWorld);
+  app.pendingStairs = hills.pendingStairs(app.editor.terrain.stairs, app.builtStairs);
 
   // An undo or a delete can leave a selection pointing at something that is gone.
   if (app.selected && !model.getPlace(places, app.selected)) app.selected = null;
@@ -290,6 +350,7 @@ function refresh() {
   app.problems = [
     ...model.checkPlaces(places, world),
     ...edits.checkEdits(app.editor.edits, { ...objectWorld, places, stale: applied.stale }),
+    ...hills.checkHills(app.editor.terrain, hillWorld, isWet),
   ];
   const dirty = isDirty();
 
@@ -306,6 +367,7 @@ function refresh() {
     turns,
     tool: app.tool,
     brush: app.brush,
+    kit: app.kit,
     painted: Object.keys(app.editor.terrain.ground).length,
     tags: objectWorld.tags,
     staleEdits: applied.stale.length > 0,
@@ -354,6 +416,8 @@ async function load() {
     stale: places.stale,
     base: edits.baseObjects(MAP_OBJECTS, built, objectWorld.builtStale),
     builtGround: upToDate ? structuredClone(editor.terrain.ground) : {},
+    builtLevels: upToDate ? structuredClone(editor.terrain.levels) : {},
+    builtStairs: upToDate ? structuredClone(editor.terrain.stairs) : { added: [], removed: [] },
     selected: null,
     chosen: [],
   });

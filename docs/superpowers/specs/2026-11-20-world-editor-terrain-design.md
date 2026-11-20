@@ -138,8 +138,11 @@ the script, so deleting a hill never leaves stairs behind.
 - Every plateau needs a flight of stairs, with dry level ground at its foot. `tests/world/
   cliffs.test.js` already fails a map where a level can't be reached, so a hill with no stairs
   fails the rebuild and the log says which.
-- After applying the edits the script runs the same `tidy` it uses on generated hills (it fills
-  holes and gaps too short for the art), so a painted shape can come out slightly filled in.
+- **As built:** the script does not run `tidy` on hand-made shapes (it keeps only the biggest
+  piece of a shape, which is wrong for a whole map of hills). The editor warns instead when a
+  south edge lacks three boxes of lower flat ground below it, and the build stops on a hill
+  raised on water or a step of more than one level. The rules about dirt and about four boxes
+  from a place are not enforced; the rebuild's tests are the judge there.
 
 ### In the file
 

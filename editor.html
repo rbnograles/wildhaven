@@ -62,6 +62,26 @@
               <option value="5">5 boxes</option>
             </select></label
           >
+          <h2>Hills</h2>
+          <p>
+            Raise and Lower work on blocks of 2 by 2 boxes, one level at a time. Stairs: click the
+            south edge or the wall of a hill to add a flight, or an existing flight to remove it.
+            The walls and edges of the hill are drawn when you rebuild.
+          </p>
+          <div id="hill-tools">
+            <button type="button" data-ground="raise">Raise</button>
+            <button type="button" data-ground="lower">Lower</button>
+            <button type="button" data-ground="stairs">Stairs</button>
+          </div>
+          <label
+            >Cliff art
+            <select id="kit">
+              <option value="auto">By region</option>
+              <option value="meadow">Meadow</option>
+              <option value="canyon">Canyon</option>
+              <option value="snow">Snow</option>
+            </select></label
+          >
           <p id="painted"></p>
         </section>
         <h2>Problems</h2>

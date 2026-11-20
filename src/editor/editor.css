@@ -306,3 +306,10 @@ main {
   border: 1px solid #10140f;
   border-radius: 3px;
 }
+
+/* The hill tools sit in a row of three under the ground kinds. */
+#hill-tools {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}

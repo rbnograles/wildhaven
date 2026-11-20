@@ -11,6 +11,7 @@ import { listPlaces, getPlace } from './model.js';
 import { createTiles } from './tiles.js';
 import { createSprites, bucketObjects, drawOrder } from './sprites.js';
 import { BOX } from './terrain.js';
+import { WALL_ROWS } from './hills.js';
 
 /** The marker colour of each kind of place. The side panel's list uses the same colours. */
 export const COLORS = {
@@ -48,6 +49,9 @@ const GROUND_URLS = Object.fromEntries(
   ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
 );
 const GROUND_TILE = 256;
+
+/** The terrain tools that work on whole map tiles (hills) instead of ground boxes. */
+const HILL_TOOLS = ['raise', 'lower', 'stairs'];
 
 /** The grid of boxes is drawn once a box is at least this many screen pixels wide. */
 const GRID_PIXELS = 8;
@@ -100,7 +104,8 @@ const sameObject = (a, b) => a.name === b.name && a.x === b.x && a.y === b.y && 
  *   `turn()` (how far the armed sprite is turned, in degrees), `placeObject(x, y)` and
  *   `hint(text)` for the status line. Terrain: `ground()` (the
  *   hand-painted corners), `tool()` (the ground being painted, or null), `brush()` (its side in
- *   boxes) and `paint(col, row, first)`.
+ *   boxes), `paint(col, row, first)`, `levels()` (hill tiles the map does not show yet, with
+ *   their new level), `levelAt(row, col)` and `stairs()` (flights added and removed, not built yet).
  * @returns {{draw: Function, centerOn: Function, setOverlay: Function, setObjects: Function}} The
  *   view's controls.
  */
@@ -389,26 +394,104 @@ export function createView(canvas, on) {
       ctx.lineWidth = 1;
       ctx.beginPath();
 
-      for (let c = Math.floor(x0 / BOX) - 1; (c + 0.5) * BOX <= x1; c++) {
-        const x = Math.round(toScreen((c + 0.5) * BOX, 0)[0]) + 0.5;
+      // Ground boxes are centred on tile corners (half a tile off); hill tools show the tiles.
+      const off = HILL_TOOLS.includes(on.tool()) ? 0 : 0.5;
+      for (let c = Math.floor(x0 / BOX) - 1; (c + off) * BOX <= x1; c++) {
+        const x = Math.round(toScreen((c + off) * BOX, 0)[0]) + 0.5;
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
       }
-      for (let r = Math.floor(y0 / BOX) - 1; (r + 0.5) * BOX <= y1; r++) {
-        const y = Math.round(toScreen(0, (r + 0.5) * BOX)[1]) + 0.5;
+      for (let r = Math.floor(y0 / BOX) - 1; (r + off) * BOX <= y1; r++) {
+        const y = Math.round(toScreen(0, (r + off) * BOX)[1]) + 0.5;
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
       }
       ctx.stroke();
     }
 
-    // The boxes the next click would paint.
+    // The cells the next click would change: a square of ground boxes, a 2 by 2 block of
+    // tiles for Raise and Lower, or the two tiles of a flight and its wall rows for Stairs.
     if (brushAt && on.tool()) {
+      const tool = on.tool();
       const half = (on.brush() - 1) / 2;
-      const [x, y] = toScreen((brushAt[0] - half - 0.5) * BOX, (brushAt[1] - half - 0.5) * BOX);
+      const [wx, wy, w, h] =
+        tool === 'stairs'
+          ? [brushAt[0], brushAt[1], 2, 1]
+          : HILL_TOOLS.includes(tool)
+            ? [brushAt[0], brushAt[1], 2, 2]
+            : [brushAt[0] - half - 0.5, brushAt[1] - half - 0.5, on.brush(), on.brush()];
+      const [x, y] = toScreen(wx * BOX, wy * BOX);
       ctx.strokeStyle = '#ffe14a';
       ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, on.brush() * side, on.brush() * side);
+      ctx.strokeRect(x, y, w * side, h * side);
+    }
+  }
+
+  /**
+   * Shows the hand-made hills the map does not have yet: each changed tile tinted by its new
+   * level with the level written on it, a dark band where its wall will hang, and the flights
+   * of stairs added (pale, with steps) or removed (crossed out).
+   */
+  function drawHills() {
+    const levels = on.levels();
+    const side = BOX * cam.scale;
+
+    for (const key in levels) {
+      const [row, col] = key.split(',').map(Number);
+      const [x, y] = toScreen(col * BOX, row * BOX);
+      if (x > canvas.width || y > canvas.height || x + side < 0 || y + side * 3 < 0) continue;
+      const level = levels[key];
+
+      // Raised ground is warm and brighter the higher it is; ground lowered to flat is dark.
+      ctx.fillStyle = level
+        ? `rgba(255, 214, 102, ${0.2 + 0.15 * level})`
+        : 'rgba(20, 24, 20, 0.55)';
+      ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(side), Math.ceil(side));
+
+      // Where the ground to the south is lower, the wall will cover the next rows.
+      if (level > on.levelAt(row + 1, col)) {
+        ctx.fillStyle = 'rgba(70, 46, 24, 0.6)';
+        ctx.fillRect(
+          Math.floor(x),
+          Math.floor(y + side),
+          Math.ceil(side),
+          Math.ceil(side * WALL_ROWS),
+        );
+      }
+
+      if (side >= 18) {
+        ctx.fillStyle = '#10140f';
+        ctx.font = `${Math.min(18, Math.floor(side / 2))}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(level), x + side / 2, y + side / 2);
+      }
+    }
+
+    const { added, removed } = on.stairs();
+    for (const [col, row] of added) {
+      const [x, y] = toScreen(col * BOX, (row + 1) * BOX);
+      ctx.fillStyle = 'rgba(236, 232, 214, 0.85)';
+      ctx.fillRect(x, y, side * 2, side * WALL_ROWS);
+      ctx.strokeStyle = '#5b4a36';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let step = 1; step < 6; step++) {
+        ctx.moveTo(x, y + (side * WALL_ROWS * step) / 6);
+        ctx.lineTo(x + side * 2, y + (side * WALL_ROWS * step) / 6);
+      }
+      ctx.stroke();
+    }
+    for (const [col, row] of removed) {
+      const [x, y] = toScreen(col * BOX, (row + 1) * BOX);
+      ctx.strokeStyle = '#ff5a4a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + side * 2, y + side * WALL_ROWS);
+      ctx.moveTo(x + side * 2, y);
+      ctx.lineTo(x, y + side * WALL_ROWS);
+      ctx.stroke();
     }
   }
 
@@ -468,6 +551,7 @@ export function createView(canvas, on) {
     }
 
     if (on.places() && !sharp()) drawGround();
+    if (on.places()) drawHills();
     if (on.mode() === 'terrain') drawGrid();
 
     if (overlays.blocked && cam.scale >= BLOCK_ZOOM) drawBlocked();
@@ -487,13 +571,23 @@ export function createView(canvas, on) {
   }
 
   /**
-   * Works out which box a world spot is in.
+   * Works out which cell a world spot is in, for the tool in hand.
+   *
+   * Ground is painted in boxes centred on tile corners. Hills are made of whole tiles, so the
+   * hill tools use the tile under the pointer, and Raise and Lower snap to the 2 by 2 block it
+   * is in (blocks start on even rows and columns).
    *
    * @param {number} x - World x.
    * @param {number} y - World y.
-   * @returns {number[]} `[col, row]` of the box.
+   * @returns {number[]} `[col, row]` of the cell.
    */
-  const boxAt = (x, y) => [Math.round(x / BOX), Math.round(y / BOX)];
+  function boxAt(x, y) {
+    if (!HILL_TOOLS.includes(on.tool())) return [Math.round(x / BOX), Math.round(y / BOX)];
+
+    const col = Math.floor(x / BOX),
+      row = Math.floor(y / BOX);
+    return on.tool() === 'stairs' ? [col, row] : [col - (col % 2), row - (row % 2)];
+  }
 
   /**
    * Starts whatever a press in terrain mode means: paint, or move the map.

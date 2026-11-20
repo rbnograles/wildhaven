@@ -28,7 +28,7 @@ function el(tag, props = {}, children = []) {
  *   `field(name, value)`, `move(x, y)`, `remove()`, `add(kind)`. Objects: `mode(name)`,
  *   `armSprite(name)`, `objectMove(x, y)`, `objectTurn(degrees)`, `removeObjects()`,
  *   `dropStale()`, `pickObject(obj)`.
- *   Terrain: `tool(kind)`, `brush(size)`.
+ *   Terrain: `tool(kind)`, `brush(size)`, `kit(name)`.
  *   Both: `undo()`, `redo()`, `save()`, `rebuild()`, `overlay(name, shown)`. Also `specs`, the
  *   sprites of objects.json, for the palette.
  * @returns {{render: Function, log: Function, setLog: Function, palette: object}} The controls.
@@ -64,12 +64,16 @@ export function createPanel(root, on) {
   for (const button of modeButtons) button.onclick = () => on.mode(button.dataset.mode);
   for (const button of groundButtons) {
     // A swatch of the colour this ground is previewed in on the map.
-    const swatch = el('span', { className: 'swatch' });
-    swatch.style.background = GROUND_COLORS[button.dataset.ground];
-    button.prepend(swatch);
+    // The hill tools (raise, lower, stairs) share these buttons but have no ground colour.
+    if (GROUND_COLORS[button.dataset.ground]) {
+      const swatch = el('span', { className: 'swatch' });
+      swatch.style.background = GROUND_COLORS[button.dataset.ground];
+      button.prepend(swatch);
+    }
     button.onclick = () => on.tool(button.dataset.ground);
   }
   $('brush').onchange = () => on.brush(Number($('brush').value));
+  $('kit').onchange = () => on.kit($('kit').value);
   for (const box of root.querySelectorAll('[data-overlay]'))
     box.onchange = () => on.overlay(box.dataset.overlay, box.checked);
   filter.oninput = () => last && drawList(last);
@@ -320,9 +324,10 @@ export function createPanel(root, on) {
       for (const button of groundButtons)
         button.classList.toggle('on', state.tool === button.dataset.ground);
       $('brush').value = String(state.brush);
+      $('kit').value = state.kit;
       $('painted').textContent = state.painted
-        ? `${state.painted} boxes painted by hand.`
-        : 'Nothing painted yet.';
+        ? `${state.painted} boxes of ground painted by hand.`
+        : 'No ground painted yet.';
       root.querySelector('.places-only').hidden = !places;
 
       for (const button of modeButtons)

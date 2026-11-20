@@ -437,3 +437,11 @@ Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server).
 - Arming `path-stone-a` and pressing R twice showed "R turns it (now 30°)"; a click placed it turned 30. No console errors.
 - `python tools/build-map.py` with one generated path piece and one sea wave removed and one path piece added at 45°: "2 objects removed by hand, 1 added by hand, 0 stale edits"; the map held the new piece with rotation 45 and neither removed one; the edits, map and places tests passed.
 - Not checked in the browser: Save and Rebuild of path edits from the page, the turn box, and a path piece placed across a river (the map test should fail the rebuild).
+
+## 2026-11-20: world editor (hills and stairs)
+
+- `python tools/build-map.py` with no hand hills: tile layers and the elevation grid identical to before, 25 flights.
+- A hill written by hand into `terrain.json` (8 by 6 tiles at level 1 on open meadow, one flight added): 26 flights; cliffs, places, map, sea and terrain tests passed. In the editor's sharp view it had its lips, a two-tile south wall with end pieces and the stairs art, with a pine left standing on the plateau.
+- Hill tools in the editor: Raise on a block at the plateau's edge was refused with "next-door boxes may differ by one level only"; a Raise drag on flat ground made a strip of level-1 blocks shown tinted with "1" and a dark band where the wall will hang; Stairs on its south edge added a flight (pale, with steps); Lower inside the first hill showed dark "0" tiles and four warnings about walls without room, which Undo cleared.
+- Save, then Rebuild from the page: 27 flights, "RESULT: pass", back in Terrain mode; the new L-shaped hill showed real cliff edges, walls and stairs, and the tint was gone.
+- Not checked: a second level on top of a hand-made hill, removing a generated flight, the Cliff art choice (canyon, snow), a hill raised on water (the build should stop with one line), walking up hand-made stairs in the game, and a hill with no stairs failing the rebuild.

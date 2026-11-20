@@ -18,6 +18,7 @@ import MAP from '../../assets/world/map/wildhaven.json' with { type: 'json' };
 import { JOURNALS } from '../data/journal.js';
 import { WILD, HARVEST } from '../data/supplies.js';
 import { KINDS } from './terrain.js';
+import { KITS } from './hills.js';
 
 /**
  * Builds the `world` object that `checkPlaces` reads, from the game's own modules.
@@ -119,5 +120,57 @@ export function groundLookups() {
     builtHash,
     // The ground kind the build made at one corner.
     kindAt: (row, col) => KINDS[Number(digits[row * (cols + 1) + col] ?? 0)],
+  };
+}
+
+/** The cliff art each region's hills use; a region not listed here gets the meadow kit. */
+const REGION_KITS = {
+  canyons: 'canyon',
+  desert: 'canyon',
+  frostpeak: 'snow',
+};
+
+/**
+ * Reads one named text the map build stored, or an empty text for a map older than the feature.
+ *
+ * @param {string} name - The property's name.
+ * @returns {string} Its value, or ''.
+ */
+function stored(name) {
+  try {
+    return mapProperty(name);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Reads the hills the map build generated, before any hand edit.
+ *
+ * @returns {object} `rows` and `cols` (the map in tiles), `levelAt(row, col)` (0 to 3),
+ *   `kitAt(row, col)` (the cliff art of a tile, or null), `flights` (`[leftColumn, edgeRow]`
+ *   pairs) and `kitFor(row, col)` (the kit a new hill there should use, by its region).
+ */
+export function hillLookups() {
+  const levels = stored('baseLevels');
+  const kits = stored('baseKits');
+  const cols = MAP.width,
+    rows = MAP.height;
+
+  /** Says whether a tile is on the map. */
+  const inside = (row, col) => row >= 0 && col >= 0 && row < rows && col < cols;
+
+  return {
+    rows,
+    cols,
+    // The generated level of one tile; off the map counts as flat ground.
+    levelAt: (row, col) => (inside(row, col) ? Number(levels[row * cols + col] ?? 0) : 0),
+    // The cliff art the build used for one tile, or null where there is none.
+    kitAt: (row, col) => (inside(row, col) ? (KITS[kits[row * cols + col]] ?? null) : null),
+    flights: JSON.parse(stored('baseStairs') || '[]'),
+    // The kit a new hill should use: the one its region's hills are drawn with.
+    kitFor: (row, col) =>
+      REGION_KITS[regionOf((col + 0.5) * MAP.tilewidth, (row + 0.5) * MAP.tileheight).id] ??
+      'meadow',
   };
 }

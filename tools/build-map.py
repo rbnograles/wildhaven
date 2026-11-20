@@ -397,11 +397,64 @@ level = np.pad(level, SEA)
 kit_of = np.pad(kit_of, SEA, constant_values=-1)
 flights = [(kit, c + SEA, y + SEA) for kit, c, y in flights]
 
+# ---- hand-made hills ---------------------------------------------------------------------
+# terrain.json can also hold hills made in the world editor: "levels" are runs of map TILES
+# ([row, first column, last column, level, kit]) that set a tile's level outright, level 0 included, which is how a
+# generated hill is flattened; "stairs" lists flights added and removed by hand as [left column, edge row]. They are
+# laid over the generated hills here, before the walls, the collision grid and the cliff tiles are worked out, so
+# a hand-made hill gets its walls, lips and shadows the same way a generated one does.
+base_level, base_kit, base_flights = level.copy(), kit_of.copy(), [[c, y] for _, c, y in flights]   # kept for the editor
+
+# Reads the "levels" runs of terrain.json. A wrong run stops the build with a plain message.
+def read_levels(runs):
+    if not isinstance(runs, list): sys.exit('terrain.json: "levels" must be a list')
+    for run in runs:
+        ok = (isinstance(run, list) and len(run) == 5 and all(type(v) is int for v in run[:4]) and run[4] in KITS
+              and 0 <= run[0] < ROWS and 0 <= run[1] <= run[2] < COLS and 0 <= run[3] <= 3)
+        if not ok: sys.exit(f'terrain.json: bad run in "levels": {run}')
+    return runs
+
+# Reads one list of flights from the "stairs" part of terrain.json as (left column, edge row) pairs.
+def read_flights(stairs, key):
+    rows = stairs.get(key, []) if isinstance(stairs, dict) else None
+    if not isinstance(rows, list) or not all(isinstance(f, list) and len(f) == 2 and all(type(v) is int for v in f) for f in rows):
+        sys.exit(f'terrain.json: "stairs.{key}" must be a list of [left column, edge row]')
+    return [tuple(f) for f in rows]
+
+# Says whether a flight of stairs can stand at (left column c, edge row y): both of its tiles on a plateau one
+# level above the ground it comes down to, and that lower ground running on for the wall rows and the landing.
+def flight_fits(c, y):
+    return (0 <= c < COLS - 1 and 0 <= y < ROWS - WALL_ROWS - 1 and level[y, c] >= 1 and level[y, c] == level[y, c + 1]
+            and bool((level[y + 1:y + WALL_ROWS + 2, c:c + 2] == level[y, c] - 1).all()))
+
+hand_levels = read_levels(terrain_file.get('levels', []) if isinstance(terrain_file, dict) else None)
+hand_stairs = terrain_file.get('stairs', {}) if isinstance(terrain_file, dict) else {}
+for row, c0, c1, lvl, kit in hand_levels:
+    level[row, c0:c1 + 1] = lvl
+    if lvl > 0: kit_of[row, c0:c1 + 1] = KITS.index(kit)
+for row, c0, c1, lvl, kit in hand_levels:
+    # A hill needs dry ground under it: a raised tile with a water corner would put a cliff in a river.
+    if lvl > 0 and (corner[row:row + 2, c0:c1 + 2] >= WATER).any(): sys.exit(f'terrain.json: a hill is raised on water at row {row}, columns {c0} to {c1}')
+if hand_levels and max(np.abs(np.diff(level, axis=0)).max(), np.abs(np.diff(level, axis=1)).max()) > 1:
+    sys.exit('terrain.json: two tiles side by side differ by more than one level; a hill must step up one level at a time')
+gone_flights = set(read_flights(hand_stairs, 'removed'))
+flights = [f for f in flights if (f[1], f[2]) not in gone_flights]
+# A generated flight whose edge was flattened or changed by hand is dropped, so no stairs are left hanging.
+if hand_levels: flights = [f for f in flights if flight_fits(f[1], f[2])]
+flights += [(KITS[kit_of[y, c]], c, y) for c, y in read_flights(hand_stairs, 'added') if flight_fits(c, y) and kit_of[y, c] >= 0]
+
 # Walls hang below every south edge; stairs replace two tiles of wall. The elevation grid holds one letter per
 # tile for the game's collision (src/world/map.js): '0'-'3' is the level, 'w' a wall, 's' stairs.
 wall_row = np.full((ROWS, COLS), -1)       # which row of its wall a tile is (0 = top), or -1 if not a wall
 edge = level[:-1] > level[1:]
 for r in range(WALL_ROWS): wall_row[1 + r:][edge[:ROWS - 1 - r]] = r
+# The generated hills marked which kit draws each of their tiles. Hand-raised ground only marks its own tiles, so
+# the kit is spread from there over its walls and the ring of ground around it, where lips and shadows are drawn.
+if hand_levels:
+    kit_need = grow_box((level > 0) | (wall_row >= 0), 1, 1, 1, 1)
+    for _ in range(WALL_ROWS + 2):
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            near = np.roll(kit_of, (dy, dx), (0, 1)); fill = kit_need & (kit_of < 0) & (near >= 0); kit_of[fill] = near[fill]
 on_stairs = np.zeros((ROWS, COLS), bool)
 keep_clear = np.zeros((ROWS, COLS), bool)  # the stairs and the ground just above and below them
 for _, c, y in flights:
@@ -1128,6 +1181,11 @@ tiled = {
                    {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())},
                    # The world editor reads these two: the generated ground at every tile corner (one digit per corner,
                    # row by row, before any hand painting), and a fingerprint of the terrain.json this map was built from.
+                   # The generated hills before any hand edit, for the world editor: the level of every tile (one digit
+                   # each, row by row), the kit of every tile ('.' for none, else its index in cliffs.json), and the flights.
+                   {'name': 'baseLevels', 'type': 'string', 'value': ''.join(str(v) for v in base_level.ravel())},
+                   {'name': 'baseKits', 'type': 'string', 'value': ''.join('.' if v < 0 else str(v) for v in base_kit.ravel())},
+                   {'name': 'baseStairs', 'type': 'string', 'value': json.dumps(base_flights)},
                    {'name': 'baseGround', 'type': 'string', 'value': ''.join(str(v) for v in base_corner.ravel())},
                    {'name': 'terrainHash', 'type': 'string', 'value': hashlib.sha256(terrain_bytes).hexdigest()},
                    # The world editor reads this to list removals in edits.json that matched nothing.
