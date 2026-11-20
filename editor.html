@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wildhaven world editor</title>
+  </head>
+  <body>
+    <header id="bar">
+      <strong>Wildhaven places</strong>
+      <button type="button" data-add="landmark">+ Landmark</button>
+      <button type="button" data-add="waypoint">+ Signpost</button>
+      <button type="button" data-add="wreck">+ Old boat</button>
+      <button type="button" id="undo">Undo</button>
+      <button type="button" id="redo">Redo</button>
+      <label><input type="checkbox" data-overlay="regions" checked /> Region borders</label>
+      <label><input type="checkbox" data-overlay="blocked" /> Blocked ground</label>
+      <span id="status" role="status"></span>
+      <button type="button" id="save">Save</button>
+      <button type="button" id="rebuild">Rebuild map</button>
+    </header>
+    <main>
+      <canvas id="map"></canvas>
+      <aside id="side">
+        <input id="filter" type="search" placeholder="Find a place" aria-label="Find a place" />
+        <ul id="list"></ul>
+        <form id="form"></form>
+        <h2>Problems</h2>
+        <p id="stale" hidden>
+          Places changed since the map was last built, so the position warnings may be out of date.
+          Rebuild for the real answer.
+        </p>
+        <ul id="problems"></ul>
+        <h2>Rebuild log</h2>
+        <pre id="log"></pre>
+      </aside>
+    </main>
+    <script type="module" src="/src/editor/main.js"></script>
+  </body>
+</html>

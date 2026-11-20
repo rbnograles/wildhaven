@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame } from '../../src/game/state.js';
+import { LANDMARKS } from '../../src/data/places.js';
 import { regionProgress, worldProgress } from '../../src/world/progress.js';
 
 // Guards the per-region counts: finds in one region must not be counted in another.
@@ -29,7 +30,7 @@ test('world progress counts everything found', () => {
 
   assert.deepEqual(worldProgress(game), {
     regions: { found: 2, total: 7 },
-    places: { found: 2, total: 52 },
+    places: { found: 2, total: LANDMARKS.length },
     signposts: { found: 0, total: 14 },
   });
 });
