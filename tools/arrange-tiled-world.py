@@ -112,17 +112,17 @@ GROVE_ROUND_CAVE = 420         # a forest cave stands in thick forest this far r
 # rest is open). Each list is (sprite, weight). lone: the chance a spot in the open still gets a single tree.
 FOREST = {
     'pinefall': dict(dense=0.38, sparse=0.2, lone=0.008, thick=[('pine', 7), ('pines', 3), ('oak', 1)],
-                     loose=[('pine', 4), ('oak', 2), ('pines', 1)], under=[('fern', 3), ('tall-grass', 2)],
+                     loose=[('pine', 4), ('oak', 2), ('pines', 1)], under=[('tall-grass', 1)],
                      tufts=['grass-tuft', 'tall-grass'], flowers=0.5),
     'frostpeak': dict(dense=0.45, sparse=0.22, lone=0.01, thick=[('snowy-pine', 1)], loose=[('snowy-pine', 1)],
                       under=[('snow-grass', 1)], tufts=['snow-grass'], flowers=0),
     'meadows': dict(dense=0.15, sparse=0.15, lone=0.006, thick=[('oak', 4), ('big-oak', 3), ('pine', 3), ('pines', 1)],
-                    loose=[('oak', 3), ('big-oak', 1), ('pine', 1)], under=[('fern', 1), ('tall-grass', 2)],
+                    loose=[('oak', 3), ('big-oak', 1), ('pine', 1)], under=[('tall-grass', 1)],
                     tufts=['grass-tuft', 'tall-grass'], flowers=1),
     'lagoon': dict(dense=0.12, sparse=0.15, lone=0.006, thick=[('palm', 5), ('oak', 1)], loose=[('palm', 3), ('oak', 1)],
-                   under=[('fern', 1)], tufts=['grass-tuft', 'tall-grass'], flowers=0.6),
+                   under=[('tall-grass', 1)], tufts=['grass-tuft', 'tall-grass'], flowers=0.6),
     'jungle': dict(dense=0.33, sparse=0.18, lone=0.01, thick=[('jungle-tree', 6), ('palm', 2)],
-                   loose=[('jungle-tree', 3), ('palm', 2)], under=[('fern', 4)], tufts=['grass-tuft'], flowers=0.3),
+                   loose=[('jungle-tree', 3), ('palm', 2)], under=[('tall-grass', 1)], tufts=['grass-tuft'], flowers=0.3),
     'desert': dict(dense=0.03, sparse=0.06, lone=0.002, thick=[('cactus', 2), ('dead-bush', 1)],
                    loose=[('cactus', 1), ('dead-bush', 2)], under=[('dry-grass', 1)], tufts=['dry-grass'], flowers=0),
     'canyons': dict(dense=0.03, sparse=0.06, lone=0.002, thick=[('dead-bush', 2), ('cactus', 1)],
@@ -130,17 +130,17 @@ FOREST = {
 }
 # How far apart two of a kind stand in thick grove, in world units: small numbers crowd them together.
 SPACING = {'pine': 46, 'pines': 80, 'snowy-pine': 46, 'oak': 105, 'big-oak': 125, 'jungle-tree': 105, 'palm': 80,
-           'cactus': 70, 'dead-bush': 60, 'fern': 42, 'tall-grass': 40, 'grass-tuft': 36, 'dry-grass': 36, 'snow-grass': 36}
+           'cactus': 70, 'dead-bush': 60, 'tall-grass': 40, 'grass-tuft': 36, 'dry-grass': 36, 'snow-grass': 36}
 LOOSE_SPACE = 2.0              # loose woodland is this many times as spread out as a grove
 LOOSE_TAKE = 0.3               # the share of tries that take root in loose woodland
 # Each kind's size, as a share of the size the game draws it. Every tree is then 88% to 112% of that.
 SIZE = {'pine': 1.0, 'pines': 1.0, 'snowy-pine': 1.0, 'oak': 0.8, 'big-oak': 0.85, 'jungle-tree': 0.85,
-        'palm': 0.95, 'cactus': 0.9, 'dead-bush': 0.85, 'fern': 0.8}
+        'palm': 0.95, 'cactus': 0.9, 'dead-bush': 0.85}
 TUFT_SHARE = 0.18              # the share of open land where grass tufts grow in clumps
 FLOWER_PATCHES = 0.0035        # flower patches per open square, before the region's own `flowers` share
 GONE = {'feather', 'pine-cone'}
 TREES = {'pines', 'pine', 'oak', 'big-oak', 'snowy-pine', 'jungle-tree', 'palm', 'cactus'}
-GREENERY = TREES | {'fern', 'dead-bush', 'berry-bush', 'grass-tuft', 'tall-grass', 'dry-grass', 'snow-grass', 'flowers'}
+GREENERY = TREES | {'dead-bush', 'berry-bush', 'grass-tuft', 'tall-grass', 'dry-grass', 'snow-grass', 'flowers'}
 REPLACED = {'cave-forest', 'cave-snow', 'cave-canyon', 'bridge'}
 SOLID = {'tent', 'house-a', 'house-b', 'house-c', 'workshop', 'ship', 'sandstone-ruin', 'cave-forest', 'cave-snow',
          'cave-canyon', 'log', 'signpost', 'campfire', 'rocks-a', 'rocks-b', 'boulder', 'beach-rock', 'ice-rock',
@@ -727,7 +727,7 @@ counted = {}
 for t in trees: counted[t[0]] = counted.get(t[0], 0) + 1
 report['trees'] = counted
 
-# Bushes and ferns under the groves, and grass tufts in clumps in the open.
+# Bushes and tall grass under the groves, and grass tufts in clumps in the open.
 def under_choice(x, y):
     region = region_at(x, y)
     if region not in FOREST: return None

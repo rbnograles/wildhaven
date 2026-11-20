@@ -62,7 +62,6 @@ Made by `tools/make-biome-standins.py` from existing art, so the 384×256 world 
 | `objects/rocks/boulder.png` | rocks-a, grey | Canyons and Frostpeak |
 | `objects/rocks/cliff-rock.png` | rocks-a, stretched taller, dark grey | Canyon outcrops and lookouts |
 | `objects/trees/jungle-tree.png` | big-oak, deep green | Jungle trees |
-| `objects/plants/fern.png` | berry-bush, green | Jungle undergrowth (walk-through) |
 | `objects/plants/dead-bush.png` | berry-bush, brown | Desert and canyons |
 | `objects/props/bridge.png` | drawn plank deck (flat) | River bridges |
 | `source/ground/deep.png` | stand-in from `tools/make-biome-standins.py`; real prompt in its `.prompt.txt` | Deep sea (archipelago A1) |

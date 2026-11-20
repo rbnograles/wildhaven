@@ -92,8 +92,6 @@ save(recolor(sprite('rocks-a').resize((290, 255), Image.LANCZOS), (0.7, 0.66, 0.
 save(recolor(sprite('big-oak'), (0.45, 0.8, 0.5), (0, 5, 5)), obj('jungle-tree'),
      object_prompt('one broad tropical jungle tree with a dense deep-green canopy, buttress roots and hanging vines',
                    270, 320))
-save(recolor(sprite('berry-bush'), (0.5, 0.95, 0.45), gray=0.2), obj('fern'),
-     object_prompt('a low spray of broad bright-green jungle fern fronds', 150, 104))
 save(recolor(sprite('oak').resize((200, 300), Image.LANCZOS), (0.8, 1.0, 0.55), (15, 10, 0)), obj('palm'),
      object_prompt('one leaning coconut palm tree with a slim curved trunk and a crown of long green fronds', 200, 300))
 save(recolor(sprite('berry-bush'), (0.75, 0.6, 0.42), (40, 25, 10), gray=0.9), obj('dead-bush'),

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<tileset version="1.10" name="wildhaven-sheet" tilewidth="64" tileheight="64" tilecount="2124" columns="36">
- <image source="wildhaven-sheet.png" width="2304" height="3776" />
+<tileset version="1.10" name="wildhaven-sheet" tilewidth="64" tileheight="64" tilecount="2160" columns="36">
+ <image source="wildhaven-sheet.png" width="2304" height="3840" />
  <tile id="0" type="grass" />
  <tile id="1" type="grass" />
  <tile id="2" type="grass" />
@@ -237,18 +237,15 @@
  <tile id="293" type="dead-bush" />
  <tile id="294" type="dead-bush" />
  <tile id="295" type="dead-bush" />
- <tile id="296" type="fern" />
- <tile id="297" type="fern" />
- <tile id="298" type="fern" />
- <tile id="299" type="tall-grass" />
- <tile id="300" type="tall-grass" />
- <tile id="301" type="wild-berries" />
- <tile id="302" type="wild-berries" />
- <tile id="303" type="flowers" />
- <tile id="304" type="flowers" />
- <tile id="305" type="dry-grass" />
- <tile id="306" type="grass-tuft" />
- <tile id="307" type="snow-grass" />
+ <tile id="296" type="tall-grass" />
+ <tile id="297" type="tall-grass" />
+ <tile id="298" type="wild-berries" />
+ <tile id="299" type="wild-berries" />
+ <tile id="300" type="flowers" />
+ <tile id="301" type="flowers" />
+ <tile id="302" type="dry-grass" />
+ <tile id="303" type="grass-tuft" />
+ <tile id="304" type="snow-grass" />
  <tile id="324" type="cactus" />
  <tile id="325" type="cactus" />
  <tile id="326" type="berry-bush" />
@@ -257,13 +254,10 @@
  <tile id="329" type="dead-bush" />
  <tile id="330" type="dead-bush" />
  <tile id="331" type="dead-bush" />
- <tile id="332" type="fern" />
- <tile id="333" type="fern" />
- <tile id="334" type="fern" />
- <tile id="335" type="tall-grass" />
- <tile id="336" type="tall-grass" />
- <tile id="337" type="wild-berries" />
- <tile id="338" type="wild-berries" />
+ <tile id="332" type="tall-grass" />
+ <tile id="333" type="tall-grass" />
+ <tile id="334" type="wild-berries" />
+ <tile id="335" type="wild-berries" />
  <tile id="360" type="cactus" />
  <tile id="361" type="cactus" />
  <tile id="396" type="cliff-rock" />
@@ -381,26 +375,26 @@
  <tile id="589" type="workshop" />
  <tile id="590" type="workshop" />
  <tile id="591" type="workshop" />
- <tile id="592" type="house-b" />
- <tile id="593" type="house-b" />
- <tile id="594" type="house-b" />
- <tile id="595" type="house-b" />
- <tile id="596" type="house-b" />
- <tile id="597" type="house-c" />
- <tile id="598" type="house-c" />
- <tile id="599" type="house-c" />
- <tile id="600" type="house-c" />
- <tile id="601" type="house-c" />
- <tile id="602" type="sandstone-ruin" />
- <tile id="603" type="sandstone-ruin" />
- <tile id="604" type="sandstone-ruin" />
- <tile id="605" type="sandstone-ruin" />
- <tile id="606" type="sandstone-ruin" />
- <tile id="607" type="house-a" />
- <tile id="608" type="house-a" />
- <tile id="609" type="house-a" />
- <tile id="610" type="house-a" />
- <tile id="611" type="house-a" />
+ <tile id="592" type="centre-3" />
+ <tile id="593" type="centre-3" />
+ <tile id="594" type="centre-3" />
+ <tile id="595" type="centre-3" />
+ <tile id="596" type="centre-3" />
+ <tile id="597" type="house-b" />
+ <tile id="598" type="house-b" />
+ <tile id="599" type="house-b" />
+ <tile id="600" type="house-b" />
+ <tile id="601" type="house-b" />
+ <tile id="602" type="house-c" />
+ <tile id="603" type="house-c" />
+ <tile id="604" type="house-c" />
+ <tile id="605" type="house-c" />
+ <tile id="606" type="house-c" />
+ <tile id="607" type="sandstone-ruin" />
+ <tile id="608" type="sandstone-ruin" />
+ <tile id="609" type="sandstone-ruin" />
+ <tile id="610" type="sandstone-ruin" />
+ <tile id="611" type="sandstone-ruin" />
  <tile id="612" type="ship" />
  <tile id="613" type="ship" />
  <tile id="614" type="ship" />
@@ -417,26 +411,26 @@
  <tile id="625" type="workshop" />
  <tile id="626" type="workshop" />
  <tile id="627" type="workshop" />
- <tile id="628" type="house-b" />
- <tile id="629" type="house-b" />
- <tile id="630" type="house-b" />
- <tile id="631" type="house-b" />
- <tile id="632" type="house-b" />
- <tile id="633" type="house-c" />
- <tile id="634" type="house-c" />
- <tile id="635" type="house-c" />
- <tile id="636" type="house-c" />
- <tile id="637" type="house-c" />
- <tile id="638" type="sandstone-ruin" />
- <tile id="639" type="sandstone-ruin" />
- <tile id="640" type="sandstone-ruin" />
- <tile id="641" type="sandstone-ruin" />
- <tile id="642" type="sandstone-ruin" />
- <tile id="643" type="house-a" />
- <tile id="644" type="house-a" />
- <tile id="645" type="house-a" />
- <tile id="646" type="house-a" />
- <tile id="647" type="house-a" />
+ <tile id="628" type="centre-3" />
+ <tile id="629" type="centre-3" />
+ <tile id="630" type="centre-3" />
+ <tile id="631" type="centre-3" />
+ <tile id="632" type="centre-3" />
+ <tile id="633" type="house-b" />
+ <tile id="634" type="house-b" />
+ <tile id="635" type="house-b" />
+ <tile id="636" type="house-b" />
+ <tile id="637" type="house-b" />
+ <tile id="638" type="house-c" />
+ <tile id="639" type="house-c" />
+ <tile id="640" type="house-c" />
+ <tile id="641" type="house-c" />
+ <tile id="642" type="house-c" />
+ <tile id="643" type="sandstone-ruin" />
+ <tile id="644" type="sandstone-ruin" />
+ <tile id="645" type="sandstone-ruin" />
+ <tile id="646" type="sandstone-ruin" />
+ <tile id="647" type="sandstone-ruin" />
  <tile id="648" type="ship" />
  <tile id="649" type="ship" />
  <tile id="650" type="ship" />
@@ -453,26 +447,26 @@
  <tile id="661" type="workshop" />
  <tile id="662" type="workshop" />
  <tile id="663" type="workshop" />
- <tile id="664" type="house-b" />
- <tile id="665" type="house-b" />
- <tile id="666" type="house-b" />
- <tile id="667" type="house-b" />
- <tile id="668" type="house-b" />
- <tile id="669" type="house-c" />
- <tile id="670" type="house-c" />
- <tile id="671" type="house-c" />
- <tile id="672" type="house-c" />
- <tile id="673" type="house-c" />
- <tile id="674" type="sandstone-ruin" />
- <tile id="675" type="sandstone-ruin" />
- <tile id="676" type="sandstone-ruin" />
- <tile id="677" type="sandstone-ruin" />
- <tile id="678" type="sandstone-ruin" />
- <tile id="679" type="house-a" />
- <tile id="680" type="house-a" />
- <tile id="681" type="house-a" />
- <tile id="682" type="house-a" />
- <tile id="683" type="house-a" />
+ <tile id="664" type="centre-3" />
+ <tile id="665" type="centre-3" />
+ <tile id="666" type="centre-3" />
+ <tile id="667" type="centre-3" />
+ <tile id="668" type="centre-3" />
+ <tile id="669" type="house-b" />
+ <tile id="670" type="house-b" />
+ <tile id="671" type="house-b" />
+ <tile id="672" type="house-b" />
+ <tile id="673" type="house-b" />
+ <tile id="674" type="house-c" />
+ <tile id="675" type="house-c" />
+ <tile id="676" type="house-c" />
+ <tile id="677" type="house-c" />
+ <tile id="678" type="house-c" />
+ <tile id="679" type="sandstone-ruin" />
+ <tile id="680" type="sandstone-ruin" />
+ <tile id="681" type="sandstone-ruin" />
+ <tile id="682" type="sandstone-ruin" />
+ <tile id="683" type="sandstone-ruin" />
  <tile id="684" type="ship" />
  <tile id="685" type="ship" />
  <tile id="686" type="ship" />
@@ -489,26 +483,26 @@
  <tile id="697" type="workshop" />
  <tile id="698" type="workshop" />
  <tile id="699" type="workshop" />
- <tile id="700" type="house-b" />
- <tile id="701" type="house-b" />
- <tile id="702" type="house-b" />
- <tile id="703" type="house-b" />
- <tile id="704" type="house-b" />
- <tile id="705" type="house-c" />
- <tile id="706" type="house-c" />
- <tile id="707" type="house-c" />
- <tile id="708" type="house-c" />
- <tile id="709" type="house-c" />
- <tile id="710" type="sandstone-ruin" />
- <tile id="711" type="sandstone-ruin" />
- <tile id="712" type="sandstone-ruin" />
- <tile id="713" type="sandstone-ruin" />
- <tile id="714" type="sandstone-ruin" />
- <tile id="715" type="house-a" />
- <tile id="716" type="house-a" />
- <tile id="717" type="house-a" />
- <tile id="718" type="house-a" />
- <tile id="719" type="house-a" />
+ <tile id="700" type="centre-3" />
+ <tile id="701" type="centre-3" />
+ <tile id="702" type="centre-3" />
+ <tile id="703" type="centre-3" />
+ <tile id="704" type="centre-3" />
+ <tile id="705" type="house-b" />
+ <tile id="706" type="house-b" />
+ <tile id="707" type="house-b" />
+ <tile id="708" type="house-b" />
+ <tile id="709" type="house-b" />
+ <tile id="710" type="house-c" />
+ <tile id="711" type="house-c" />
+ <tile id="712" type="house-c" />
+ <tile id="713" type="house-c" />
+ <tile id="714" type="house-c" />
+ <tile id="715" type="sandstone-ruin" />
+ <tile id="716" type="sandstone-ruin" />
+ <tile id="717" type="sandstone-ruin" />
+ <tile id="718" type="sandstone-ruin" />
+ <tile id="719" type="sandstone-ruin" />
  <tile id="720" type="ship" />
  <tile id="721" type="ship" />
  <tile id="722" type="ship" />
@@ -554,53 +548,103 @@
  <tile id="870" type="ship" />
  <tile id="871" type="ship" />
  <tile id="872" type="ship" />
- <tile id="900" type="tent" />
- <tile id="901" type="tent" />
- <tile id="902" type="tent" />
- <tile id="903" type="tent" />
- <tile id="936" type="tent" />
- <tile id="937" type="tent" />
- <tile id="938" type="tent" />
- <tile id="939" type="tent" />
- <tile id="972" type="tent" />
- <tile id="973" type="tent" />
- <tile id="974" type="tent" />
- <tile id="975" type="tent" />
- <tile id="1008" type="path-dirt-a" />
- <tile id="1009" type="path-dirt-a" />
- <tile id="1010" type="path-dirt-a" />
- <tile id="1011" type="path-dirt-b" />
- <tile id="1012" type="path-dirt-b" />
- <tile id="1013" type="path-dirt-b" />
- <tile id="1014" type="path-stone-a" />
- <tile id="1015" type="path-stone-a" />
- <tile id="1016" type="path-stone-a" />
- <tile id="1017" type="path-stone-b" />
- <tile id="1018" type="path-stone-b" />
- <tile id="1019" type="path-stone-b" />
- <tile id="1020" type="bridge" />
- <tile id="1021" type="bridge" />
- <tile id="1022" type="bridge" />
- <tile id="1023" type="bridge" />
- <tile id="1024" type="bridge" />
- <tile id="1025" type="bridge" />
- <tile id="1026" type="bridge" />
- <tile id="1027" type="bridge" />
- <tile id="1028" type="canyon-stairs" />
- <tile id="1029" type="canyon-stairs" />
- <tile id="1030" type="canyon-stairs" />
- <tile id="1031" type="meadow-stairs" />
- <tile id="1032" type="meadow-stairs" />
- <tile id="1033" type="meadow-stairs" />
- <tile id="1034" type="snow-stairs" />
- <tile id="1035" type="snow-stairs" />
- <tile id="1036" type="snow-stairs" />
- <tile id="1037" type="signpost" />
- <tile id="1038" type="signpost" />
- <tile id="1039" type="dirt-patch" />
- <tile id="1040" type="dirt-patch" />
- <tile id="1041" type="dirt-patch" />
- <tile id="1042" type="dirt-patch" />
+ <tile id="900" type="house-a" />
+ <tile id="901" type="house-a" />
+ <tile id="902" type="house-a" />
+ <tile id="903" type="house-a" />
+ <tile id="904" type="house-a" />
+ <tile id="905" type="centre-2" />
+ <tile id="906" type="centre-2" />
+ <tile id="907" type="centre-2" />
+ <tile id="908" type="centre-2" />
+ <tile id="909" type="centre-2" />
+ <tile id="910" type="centre-1" />
+ <tile id="911" type="centre-1" />
+ <tile id="912" type="centre-1" />
+ <tile id="913" type="centre-1" />
+ <tile id="914" type="tent" />
+ <tile id="915" type="tent" />
+ <tile id="916" type="tent" />
+ <tile id="917" type="tent" />
+ <tile id="918" type="shelter-2" />
+ <tile id="919" type="shelter-2" />
+ <tile id="920" type="shelter-2" />
+ <tile id="921" type="shelter-3" />
+ <tile id="922" type="shelter-3" />
+ <tile id="923" type="shelter-3" />
+ <tile id="924" type="shelter-4" />
+ <tile id="925" type="shelter-4" />
+ <tile id="926" type="shelter-4" />
+ <tile id="927" type="shelter-1" />
+ <tile id="928" type="shelter-1" />
+ <tile id="929" type="shelter-1" />
+ <tile id="936" type="house-a" />
+ <tile id="937" type="house-a" />
+ <tile id="938" type="house-a" />
+ <tile id="939" type="house-a" />
+ <tile id="940" type="house-a" />
+ <tile id="941" type="centre-2" />
+ <tile id="942" type="centre-2" />
+ <tile id="943" type="centre-2" />
+ <tile id="944" type="centre-2" />
+ <tile id="945" type="centre-2" />
+ <tile id="946" type="centre-1" />
+ <tile id="947" type="centre-1" />
+ <tile id="948" type="centre-1" />
+ <tile id="949" type="centre-1" />
+ <tile id="950" type="tent" />
+ <tile id="951" type="tent" />
+ <tile id="952" type="tent" />
+ <tile id="953" type="tent" />
+ <tile id="954" type="shelter-2" />
+ <tile id="955" type="shelter-2" />
+ <tile id="956" type="shelter-2" />
+ <tile id="957" type="shelter-3" />
+ <tile id="958" type="shelter-3" />
+ <tile id="959" type="shelter-3" />
+ <tile id="960" type="shelter-4" />
+ <tile id="961" type="shelter-4" />
+ <tile id="962" type="shelter-4" />
+ <tile id="963" type="shelter-1" />
+ <tile id="964" type="shelter-1" />
+ <tile id="965" type="shelter-1" />
+ <tile id="972" type="house-a" />
+ <tile id="973" type="house-a" />
+ <tile id="974" type="house-a" />
+ <tile id="975" type="house-a" />
+ <tile id="976" type="house-a" />
+ <tile id="977" type="centre-2" />
+ <tile id="978" type="centre-2" />
+ <tile id="979" type="centre-2" />
+ <tile id="980" type="centre-2" />
+ <tile id="981" type="centre-2" />
+ <tile id="982" type="centre-1" />
+ <tile id="983" type="centre-1" />
+ <tile id="984" type="centre-1" />
+ <tile id="985" type="centre-1" />
+ <tile id="986" type="tent" />
+ <tile id="987" type="tent" />
+ <tile id="988" type="tent" />
+ <tile id="989" type="tent" />
+ <tile id="990" type="shelter-2" />
+ <tile id="991" type="shelter-2" />
+ <tile id="992" type="shelter-2" />
+ <tile id="993" type="shelter-3" />
+ <tile id="994" type="shelter-3" />
+ <tile id="995" type="shelter-3" />
+ <tile id="996" type="shelter-4" />
+ <tile id="997" type="shelter-4" />
+ <tile id="998" type="shelter-4" />
+ <tile id="1008" type="house-a" />
+ <tile id="1009" type="house-a" />
+ <tile id="1010" type="house-a" />
+ <tile id="1011" type="house-a" />
+ <tile id="1012" type="house-a" />
+ <tile id="1013" type="centre-2" />
+ <tile id="1014" type="centre-2" />
+ <tile id="1015" type="centre-2" />
+ <tile id="1016" type="centre-2" />
+ <tile id="1017" type="centre-2" />
  <tile id="1044" type="path-dirt-a" />
  <tile id="1045" type="path-dirt-a" />
  <tile id="1046" type="path-dirt-a" />
@@ -636,6 +680,18 @@
  <tile id="1076" type="dirt-patch" />
  <tile id="1077" type="dirt-patch" />
  <tile id="1078" type="dirt-patch" />
+ <tile id="1080" type="path-dirt-a" />
+ <tile id="1081" type="path-dirt-a" />
+ <tile id="1082" type="path-dirt-a" />
+ <tile id="1083" type="path-dirt-b" />
+ <tile id="1084" type="path-dirt-b" />
+ <tile id="1085" type="path-dirt-b" />
+ <tile id="1086" type="path-stone-a" />
+ <tile id="1087" type="path-stone-a" />
+ <tile id="1088" type="path-stone-a" />
+ <tile id="1089" type="path-stone-b" />
+ <tile id="1090" type="path-stone-b" />
+ <tile id="1091" type="path-stone-b" />
  <tile id="1092" type="bridge" />
  <tile id="1093" type="bridge" />
  <tile id="1094" type="bridge" />
@@ -655,32 +711,29 @@
  <tile id="1108" type="snow-stairs" />
  <tile id="1109" type="signpost" />
  <tile id="1110" type="signpost" />
- <tile id="1116" type="log" />
- <tile id="1117" type="log" />
- <tile id="1118" type="log" />
- <tile id="1119" type="old-boat" />
- <tile id="1120" type="old-boat" />
- <tile id="1121" type="old-boat" />
- <tile id="1122" type="old-boat" />
- <tile id="1123" type="rowboat" />
- <tile id="1124" type="rowboat" />
- <tile id="1125" type="rowboat" />
- <tile id="1126" type="rowboat" />
- <tile id="1127" type="campfire" />
- <tile id="1128" type="campfire" />
- <tile id="1129" type="antler" />
- <tile id="1130" type="lake-ripple" />
- <tile id="1131" type="lake-ripple" />
- <tile id="1132" type="sea-wave" />
- <tile id="1133" type="sea-wave" />
- <tile id="1134" type="driftwood" />
- <tile id="1135" type="driftwood" />
- <tile id="1136" type="feather" />
- <tile id="1137" type="river-ripple" />
- <tile id="1138" type="river-ripple" />
- <tile id="1139" type="pine-cone" />
- <tile id="1140" type="sticks" />
- <tile id="1141" type="sticks" />
+ <tile id="1111" type="dirt-patch" />
+ <tile id="1112" type="dirt-patch" />
+ <tile id="1113" type="dirt-patch" />
+ <tile id="1114" type="dirt-patch" />
+ <tile id="1128" type="bridge" />
+ <tile id="1129" type="bridge" />
+ <tile id="1130" type="bridge" />
+ <tile id="1131" type="bridge" />
+ <tile id="1132" type="bridge" />
+ <tile id="1133" type="bridge" />
+ <tile id="1134" type="bridge" />
+ <tile id="1135" type="bridge" />
+ <tile id="1136" type="canyon-stairs" />
+ <tile id="1137" type="canyon-stairs" />
+ <tile id="1138" type="canyon-stairs" />
+ <tile id="1139" type="meadow-stairs" />
+ <tile id="1140" type="meadow-stairs" />
+ <tile id="1141" type="meadow-stairs" />
+ <tile id="1142" type="snow-stairs" />
+ <tile id="1143" type="snow-stairs" />
+ <tile id="1144" type="snow-stairs" />
+ <tile id="1145" type="signpost" />
+ <tile id="1146" type="signpost" />
  <tile id="1152" type="log" />
  <tile id="1153" type="log" />
  <tile id="1154" type="log" />
@@ -692,38 +745,46 @@
  <tile id="1160" type="rowboat" />
  <tile id="1161" type="rowboat" />
  <tile id="1162" type="rowboat" />
- <tile id="1188" type="path-dirt-straight" />
- <tile id="1189" type="path-dirt-straight" />
- <tile id="1190" type="path-dirt-bend" />
- <tile id="1191" type="path-dirt-bend" />
- <tile id="1192" type="path-dirt-tee" />
- <tile id="1193" type="path-dirt-tee" />
- <tile id="1194" type="path-dirt-cross" />
- <tile id="1195" type="path-dirt-cross" />
- <tile id="1196" type="path-cobblestone-straight" />
- <tile id="1197" type="path-cobblestone-straight" />
- <tile id="1198" type="path-cobblestone-bend" />
- <tile id="1199" type="path-cobblestone-bend" />
- <tile id="1200" type="path-cobblestone-tee" />
- <tile id="1201" type="path-cobblestone-tee" />
- <tile id="1202" type="path-cobblestone-cross" />
- <tile id="1203" type="path-cobblestone-cross" />
- <tile id="1204" type="path-boardwalk-straight" />
- <tile id="1205" type="path-boardwalk-straight" />
- <tile id="1206" type="path-boardwalk-bend" />
- <tile id="1207" type="path-boardwalk-bend" />
- <tile id="1208" type="path-boardwalk-tee" />
- <tile id="1209" type="path-boardwalk-tee" />
- <tile id="1210" type="path-boardwalk-cross" />
- <tile id="1211" type="path-boardwalk-cross" />
- <tile id="1212" type="path-stepping-stone-straight" />
- <tile id="1213" type="path-stepping-stone-straight" />
- <tile id="1214" type="path-stepping-stone-bend" />
- <tile id="1215" type="path-stepping-stone-bend" />
- <tile id="1216" type="path-stepping-stone-tee" />
- <tile id="1217" type="path-stepping-stone-tee" />
- <tile id="1218" type="path-stepping-stone-cross" />
- <tile id="1219" type="path-stepping-stone-cross" />
+ <tile id="1163" type="chest-full" />
+ <tile id="1164" type="chest-full" />
+ <tile id="1165" type="chest-open" />
+ <tile id="1166" type="chest-open" />
+ <tile id="1167" type="chest-ajar" />
+ <tile id="1168" type="chest-ajar" />
+ <tile id="1169" type="chest-closed" />
+ <tile id="1170" type="chest-closed" />
+ <tile id="1171" type="campfire" />
+ <tile id="1172" type="campfire" />
+ <tile id="1173" type="antler" />
+ <tile id="1174" type="lake-ripple" />
+ <tile id="1175" type="lake-ripple" />
+ <tile id="1176" type="sea-wave" />
+ <tile id="1177" type="sea-wave" />
+ <tile id="1178" type="driftwood" />
+ <tile id="1179" type="driftwood" />
+ <tile id="1180" type="feather" />
+ <tile id="1181" type="river-ripple" />
+ <tile id="1182" type="river-ripple" />
+ <tile id="1183" type="pine-cone" />
+ <tile id="1184" type="sticks" />
+ <tile id="1185" type="sticks" />
+ <tile id="1188" type="log" />
+ <tile id="1189" type="log" />
+ <tile id="1190" type="log" />
+ <tile id="1191" type="old-boat" />
+ <tile id="1192" type="old-boat" />
+ <tile id="1193" type="old-boat" />
+ <tile id="1194" type="old-boat" />
+ <tile id="1195" type="rowboat" />
+ <tile id="1196" type="rowboat" />
+ <tile id="1197" type="rowboat" />
+ <tile id="1198" type="rowboat" />
+ <tile id="1199" type="chest-full" />
+ <tile id="1200" type="chest-full" />
+ <tile id="1201" type="chest-open" />
+ <tile id="1202" type="chest-open" />
+ <tile id="1203" type="chest-ajar" />
+ <tile id="1204" type="chest-ajar" />
  <tile id="1224" type="path-dirt-straight" />
  <tile id="1225" type="path-dirt-straight" />
  <tile id="1226" type="path-dirt-bend" />
@@ -756,42 +817,38 @@
  <tile id="1253" type="path-stepping-stone-tee" />
  <tile id="1254" type="path-stepping-stone-cross" />
  <tile id="1255" type="path-stepping-stone-cross" />
- <tile id="1260" type="ocean-bank-1" />
- <tile id="1261" type="ocean-bank-1" />
- <tile id="1262" type="ocean-bank-1" />
- <tile id="1263" type="ocean-bank-1" />
- <tile id="1264" type="ocean-bank-1" />
- <tile id="1265" type="ocean-bank-1" />
- <tile id="1266" type="ocean-bank-2" />
- <tile id="1267" type="ocean-bank-2" />
- <tile id="1268" type="ocean-bank-2" />
- <tile id="1269" type="ocean-bank-3" />
- <tile id="1270" type="ocean-bank-3" />
- <tile id="1271" type="ocean-bank-3" />
- <tile id="1272" type="ocean-bank-3" />
- <tile id="1273" type="ocean-bank-3" />
- <tile id="1274" type="ocean-bank-4" />
- <tile id="1275" type="ocean-bank-4" />
- <tile id="1276" type="ocean-bank-4" />
- <tile id="1277" type="ocean-bank-4" />
- <tile id="1278" type="ocean-bank-4" />
- <tile id="1279" type="ocean-bank-5" />
- <tile id="1280" type="ocean-bank-5" />
- <tile id="1281" type="ocean-bank-5" />
- <tile id="1282" type="ocean-bank-5" />
- <tile id="1283" type="ocean-bank-5" />
- <tile id="1284" type="ocean-bank-5" />
- <tile id="1285" type="ocean-bank-6" />
- <tile id="1286" type="ocean-bank-6" />
- <tile id="1287" type="ocean-bank-6" />
- <tile id="1288" type="ocean-bank-6" />
- <tile id="1289" type="ocean-bank-6" />
- <tile id="1290" type="river-bank-1" />
- <tile id="1291" type="river-bank-1" />
- <tile id="1292" type="river-bank-1" />
- <tile id="1293" type="river-bank-1" />
- <tile id="1294" type="river-bank-2" />
- <tile id="1295" type="river-bank-2" />
+ <tile id="1260" type="path-dirt-straight" />
+ <tile id="1261" type="path-dirt-straight" />
+ <tile id="1262" type="path-dirt-bend" />
+ <tile id="1263" type="path-dirt-bend" />
+ <tile id="1264" type="path-dirt-tee" />
+ <tile id="1265" type="path-dirt-tee" />
+ <tile id="1266" type="path-dirt-cross" />
+ <tile id="1267" type="path-dirt-cross" />
+ <tile id="1268" type="path-cobblestone-straight" />
+ <tile id="1269" type="path-cobblestone-straight" />
+ <tile id="1270" type="path-cobblestone-bend" />
+ <tile id="1271" type="path-cobblestone-bend" />
+ <tile id="1272" type="path-cobblestone-tee" />
+ <tile id="1273" type="path-cobblestone-tee" />
+ <tile id="1274" type="path-cobblestone-cross" />
+ <tile id="1275" type="path-cobblestone-cross" />
+ <tile id="1276" type="path-boardwalk-straight" />
+ <tile id="1277" type="path-boardwalk-straight" />
+ <tile id="1278" type="path-boardwalk-bend" />
+ <tile id="1279" type="path-boardwalk-bend" />
+ <tile id="1280" type="path-boardwalk-tee" />
+ <tile id="1281" type="path-boardwalk-tee" />
+ <tile id="1282" type="path-boardwalk-cross" />
+ <tile id="1283" type="path-boardwalk-cross" />
+ <tile id="1284" type="path-stepping-stone-straight" />
+ <tile id="1285" type="path-stepping-stone-straight" />
+ <tile id="1286" type="path-stepping-stone-bend" />
+ <tile id="1287" type="path-stepping-stone-bend" />
+ <tile id="1288" type="path-stepping-stone-tee" />
+ <tile id="1289" type="path-stepping-stone-tee" />
+ <tile id="1290" type="path-stepping-stone-cross" />
+ <tile id="1291" type="path-stepping-stone-cross" />
  <tile id="1296" type="ocean-bank-1" />
  <tile id="1297" type="ocean-bank-1" />
  <tile id="1298" type="ocean-bank-1" />
@@ -925,6 +982,17 @@
  <tile id="1426" type="ocean-bank-5" />
  <tile id="1427" type="ocean-bank-5" />
  <tile id="1428" type="ocean-bank-5" />
+ <tile id="1429" type="ocean-bank-6" />
+ <tile id="1430" type="ocean-bank-6" />
+ <tile id="1431" type="ocean-bank-6" />
+ <tile id="1432" type="ocean-bank-6" />
+ <tile id="1433" type="ocean-bank-6" />
+ <tile id="1434" type="river-bank-1" />
+ <tile id="1435" type="river-bank-1" />
+ <tile id="1436" type="river-bank-1" />
+ <tile id="1437" type="river-bank-1" />
+ <tile id="1438" type="river-bank-2" />
+ <tile id="1439" type="river-bank-2" />
  <tile id="1440" type="ocean-bank-1" />
  <tile id="1441" type="ocean-bank-1" />
  <tile id="1442" type="ocean-bank-1" />
@@ -939,42 +1007,31 @@
  <tile id="1451" type="ocean-bank-3" />
  <tile id="1452" type="ocean-bank-3" />
  <tile id="1453" type="ocean-bank-3" />
- <tile id="1476" type="river-bank-3" />
- <tile id="1477" type="river-bank-3" />
- <tile id="1478" type="river-bank-3" />
- <tile id="1479" type="river-bank-4" />
- <tile id="1480" type="river-bank-4" />
- <tile id="1481" type="river-bank-4" />
- <tile id="1482" type="river-bank-5" />
- <tile id="1483" type="river-bank-5" />
- <tile id="1484" type="river-bank-5" />
- <tile id="1485" type="river-bank-5" />
- <tile id="1486" type="river-bank-6" />
- <tile id="1487" type="river-bank-6" />
- <tile id="1488" type="river-bank-6" />
- <tile id="1489" type="lake-bank-1" />
- <tile id="1490" type="lake-bank-1" />
- <tile id="1491" type="lake-bank-1" />
- <tile id="1492" type="lake-bank-1" />
- <tile id="1493" type="lake-bank-1" />
- <tile id="1494" type="lake-bank-2" />
- <tile id="1495" type="lake-bank-2" />
- <tile id="1496" type="lake-bank-3" />
- <tile id="1497" type="lake-bank-3" />
- <tile id="1498" type="lake-bank-3" />
- <tile id="1499" type="lake-bank-3" />
- <tile id="1500" type="lake-bank-4" />
- <tile id="1501" type="lake-bank-4" />
- <tile id="1502" type="lake-bank-4" />
- <tile id="1503" type="lake-bank-4" />
- <tile id="1504" type="lake-bank-5" />
- <tile id="1505" type="lake-bank-5" />
- <tile id="1506" type="lake-bank-5" />
- <tile id="1507" type="lake-bank-5" />
- <tile id="1508" type="lake-bank-5" />
- <tile id="1509" type="lake-bank-6" />
- <tile id="1510" type="lake-bank-6" />
- <tile id="1511" type="lake-bank-6" />
+ <tile id="1454" type="ocean-bank-4" />
+ <tile id="1455" type="ocean-bank-4" />
+ <tile id="1456" type="ocean-bank-4" />
+ <tile id="1457" type="ocean-bank-4" />
+ <tile id="1458" type="ocean-bank-4" />
+ <tile id="1459" type="ocean-bank-5" />
+ <tile id="1460" type="ocean-bank-5" />
+ <tile id="1461" type="ocean-bank-5" />
+ <tile id="1462" type="ocean-bank-5" />
+ <tile id="1463" type="ocean-bank-5" />
+ <tile id="1464" type="ocean-bank-5" />
+ <tile id="1476" type="ocean-bank-1" />
+ <tile id="1477" type="ocean-bank-1" />
+ <tile id="1478" type="ocean-bank-1" />
+ <tile id="1479" type="ocean-bank-1" />
+ <tile id="1480" type="ocean-bank-1" />
+ <tile id="1481" type="ocean-bank-1" />
+ <tile id="1482" type="ocean-bank-2" />
+ <tile id="1483" type="ocean-bank-2" />
+ <tile id="1484" type="ocean-bank-2" />
+ <tile id="1485" type="ocean-bank-3" />
+ <tile id="1486" type="ocean-bank-3" />
+ <tile id="1487" type="ocean-bank-3" />
+ <tile id="1488" type="ocean-bank-3" />
+ <tile id="1489" type="ocean-bank-3" />
  <tile id="1512" type="river-bank-3" />
  <tile id="1513" type="river-bank-3" />
  <tile id="1514" type="river-bank-3" />
@@ -1050,6 +1107,16 @@
  <tile id="1584" type="river-bank-3" />
  <tile id="1585" type="river-bank-3" />
  <tile id="1586" type="river-bank-3" />
+ <tile id="1587" type="river-bank-4" />
+ <tile id="1588" type="river-bank-4" />
+ <tile id="1589" type="river-bank-4" />
+ <tile id="1590" type="river-bank-5" />
+ <tile id="1591" type="river-bank-5" />
+ <tile id="1592" type="river-bank-5" />
+ <tile id="1593" type="river-bank-5" />
+ <tile id="1594" type="river-bank-6" />
+ <tile id="1595" type="river-bank-6" />
+ <tile id="1596" type="river-bank-6" />
  <tile id="1597" type="lake-bank-1" />
  <tile id="1598" type="lake-bank-1" />
  <tile id="1599" type="lake-bank-1" />
@@ -1073,18 +1140,32 @@
  <tile id="1617" type="lake-bank-6" />
  <tile id="1618" type="lake-bank-6" />
  <tile id="1619" type="lake-bank-6" />
- <tile id="1620" type="wheat-1" />
- <tile id="1621" type="wheat-1" />
- <tile id="1622" type="wheat-1" />
- <tile id="1623" type="wheat-2" />
- <tile id="1624" type="wheat-2" />
- <tile id="1625" type="wheat-2" />
- <tile id="1626" type="wheat-3" />
- <tile id="1627" type="wheat-3" />
- <tile id="1628" type="wheat-3" />
- <tile id="1629" type="wheat-4" />
- <tile id="1630" type="wheat-4" />
- <tile id="1631" type="wheat-4" />
+ <tile id="1620" type="river-bank-3" />
+ <tile id="1621" type="river-bank-3" />
+ <tile id="1622" type="river-bank-3" />
+ <tile id="1633" type="lake-bank-1" />
+ <tile id="1634" type="lake-bank-1" />
+ <tile id="1635" type="lake-bank-1" />
+ <tile id="1636" type="lake-bank-1" />
+ <tile id="1637" type="lake-bank-1" />
+ <tile id="1638" type="lake-bank-2" />
+ <tile id="1639" type="lake-bank-2" />
+ <tile id="1640" type="lake-bank-3" />
+ <tile id="1641" type="lake-bank-3" />
+ <tile id="1642" type="lake-bank-3" />
+ <tile id="1643" type="lake-bank-3" />
+ <tile id="1644" type="lake-bank-4" />
+ <tile id="1645" type="lake-bank-4" />
+ <tile id="1646" type="lake-bank-4" />
+ <tile id="1647" type="lake-bank-4" />
+ <tile id="1648" type="lake-bank-5" />
+ <tile id="1649" type="lake-bank-5" />
+ <tile id="1650" type="lake-bank-5" />
+ <tile id="1651" type="lake-bank-5" />
+ <tile id="1652" type="lake-bank-5" />
+ <tile id="1653" type="lake-bank-6" />
+ <tile id="1654" type="lake-bank-6" />
+ <tile id="1655" type="lake-bank-6" />
  <tile id="1656" type="wheat-1" />
  <tile id="1657" type="wheat-1" />
  <tile id="1658" type="wheat-1" />
@@ -1121,16 +1202,18 @@
  <tile id="1737" type="wheat-4" />
  <tile id="1738" type="wheat-4" />
  <tile id="1739" type="wheat-4" />
- <tile id="1764" type="copper-ore" />
- <tile id="1765" type="copper-ore" />
- <tile id="1766" type="copper-ore" />
- <tile id="1767" type="iron-ore" />
- <tile id="1768" type="iron-ore" />
- <tile id="1769" type="iron-ore" />
- <tile id="1770" type="iron-chunks" />
- <tile id="1771" type="iron-chunks" />
- <tile id="1772" type="copper-chunks" />
- <tile id="1773" type="copper-chunks" />
+ <tile id="1764" type="wheat-1" />
+ <tile id="1765" type="wheat-1" />
+ <tile id="1766" type="wheat-1" />
+ <tile id="1767" type="wheat-2" />
+ <tile id="1768" type="wheat-2" />
+ <tile id="1769" type="wheat-2" />
+ <tile id="1770" type="wheat-3" />
+ <tile id="1771" type="wheat-3" />
+ <tile id="1772" type="wheat-3" />
+ <tile id="1773" type="wheat-4" />
+ <tile id="1774" type="wheat-4" />
+ <tile id="1775" type="wheat-4" />
  <tile id="1800" type="copper-ore" />
  <tile id="1801" type="copper-ore" />
  <tile id="1802" type="copper-ore" />
@@ -1147,18 +1230,16 @@
  <tile id="1839" type="iron-ore" />
  <tile id="1840" type="iron-ore" />
  <tile id="1841" type="iron-ore" />
- <tile id="1872" type="cave-canyon" />
- <tile id="1873" type="cave-canyon" />
- <tile id="1874" type="cave-canyon" />
- <tile id="1875" type="cave-canyon" />
- <tile id="1876" type="cave-forest" />
- <tile id="1877" type="cave-forest" />
- <tile id="1878" type="cave-forest" />
- <tile id="1879" type="cave-forest" />
- <tile id="1880" type="cave-snow" />
- <tile id="1881" type="cave-snow" />
- <tile id="1882" type="cave-snow" />
- <tile id="1883" type="cave-snow" />
+ <tile id="1842" type="iron-chunks" />
+ <tile id="1843" type="iron-chunks" />
+ <tile id="1844" type="copper-chunks" />
+ <tile id="1845" type="copper-chunks" />
+ <tile id="1872" type="copper-ore" />
+ <tile id="1873" type="copper-ore" />
+ <tile id="1874" type="copper-ore" />
+ <tile id="1875" type="iron-ore" />
+ <tile id="1876" type="iron-ore" />
+ <tile id="1877" type="iron-ore" />
  <tile id="1908" type="cave-canyon" />
  <tile id="1909" type="cave-canyon" />
  <tile id="1910" type="cave-canyon" />
@@ -1199,150 +1280,162 @@
  <tile id="2017" type="cave-canyon" />
  <tile id="2018" type="cave-canyon" />
  <tile id="2019" type="cave-canyon" />
+ <tile id="2020" type="cave-forest" />
+ <tile id="2021" type="cave-forest" />
+ <tile id="2022" type="cave-forest" />
+ <tile id="2023" type="cave-forest" />
  <tile id="2024" type="cave-snow" />
  <tile id="2025" type="cave-snow" />
  <tile id="2026" type="cave-snow" />
  <tile id="2027" type="cave-snow" />
- <tile id="2052" type="connector-dirt-02" />
- <tile id="2053" type="connector-dirt-10" />
- <tile id="2054" type="connector-dirt-08" />
- <tile id="2055" type="connector-dirt-00" />
- <tile id="2056" type="connector-dirt-06" />
- <tile id="2057" type="connector-dirt-14" />
- <tile id="2058" type="connector-dirt-12" />
- <tile id="2059" type="connector-dirt-01" />
- <tile id="2060" type="connector-dirt-07" />
- <tile id="2061" type="connector-dirt-15" />
- <tile id="2062" type="connector-dirt-13" />
- <tile id="2063" type="connector-dirt-05" />
- <tile id="2064" type="connector-dirt-03" />
- <tile id="2065" type="connector-dirt-11" />
- <tile id="2066" type="connector-dirt-09" />
- <tile id="2067" type="connector-dirt-04" />
- <tile id="2068" type="connector-cobblestone-02" />
- <tile id="2069" type="connector-cobblestone-10" />
- <tile id="2070" type="connector-cobblestone-08" />
- <tile id="2071" type="connector-cobblestone-00" />
- <tile id="2072" type="connector-cobblestone-06" />
- <tile id="2073" type="connector-cobblestone-14" />
- <tile id="2074" type="connector-cobblestone-12" />
- <tile id="2075" type="connector-cobblestone-01" />
- <tile id="2076" type="connector-cobblestone-07" />
- <tile id="2077" type="connector-cobblestone-15" />
- <tile id="2078" type="connector-cobblestone-13" />
- <tile id="2079" type="connector-cobblestone-05" />
- <tile id="2080" type="connector-cobblestone-03" />
- <tile id="2081" type="connector-cobblestone-11" />
- <tile id="2082" type="connector-cobblestone-09" />
- <tile id="2083" type="connector-cobblestone-04" />
- <tile id="2084" type="connector-boardwalk-02" />
- <tile id="2085" type="connector-boardwalk-10" />
- <tile id="2086" type="connector-boardwalk-08" />
- <tile id="2087" type="connector-boardwalk-00" />
- <tile id="2088" type="connector-boardwalk-06" />
- <tile id="2089" type="connector-boardwalk-14" />
- <tile id="2090" type="connector-boardwalk-12" />
- <tile id="2091" type="connector-boardwalk-01" />
- <tile id="2092" type="connector-boardwalk-07" />
- <tile id="2093" type="connector-boardwalk-15" />
- <tile id="2094" type="connector-boardwalk-13" />
- <tile id="2095" type="connector-boardwalk-05" />
- <tile id="2096" type="connector-boardwalk-03" />
- <tile id="2097" type="connector-boardwalk-11" />
- <tile id="2098" type="connector-boardwalk-09" />
- <tile id="2099" type="connector-boardwalk-04" />
- <tile id="2100" type="connector-stepping-stone-02" />
- <tile id="2101" type="connector-stepping-stone-10" />
- <tile id="2102" type="connector-stepping-stone-08" />
- <tile id="2103" type="connector-stepping-stone-00" />
- <tile id="2104" type="connector-stepping-stone-06" />
- <tile id="2105" type="connector-stepping-stone-14" />
- <tile id="2106" type="connector-stepping-stone-12" />
- <tile id="2107" type="connector-stepping-stone-01" />
- <tile id="2108" type="connector-stepping-stone-07" />
- <tile id="2109" type="connector-stepping-stone-15" />
- <tile id="2110" type="connector-stepping-stone-13" />
- <tile id="2111" type="connector-stepping-stone-05" />
- <tile id="2112" type="connector-stepping-stone-03" />
- <tile id="2113" type="connector-stepping-stone-11" />
- <tile id="2114" type="connector-stepping-stone-09" />
- <tile id="2115" type="connector-stepping-stone-04" />
+ <tile id="2052" type="cave-canyon" />
+ <tile id="2053" type="cave-canyon" />
+ <tile id="2054" type="cave-canyon" />
+ <tile id="2055" type="cave-canyon" />
+ <tile id="2060" type="cave-snow" />
+ <tile id="2061" type="cave-snow" />
+ <tile id="2062" type="cave-snow" />
+ <tile id="2063" type="cave-snow" />
+ <tile id="2088" type="connector-dirt-02" />
+ <tile id="2089" type="connector-dirt-10" />
+ <tile id="2090" type="connector-dirt-08" />
+ <tile id="2091" type="connector-dirt-00" />
+ <tile id="2092" type="connector-dirt-06" />
+ <tile id="2093" type="connector-dirt-14" />
+ <tile id="2094" type="connector-dirt-12" />
+ <tile id="2095" type="connector-dirt-01" />
+ <tile id="2096" type="connector-dirt-07" />
+ <tile id="2097" type="connector-dirt-15" />
+ <tile id="2098" type="connector-dirt-13" />
+ <tile id="2099" type="connector-dirt-05" />
+ <tile id="2100" type="connector-dirt-03" />
+ <tile id="2101" type="connector-dirt-11" />
+ <tile id="2102" type="connector-dirt-09" />
+ <tile id="2103" type="connector-dirt-04" />
+ <tile id="2104" type="connector-cobblestone-02" />
+ <tile id="2105" type="connector-cobblestone-10" />
+ <tile id="2106" type="connector-cobblestone-08" />
+ <tile id="2107" type="connector-cobblestone-00" />
+ <tile id="2108" type="connector-cobblestone-06" />
+ <tile id="2109" type="connector-cobblestone-14" />
+ <tile id="2110" type="connector-cobblestone-12" />
+ <tile id="2111" type="connector-cobblestone-01" />
+ <tile id="2112" type="connector-cobblestone-07" />
+ <tile id="2113" type="connector-cobblestone-15" />
+ <tile id="2114" type="connector-cobblestone-13" />
+ <tile id="2115" type="connector-cobblestone-05" />
+ <tile id="2116" type="connector-cobblestone-03" />
+ <tile id="2117" type="connector-cobblestone-11" />
+ <tile id="2118" type="connector-cobblestone-09" />
+ <tile id="2119" type="connector-cobblestone-04" />
+ <tile id="2120" type="connector-boardwalk-02" />
+ <tile id="2121" type="connector-boardwalk-10" />
+ <tile id="2122" type="connector-boardwalk-08" />
+ <tile id="2123" type="connector-boardwalk-00" />
+ <tile id="2124" type="connector-boardwalk-06" />
+ <tile id="2125" type="connector-boardwalk-14" />
+ <tile id="2126" type="connector-boardwalk-12" />
+ <tile id="2127" type="connector-boardwalk-01" />
+ <tile id="2128" type="connector-boardwalk-07" />
+ <tile id="2129" type="connector-boardwalk-15" />
+ <tile id="2130" type="connector-boardwalk-13" />
+ <tile id="2131" type="connector-boardwalk-05" />
+ <tile id="2132" type="connector-boardwalk-03" />
+ <tile id="2133" type="connector-boardwalk-11" />
+ <tile id="2134" type="connector-boardwalk-09" />
+ <tile id="2135" type="connector-boardwalk-04" />
+ <tile id="2136" type="connector-stepping-stone-02" />
+ <tile id="2137" type="connector-stepping-stone-10" />
+ <tile id="2138" type="connector-stepping-stone-08" />
+ <tile id="2139" type="connector-stepping-stone-00" />
+ <tile id="2140" type="connector-stepping-stone-06" />
+ <tile id="2141" type="connector-stepping-stone-14" />
+ <tile id="2142" type="connector-stepping-stone-12" />
+ <tile id="2143" type="connector-stepping-stone-01" />
+ <tile id="2144" type="connector-stepping-stone-07" />
+ <tile id="2145" type="connector-stepping-stone-15" />
+ <tile id="2146" type="connector-stepping-stone-13" />
+ <tile id="2147" type="connector-stepping-stone-05" />
+ <tile id="2148" type="connector-stepping-stone-03" />
+ <tile id="2149" type="connector-stepping-stone-11" />
+ <tile id="2150" type="connector-stepping-stone-09" />
+ <tile id="2151" type="connector-stepping-stone-04" />
  <wangsets>
-  <wangset name="Path - dirt" type="edge" tile="2061">
-   <wangcolor name="dirt" color="#c79a58" tile="2061" probability="1" />
-   <wangtile tileid="2055" wangid="0,0,0,0,0,0,0,0" />
-   <wangtile tileid="2059" wangid="1,0,0,0,0,0,0,0" />
-   <wangtile tileid="2052" wangid="0,0,1,0,0,0,0,0" />
-   <wangtile tileid="2064" wangid="1,0,1,0,0,0,0,0" />
-   <wangtile tileid="2067" wangid="0,0,0,0,1,0,0,0" />
-   <wangtile tileid="2063" wangid="1,0,0,0,1,0,0,0" />
-   <wangtile tileid="2056" wangid="0,0,1,0,1,0,0,0" />
-   <wangtile tileid="2060" wangid="1,0,1,0,1,0,0,0" />
-   <wangtile tileid="2054" wangid="0,0,0,0,0,0,1,0" />
-   <wangtile tileid="2066" wangid="1,0,0,0,0,0,1,0" />
-   <wangtile tileid="2053" wangid="0,0,1,0,0,0,1,0" />
-   <wangtile tileid="2065" wangid="1,0,1,0,0,0,1,0" />
-   <wangtile tileid="2058" wangid="0,0,0,0,1,0,1,0" />
-   <wangtile tileid="2062" wangid="1,0,0,0,1,0,1,0" />
-   <wangtile tileid="2057" wangid="0,0,1,0,1,0,1,0" />
-   <wangtile tileid="2061" wangid="1,0,1,0,1,0,1,0" />
+  <wangset name="Path - dirt" type="edge" tile="2097">
+   <wangcolor name="dirt" color="#c79a58" tile="2097" probability="1" />
+   <wangtile tileid="2091" wangid="0,0,0,0,0,0,0,0" />
+   <wangtile tileid="2095" wangid="1,0,0,0,0,0,0,0" />
+   <wangtile tileid="2088" wangid="0,0,1,0,0,0,0,0" />
+   <wangtile tileid="2100" wangid="1,0,1,0,0,0,0,0" />
+   <wangtile tileid="2103" wangid="0,0,0,0,1,0,0,0" />
+   <wangtile tileid="2099" wangid="1,0,0,0,1,0,0,0" />
+   <wangtile tileid="2092" wangid="0,0,1,0,1,0,0,0" />
+   <wangtile tileid="2096" wangid="1,0,1,0,1,0,0,0" />
+   <wangtile tileid="2090" wangid="0,0,0,0,0,0,1,0" />
+   <wangtile tileid="2102" wangid="1,0,0,0,0,0,1,0" />
+   <wangtile tileid="2089" wangid="0,0,1,0,0,0,1,0" />
+   <wangtile tileid="2101" wangid="1,0,1,0,0,0,1,0" />
+   <wangtile tileid="2094" wangid="0,0,0,0,1,0,1,0" />
+   <wangtile tileid="2098" wangid="1,0,0,0,1,0,1,0" />
+   <wangtile tileid="2093" wangid="0,0,1,0,1,0,1,0" />
+   <wangtile tileid="2097" wangid="1,0,1,0,1,0,1,0" />
   </wangset>
-  <wangset name="Path - cobblestone" type="edge" tile="2077">
-   <wangcolor name="cobblestone" color="#938273" tile="2077" probability="1" />
-   <wangtile tileid="2071" wangid="0,0,0,0,0,0,0,0" />
-   <wangtile tileid="2075" wangid="1,0,0,0,0,0,0,0" />
-   <wangtile tileid="2068" wangid="0,0,1,0,0,0,0,0" />
-   <wangtile tileid="2080" wangid="1,0,1,0,0,0,0,0" />
-   <wangtile tileid="2083" wangid="0,0,0,0,1,0,0,0" />
-   <wangtile tileid="2079" wangid="1,0,0,0,1,0,0,0" />
-   <wangtile tileid="2072" wangid="0,0,1,0,1,0,0,0" />
-   <wangtile tileid="2076" wangid="1,0,1,0,1,0,0,0" />
-   <wangtile tileid="2070" wangid="0,0,0,0,0,0,1,0" />
-   <wangtile tileid="2082" wangid="1,0,0,0,0,0,1,0" />
-   <wangtile tileid="2069" wangid="0,0,1,0,0,0,1,0" />
-   <wangtile tileid="2081" wangid="1,0,1,0,0,0,1,0" />
-   <wangtile tileid="2074" wangid="0,0,0,0,1,0,1,0" />
-   <wangtile tileid="2078" wangid="1,0,0,0,1,0,1,0" />
-   <wangtile tileid="2073" wangid="0,0,1,0,1,0,1,0" />
-   <wangtile tileid="2077" wangid="1,0,1,0,1,0,1,0" />
+  <wangset name="Path - cobblestone" type="edge" tile="2113">
+   <wangcolor name="cobblestone" color="#938273" tile="2113" probability="1" />
+   <wangtile tileid="2107" wangid="0,0,0,0,0,0,0,0" />
+   <wangtile tileid="2111" wangid="1,0,0,0,0,0,0,0" />
+   <wangtile tileid="2104" wangid="0,0,1,0,0,0,0,0" />
+   <wangtile tileid="2116" wangid="1,0,1,0,0,0,0,0" />
+   <wangtile tileid="2119" wangid="0,0,0,0,1,0,0,0" />
+   <wangtile tileid="2115" wangid="1,0,0,0,1,0,0,0" />
+   <wangtile tileid="2108" wangid="0,0,1,0,1,0,0,0" />
+   <wangtile tileid="2112" wangid="1,0,1,0,1,0,0,0" />
+   <wangtile tileid="2106" wangid="0,0,0,0,0,0,1,0" />
+   <wangtile tileid="2118" wangid="1,0,0,0,0,0,1,0" />
+   <wangtile tileid="2105" wangid="0,0,1,0,0,0,1,0" />
+   <wangtile tileid="2117" wangid="1,0,1,0,0,0,1,0" />
+   <wangtile tileid="2110" wangid="0,0,0,0,1,0,1,0" />
+   <wangtile tileid="2114" wangid="1,0,0,0,1,0,1,0" />
+   <wangtile tileid="2109" wangid="0,0,1,0,1,0,1,0" />
+   <wangtile tileid="2113" wangid="1,0,1,0,1,0,1,0" />
   </wangset>
-  <wangset name="Path - boardwalk" type="edge" tile="2093">
-   <wangcolor name="boardwalk" color="#9e6b38" tile="2093" probability="1" />
-   <wangtile tileid="2087" wangid="0,0,0,0,0,0,0,0" />
-   <wangtile tileid="2091" wangid="1,0,0,0,0,0,0,0" />
-   <wangtile tileid="2084" wangid="0,0,1,0,0,0,0,0" />
-   <wangtile tileid="2096" wangid="1,0,1,0,0,0,0,0" />
-   <wangtile tileid="2099" wangid="0,0,0,0,1,0,0,0" />
-   <wangtile tileid="2095" wangid="1,0,0,0,1,0,0,0" />
-   <wangtile tileid="2088" wangid="0,0,1,0,1,0,0,0" />
-   <wangtile tileid="2092" wangid="1,0,1,0,1,0,0,0" />
-   <wangtile tileid="2086" wangid="0,0,0,0,0,0,1,0" />
-   <wangtile tileid="2098" wangid="1,0,0,0,0,0,1,0" />
-   <wangtile tileid="2085" wangid="0,0,1,0,0,0,1,0" />
-   <wangtile tileid="2097" wangid="1,0,1,0,0,0,1,0" />
-   <wangtile tileid="2090" wangid="0,0,0,0,1,0,1,0" />
-   <wangtile tileid="2094" wangid="1,0,0,0,1,0,1,0" />
-   <wangtile tileid="2089" wangid="0,0,1,0,1,0,1,0" />
-   <wangtile tileid="2093" wangid="1,0,1,0,1,0,1,0" />
+  <wangset name="Path - boardwalk" type="edge" tile="2129">
+   <wangcolor name="boardwalk" color="#9e6b38" tile="2129" probability="1" />
+   <wangtile tileid="2123" wangid="0,0,0,0,0,0,0,0" />
+   <wangtile tileid="2127" wangid="1,0,0,0,0,0,0,0" />
+   <wangtile tileid="2120" wangid="0,0,1,0,0,0,0,0" />
+   <wangtile tileid="2132" wangid="1,0,1,0,0,0,0,0" />
+   <wangtile tileid="2135" wangid="0,0,0,0,1,0,0,0" />
+   <wangtile tileid="2131" wangid="1,0,0,0,1,0,0,0" />
+   <wangtile tileid="2124" wangid="0,0,1,0,1,0,0,0" />
+   <wangtile tileid="2128" wangid="1,0,1,0,1,0,0,0" />
+   <wangtile tileid="2122" wangid="0,0,0,0,0,0,1,0" />
+   <wangtile tileid="2134" wangid="1,0,0,0,0,0,1,0" />
+   <wangtile tileid="2121" wangid="0,0,1,0,0,0,1,0" />
+   <wangtile tileid="2133" wangid="1,0,1,0,0,0,1,0" />
+   <wangtile tileid="2126" wangid="0,0,0,0,1,0,1,0" />
+   <wangtile tileid="2130" wangid="1,0,0,0,1,0,1,0" />
+   <wangtile tileid="2125" wangid="0,0,1,0,1,0,1,0" />
+   <wangtile tileid="2129" wangid="1,0,1,0,1,0,1,0" />
   </wangset>
-  <wangset name="Path - stepping-stone" type="edge" tile="2109">
-   <wangcolor name="stepping-stone" color="#ae9c80" tile="2109" probability="1" />
-   <wangtile tileid="2103" wangid="0,0,0,0,0,0,0,0" />
-   <wangtile tileid="2107" wangid="1,0,0,0,0,0,0,0" />
-   <wangtile tileid="2100" wangid="0,0,1,0,0,0,0,0" />
-   <wangtile tileid="2112" wangid="1,0,1,0,0,0,0,0" />
-   <wangtile tileid="2115" wangid="0,0,0,0,1,0,0,0" />
-   <wangtile tileid="2111" wangid="1,0,0,0,1,0,0,0" />
-   <wangtile tileid="2104" wangid="0,0,1,0,1,0,0,0" />
-   <wangtile tileid="2108" wangid="1,0,1,0,1,0,0,0" />
-   <wangtile tileid="2102" wangid="0,0,0,0,0,0,1,0" />
-   <wangtile tileid="2114" wangid="1,0,0,0,0,0,1,0" />
-   <wangtile tileid="2101" wangid="0,0,1,0,0,0,1,0" />
-   <wangtile tileid="2113" wangid="1,0,1,0,0,0,1,0" />
-   <wangtile tileid="2106" wangid="0,0,0,0,1,0,1,0" />
-   <wangtile tileid="2110" wangid="1,0,0,0,1,0,1,0" />
-   <wangtile tileid="2105" wangid="0,0,1,0,1,0,1,0" />
-   <wangtile tileid="2109" wangid="1,0,1,0,1,0,1,0" />
+  <wangset name="Path - stepping-stone" type="edge" tile="2145">
+   <wangcolor name="stepping-stone" color="#ae9c80" tile="2145" probability="1" />
+   <wangtile tileid="2139" wangid="0,0,0,0,0,0,0,0" />
+   <wangtile tileid="2143" wangid="1,0,0,0,0,0,0,0" />
+   <wangtile tileid="2136" wangid="0,0,1,0,0,0,0,0" />
+   <wangtile tileid="2148" wangid="1,0,1,0,0,0,0,0" />
+   <wangtile tileid="2151" wangid="0,0,0,0,1,0,0,0" />
+   <wangtile tileid="2147" wangid="1,0,0,0,1,0,0,0" />
+   <wangtile tileid="2140" wangid="0,0,1,0,1,0,0,0" />
+   <wangtile tileid="2144" wangid="1,0,1,0,1,0,0,0" />
+   <wangtile tileid="2138" wangid="0,0,0,0,0,0,1,0" />
+   <wangtile tileid="2150" wangid="1,0,0,0,0,0,1,0" />
+   <wangtile tileid="2137" wangid="0,0,1,0,0,0,1,0" />
+   <wangtile tileid="2149" wangid="1,0,1,0,0,0,1,0" />
+   <wangtile tileid="2142" wangid="0,0,0,0,1,0,1,0" />
+   <wangtile tileid="2146" wangid="1,0,0,0,1,0,1,0" />
+   <wangtile tileid="2141" wangid="0,0,1,0,1,0,1,0" />
+   <wangtile tileid="2145" wangid="1,0,1,0,1,0,1,0" />
   </wangset>
  </wangsets>
 </tileset>

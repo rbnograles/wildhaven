@@ -805,7 +805,7 @@ SCATTER = {
     'P': (0.85, ['pines', 'pine', 'pine', 'pines', 'rocks-a']),
     'S': (0.32, ['snowy-pine', 'snowy-pine', 'ice-rock', 'boulder']),
     'C': (0.38, ['boulder', 'cliff-rock', 'rocks-a', 'dead-bush', 'boulder']),
-    'J': (0.70, ['jungle-tree', 'jungle-tree', 'fern', 'fern', 'big-oak', 'palm']),
+    'J': (0.70, ['jungle-tree', 'jungle-tree', 'big-oak', 'palm']),
 }
 # What washes up on the sea beach all round the island (the lagoon keeps its own shore, below).
 BEACH_SCATTER = (0.18, ['driftwood', 'driftwood', 'driftwood', 'beach-rock'])

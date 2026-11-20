@@ -22,7 +22,6 @@
   "boulder": { "kind": "rocks", "origin": [0.5, 0.971], "footprint": [85, 55] },
   "cliff-rock": { "kind": "rocks", "origin": [0.5, 0.98], "footprint": [85, 55] },
   "jungle-tree": { "kind": "trees", "origin": [0.5, 0.984], "footprint": [48, 26], "scale": 0.75 },
-  "fern": { "kind": "plants", "origin": [0.5, 0.9] },
   "palm": { "kind": "trees", "origin": [0.765, 0.982], "footprint": [15, 12], "scale": 0.75 },
   "dead-bush": { "kind": "plants", "origin": [0.5, 0.9], "footprint": [30, 16] },
   "cactus": { "kind": "plants", "origin": [0.5, 0.97], "footprint": [22, 16] },

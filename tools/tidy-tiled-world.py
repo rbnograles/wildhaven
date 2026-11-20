@@ -36,7 +36,7 @@ CROSSINGS = [(18648, 5698), (16748, 9548), (19548, 12148), (22248, 12423), (4948
 FORD_REACH = 6                 # how many squares from a crossing its patch of ford dirt may reach
 BANK_LOOP = 4                  # the painted bank repeats every four squares along a shore
 SMALL = {'pebbles', 'sticks', 'feather', 'pine-cone', 'antler', 'mossy-stone', 'grey-rock', 'flat-stone', 'flowers',
-         'driftwood', 'grass-tuft', 'tall-grass', 'dry-grass', 'snow-grass', 'fern', 'wild-berries', 'dead-bush'}
+         'driftwood', 'grass-tuft', 'tall-grass', 'dry-grass', 'snow-grass', 'wild-berries', 'dead-bush'}
 BIG = {'pines', 'pine', 'oak', 'big-oak', 'snowy-pine', 'jungle-tree', 'palm', 'cactus', 'rocks-a', 'rocks-b',
        'beach-rock', 'ice-rock', 'boulder', 'cliff-rock', 'iron-ore', 'copper-ore'}   # scenery that can crowd
 SOLID = BIG | {'tent', 'house-a', 'house-b', 'house-c', 'workshop', 'ship', 'sandstone-ruin', 'cave-forest',
