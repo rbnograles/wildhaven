@@ -4,15 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  GATHER_SECONDS,
-  PICKUP_SECONDS,
-  SUPPLY_REGROW,
-  TOOL_SECONDS,
-  SIZE_WEAR,
-  ROCK_YIELD,
-} from '../../src/data/balance.js';
-import { HARVEST, sizedHarvest } from '../../src/data/supplies.js';
+import { GATHER_SECONDS, SUPPLY_REGROW, TOOL_SECONDS } from '../../src/data/balance.js';
 import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import {
@@ -22,10 +14,8 @@ import {
   beginGather,
   finishGather,
   gatherTime,
-  toolWear,
   aimState,
 } from '../../src/actions/gather.js';
-import { finishInteraction } from '../../src/actions/interact.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 
 /** The wild flower patches: herb nodes that grow back after being picked. */
@@ -178,58 +168,6 @@ test('tools shorten the gathers that need them, and only those', () => {
   game.tools.axe = { tier: 'iron' };
   assert.equal(gatherTime(game, pine), TOOL_SECONDS.iron);
   assert.equal(gatherTime(game, berries), GATHER_SECONDS);
-});
-
-// Guards rock sizes: a bigger rock must give more, take longer and wear a stone pickaxe more than
-// a smaller one of the same kind, or the big boulders stop being worth their extra work.
-test('a bigger rock gives more, takes longer to mine and wears the pickaxe more', () => {
-  const game = createGame('survivor');
-  game.tools.pickaxe = { tier: 'stone', uses: 25 };
-  const [small, medium, large] = ['beach-rock', 'rocks-a', 'boulder'].map((sprite) =>
-    NODES.find((n) => n.sprite === sprite && n.inScenery && n.size === HARVEST[sprite].size),
-  );
-
-  assert.deepEqual([small.size, medium.size, large.size], [1, 2, 3]);
-  assert.ok(small.amount < medium.amount && medium.amount < large.amount);
-  assert.equal(gatherTime(game, small), TOOL_SECONDS.stone);
-  assert.ok(gatherTime(game, small) < gatherTime(game, medium));
-  assert.ok(gatherTime(game, medium) < gatherTime(game, large));
-  assert.deepEqual([small, medium, large].map(toolWear), SIZE_WEAR);
-  for (const yields of Object.values(ROCK_YIELD))
-    assert.ok(yields[0] < yields[1] && yields[1] < yields[2]);
-
-  // A rock the map draws much smaller than usual is mined as the next size down.
-  const boulder = HARVEST.boulder;
-  assert.equal(sizedHarvest(boulder, 1), boulder);
-  assert.deepEqual(
-    [sizedHarvest(boulder, 0.7).size, sizedHarvest(boulder, 0.7).amount],
-    [2, ROCK_YIELD.stone[1]],
-  );
-  assert.equal(sizedHarvest(HARVEST['beach-rock'], 0.5).size, 1); // nothing is smaller than small
-  assert.equal(sizedHarvest(HARVEST.oak, 0.5), HARVEST.oak); // trees have no size
-
-  // Mining the boulder through the finish step costs the stone pickaxe three uses.
-  Object.assign(game.player, { x: large.x, y: large.y + 30 });
-  assert.equal(finishInteraction(game, large.id)?.node, large);
-  assert.equal(game.tools.pickaxe.uses, 25 - SIZE_WEAR[2]);
-});
-
-// Guards the quick pick-ups: loose stones and sticks must be much faster than chopping, while
-// picking berries keeps the full bare-hand time.
-test('picking up small stones and sticks is quicker than chopping or picking berries', () => {
-  const game = createGame('scout');
-  for (const sprite of ['pebbles', 'sticks', 'driftwood', 'grey-rock']) {
-    const node = NODES.find((n) => n.sprite === sprite);
-    assert.equal(gatherTime(game, node), PICKUP_SECONDS, sprite);
-  }
-  assert.ok(PICKUP_SECONDS < TOOL_SECONDS.iron);
-  assert.equal(
-    gatherTime(
-      game,
-      NODES.find((n) => n.sprite === 'wild-berries'),
-    ),
-    GATHER_SECONDS,
-  );
 });
 
 // Guards the map's trees and rocks: with the right tool they give their wood, stone or iron.

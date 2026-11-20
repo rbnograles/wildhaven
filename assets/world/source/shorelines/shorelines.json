@@ -4,7 +4,5 @@
     "ocean": { "left": 58, "right": 458, "top": 272, "water": 336, "bottom": 350, "fade": 18 },
     "river": { "left": 48, "right": 486, "top": 215, "water": 328, "bottom": 345, "fade": 5 },
     "lake": { "left": 75, "right": 520, "top": 205, "water": 298, "bottom": 307, "fade": 5 }
-  },
-  "_snowComment": "The snowy bank, cut from snow-ocean-bank.png by tools/build-snow-banks.py for the map drawn in Tiled (build-map.py does not use it). Same fields as a kind above. The strip starts below the dark outline of its snow, so the snow melts into the snowy ground.",
-  "snow": { "left": 70, "right": 450, "top": 246, "water": 338, "bottom": 356, "fade": 14 }
+  }
 }

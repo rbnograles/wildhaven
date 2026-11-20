@@ -1,20 +1,9 @@
-// Draws the map's real ground for the world editor when it is zoomed in, the way the game draws
-// it: every shown tile layer, from every tileset the map lists (a map brought in from Tiled adds the
-// ground and path kits). Drawing 448 by 320 tiles on every mouse move would be far too slow, so each
-// block of 16 by 16 tiles is painted once onto its own small canvas and reused.
+// Draws the map's real ground for the world editor when it is zoomed in. The map has eleven tile
+// layers of 448 by 320 tiles; drawing them tile by tile on every mouse move would be far too slow,
+// so each block of 16 by 16 tiles is painted once onto its own small canvas and reused.
 
 import MAP from '../../assets/world/map/wildhaven.json';
-
-/** Tileset picture name (`tileset.png`, `ground-kit.png`, `path-kit.png`) → its URL. */
-const SHEET_URLS = Object.fromEntries(
-  Object.entries(
-    import.meta.glob('../../assets/world/map/*.png', {
-      eager: true,
-      query: '?url',
-      import: 'default',
-    }),
-  ).map(([path, url]) => [path.match(/([\w-]+\.png)$/)[1], url]),
-);
+import tilesetUrl from '../../assets/world/map/tileset.png';
 
 /** One tile's width in world units. */
 const TILE = MAP.tilewidth;
@@ -40,20 +29,11 @@ const KEEP = { [HALF]: 96, [TILE]: 40 };
 /** At most this many new chunks are painted per draw, so the first look at a place doesn't freeze. */
 const PER_DRAW = 6;
 
-/** The map's shown tile layers, bottom to top, in the map's own order. Hidden ones (the game's own
- * ground layers, kept for collision under a map from Tiled) are left out, as in the game. */
-const LAYERS = MAP.layers.filter((layer) => layer.type === 'tilelayer' && layer.visible !== false);
+/** The map's tile layers, bottom to top, in the map's own order. */
+const LAYERS = MAP.layers.filter((layer) => layer.type === 'tilelayer');
 
-/** The map's tilesets, each with where its tiles sit in its picture: margin, spacing and columns. */
-const SETS = MAP.tilesets;
-
-/**
- * Finds the tileset a tile number belongs to: the last one whose first number is not above it.
- *
- * @param {number} gid - The tile's number in the map, flip bits removed.
- * @returns {number} The tileset's index in SETS.
- */
-const setOf = (gid) => SETS.findLastIndex((set) => set.firstgid <= gid);
+/** Where the tiles sit in the tileset picture: margin, spacing and columns. */
+const SET = MAP.tilesets[0];
 
 /**
  * Sets up the chunked ground painter.
@@ -62,12 +42,9 @@ const setOf = (gid) => SETS.findLastIndex((set) => set.firstgid <= gid);
  * @returns {{ready: Function, draw: Function}} The painter.
  */
 export function createTiles(onReady) {
-  const sheets = SETS.map((set) => {
-    const sheet = new Image();
-    sheet.onload = onReady;
-    sheet.src = SHEET_URLS[set.image];
-    return sheet;
-  });
+  const sheet = new Image();
+  sheet.onload = onReady;
+  sheet.src = tilesetUrl;
 
   /**
    * Chunk canvases for each tile size, by 'cx,cy', oldest first, so the least recently used can
@@ -95,26 +72,22 @@ export function createTiles(onReady) {
             row = cy * CHUNK + ty;
           if (col >= MAP.width || row >= MAP.height) continue;
 
-          // The top three bits of a tile number say how it is flipped; the editor ignores them.
-          const gid = layer.data[row * MAP.width + col] & 0x1fffffff;
+          const gid = layer.data[row * MAP.width + col];
           if (!gid) continue;
 
-          // A tile's place in its tileset picture, allowing for the margin and spacing.
-          const i = setOf(gid),
-            set = SETS[i],
-            n = gid - set.firstgid;
-          if (n >= set.tilecount) continue;
-          const sx = set.margin + (n % set.columns) * (TILE + set.spacing);
-          const sy = set.margin + Math.floor(n / set.columns) * (TILE + set.spacing);
-          ctx.drawImage(sheets[i], sx, sy, TILE, TILE, tx * px, ty * px, px, px);
+          // A tile's place in the tileset picture, allowing for its margin and spacing.
+          const n = gid - SET.firstgid;
+          const sx = SET.margin + (n % SET.columns) * (TILE + SET.spacing);
+          const sy = SET.margin + Math.floor(n / SET.columns) * (TILE + SET.spacing);
+          ctx.drawImage(sheet, sx, sy, TILE, TILE, tx * px, ty * px, px, px);
         }
 
     return canvas;
   }
 
   return {
-    // Says whether every tileset picture has loaded.
-    ready: () => sheets.every((sheet) => sheet.complete && sheet.naturalWidth > 0),
+    // Says whether the tileset picture has loaded.
+    ready: () => sheet.complete && sheet.naturalWidth > 0,
 
     // Draws the ground for the part of the world on screen. Returns true if some chunks are
     // still to be painted, so the caller should draw again soon.

@@ -50,9 +50,6 @@ import survivorHurtCold from '../../assets/characters/survivor/survivor-damage-c
 import scoutHurtAttack from '../../assets/characters/scout/scout-damage-attack.png';
 import builderHurtAttack from '../../assets/characters/builder/builder-damage-attack.png';
 import survivorHurtAttack from '../../assets/characters/survivor/survivor-damage-attack.png';
-import scoutRepel from '../../assets/characters/scout/scout-repel.png';
-import builderRepel from '../../assets/characters/builder/builder-repel.png';
-import survivorRepel from '../../assets/characters/survivor/survivor-repel.png';
 import scoutDying from '../../assets/characters/scout/scout-dying-v2.png';
 import builderDying from '../../assets/characters/builder/builder-dying-v2.png';
 import survivorDying from '../../assets/characters/survivor/survivor-dying-v2.png';
@@ -123,7 +120,6 @@ const SOURCES = {
     hurtHunger: { url: scoutHurtHunger, edges: [0, 418] },
     hurtCold: { url: scoutHurtCold, edges: [0, 418], steady: true },
     hurtAttack: { url: scoutHurtAttack, edges: [0, 362] },
-    repel: { url: scoutRepel, edges: [0, 418] },
     dying: { url: scoutDying, edges: [0, 320], columns: 6 },
     walkNE: { url: scoutWalkNE, edges: [0, 418], steady: true },
     walkSE: { url: scoutWalkSE, edges: [0, 418], steady: true },
@@ -147,7 +143,6 @@ const SOURCES = {
     hurtHunger: { url: builderHurtHunger, edges: [0, 418] },
     hurtCold: { url: builderHurtCold, edges: [0, 418], steady: true },
     hurtAttack: { url: builderHurtAttack, edges: [0, 362] },
-    repel: { url: builderRepel, edges: [0, 418] },
     dying: { url: builderDying, edges: [0, 320], columns: 6 },
     walkNE: { url: builderWalkNE, edges: [0, 418], steady: true },
     walkSE: { url: builderWalkSE, edges: [0, 418], steady: true },
@@ -171,7 +166,6 @@ const SOURCES = {
     hurtHunger: { url: survivorHurtHunger, edges: [0, 418] },
     hurtCold: { url: survivorHurtCold, edges: [0, 418], steady: true },
     hurtAttack: { url: survivorHurtAttack, edges: [0, 362] },
-    repel: { url: survivorRepel, edges: [0, 418] },
     dying: { url: survivorDying, edges: [0, 320], columns: 6 },
     walkNE: { url: survivorWalkNE, edges: [0, 418], steady: true },
     walkSE: { url: survivorWalkSE, edges: [0, 418], steady: true },
@@ -231,14 +225,7 @@ const SETTLER_STOOP = {
  * How tall the first pose of each standing survival sheet is, as a share of standing straight.
  * `loadCharacterSheets` uses it to size those sheets, so a hunched pose isn't stretched to full height.
  */
-const STOOP = {
-  hungry: 1,
-  hurtHunger: 0.97,
-  hurtCold: 0.97,
-  hurtAttack: 0.97,
-  dying: 0.97,
-  repel: 1,
-};
+const STOOP = { hungry: 1, hurtHunger: 0.97, hurtCold: 0.97, hurtAttack: 0.97, dying: 0.97 };
 
 /**
  * Loads one image file and waits until it is ready to draw.

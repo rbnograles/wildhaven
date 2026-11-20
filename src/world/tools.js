@@ -43,27 +43,24 @@ export function startingTools(characterId) {
 }
 
 /**
- * Uses up a stone tool a little, like a pencil getting shorter each time it is sharpened.
+ * Uses up one use of a stone tool, like a pencil getting shorter each time it is sharpened.
  *
  * Iron tools and tools the player doesn't own are left alone. A stone tool that runs out is
- * removed from the backpack. Hard work (a big rock) takes more than one use at once.
+ * removed from the backpack.
  *
  * @param {object} state - The game being played. The tool's uses go down, or it is removed.
  * @param {string} tool - The tool's id.
- * @param {number} [uses] - How many uses this piece of work costs. One unless told otherwise.
- * @returns {string|null} 'warn' when this work brought the tool down to TOOL_WEAR_WARNING uses or
- *   fewer for the first time, 'broke' when it just ran out, otherwise null.
+ * @returns {string|null} 'warn' when exactly TOOL_WEAR_WARNING uses are left, 'broke' when it just
+ *   ran out, otherwise null.
  */
-export function wearTool(state, tool, uses = 1) {
+export function wearTool(state, tool) {
   const owned = state.tools[tool];
   if (owned?.tier !== 'stone') return null;
 
-  const before = owned.uses;
-  owned.uses -= uses;
+  owned.uses -= 1;
   if (owned.uses <= 0) {
     delete state.tools[tool];
     return 'broke';
   }
-  // Warn once, on the step that crosses the line, even when that step skips right past it.
-  return before > TOOL_WEAR_WARNING && owned.uses <= TOOL_WEAR_WARNING ? 'warn' : null;
+  return owned.uses === TOOL_WEAR_WARNING ? 'warn' : null;
 }

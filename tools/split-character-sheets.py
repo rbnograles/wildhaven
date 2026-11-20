@@ -31,7 +31,6 @@ SHEETS = {
         'damage-hunger.png': 'damage-hunger.png',
         'damage-cold.png': 'damage-cold.png',
         'damage-attack.png': 'damage-attack.png',
-        'players-repel.png': 'repel.png',
     },
     'diagonal': {
         'walk-ne.png': 'walk-ne.png',

@@ -9,8 +9,6 @@ import herbsIconUrl from '../../assets/ui/game/item-herbs.png';
 import featherIconUrl from '../../assets/ui/game/item-feather.png';
 import pineconeIconUrl from '../../assets/ui/game/item-pinecone.png';
 import antlerIconUrl from '../../assets/ui/game/item-antler.png';
-import ironIconUrl from '../../assets/ui/game/item-iron.png';
-import copperIconUrl from '../../assets/ui/game/item-copper.png';
 import journalIconUrl from '../../assets/ui/game/icon-journal.png';
 import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
 import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
@@ -21,7 +19,6 @@ import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
 import { RESOURCES } from '../data/supplies.js';
 import { GEAR } from '../data/gear.js';
-import { BUILDINGS } from '../data/buildings.js';
 
 // How many of the item box's ten painted slots are still empty: all but one per resource.
 const SPARE_SLOTS = 10 - RESOURCES.length;
@@ -280,15 +277,6 @@ export function mountLayout(app) {
                 >${CAMPFIRE_COST.wood} wood · ${CAMPFIRE_COST.stone} stone</span
               ><kbd>1</kbd>
             </button>
-            <p class="build-menu-title">CAMP</p>
-            ${BUILDINGS.map(
-              (b) =>
-                /* HTML */ `<button id="build-${b.id}" class="build-option building-option">
-                  ${icon('hammer')}<span class="build-option-text"
-                    ><b class="building-name"></b><small>${b.use}</small></span
-                  ><span class="build-cost building-cost"></span><kbd>${b.key}</kbd>
-                </button>`,
-            ).join('')}
             <p class="build-menu-title">TOOLS</p>
             ${TOOLS.map(
               (t) =>
@@ -330,11 +318,7 @@ export function mountLayout(app) {
                 ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
                 ><span class="slot-label">Stone</span></span
               ><span class="slot" title="Iron"
-                ><img src="${ironIconUrl}" alt="" /><b id="iron">0</b
-                ><span class="slot-label">Iron</span></span
-              ><span class="slot" title="Copper"
-                ><img src="${copperIconUrl}" alt="" /><b id="copper">0</b
-                ><span class="slot-label">Copper</span></span
+                >${icon('iron')}<b id="iron">0</b><span class="slot-label">Iron</span></span
               ><button id="slot-food" class="slot" title="Eat one food (F)">
                 <img src="${foodIconUrl}" alt="" /><b id="food">0</b
                 ><span class="slot-label">Food</span><kbd>F</kbd></button
@@ -364,17 +348,11 @@ export function mountLayout(app) {
           </div>
         </div>
 
-        <!-- The round map. Clicking it opens the big map; the wheel and the + and - buttons zoom it. -->
-        <div class="minimap">
-          <button id="open-map" class="minimap-map" aria-label="Open world map (M)">
-            <canvas id="minimap" width="220" height="220" aria-hidden="true"></canvas
-            ><kbd class="minimap-key">M</kbd>
-          </button>
-          <div class="minimap-zoom">
-            <button id="minimap-in" type="button" aria-label="Zoom minimap in">+</button
-            ><button id="minimap-out" type="button" aria-label="Zoom minimap out">&minus;</button>
-          </div>
-        </div>
+        <!-- The round map. Clicking it opens the big map. -->
+        <button id="open-map" class="minimap" aria-label="Open world map (M)">
+          <canvas id="minimap" width="220" height="220" aria-hidden="true"></canvas
+          ><kbd class="minimap-key">M</kbd>
+        </button>
       </div>
 
       <!-- The "E" button. It appears when E would do something (gather, repair, board, step ashore, open a camp) and shows progress while gathering or repairing. -->
@@ -403,7 +381,7 @@ export function mountLayout(app) {
     </section>
 
     <!-- Pause menu. Any open dialog pauses the game. -->
-    <dialog id="pause-dialog" class="pause-dialog hud-window">
+    <dialog id="pause-dialog" class="pause-dialog">
       <span class="modal-mark">${icon('compass')}</span>
       <p class="dialog-kicker">TAKE A BREATH</p>
       <h2>The wilds can wait.</h2>
@@ -445,10 +423,7 @@ export function mountLayout(app) {
         <div id="map-waypoints"></div>
       </div>
       <div class="map-footer">
-        <span
-          >● You · <b class="legend-camp">●</b> Camp · <b class="legend-herd">●</b> Herd ·
-          <b class="legend-den">●</b> Wolf den · <b class="legend-signpost">●</b> Signpost: click to
-          travel</span
+        <span>● You · <b class="legend-camp">●</b> Camp · ◆ Signpost: click to travel</span
         ><span id="map-discovered"></span><span><kbd>M</kbd> Close map</span>
       </div>
     </dialog>
@@ -464,40 +439,12 @@ export function mountLayout(app) {
           ${icon('close')}
         </button>
       </div>
-      <!-- Two tabs: the places found, and what every key and button does. -->
-      <div class="journal-tabs" role="tablist" aria-label="Journal sections">
-        <button
-          id="journal-tab-places"
-          role="tab"
-          aria-controls="journal-places"
-          aria-selected="true"
-        >
-          Places</button
-        ><button
-          id="journal-tab-controls"
-          role="tab"
-          aria-controls="journal-controls"
-          aria-selected="false"
-        >
-          Controls
-        </button>
+      <p id="journal-intro" class="journal-intro"></p>
+      <div id="journal-trail" class="journal-trail">
+        <span class="dialog-kicker">ON THE TRAIL</span>
+        <p id="journal-trail-text"></p>
       </div>
-      <div id="journal-places" role="tabpanel" aria-labelledby="journal-tab-places">
-        <p id="journal-intro" class="journal-intro"></p>
-        <div id="journal-trail" class="journal-trail">
-          <span class="dialog-kicker">ON THE TRAIL</span>
-          <p id="journal-trail-text"></p>
-        </div>
-        <ol id="journal-pages" class="journal-pages"></ol>
-      </div>
-      <!-- The controls list. ui/journal.js builds it once from data/controls.js. -->
-      <div
-        id="journal-controls"
-        class="journal-controls"
-        role="tabpanel"
-        aria-labelledby="journal-tab-controls"
-        hidden
-      ></div>
+      <ol id="journal-pages" class="journal-pages"></ol>
       <div class="map-footer">
         <span id="journal-count"></span><span><kbd>J</kbd> Close journal</span>
       </div>
@@ -516,7 +463,7 @@ export function mountLayout(app) {
     <!-- Naming a camp just founded. ui/camp.js fills in the suggested name. -->
     <dialog
       id="camp-name-dialog"
-      class="pause-dialog camp-name-dialog hud-window"
+      class="pause-dialog camp-name-dialog"
       aria-labelledby="camp-name-title"
     >
       <form method="dialog">
@@ -530,7 +477,7 @@ export function mountLayout(app) {
     </dialog>
 
     <!-- A camp: its needs and what to do at the fire. ui/camp.js fills it. -->
-    <dialog id="camp-dialog" class="camp-dialog hud-window" aria-labelledby="camp-title">
+    <dialog id="camp-dialog" class="camp-dialog" aria-labelledby="camp-title">
       <div class="map-heading">
         <div>
           <p id="camp-kicker" class="dialog-kicker"></p>
@@ -552,23 +499,8 @@ export function mountLayout(app) {
       </div>
     </dialog>
 
-    <!-- A storage chest: what is in it, and putting things in or taking them out. ui/chest.js fills it. -->
-    <dialog id="chest-dialog" class="camp-dialog hud-window" aria-labelledby="chest-title">
-      <div class="map-heading">
-        <div>
-          <p id="chest-kicker" class="dialog-kicker"></p>
-          <h2 id="chest-title">Storage chest</h2>
-        </div>
-        <button id="close-chest" class="icon-button" aria-label="Close chest">
-          ${icon('close')}
-        </button>
-      </div>
-      <p class="camp-fire">Put things away, or take them out. Both sides are counted.</p>
-      <ol id="chest-rows" class="camp-needs chest-rows"></ol>
-    </dialog>
-    <!-- Shown after passing out (from the cold or the wolves). ui/camp.js sets the cause and says
-         where the player will wake. -->
-    <dialog id="passout-dialog" class="pause-dialog hud-window" aria-labelledby="passout-title">
+    <!-- Shown after passing out from the cold. ui/camp.js says where the player will wake. -->
+    <dialog id="passout-dialog" class="pause-dialog" aria-labelledby="passout-title">
       <span class="modal-mark">${icon('moon')}</span>
       <p class="dialog-kicker">YOU PASSED OUT</p>
       <h2 id="passout-title">The cold caught you.</h2>

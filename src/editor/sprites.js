@@ -110,8 +110,7 @@ export function createSprites(specs, onLoad) {
     const spec = specs[obj.name];
     if (!img || !spec) return null;
 
-    // An object from a map made in Tiled may have its own size (`scale`, see objectScale).
-    const scale = (spec.scale ?? 1) * (obj.scale ?? 1);
+    const scale = spec.scale ?? 1;
     const w = img.naturalWidth * scale,
       h = img.naturalHeight * scale;
     return { x: obj.x - spec.origin[0] * w, y: obj.y - spec.origin[1] * h, w, h, img };

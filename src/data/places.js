@@ -24,18 +24,13 @@ export const SUPPLY_SPOTS = spots(PLACES.supplies);
 /** The seven regions, in the order the map's region grid numbers them. Fields: `id`, `key`, `name`. */
 export const REGION_LIST = PLACES.regions;
 
-/**
- * Named places to find. Fields: `id`, `region` (a region id), `name`, `x`, `y`, and `object`: the
- * sprite that marks the place (a tent, a ruin), or null when nothing stands there. The maps use
- * `object` for the place's icon.
- */
-export const LANDMARKS = PLACES.landmarks.map(({ id, region, name, x, y, object }) => ({
+/** Named places to find. Fields: `id`, `region` (a region id), `name`, `x`, `y`. */
+export const LANDMARKS = PLACES.landmarks.map(({ id, region, name, x, y }) => ({
   id,
   region,
   name,
   x,
   y,
-  object: object ?? null,
 }));
 
 /** Signposts the player can travel between once found. Fields: `id`, `region`, `name`, `x`, `y`. */

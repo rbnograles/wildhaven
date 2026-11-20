@@ -47,9 +47,9 @@ export const STAND_STUCK = 0.2;
 // (once), and then gives up.
 export const APPROACH_STUCK = 0.4;
 
-// How many seconds a bare-hand gather takes (picking berries, flowers and the big berry bushes).
-// Tools shorten the gathers that need them (see TOOL_SECONDS), and loose things on the ground are
-// quick to pick up (see PICKUP_SECONDS). This is a design decision, so don't shorten it as a "fix".
+// How many seconds a bare-hand gather takes. Tools shorten the gathers that need them (see
+// TOOL_SECONDS); bare-hand gathers always take the full time. This is a design decision, so don't
+// shorten it as a "fix".
 export const GATHER_SECONDS = 6;
 
 /** How close the player must come before a villager turns to look at them. */
@@ -260,30 +260,6 @@ export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10 };
 // GATHER_SECONDS; this is how tools shorten gathering, as GATHER_SECONDS always promised.
 export const TOOL_SECONDS = { stone: 5, iron: 3 };
 
-// ---- Rock sizes ----
-
-// A rock is small (size 1), medium (2) or large (3). A bigger rock gives more, takes longer to mine
-// and is harder on a stone pickaxe. Each list below has one number per size, smallest first.
-
-// How much one mining gives, by what the rock holds and its size.
-export const ROCK_YIELD = { stone: [2, 4, 10], iron: [1, 2, 3], copper: [1, 2, 3] };
-
-// How many times TOOL_SECONDS mining takes, by size: a large rock takes twice as long as a small one.
-export const SIZE_SECONDS = [1, 1.5, 2];
-
-// How many uses of a stone pickaxe one mining costs, by size. Iron tools still never wear out.
-export const SIZE_WEAR = [1, 2, 3];
-
-// A rock the map draws smaller than SIZE_SHRINK times its usual size counts as one size smaller,
-// and one drawn bigger than SIZE_GROW times counts as one size bigger.
-export const SIZE_SHRINK = 0.85;
-export const SIZE_GROW = 1.2;
-
-// Seconds it takes to pick up something loose from the ground (small stones, sticks, driftwood,
-// an antler). Bending down for a stone is much quicker than chopping a tree, so it is far below
-// GATHER_SECONDS and TOOL_SECONDS on purpose.
-export const PICKUP_SECONDS = 2;
-
 // ---- Gear made from the finds ----
 
 // What each piece of gear costs (data/gear.js lists them). The boat's recipe is a first pass: it
@@ -321,108 +297,3 @@ export const HARVEST_REGROW = 1080;
 
 /** Below this much hunger (out of 100) the character stands with a hand on their belly. */
 export const HUNGRY_BELOW = 25;
-
-// ---- Buildings at a camp (data/buildings.js says what each one is) ----
-
-/**
- * What each building costs: a tent, a storage chest and a wheat bed once each, and the camp centre
- * once per tier (pavilion, small hall, big hall). Paid only when the building is finished.
- */
-export const BUILDING_COSTS = {
-  tent: { wood: 8, stone: 2 },
-  chest: { wood: 6, stone: 2, iron: 1 },
-  farm: { wood: 4 },
-  centre: [
-    { wood: 10, stone: 4 },
-    { wood: 20, stone: 10, iron: 2 },
-    { wood: 30, stone: 20, iron: 6 },
-  ],
-};
-
-/** Seconds of hammering each building takes. Moving stops it, and nothing is paid. */
-export const BUILD_SECONDS = { tent: 8, chest: 4, farm: 4, centre: 8 };
-
-/** The most of each building one camp may have. */
-export const BUILDING_LIMITS = { tent: 1, chest: 2, farm: 4, centre: 1 };
-
-/** How much farther a fire's warmth reaches for each tier of its camp centre, in world units. */
-export const CENTRE_WARMTH = 80;
-
-/** How close the player must stand to use a chest or a wheat bed, in world units. */
-export const BUILDING_REACH = 110;
-
-/** The share of the night's hunger a rest in a tent still costs: sheltered sleep, half the hunger. */
-export const TENT_REST_HUNGER = 0.5;
-
-// A wheat bed: sowing costs this much food as seed; each growth stage takes GROW_SECONDS game
-// seconds (tending once in a stage halves what is left of it); a ripe bed gives HARVEST_FOOD food.
-// Sowing, tending and harvesting each take FARM_SECONDS.
-export const SOW_COST = { food: 1 };
-export const GROW_SECONDS = 360;
-export const HARVEST_FOOD = 6;
-export const FARM_SECONDS = 3;
-
-// ---- Animals (data/animals.js says where each kind lives and what it gives) ----
-
-/** How many herds each region holds, shared among the kinds that live there. */
-export const HERDS_PER_REGION = 6;
-
-/** How far an animal wanders from its herd's home, in world units. */
-export const HERD_ROAM = 260;
-
-// An animal runs from a player this close: a running player is heard from FLEE_RUNNING away, but a
-// walking one gets as near as FLEE_WALKING, so a careful player can creep up close enough to hunt.
-// Once scared, it runs for FLEE_SECONDS.
-export const FLEE_RUNNING = 260;
-export const FLEE_WALKING = 70;
-export const FLEE_SECONDS = 3;
-
-// Hunting: how close the player must stand (world units), and how long the swing takes (seconds).
-export const HUNT_REACH = 95;
-export const HUNT_SECONDS = 1.5;
-
-/** Game seconds before a hunted animal is back with its herd: one game day. */
-export const ANIMAL_RETURN = 360;
-
-/** Seconds a hunted animal lies on the ground before it fades away. */
-export const ANIMAL_DOWN_SECONDS = 2;
-
-// ---- Wolves (world/wolves.js picks the dens; actions/wolves.js moves the packs) ----
-
-/** The most caves per region that are wolf dens, and how many wolves live in each. */
-export const DENS_PER_REGION = 2;
-export const PACK_SIZE = 3;
-
-/** No cave this close to a start spot is a den, in world units: wolves keep away from new players. */
-export const DEN_FROM_SPAWN = 2000;
-
-// By day a pack stays within WOLF_GUARD of its den. A player who comes within WOLF_WARN gets a growl;
-// one who keeps coming within WOLF_ATTACK is attacked.
-export const WOLF_GUARD = 220;
-export const WOLF_WARN = 300;
-export const WOLF_ATTACK = 200;
-
-// At night a pack roams within WOLF_ROAM of its den and chases a player it sees within WOLF_SIGHT.
-export const WOLF_ROAM = 2000;
-export const WOLF_SIGHT = 450;
-
-// Speeds, in world units per second: walking about, and running (a player walks at 155, runs at 245).
-export const WOLF_WALK = 60;
-export const WOLF_RUN = 210;
-
-// A bite: a wolf this close bites for WOLF_BITE health, at most once every WOLF_BITE_EVERY seconds.
-// The whole pack shares one more wait, PACK_BITE_EVERY: however many wolves are round the player,
-// only one bites in that time. So a full pack takes about 25 s to bring a player from full health
-// to 0, never a sudden kill, and there is time to repel, run for a fire or fight back.
-export const WOLF_BITE_REACH = 60;
-export const WOLF_BITE = 8;
-export const WOLF_BITE_EVERY = 2.5;
-export const PACK_BITE_EVERY = 2;
-
-// Repel (R): wolves within REPEL_REACH are pushed REPEL_PUSH away and stand stunned for REPEL_STUN
-// seconds. It can be used once every REPEL_EVERY seconds, and the shove takes REPEL_SECONDS.
-export const REPEL_REACH = 160;
-export const REPEL_PUSH = 140;
-export const REPEL_STUN = 2.5;
-export const REPEL_EVERY = 3;
-export const REPEL_SECONDS = 0.5;

@@ -10,9 +10,6 @@ import { beginApproach, beginPlacing, approachStep, eightWay } from '../actions/
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
-import { growCrops } from '../world/buildings.js';
-import { tickAnimals } from '../actions/animals.js';
-import { tickWolves } from '../actions/wolves.js';
 import { tickVillagers } from '../actions/villagers.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
@@ -55,34 +52,17 @@ const FOUND = {
       : `Found ${name} · Repair it with ${REPAIR_COST.wood} wood and ${REPAIR_COST.stone} stone`,
 };
 
-// When a wolf last bit the player, in milliseconds of the page's clock (for the flinch) and in game
-// seconds (for the pass-out screen), and when the player was last told about a growl or a bite (so
-// the toasts don't pile up). Never saved.
-let bittenAt = -Infinity,
-  bittenGameAt = -Infinity,
-  warnedWolfAt = -Infinity;
-
-// How long after a bite the player still flinches, and the least time between two wolf toasts (ms).
-const BITE_FLINCH = 600;
-const WOLF_TOAST_MS = 4000;
-
-// A pass-out this soon after a bite, in game seconds (the fall itself takes 1.8), is blamed on the
-// wolves. Game seconds, not the page's clock: on a slow page the fall takes longer in real time.
-const WOLF_CAUSE_SECONDS = 5;
-
 /**
  * Picks the flinch to show for what is hurting the player right now.
  *
- * A fresh wolf bite comes first. Then freezing, because it drains health fastest. Starving drains it
- * slowly, and its cramp keeps showing at the health floor as a reminder to eat. Seated in the boat
- * there is no flinch.
+ * Freezing comes first, because it drains health fastest. Starving drains it slowly, and its
+ * cramp keeps showing at the health floor as a reminder to eat. Seated in the boat there is no flinch.
  *
  * @param {object} state - The game being played.
- * @returns {string|null} A reaction clip name (`hurtAttack`, `hurtCold` or `hurtHunger`), or null.
+ * @returns {string|null} A reaction clip name (`hurtCold` or `hurtHunger`), or null.
  */
 function hurtClip(state) {
   if (state.aboard) return null;
-  if (performance.now() - bittenAt < BITE_FLINCH) return 'hurtAttack';
   const trends = meterTrends(state);
   if (trends.health === 'freezing') return 'hurtCold';
   return trends.hunger === 'starving' ? 'hurtHunger' : null;
@@ -95,15 +75,11 @@ function hurtClip(state) {
  * character stays lying where they fell behind the screen, and only its "Get up" button moves
  * them to a fire at midday (see `ui/camp.js`), so the scene never changes under the player's eyes.
  *
- * A wolf bite in the last few seconds means the wolves brought the player down; otherwise it was
- * the cold (hunger alone never takes health to 0).
- *
- * @param {object} state - The game being played (its clock).
  * @param {object} ui - The UI helpers (`hud`, `build`, `camp`).
  */
-function showPassOut(state, ui) {
+function showPassOut(ui) {
   ui.build.cancel();
-  ui.camp.showPassOut(state.time - bittenGameAt < WOLF_CAUSE_SECONDS ? 'wolves' : 'cold');
+  ui.camp.showPassOut();
   ui.hud.update();
 }
 
@@ -123,7 +99,7 @@ function showPassOut(state, ui) {
 function handleSurvival(session, ui, events) {
   const { state, animator } = session;
   if (state.meters.health <= 0) {
-    if (state.aboard) showPassOut(state, ui);
+    if (state.aboard) showPassOut(ui);
     else if (startCollapse(animator)) {
       ui.build.cancel();
       ui.hud.update();
@@ -221,14 +197,12 @@ export function startLoop(session, ui) {
    * Runs one frame: update the game, then draw it.
    *
    * Like a flip book, each call is one page. We clamp the time step so that if the page was slow
-   * (or the browser stalled), the player doesn't leap a long way in one go. It never goes below
-   * zero either: the browser's first frame time can be a little earlier than the moment the game
-   * started, and a backwards step made the animation clocks negative (picture number -1).
+   * (or the browser stalled), the player doesn't leap a long way in one go.
    *
    * @param {number} now - The browser's current time in milliseconds.
    */
   function frame(now) {
-    const dt = Math.max(0, Math.min((now - clock.last) / 1000, MAX_FRAME_DT));
+    const dt = Math.min((now - clock.last) / 1000, MAX_FRAME_DT);
     clock.last = now;
     const { state, renderer, animator } = session;
 
@@ -271,33 +245,8 @@ export function startLoop(session, ui) {
         state.elapsed += dt;
         // The world clock, the meters and each camp's dawn update move with the survival tick.
         const events = tickSurvival(state, dt);
-        // Wheat beds grow by the world clock (a rest or passing out can bring several stages at once).
-        growCrops(state);
         // The villagers of Hollowstead get on with their work (and wait while the player is near).
         tickVillagers(state, dt);
-        // The animals graze, wander and run from a player who comes too close (sooner when running).
-        tickAnimals(state, dt, {
-          running: moving && running,
-          hunting: animator.pending?.target?.startsWith('hunt:')
-            ? animator.pending.target.slice(5)
-            : null,
-        });
-        // The wolves guard their dens by day and roam at night; a growl or a bite is told in a toast.
-        const howled = tickWolves(state, dt, {
-          hunting: animator.pending?.target?.startsWith('hunt:wolf-')
-            ? animator.pending.target.slice(5)
-            : null,
-        });
-        if (howled.some((e) => e.kind === 'bite')) [bittenAt, bittenGameAt] = [now, state.time];
-        if (howled.length && now - warnedWolfAt > WOLF_TOAST_MS) {
-          warnedWolfAt = now;
-          ui.hud.notify(
-            howled.some((e) => e.kind === 'bite')
-              ? 'A wolf bit you · Press R to drive them back, or get to a fire or a village'
-              : 'A wolf growls at you · Back away from its den',
-          );
-          ui.hud.update();
-        }
         ui.build.update(); // keep the build ghost on the pointer
 
         // Rowing into deep water: say why the boat won't go on, but not every frame.
@@ -321,7 +270,7 @@ export function startLoop(session, ui) {
         });
         const finished = done?.target ? finishInteraction(state, done.target) : null;
         // The fall has played: the pass-out screen comes up over the fallen character.
-        if (done?.clip === 'collapse') showPassOut(state, ui);
+        if (done?.clip === 'collapse') showPassOut(ui);
         if (finished) {
           ui.hud.notify(describeFinish(finished));
           ui.hud.update();
