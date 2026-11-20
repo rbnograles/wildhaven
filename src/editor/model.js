@@ -61,17 +61,20 @@ const copy = (value) => structuredClone(value);
  *
  * @param {object} places - The parsed places file.
  * @returns {object} The session: `places`, `edits` (the hand edits to the map's objects, filled in
- *   by `loadEdits` in edits.js), `past` and `future` (undo steps, each `{places, edits}`), and the
+ *   by `loadEdits` in edits.js), `terrain` (hand-painted ground, filled in by `loadTerrain` in
+ *   terrain.js), `past` and `future` (undo steps, each `{places, edits, terrain}`), and the
  *   saved text of each file.
  */
 export function createEditor(places) {
   return {
     places: copy(places),
     edits: { removed: [], added: [] },
+    terrain: { ground: {} },
     past: [],
     future: [],
     saved: writePlaces(places),
     savedEdits: '',
+    savedTerrain: '',
   };
 }
 
@@ -121,13 +124,13 @@ export function listPlaces(places) {
 }
 
 /**
- * Puts the places and the object edits as they are now on the undo pile, before an edit changes
+ * Puts the places, the object edits and the painted ground as they are now on the undo pile, before an edit changes
  * them. edits.js calls this too, so both kinds of edit share one history.
  *
  * @param {object} editor - The editing session.
  */
 export function remember(editor) {
-  editor.past.push(copy({ places: editor.places, edits: editor.edits }));
+  editor.past.push(copy({ places: editor.places, edits: editor.edits, terrain: editor.terrain }));
   if (editor.past.length > HISTORY) editor.past.shift();
   editor.future = [];
 }
@@ -272,8 +275,8 @@ export function setField(editor, ref, field, value) {
  */
 export function undo(editor) {
   if (!editor.past.length) return false;
-  editor.future.push({ places: editor.places, edits: editor.edits });
-  ({ places: editor.places, edits: editor.edits } = editor.past.pop());
+  editor.future.push({ places: editor.places, edits: editor.edits, terrain: editor.terrain });
+  ({ places: editor.places, edits: editor.edits, terrain: editor.terrain } = editor.past.pop());
   return true;
 }
 
@@ -285,8 +288,8 @@ export function undo(editor) {
  */
 export function redo(editor) {
   if (!editor.future.length) return false;
-  editor.past.push({ places: editor.places, edits: editor.edits });
-  ({ places: editor.places, edits: editor.edits } = editor.future.pop());
+  editor.past.push({ places: editor.places, edits: editor.edits, terrain: editor.terrain });
+  ({ places: editor.places, edits: editor.edits, terrain: editor.terrain } = editor.future.pop());
   return true;
 }
 
