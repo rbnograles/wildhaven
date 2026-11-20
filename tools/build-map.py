@@ -1032,6 +1032,35 @@ objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scatter
 # The pieces of path come last and are the only objects that are turned: `rotation` is in degrees, clockwise.
 path_objects = [(n, x + PAD, y + PAD, turn) for n, x, y, turn in paths]
 
+# ---- hand edits --------------------------------------------------------------------------
+# assets/world/source/edits.json holds what a person changed in the world editor: generated objects to leave out
+# ("removed") and objects placed by hand ("added"), in WORLD units. It is applied here, after every pass above has
+# run, so an edit can never reshuffle the rest of the map. Nothing is cleared around an added object on purpose:
+# the person deletes what is in the way, so there are no surprises.
+EDIT_LOCKED = {'signpost', 'bridge', 'sea-wave', 'river-ripple', 'lake-ripple'}
+
+# Says whether a sprite may be named in edits.json. Path pieces, hill stairs, ripples, signposts and bridges are
+# made by other parts of this script and may not. (The editor has the same rule: lockReason in src/editor/edits.js.)
+def editable(n): return n in spec and not spec[n].get('path') and not n.endswith('-stairs') and n not in EDIT_LOCKED
+
+# Reads one list of edits.json as (name, x, y) rows. A wrong entry stops the build with a plain message.
+def edit_rows(edits, key):
+    rows = edits.get(key, []) if isinstance(edits, dict) else None
+    if not isinstance(rows, list): sys.exit(f'edits.json: "{key}" must be a list')
+    for r in rows:
+        if not (isinstance(r, dict) and isinstance(r.get('name'), str) and type(r.get('x')) is int and type(r.get('y')) is int):
+            sys.exit(f'edits.json: bad entry in "{key}": {r}')
+        if not editable(r['name']): sys.exit(f'edits.json: "{r["name"]}" in "{key}" is not a sprite that can be edited by hand')
+    return [(r['name'], r['x'], r['y']) for r in rows]
+
+edits_path = os.path.join(SRC, 'edits.json')
+try: edits = json.load(open(edits_path, encoding='utf-8')) if os.path.exists(edits_path) else {}
+except ValueError as e: sys.exit(f'edits.json is not valid JSON: {e}')
+removed, added = set(edit_rows(edits, 'removed')), edit_rows(edits, 'added')
+# A removal that matches no generated object is "stale": the editor lists these so they can be cleaned up.
+stale_edits = sorted(removed - set(objects))
+objects = [o for o in objects if o not in removed] + added
+
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
     'width': COLS, 'height': ROWS, 'tilewidth': TILE, 'tileheight': TILE, 'nextlayerid': len(TILE_LAYERS) + 2, 'nextobjectid': len(objects) + len(path_objects) + 1,
@@ -1046,7 +1075,9 @@ tiled = {
                    {'name': 'regionCell', 'type': 'int', 'value': REGION_CELL},
                    {'name': 'regionCols', 'type': 'int', 'value': REGION_COLS},
                    {'name': 'regionGrid', 'type': 'string', 'value': region_grid},
-                   {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())}],
+                   {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())},
+                   # The world editor reads this to list removals in edits.json that matched nothing.
+                   {'name': 'staleEdits', 'type': 'string', 'value': json.dumps([{'name': n, 'x': x, 'y': y} for n, x, y in stale_edits])}],
     'layers': [{'id': i + 1, 'name': n, 'type': 'tilelayer', 'x': 0, 'y': 0, 'width': COLS, 'height': ROWS, 'opacity': 1, 'visible': True, 'data': layers[n]}
                for i, n in enumerate(TILE_LAYERS)]
             + [{'id': len(TILE_LAYERS) + 1, 'name': 'objects', 'type': 'objectgroup', 'x': 0, 'y': 0, 'opacity': 1, 'visible': True, 'draworder': 'topdown',
@@ -1081,3 +1112,4 @@ full.convert('RGB').resize((1568, 1120), Image.LANCZOS).save(os.path.join(OUT, '
 if len(sys.argv) > 1: full.convert('RGB').save(sys.argv[1])
 print(len(tiles), 'tiles,', len(objects), 'objects,', len(path_objects), 'pieces of path,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file,',
       len(flights), 'flights of stairs,', len(cliff_gid), 'cliff tiles; hills per kit:', HILL_COUNT)
+print(len(removed) - len(stale_edits), 'objects removed by hand,', len(added), 'added by hand,', len(stale_edits), 'stale edits', stale_edits or '')

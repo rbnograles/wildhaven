@@ -2,9 +2,20 @@
 // what ground is walkable or sailable, which region a spot is in, which landmarks the journal
 // names and which object sprites exist. Kept apart from the model so the model stays import-free.
 
-import { WORLD, isWalkable, isSailable, OBJECT_SPECS } from '../world/map.js';
+import {
+  WORLD,
+  isWalkable,
+  isSailable,
+  isDryLand,
+  hitsCliff,
+  elevationAt,
+  OBJECT_SPECS,
+  MAP_OBJECTS,
+  mapProperty,
+} from '../world/map.js';
 import { regionOf } from '../world/regions.js';
 import { JOURNALS } from '../data/journal.js';
+import { WILD, HARVEST } from '../data/supplies.js';
 
 /**
  * Builds the `world` object that `checkPlaces` reads, from the game's own modules.
@@ -29,5 +40,49 @@ export function gameLookups() {
       ]),
     ),
     sprites: Object.keys(OBJECT_SPECS).filter((name) => !name.startsWith('_')),
+  };
+}
+
+/**
+ * Reads the removals the last map build said matched nothing.
+ *
+ * @returns {{name: string, x: number, y: number}[]} The stale removals; none if the map is older
+ *   than this feature.
+ */
+function builtStale() {
+  try {
+    return JSON.parse(mapProperty('staleEdits'));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Builds the facts the object editor reads, from the game's own modules.
+ *
+ * @returns {object} `specs` (the sprites of objects.json), `width`, `height`, `isBlocked(x, y)`
+ *   (water, a cliff or stairs), `paths` (the middle of each path piece), `builtStale`, and
+ *   `tags(name)` (what the game does with a sprite: 'solid', 'chop or mine', 'pick up').
+ */
+export function objectLookups() {
+  const specs = Object.fromEntries(
+    Object.entries(OBJECT_SPECS).filter(([name]) => !name.startsWith('_')),
+  );
+
+  return {
+    specs,
+    width: WORLD.width,
+    height: WORLD.height,
+    // Water, a cliff wall or edge, or a flight of stairs: no place for something solid.
+    isBlocked: (x, y) => !isDryLand(x, y) || hitsCliff(x, y) || elevationAt(x, y) === 's',
+    paths: MAP_OBJECTS.filter((o) => specs[o.name]?.path).map(({ x, y }) => ({ x, y })),
+    builtStale: builtStale(),
+    // What the game does with a sprite, in a few words for the side panel.
+    tags: (name) =>
+      [
+        specs[name]?.footprint && 'solid',
+        HARVEST[name] && 'chop or mine',
+        WILD[name] && 'pick up',
+      ].filter(Boolean),
   };
 }
