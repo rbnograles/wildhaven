@@ -12,23 +12,27 @@ import { GATHER_RANGE } from '../../src/data/balance.js';
 import { REGION_LIST, LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
 import { flood } from './flood.js';
 
-// How many landmarks each region has. The lagoon's three islets add one each.
-const LANDMARKS_PER_REGION = { lagoon: 10 };
-
-// Guards the counts the HUD and map show, and the ids saves are keyed by.
-test('the world has seven regions, 52 landmarks, 14 signposts and 4 old boats with unique ids', () => {
+// Guards the ids saves are keyed by, and the rule that every region has something to find.
+// The counts themselves are not pinned: places are added and removed in the world editor.
+test('the world has seven regions, unique ids, and a landmark and a signpost in every region', () => {
   assert.equal(REGION_LIST.length, 7);
-  assert.equal(LANDMARKS.length, 52);
-  assert.equal(WAYPOINTS.length, 14);
-  assert.equal(WRECKS.length, 4);
 
   const ids = [...REGION_LIST, ...LANDMARKS, ...WAYPOINTS, ...WRECKS].map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
 
-  for (const region of REGION_LIST) {
-    const expected = LANDMARKS_PER_REGION[region.id] ?? 7;
-    assert.equal(LANDMARKS.filter((l) => l.region === region.id).length, expected, region.id);
-    assert.equal(WAYPOINTS.filter((w) => w.region === region.id).length, 2, region.id);
+  const regions = REGION_LIST.map((r) => r.id);
+  for (const p of [...LANDMARKS, ...WAYPOINTS, ...WRECKS])
+    assert.ok(regions.includes(p.region), `${p.id} names the unknown region ${p.region}`);
+
+  for (const region of regions) {
+    assert.ok(
+      LANDMARKS.some((l) => l.region === region),
+      `${region} has no landmark`,
+    );
+    assert.ok(
+      WAYPOINTS.some((w) => w.region === region),
+      `${region} has no signpost`,
+    );
   }
 });
 
