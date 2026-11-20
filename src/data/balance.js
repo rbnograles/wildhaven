@@ -28,6 +28,15 @@ export const APPROACH_SPAN = 1800;
 // The path ends this many units inside GATHER_RANGE, so the player is surely in reach on arrival.
 export const APPROACH_MARGIN = 16;
 
+// Before picking something up by hand the player steps to a spot beside it, so the bending
+// picture (which faces east or west) reaches toward it instead of away. STAND_SIDE is how far to
+// the side of a walk-through patch they stand, STAND_GAP how far clear of a solid supply's base,
+// and STAND_STUCK the seconds they may push at something on the way before gathering from where
+// they are.
+export const STAND_SIDE = 44;
+export const STAND_GAP = 26;
+export const STAND_STUCK = 0.2;
+
 // Seconds the player may push at something without moving before the walk plans a new path
 // (once), and then gives up.
 export const APPROACH_STUCK = 0.4;

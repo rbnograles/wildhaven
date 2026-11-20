@@ -10,7 +10,7 @@
  * - `fps`: how many of those steps to show per second.
  * - `loop`: start over at the end (true) or hold the last picture (false).
  * - `sheet`: which sprite sheet the pictures live on (`idleLoop`, `locomotion`, `run`, `actions`,
- *   `chop`, or one of the survival sheets: `sleep`, `wake`, `hungry`, `hurtHunger`, `hurtCold`,
+ *   `chop`, `chopIron`, `mine`, `mineIron`, or one of the survival sheets: `sleep`, `wake`, `hungry`, `hurtHunger`, `hurtCold`,
  *   `hurtAttack`, `dying`).
  * - `row`: which row of that sheet.
  * - `turns`: the sheet has one row per facing (south, west, east, north), added to `row`.
@@ -92,7 +92,42 @@ export const CLIPS = {
     action: true,
   },
   // Chopping a tree with the axe: ready, lift overhead, strike, follow through.
-  chop: { label: 'Chopping', frames: 4, fps: 5, loop: true, sheet: 'chop', row: 0, action: true },
+  chop: {
+    label: 'Chopping — stone axe',
+    frames: 4,
+    fps: 5,
+    loop: true,
+    sheet: 'chop',
+    row: 0,
+    action: true,
+  },
+  chopIron: {
+    label: 'Chopping — iron axe',
+    frames: 4,
+    fps: 5,
+    loop: true,
+    sheet: 'chopIron',
+    row: 0,
+    action: true,
+  },
+  mine: {
+    label: 'Mining — stone pickaxe',
+    frames: 4,
+    fps: 5,
+    loop: true,
+    sheet: 'mine',
+    row: 0,
+    action: true,
+  },
+  mineIron: {
+    label: 'Mining — iron pickaxe',
+    frames: 4,
+    fps: 5,
+    loop: true,
+    sheet: 'mineIron',
+    row: 0,
+    action: true,
+  },
   // Lying on one side, breathing slowly: after passing out, and for a short nap when resting.
   sleep: { label: 'Sleeping', frames: 4, fps: 2, loop: true, sheet: 'sleep', row: 0, east: true },
   // Getting up: lying, pushing upright, kneeling, standing. A timed action, so the character

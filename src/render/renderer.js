@@ -64,6 +64,18 @@ const toolUrls = Object.fromEntries(
   ).map(([path, url]) => [path.match(/tool-([\w-]+)\.png$/)[1], url]),
 );
 
+// Resource name ("wood", "stone", "food", "herbs") → the URL of its painted item picture, for the
+// badge over something picked by hand (berries, small stones, flowers, driftwood) under the mouse.
+const itemUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/ui/game/item-{wood,stone,food,herbs}.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/item-([\w-]+)\.png$/)[1], url]),
+);
+
 // Moving water: a see-through copy of each of these tile layers drifts in a small circle over the
 // real one, so the painted waves seem to swell. WATER_DRIFT is how far the copy strays, in world
 // units: small enough that the painted bank (56 units wide) always hides its edge on the shore.
@@ -72,12 +84,20 @@ const WATER_LAYERS = ['water', 'deep'];
 const WATER_DRIFT = 9;
 const WATER_SWELL_SECONDS = 7;
 
-// The tool badge over a tree or rock under the mouse: how many screen-sized units wide its dark
-// slot is drawn, and how see-through the badge is in each aim state (see aimState in
-// actions/gather.js). A tree too far to work on is faint; one whose tool is missing stays clear,
-// because its crossed-out tool is the message.
+// The badge over the thing under the mouse (the tool a tree or rock needs, or what a hand-picked
+// patch gives): how many screen-sized units wide its dark slot is drawn, and how see-through the
+// badge is in each aim state (see aimState in actions/gather.js). One too far to work on is faint;
+// one whose tool is missing stays clear, because its crossed-out tool is the message.
 const BADGE_SIZE = 46;
 const BADGE_ALPHA = { ready: 1, far: 0.7, locked: 1 };
+
+// Berries, small stones and flowers are tiny pictures, so the mouse counts as over one anywhere in
+// a box at least this many world units wide and tall around it. Otherwise they are fiddly to hit.
+const HOVER_MIN = 56;
+
+// How far above the player's feet (world units) the progress bar sits while they pick something
+// by hand: just clear of the head of the bending picture.
+const BAR_OVER_HEAD = 118;
 
 // What a gathered supply plays before it fades, by how many rows its sheet has: a tree (3 rows)
 // falls and breaks into firewood (frames 4-11), a rock (1 row) cracks into rubble (frames 0-3).
@@ -216,6 +236,7 @@ export async function createRenderer(container, miniCanvas) {
         this.load.image('terrain', tilesetUrl);
         this.load.image('ui-slot', slotUrl);
         for (const [name, url] of Object.entries(toolUrls)) this.load.image(`tool-${name}`, url);
+        for (const [name, url] of Object.entries(itemUrls)) this.load.image(`item-${name}`, url);
         for (const [name, url] of Object.entries(objectUrls))
           this.load.image(`object-${name}`, url);
         for (const [name, url] of Object.entries(animUrls))
@@ -384,8 +405,9 @@ export async function createRenderer(container, miniCanvas) {
           .setVisible(false);
         bar = this.add.graphics().setDepth(WORLD.height + 1);
 
-        // The tool badge over a tree or rock under the mouse: the item box's dark slot with the
-        // painted axe or pickaxe on it, and a red bar across it when the player has no such tool.
+        // The badge over the thing under the mouse: the item box's dark slot with a painted axe or
+        // pickaxe on it (or the wood, stone, food or herbs a hand-picked patch gives), and a red
+        // bar across it when the player has no such tool.
         const slot = this.add.image(0, 0, 'ui-slot');
         slot.setScale(BADGE_SIZE / slot.width);
         const tool = this.add.image(0, 0, 'tool-axe-stone');
@@ -486,12 +508,14 @@ export async function createRenderer(container, miniCanvas) {
     harvest.get(node.id) ?? supplies.find((s) => s.node.id === node.id) ?? null;
 
   /**
-   * Lists the trees and rocks whose pictures are under a spot on the screen.
+   * Lists the things to gather whose pictures are under a spot on the screen.
    *
-   * Only things a tool works on count (trees, rocks, the pine supply), and only while they stand.
-   * A picture has empty room round its edges, so a strip at each side is ignored. Pictures can
-   * overlap, like a far palm's leaves over a near one's trunk, so every one under the spot is
-   * listed, the one drawn in front (lowest on screen) first; the caller picks among them.
+   * Everything that can be gathered counts (trees, rocks, supplies, berries, small stones, flowers,
+   * driftwood), but only while it stands; old boats do not. A tree or rock picture has empty room
+   * round its edges, so a strip at each side is ignored. A hand-picked patch is small, so its box
+   * is grown to at least HOVER_MIN instead. Pictures can overlap, like a far palm's leaves over a
+   * near one's trunk, so every one under the spot is listed, the one drawn in front (lowest on
+   * screen) first; the caller picks among them.
    *
    * @param {number} clientX - Pixels from the left edge of the page.
    * @param {number} clientY - Pixels from the top edge of the page.
@@ -504,15 +528,22 @@ export async function createRenderer(container, miniCanvas) {
 
     /** True when the spot is on this entry's picture and the entry still stands. */
     const under = ({ sprite, node }) => {
-      if (!node.tool || !isAvailable(state, node)) return false;
-      const left = sprite.x - sprite.displayWidth * sprite.originX,
-        top = sprite.y - sprite.displayHeight * sprite.originY,
-        edge = sprite.displayWidth * 0.14;
+      // Old boats sit in the supplies list too, but give no resource: they are not gathered.
+      if (!node.type || !isAvailable(state, node)) return false;
+      const width = sprite.displayWidth,
+        height = sprite.displayHeight,
+        left = sprite.x - width * sprite.originX,
+        top = sprite.y - height * sprite.originY;
+
+      // How far the box is grown (or, when negative, trimmed) at the sides, the top and the bottom.
+      const side = node.tool ? -width * 0.14 : Math.max(0, (HOVER_MIN - width) / 2),
+        above = node.tool ? -height * 0.08 : Math.max(0, (HOVER_MIN - height) / 2),
+        below = node.tool ? 0 : above;
       return (
-        x >= left + edge &&
-        x <= left + sprite.displayWidth - edge &&
-        y >= top + sprite.displayHeight * 0.08 &&
-        y <= top + sprite.displayHeight
+        x >= left - side &&
+        x <= left + width + side &&
+        y >= top - above &&
+        y <= top + height + below
       );
     };
 
@@ -733,15 +764,22 @@ export async function createRenderer(container, miniCanvas) {
         capped.top - 18 + (reducedMotion ? 0 : Math.sin(performance.now() / 260) * 2.5),
       );
 
-    // The tool badge over the tree or rock under the mouse: the tool it needs, in the tier the
-    // player owns (stone when they own none), crossed out while they lack it. It sits above the E
-    // cap, and gives way to the progress bar on the one being worked on.
+    // The badge over the thing under the mouse. A tree or rock shows the tool it needs, in the tier
+    // the player owns (stone when they own none), crossed out while they lack it. Something picked
+    // by hand shows what it gives (berries show food, flowers herbs). It sits above the E cap, and
+    // gives way to the progress bar on the one being worked on.
     const pointed = hover && hover.node.id !== busy ? entryOf(hover.node) : null;
     badge.setVisible(!!pointed);
     if (pointed) {
       const locked = hover.state === 'locked',
-        tier = toolTier(state, hover.node.tool) ?? 'stone';
-      badge.tool.setTexture(`tool-${hover.node.tool}-${tier}`).setAlpha(locked ? 0.75 : 1);
+        { tool, type } = hover.node,
+        picture = tool ? `tool-${tool}-${toolTier(state, tool) ?? 'stone'}` : `item-${type}`;
+      // The pictures are different sizes, so each is fitted to the slot when it is put on.
+      if (badge.tool.texture.key !== picture) {
+        badge.tool.setTexture(picture);
+        badge.tool.setScale((BADGE_SIZE * 0.8) / Math.max(badge.tool.width, badge.tool.height));
+      }
+      badge.tool.setAlpha(locked ? 0.75 : 1);
       badge.strike.setVisible(locked);
       badge
         .setAlpha(BADGE_ALPHA[hover.state])
@@ -759,9 +797,13 @@ export async function createRenderer(container, miniCanvas) {
     // The progress bar fills up while a timed action runs.
     bar.clear();
     if (working) {
-      const w = 64,
-        x = working.node.x - w / 2,
-        y = working.top - 24,
+      // Over a tree or rock the bar floats above it. Something picked by hand is low and the
+      // player kneels right beside it, so there the bar goes above the player's head instead of
+      // across their face.
+      const byHand = !working.node.tool && working.node.type && !state.aboard,
+        w = 64,
+        x = (byHand ? state.player.x : working.node.x) - w / 2,
+        y = byHand ? state.player.y - BAR_OVER_HEAD : working.top - 24,
         progress = actionProgress(animator);
       bar.fillStyle(0x254432, 0.88).fillRoundedRect(x - 2, y - 2, w + 4, 13, 6.5);
       if (progress > 0)

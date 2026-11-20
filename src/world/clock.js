@@ -6,9 +6,11 @@ import { DAY_SECONDS, PHASES, MIDDAY } from '../data/balance.js';
 
 // How dark the world is drawn (0 clear, 1 black) at nightfall and in full night, and how many
 // seconds into the night it takes to go from one to the other. These only change the drawing.
-const DUSK_DARK = 0.35,
-  NIGHT_DARK = 0.6,
+// Night is nearly black on purpose: away from a campfire the player sees little more than the
+// small glow around themselves, so a fire feels like safety.
+const DUSK_DARK = 0.5,
   NIGHTFALL = 10;
+export const NIGHT_DARK = 0.94;
 
 // The words the HUD clock uses for each part of the day. The day itself is split at midday.
 const PHASE_WORDS = {
@@ -52,7 +54,7 @@ export function phaseOf(time) {
 }
 
 /**
- * Says how dark the world should be drawn, from 0 (clear) to 0.6 (deep night).
+ * Says how dark the world should be drawn, from 0 (clear) to NIGHT_DARK (deep night).
  *
  * Like a dimmer switch turned slowly: the light fades through dusk, keeps fading for the first
  * seconds of night, holds, and comes back across dawn.

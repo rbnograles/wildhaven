@@ -4,15 +4,20 @@
 
 import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
-import { darknessAt } from '../world/clock.js';
+import { darknessAt, NIGHT_DARK } from '../world/clock.js';
 import { fireRadius } from '../world/camps.js';
 
-// The night's colour (a deep blue), the glow around the player (world units), the light picture's
-// size (pixels), and how far past the screen edge the dark layer reaches (world units).
-const NIGHT_COLOR = 0x0b1630,
+// The night's colour (a blue so deep it is almost black), the glow around the player (world
+// units), the light picture's size (pixels), and how far past the screen edge the dark layer
+// reaches (world units).
+const NIGHT_COLOR = 0x040813,
   PLAYER_LIGHT = 150,
   LIGHT_SIZE = 256,
   EDGE = 64;
+
+// The Canvas renderer can't cut holes of light, so its plain layer never gets darker than this:
+// a nearly black night with no light at all would hide the player too.
+const FLAT_DARK = 0.6;
 
 // The dark layer sits above everything in the world, but below the E key cap and progress bar.
 const DEPTH = WORLD.height + 0.5;
@@ -83,7 +88,7 @@ export function createLighting(scene, reducedMotion) {
       height = 2 * Math.ceil(area.height / 2 + EDGE);
     layer.setPosition(left, top);
     if (!webgl) {
-      layer.setSize(width, height).setFillStyle(NIGHT_COLOR, darkness);
+      layer.setSize(width, height).setFillStyle(NIGHT_COLOR, Math.min(darkness, FLAT_DARK));
       return;
     }
     if (layer.width !== width || layer.height !== height) layer.resize(width, height);
@@ -98,7 +103,7 @@ export function createLighting(scene, reducedMotion) {
       glowAt(i)
         .setPosition(camp.x, camp.y - 30)
         .setScale((radius * 1.1) / LIGHT_SIZE)
-        .setAlpha((0.45 * darkness) / 0.6)
+        .setAlpha((0.45 * darkness) / NIGHT_DARK)
         .setVisible(true);
     });
     stamp.setScale((PLAYER_LIGHT * 2) / LIGHT_SIZE);

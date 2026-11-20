@@ -9,6 +9,7 @@ import {
   timeOfDay,
   phaseOf,
   darknessAt,
+  NIGHT_DARK,
   nextDawn,
   nextMidday,
   clockLabel,
@@ -49,17 +50,19 @@ test('each phase begins exactly at its boundary', () => {
 });
 
 // Guards the drawing curve: clear by day, deepening through dusk into night, lifting at dawn.
-test('darkness is 0 by day, 0.35 at nightfall, 0.6 after ten seconds of night, and lifts at dawn', () => {
+test('darkness is 0 by day, 0.5 at nightfall, nearly black after ten seconds of night, and lifts at dawn', () => {
   assert.equal(darknessAt(100), 0);
   assert.equal(darknessAt(210), 0);
-  assert.ok(near(darknessAt(225), 0.175));
-  assert.ok(near(darknessAt(240), 0.35));
-  assert.ok(near(darknessAt(245), 0.475));
-  assert.equal(darknessAt(250), 0.6);
-  assert.equal(darknessAt(359), 0.6);
-  assert.equal(darknessAt(360), 0.6);
-  assert.ok(near(darknessAt(370), 0.3));
+  assert.ok(near(darknessAt(225), 0.25));
+  assert.ok(near(darknessAt(240), 0.5));
+  assert.ok(near(darknessAt(245), 0.72));
+  assert.equal(darknessAt(250), NIGHT_DARK);
+  assert.equal(darknessAt(359), NIGHT_DARK);
+  assert.equal(darknessAt(360), NIGHT_DARK);
+  assert.ok(near(darknessAt(370), NIGHT_DARK / 2));
   assert.equal(darknessAt(380), 0);
+  // The night must stay "super dark" but never fully black, or the world would vanish.
+  assert.ok(NIGHT_DARK >= 0.9 && NIGHT_DARK < 1);
 });
 
 // Guards the two clock jumps: resting skips to the next dawn, passing out to the next midday.

@@ -1,5 +1,9 @@
 # Starting character sprites — first pass
 
+## Tool swings
+
+All three characters have four-frame stone/iron pickaxe mining and stone/iron axe chopping animations. The game selects the art for the owned tool tier. See [tools/README.md](tools/README.md) for sources, exact prompts, frame layout, and regeneration; all four clips are available in Preview animations.
+
 ## Diagonal locomotion
 
 `diagonal/` contains northeast and southeast walking (four frames) and running (six frames) sheets for all three characters. Northwest and southwest use a horizontal renderer flip, as the existing side-walk does. See `diagonal/README.md` for W+A/W+D/S+A/S+D mappings and `diagonal/manifest.json` for frame rectangles. The game plays them while the player moves diagonally.

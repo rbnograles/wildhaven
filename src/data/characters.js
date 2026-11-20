@@ -10,7 +10,9 @@ import { SPAWNS } from './places.js';
  * (assets/characters/<id>/); `name`/`shortName` are display names; `location` names the starting region; `tagline`,
  * `description` and `kit` are selection-screen text; `spawn` is the world position where play
  * begins; `resources` is what is in the backpack at the start; `tools` lists the stone tools in
- * the kit (the Scout's hatchet is a stone axe, the Builder's hammer a stone hammer).
+ * the kit. Each start is different on purpose: the Scout's hatchet is a stone axe, the Builder's
+ * hammer a stone hammer, and the Survivor has no tool (the painting shows only a satchel and
+ * rope) but the fullest backpack, saved from the wreck.
  */
 export const CHARACTERS = [
   {
@@ -47,9 +49,9 @@ export const CHARACTERS = [
     tagline: 'The sea took your ship. Not your spirit.',
     description:
       'Washed ashore with a handful of supplies and a will to carry on. Search the coast, follow the inland trail, and make a fresh start.',
-    kit: 'Salvaged satchel · Rope · 4 food',
+    kit: 'Salvaged satchel · Rope · 6 food',
     spawn: SPAWNS.survivor,
-    resources: { wood: 2, stone: 0, food: 4 },
+    resources: { wood: 4, stone: 2, food: 6 },
     tools: [],
   },
 ];

@@ -2,10 +2,10 @@
 // Phaser's own input is disabled; every key and touch goes through here.
 // This file remembers which keys are held down and turns them into "which way to walk".
 
-import { beginInteraction } from '../actions/interact.js';
+import { beginInteraction, chooseInteraction } from '../actions/interact.js';
 import { listMissing } from '../actions/boat.js';
 import { lockedNode, aimState } from '../actions/gather.js';
-import { beginApproach } from '../actions/approach.js';
+import { beginApproach, beginPlacing } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
@@ -38,6 +38,26 @@ export function setupInput(session, ui) {
   const world = $('world');
 
   /**
+   * Sends the player to the spot beside a hand-picked node in reach, if they aren't there yet.
+   *
+   * The walk is only a step or two; the frame loop follows it and starts the gathering on
+   * arrival. Held movement keys are forgotten, because a held key would call the walk off.
+   *
+   * @param {object} node - The node about to be gathered.
+   * @returns {boolean} True if the step was started, so the caller should not gather yet.
+   */
+  function stepBeside(node) {
+    const { state, animator } = session;
+    if (animator.pending || animator.asleep > 0) return false;
+    const walk = beginPlacing(state, node);
+    if (!walk) return false;
+
+    keys.clear();
+    session.walk = walk;
+    return true;
+  }
+
+  /**
    * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
    * order. With none of those in reach, E beside one of the player's fires opens that camp; beside a
    * tree or rock it says which tool to make; anywhere else it says why nothing happened.
@@ -47,6 +67,10 @@ export function setupInput(session, ui) {
    * doesn't walk off and cancel straight away.
    */
   function use() {
+    // Something to pick by hand: step beside it first; the frame loop starts the picking there.
+    const choice = chooseInteraction(session.state);
+    if (choice?.kind === 'gather' && stepBeside(choice.target)) return;
+
     const result = beginInteraction(session.state, session.animator);
     if (result.ok) {
       keys.clear();
@@ -86,15 +110,16 @@ export function setupInput(session, ui) {
   $('interact').addEventListener('click', interact);
 
   /**
-   * Finds the tree or rock under the mouse and what a click on it would do.
+   * Finds the thing to gather under the mouse and what a click on it would do.
    *
-   * The frame loop asks every frame, because the camera moves under a still mouse. Nothing is
-   * aimed at while placing a campfire, with the build menu open, or while a dialog is up. When
-   * two pictures overlap under the mouse, one in reach wins over one that is merely in front. The
-   * mouse also turns into a pointing hand over a tree or rock a click would work on or walk to.
+   * Trees, rocks, supplies, berries, small stones, flowers and driftwood all count. The frame loop
+   * asks every frame, because the camera moves under a still mouse. Nothing is aimed at while
+   * placing a campfire, with the build menu open, or while a dialog is up. When two pictures
+   * overlap under the mouse, one in reach wins over one that is merely in front. The mouse also
+   * turns into a pointing hand over anything a click would gather or walk to.
    *
    * @returns {{node: object, state: string}|null} The node and its aimState ('ready', 'far' or
-   *   'locked'), or null when the mouse is over nothing that needs a tool.
+   *   'locked'), or null when the mouse is over nothing that can be gathered.
    */
   function hover() {
     const { state, renderer, pointer, build } = session;
@@ -112,9 +137,9 @@ export function setupInput(session, ui) {
   }
 
   /**
-   * Does what a click on the tree or rock under the mouse means.
+   * Does what a click on the thing to gather under the mouse means.
    *
-   * In reach with the right tool, the click starts chopping or mining that very one, like E. From
+   * In reach (with the right tool, if it needs one), the click starts gathering that very one, like E. From
    * too far, the character walks there by themselves and starts the work on arriving (the frame
    * loop follows the walk; any movement key takes over again). With no tool it says which to make.
    *
@@ -132,6 +157,7 @@ export function setupInput(session, ui) {
       if (!session.walk) ui.hud.notify(`Can't find a way to the ${node.label.toLowerCase()}.`);
       return;
     }
+    if (stepBeside(node)) return;
     const result = beginInteraction(session.state, session.animator, node.id);
     if (!result.ok) return;
     // Held movement keys are forgotten, so the player doesn't walk off and cancel straight away.
@@ -202,9 +228,11 @@ export function setupInput(session, ui) {
     }
 
     // Mid-action, key-repeat from a key held since before E is ignored; only a fresh press moves (and so cancels).
+    // The same goes for the short step beside a patch that comes just before the picking.
     if (MOVE_KEYS.includes(key)) {
       event.preventDefault();
-      if (!(session.animator.pending && event.repeat)) keys.add(key);
+      const busy = session.animator.pending || session.walk?.placing;
+      if (!(busy && event.repeat)) keys.add(key);
     }
 
     if (key === 'e' && !event.repeat) {

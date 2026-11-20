@@ -6,39 +6,43 @@ import { storageKey } from '../game/saves.js';
 import { start, cancelLoading } from '../core/session.js';
 import { dayOf } from '../world/clock.js';
 import { REGIONS } from '../world/regions.js';
-import { CLIPS } from '../animation/clips.js';
-import { loadCharacterSheets, loadCharacterPainter } from '../animation/sheets.js';
+import { loadCharacterSheets } from '../animation/sheets.js';
 import { $ } from './layout.js';
 
 // How far a finger must slide sideways, in CSS pixels, before it counts as a swipe.
 const SWIPE_MIN_PX = 50;
 
-/**
- * Turns a steady 0-to-1 count into one that starts gently and ends gently.
- *
- * Like a swing: slow at each end, quickest in the middle. The menu uses it to melt one idle
- * picture into the next without a sudden start or stop.
- *
- * @param {number} t - How far through the change we are, from 0 to 1.
- * @returns {number} The eased amount, also from 0 to 1.
- */
-const easeInOut = (t) => t * t * (3 - 2 * t);
+// The menu characters' breathing. One breath in and out takes BREATH_SECONDS; at the top of a
+// breath the upper body is BREATH_RISE taller (0.014 is 1.4%, a few pixels at the head); the
+// body bends at BREATH_WAIST, a share of the way down from head to feet; and each character
+// starts BREATH_STAGGER seconds after the one before, so the three don't breathe in step.
+const BREATH_SECONDS = 3.6;
+const BREATH_RISE = 0.014;
+const BREATH_WAIST = 0.56;
+const BREATH_STAGGER = 1.3;
 
 /**
- * Brings the characters on the menu panels to life: each one breathes and blinks in place.
+ * Brings the characters on the menu panels to life: each one breathes in place.
  *
  * Every panel first shows a still picture (set in the stylesheet), so the menu never waits for
- * this. Once the animation sheets have loaded, each panel's canvas takes over and plays the
- * character's idle loop, drawn at exactly the size and spot of the still picture so nothing
- * jumps. If the sheets fail to load, or the player prefers reduced motion, the still stays.
+ * this. Once the sprite sheets have loaded, each panel's canvas takes over and draws that same
+ * still picture, gently stretching the upper body up and down like a slow breath. The legs
+ * don't move, so the feet stay planted.
+ *
+ * Why not play the game's idle loop here: its four pictures were painted one by one, so the
+ * folds and shading change from one to the next (about a fifth of the body). On the small
+ * in-game character nobody sees that, but at menu size every change shows as a twitch, and
+ * fading between them looks like a ghost. Moving one picture is smooth by nature.
+ *
+ * If the sheets fail to load, or the player prefers reduced motion, the still stays.
  *
  * @param {object} session - The shared session; drawing pauses while the menu is not on screen.
  */
 function animateFigures(session) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  Promise.all([loadCharacterSheets(), loadCharacterPainter()])
-    .then(([sheets, painter]) => {
+  loadCharacterSheets()
+    .then((sheets) => {
       const figures = [...document.querySelectorAll('[data-figure]')];
       // The canvases now show the characters, so the still pictures behind them are hidden.
       for (const canvas of figures) canvas.parentElement.classList.add('is-live');
@@ -52,50 +56,59 @@ function animateFigures(session) {
         requestAnimationFrame(draw);
         if (session.screen !== 'selection') return;
 
-        for (const canvas of figures) {
+        figures.forEach((canvas, index) => {
           // Keep the canvas as sharp as its box on screen (a hidden panel measures 0: skip it).
           const width = Math.round(canvas.clientWidth * devicePixelRatio),
             height = Math.round(canvas.clientHeight * devicePixelRatio);
-          if (!width || !height) continue;
+          if (!width || !height) return;
           if (canvas.width !== width || canvas.height !== height)
             Object.assign(canvas, { width, height });
 
           // The still picture is the first pose of the idle sheet, one of four across, filling
-          // the box. Stand the moving character on the same feet at the same height.
+          // the box. Draw that very pose at the same size and spot, so nothing jumps.
           const still = sheets.atlases[canvas.dataset.figure].idle,
             pose = still.frames[0][0],
-            ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, width, height);
+            ctx = canvas.getContext('2d'),
+            scale = height / still.image.height,
+            left = width / 2 + (pose.x - still.image.width / 8) * scale;
 
-          // The idle loop is only a few pictures a second. In the game the character is small
-          // and that reads fine, but at menu size each change is a visible jump. So here every
-          // picture melts into the next one: the old one fades out as the new one fades in.
-          // 'lighter' adds the two together, so where both are solid the body stays solid.
-          const beat = (now / 1000) * CLIPS.idle.fps,
-            step = Math.floor(beat),
-            blend = easeInOut(beat - step);
-          ctx.globalCompositeOperation = 'lighter';
-          for (const [at, alpha] of [
-            [step, 1 - blend],
-            [step + 1, blend],
-          ]) {
-            if (alpha <= 0) continue;
-            ctx.globalAlpha = alpha;
-            painter.draw(
-              ctx,
-              canvas.dataset.figure,
-              'idle',
-              // The middle of the step, so rounding can never pick a neighbouring picture.
-              (at + 0.5) / CLIPS.idle.fps,
-              0,
-              (pose.anchorX / (still.image.width / 4)) * width,
-              ((pose.y + pose.height) / still.image.height) * height,
-              (still.referenceHeight / still.image.height) * height,
-            );
-          }
-          ctx.globalAlpha = 1;
-          ctx.globalCompositeOperation = 'source-over';
-        }
+          // Cut the pose in two at the waist. The cut sits on a whole canvas pixel, so the two
+          // halves meet without a faint line between them.
+          const upper = Math.round(pose.height * BREATH_WAIST),
+            waist = Math.round((pose.y + upper) * scale);
+
+          // How full the lungs are right now, from 0 (breathed out) to 1 (breathed in). A cosine
+          // wave slows down at both ends, the way a real breath does.
+          const seconds = now / 1000 + index * BREATH_STAGGER,
+            breath = 0.5 - 0.5 * Math.cos((seconds / BREATH_SECONDS) * 2 * Math.PI),
+            tall = upper * scale * (1 + BREATH_RISE * breath);
+
+          ctx.clearRect(0, 0, width, height);
+          // Head and chest: stretched upward from the waist.
+          ctx.drawImage(
+            still.image,
+            pose.x,
+            pose.y,
+            pose.width,
+            upper,
+            left,
+            waist - tall,
+            pose.width * scale,
+            tall,
+          );
+          // Hips and legs: always the same, standing on the same feet.
+          ctx.drawImage(
+            still.image,
+            pose.x,
+            pose.y + upper,
+            pose.width,
+            pose.height - upper,
+            left,
+            waist,
+            pose.width * scale,
+            (pose.height - upper) * scale,
+          );
+        });
       }
       requestAnimationFrame(draw);
     })

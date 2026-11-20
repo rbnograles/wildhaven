@@ -6,13 +6,13 @@
 import { movePlayer, stepLength } from '../actions/move.js';
 import { beginInteraction, finishInteraction } from '../actions/interact.js';
 import { aimState } from '../actions/gather.js';
-import { beginApproach, approachStep, eightWay } from '../actions/approach.js';
+import { beginApproach, beginPlacing, approachStep, eightWay } from '../actions/approach.js';
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
-import { REPAIR_COST, HUNGRY_BELOW, APPROACH_STUCK } from '../data/balance.js';
+import { REPAIR_COST, HUNGRY_BELOW, APPROACH_STUCK, STAND_STUCK } from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
 import { revealAround } from '../world/fog.js';
 import { inSnow } from '../world/regions.js';
@@ -133,7 +133,8 @@ function replanWalk(session, ui) {
  * Follows the walk to a clicked tree or rock for one frame.
  *
  * Once the target is in reach the walk ends and the chop or the mining starts, just as if the
- * player had clicked it from beside it. If the target is gone (or its tool broke on the way) the
+ * player had clicked it from beside it. Something picked by hand gets one more short step first,
+ * to the spot beside it (see standSpot). If the target is gone (or its tool broke on the way) the
  * walk is simply dropped. Otherwise it says which way to push the player this frame.
  *
  * @param {object} session - The shared session; its `walk` is followed and may be cleared.
@@ -147,6 +148,18 @@ function followWalk(session, ui, dt, running) {
     how = aimState(state, walk.node);
 
   if (how !== 'far') {
+    // In reach of something picked by hand: first step to the spot beside it, so the bending
+    // picture reaches toward it. If something blocks that short step, gather from here instead.
+    if (how === 'ready') {
+      if (!walk.placing) session.walk = beginPlacing(state, walk.node) ?? walk;
+      const placing = session.walk.placing && session.walk;
+      const push =
+        placing &&
+        placing.stuck < STAND_STUCK &&
+        approachStep(state, placing, stepLength(state, dt, running));
+      if (push) return push;
+    }
+
     session.walk = null;
     if (how === 'ready' && beginInteraction(state, animator, walk.node.id).ok) ui.hud.update();
     return null;
@@ -221,7 +234,8 @@ export function startLoop(session, ui) {
         // A walk that pushes at something without moving plans a new path, then gives up.
         if (push && session.walk) {
           session.walk.stuck = moving ? 0 : session.walk.stuck + dt;
-          if (session.walk.stuck > APPROACH_STUCK) replanWalk(session, ui);
+          // The short step beside a patch is never planned again: followWalk gathers from here.
+          if (session.walk.stuck > APPROACH_STUCK && !session.walk.placing) replanWalk(session, ui);
         }
         // The first real step hides the controls strip.
         if (moving) ui.hud.hideKeyStrip();

@@ -94,7 +94,8 @@ test('finishInteraction hands out a gathered supply, and nothing for an unknown 
 // then the axe breaks; a bare-hand gather wears nothing.
 test('chopping wears a stone axe, and the last use still pays before it breaks', () => {
   const pine = NODES.find((n) => n.id === 'pine-wood');
-  const game = createGame('survivor'); // starts with 2 wood
+  const game = createGame('survivor');
+  game.resources.wood = 2;
   Object.assign(game.player, { x: pine.x - 60, y: pine.y });
   game.tools.axe = { tier: 'stone', uses: 1 };
   assert.deepEqual(finishInteraction(game, 'pine-wood'), {

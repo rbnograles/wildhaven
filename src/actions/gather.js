@@ -76,10 +76,11 @@ export function lockedNode(state) {
 }
 
 /**
- * Says what clicking a tree or rock under the mouse would do right now.
+ * Says what clicking the thing to gather under the mouse would do right now.
  *
- * The mouse can point at any tree on screen, but the player can only work on one they stand
- * beside and have the tool for. The badge over the tree shows which of the three it is.
+ * The mouse can point at any tree, rock or berry bush on screen, but the player can only work on
+ * one they stand beside and have the tool for (hand-picked things need none, so they are never
+ * 'locked'). The badge over it shows which of the three it is.
  *
  * @param {object} state - The game being played.
  * @param {object} node - The node under the mouse.
@@ -117,7 +118,12 @@ export function beginGather(state, animator, id) {
   // Face the node, unless it's almost straight above or below the player.
   if (Math.abs(node.x - state.player.x) > 8)
     state.player.direction = node.x < state.player.x ? 1 : 2;
-  startAction(animator, node.clip, node.id, gatherTime(state, node));
+  // The owned tier chooses the visible tool; loose supplies keep their bare-hand animation.
+  const toolClip = node.tool === 'axe' ? 'chop' : node.tool === 'pickaxe' ? 'mine' : null;
+  const clip = toolClip
+    ? toolClip + (toolTier(state, node.tool) === 'iron' ? 'Iron' : '')
+    : node.clip;
+  startAction(animator, clip, node.id, gatherTime(state, node));
   return { ok: true, node };
 }
 

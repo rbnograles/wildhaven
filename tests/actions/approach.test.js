@@ -9,7 +9,14 @@ import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { movePlayer, footing, stepLength } from '../../src/actions/move.js';
 import { aimState } from '../../src/actions/gather.js';
-import { planApproach, beginApproach, approachStep, eightWay } from '../../src/actions/approach.js';
+import {
+  planApproach,
+  beginApproach,
+  approachStep,
+  eightWay,
+  standSpot,
+  beginPlacing,
+} from '../../src/actions/approach.js';
 
 /** Straight-line distance between two spots. */
 const apart = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -79,6 +86,40 @@ test('a node in reach needs no path, and there is no walk from the boat', () => 
   game.player.x = node.x;
   game.player.y = node.y + 40;
   assert.deepEqual(planApproach(game, node), []);
+});
+
+// Guards the gathering pose: the bending picture faces east or west, so before picking something
+// by hand the player must end up beside it (not above or below), in reach, on free ground.
+test('a hand-picked patch is gathered from a spot beside it, a tree from anywhere in reach', () => {
+  const game = createGame('scout'),
+    free = footing(game);
+  let checked = 0;
+
+  for (const node of NODES.filter((n) => !n.tool && !n.inScenery)) {
+    // Stand straight below the patch, the worst place to bend sideways from.
+    game.player.x = node.x;
+    game.player.y = node.y + 60;
+    if (!free(game.player.x, game.player.y)) continue;
+    const spot = standSpot(game, node);
+    if (!spot) continue;
+
+    assert.ok(free(spot.x, spot.y), `${node.id}: blocked spot`);
+    assert.ok(apart(spot, node) < GATHER_RANGE, `${node.id}: spot out of reach`);
+    assert.ok(Math.abs(spot.x - node.x) > Math.abs(spot.y - node.y), `${node.id}: not beside`);
+
+    // Once there, no further step is asked for, or the player would shuffle for ever.
+    Object.assign(game.player, spot);
+    assert.equal(standSpot(game, node), null, node.id);
+    assert.equal(beginPlacing(game, node), null, node.id);
+    checked += 1;
+    if (checked >= 40) break;
+  }
+  assert.ok(checked >= 20, 'most patches have a spot beside them');
+
+  const tree = NODES.find((n) => n.inScenery);
+  game.player.x = tree.x;
+  game.player.y = tree.y + 60;
+  assert.equal(standSpot(game, tree), null);
 });
 
 // Guards against the player overshooting a path spot and turning back and forth for ever: a spot

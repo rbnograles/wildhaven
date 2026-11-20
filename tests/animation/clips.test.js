@@ -35,6 +35,9 @@ test('every clip the game plays has its own definition', () => {
     'fight',
     'swim',
     'chop',
+    'chopIron',
+    'mine',
+    'mineIron',
     'sleep',
     'wake',
     'hungry',
@@ -44,7 +47,8 @@ test('every clip the game plays has its own definition', () => {
     'collapse',
   ]);
   const four = ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop', 'sleep', 'wake'];
-  for (const name of [...four, 'hurtHunger', 'hurtCold', 'hurtAttack'])
+  const swings = ['chopIron', 'mine', 'mineIron'];
+  for (const name of [...four, ...swings, 'hurtHunger', 'hurtCold', 'hurtAttack'])
     assert.equal(CLIPS[name].frames, 4);
   assert.equal(CLIPS.run.frames, 6);
   assert.equal(CLIPS.collapse.frames, 6);

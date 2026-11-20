@@ -8,9 +8,18 @@ import survivorIdle from '../../assets/characters/survivor/survivor-idle-v1.png'
 import scoutIdleLoop from '../../assets/characters/scout/scout-idle-loop.png';
 import builderIdleLoop from '../../assets/characters/builder/builder-idle-loop.png';
 import survivorIdleLoop from '../../assets/characters/survivor/survivor-idle-loop.png';
-import scoutChop from '../../assets/characters/scout/scout-chop.png';
-import builderChop from '../../assets/characters/builder/builder-chop.png';
-import survivorChop from '../../assets/characters/survivor/survivor-chop.png';
+import scoutChop from '../../assets/characters/scout/scout-axe-stone.png';
+import scoutChopIron from '../../assets/characters/scout/scout-axe-iron.png';
+import scoutMine from '../../assets/characters/scout/scout-pickaxe-stone.png';
+import scoutMineIron from '../../assets/characters/scout/scout-pickaxe-iron.png';
+import builderChop from '../../assets/characters/builder/builder-axe-stone.png';
+import builderChopIron from '../../assets/characters/builder/builder-axe-iron.png';
+import builderMine from '../../assets/characters/builder/builder-pickaxe-stone.png';
+import builderMineIron from '../../assets/characters/builder/builder-pickaxe-iron.png';
+import survivorChop from '../../assets/characters/survivor/survivor-axe-stone.png';
+import survivorChopIron from '../../assets/characters/survivor/survivor-axe-iron.png';
+import survivorMine from '../../assets/characters/survivor/survivor-pickaxe-stone.png';
+import survivorMineIron from '../../assets/characters/survivor/survivor-pickaxe-iron.png';
 import scoutSideWalk from '../../assets/characters/scout/scout-side-walk-v2.png';
 import builderSideWalk from '../../assets/characters/builder/builder-side-walk-v2.png';
 import survivorSideWalk from '../../assets/characters/survivor/survivor-side-walk-v2.png';
@@ -64,7 +73,10 @@ import { sampleAnimation, steadyAnchors } from './clips.js';
  *
  * `idle` is the first standing art (one row, one column per facing); the game now only uses it to
  * size the others. `idleLoop` is standing still and breathing (4 rows: south, west, east, north).
- * `chop` is swinging the axe (one row, facing east). `profile` is walking west or east
+ * `chop`/`chopIron` swing stone/iron axes; `mine`/`mineIron` swing stone/iron pickaxes.
+ * These one-row east-facing sheets are packed by tools/prepare-tool-swings.py, anchored by
+ * the boots rather than the head so raising a tool does not pull the body sideways.
+ * `profile` is walking west or east
  * (one row). `locomotion` is walking and running, `run` is the newer run (3 rows: south, east,
  * north), and `actions` is gathering and the other actions. The survival sheets are one row each,
  * facing east: `sleep` (lying down, breathing), `wake` (getting up), `hungry` (hand on belly) and
@@ -86,7 +98,10 @@ const SOURCES = {
   scout: {
     idle: { url: scoutIdle, edges: [0, 418] },
     idleLoop: { url: scoutIdleLoop, edges: [0, 318, 632, 944, 1254], steady: true },
-    chop: { url: scoutChop, edges: [0, 724], steady: true },
+    chop: { url: scoutChop, edges: [0, 512] },
+    chopIron: { url: scoutChopIron, edges: [0, 512] },
+    mine: { url: scoutMine, edges: [0, 512] },
+    mineIron: { url: scoutMineIron, edges: [0, 512] },
     profile: { url: scoutSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: scoutWalk, edges: [0, 228, 447, 663, 889, 1112, 1331, 1547, 1774] },
     run: { url: scoutRun, edges: [0, 290, 579, 887], steady: true, columns: 6 },
@@ -106,7 +121,10 @@ const SOURCES = {
   builder: {
     idle: { url: builderIdle, edges: [0, 418] },
     idleLoop: { url: builderIdleLoop, edges: [0, 364, 722, 1081, 1448], steady: true },
-    chop: { url: builderChop, edges: [0, 724], steady: true },
+    chop: { url: builderChop, edges: [0, 512] },
+    chopIron: { url: builderChopIron, edges: [0, 512] },
+    mine: { url: builderMine, edges: [0, 512] },
+    mineIron: { url: builderMineIron, edges: [0, 512] },
     profile: { url: builderSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: builderWalk, edges: [0, 228, 446, 667, 891, 1109, 1332, 1552, 1774] },
     run: { url: builderRun, edges: [0, 292, 579, 887], steady: true, columns: 6 },
@@ -126,7 +144,10 @@ const SOURCES = {
   survivor: {
     idle: { url: survivorIdle, edges: [0, 418] },
     idleLoop: { url: survivorIdleLoop, edges: [0, 322, 655, 982, 1312], steady: true },
-    chop: { url: survivorChop, edges: [0, 724], steady: true },
+    chop: { url: survivorChop, edges: [0, 512] },
+    chopIron: { url: survivorChopIron, edges: [0, 512] },
+    mine: { url: survivorMine, edges: [0, 512] },
+    mineIron: { url: survivorMineIron, edges: [0, 512] },
     profile: { url: survivorSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: survivorWalk, edges: [0, 241, 456, 675, 902, 1119, 1331, 1554, 1774] },
     run: { url: survivorRun, edges: [0, 294, 583, 887], steady: true, columns: 6 },
@@ -307,7 +328,9 @@ export function loadCharacterSheets() {
       // and the "axe ready" pose a touch shorter (the knees are bent).
       const standing = atlas.idle.frames[0][0].height / atlases.scout.idle.referenceHeight;
       atlas.idleLoop.referenceHeight = atlas.idleLoop.frames[0][0].height / standing;
-      atlas.chop.referenceHeight = atlas.chop.frames[0][0].height / (standing * 0.97);
+      // Tool poses are packed around the boots; an overhead tool must not shrink the body.
+      for (const name of ['chop', 'chopIron', 'mine', 'mineIron'])
+        atlas[name].referenceHeight = atlas[name].frames[0][0].height / (standing * 0.97);
 
       // The survival sheets were painted at their own sizes too. The standing ones are sized by
       // their first pose, a little shorter than standing straight where the body is hunched.

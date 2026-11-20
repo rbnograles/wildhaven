@@ -46,7 +46,7 @@ All three share one world and start at different places. Each has its own save.
 | --- | --- | --- | --- | --- |
 | The Frontier Scout | Pinefall Woods (north) | 0 / 0 / 3 | Hatchet · Field pack | "Follow the trail. Find your home." |
 | The Wandering Builder | Hollowstead Meadows, at the abandoned village (center). The character card still says "Hollowstead Village" | 5 / 2 / 2 | Hammer · Work gloves | "Where others see ruins, you see a beginning." |
-| The Shipwreck Survivor | Driftwood Lagoon shore, at the shipwreck (east). The character card still says "Driftwood Coast" | 2 / 0 / 4 | Salvaged satchel · Rope | "The sea took your ship. Not your spirit." |
+| The Shipwreck Survivor | Driftwood Lagoon shore, at the shipwreck (east). The character card still says "Driftwood Coast" | 4 / 2 / 6 | Salvaged satchel · Rope | "The sea took your ship. Not your spirit." |
 
 Two kit tools are real since the tools update [Built 2026-11-19]: the Scout's hatchet is a stone axe and the Builder's hammer a stone hammer, each with every use left. The other kit items (field pack, work gloves, satchel, rope) still only identify the character visually.
 

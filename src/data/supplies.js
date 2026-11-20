@@ -15,7 +15,8 @@ import { SUPPLY_REGROW, HARVEST_REGROW } from './balance.js';
  * into the backpack; `label` and `verb` are the words on the interact button; `clip` is the
  * animation played while gathering; `sprite` and `scale` choose the picture and its size;
  * `regrow` is the seconds it takes to grow back; `tool`, when set, names the tool needed to
- * gather it (the pine tree needs an axe).
+ * gather it (the pine tree and the logs need an axe, the small boulders a pickaxe). For stone, only
+ * the small stones scattered over the land (`pebbles` in WILD) are picked up by hand.
  */
 export const SUPPLIES = [
   {
@@ -35,9 +36,10 @@ export const SUPPLIES = [
     ...SUPPLY_SPOTS['camp-stone'],
     type: 'stone',
     amount: 2,
-    label: 'Loose stones',
-    verb: 'Gather',
-    clip: 'gather',
+    label: 'Small boulder',
+    verb: 'Mine',
+    clip: 'build',
+    tool: 'pickaxe',
     sprite: 'rocks-a',
     scale: 0.5,
   },
@@ -58,8 +60,9 @@ export const SUPPLIES = [
     type: 'wood',
     amount: 3,
     label: 'Scrap timber',
-    verb: 'Gather',
-    clip: 'gather',
+    verb: 'Chop',
+    clip: 'chop',
+    tool: 'axe',
     sprite: 'log',
     scale: 0.8,
   },
@@ -68,9 +71,10 @@ export const SUPPLIES = [
     ...SUPPLY_SPOTS['village-stone'],
     type: 'stone',
     amount: 3,
-    label: 'Loose stones',
-    verb: 'Gather',
-    clip: 'gather',
+    label: 'Small boulder',
+    verb: 'Mine',
+    clip: 'build',
+    tool: 'pickaxe',
     sprite: 'rocks-a',
     scale: 0.5,
   },
@@ -91,8 +95,9 @@ export const SUPPLIES = [
     type: 'wood',
     amount: 4,
     label: 'Driftwood',
-    verb: 'Gather',
-    clip: 'gather',
+    verb: 'Chop',
+    clip: 'chop',
+    tool: 'axe',
     sprite: 'log',
     scale: 0.8,
   },
@@ -101,9 +106,10 @@ export const SUPPLIES = [
     ...SUPPLY_SPOTS['coast-stone'],
     type: 'stone',
     amount: 2,
-    label: 'Beach stones',
-    verb: 'Gather',
-    clip: 'gather',
+    label: 'Beach boulder',
+    verb: 'Mine',
+    clip: 'build',
+    tool: 'pickaxe',
     sprite: 'beach-rock',
     scale: 0.6,
   },
@@ -211,6 +217,8 @@ export const HARVEST = {
   pines: tree('Pine cluster', 3),
   'big-oak': tree('Big oak', 3),
   'jungle-tree': tree('Jungle tree', 3),
+  // A fallen log is wood like a tree, so it is chopped with an axe too, not picked up by hand.
+  log: tree('Fallen log', 2),
   'rocks-a': rock('Rocks', 'stone', 2),
   'rocks-b': rock('Rocks', 'stone', 2),
   'beach-rock': rock('Beach rock', 'stone', 2),

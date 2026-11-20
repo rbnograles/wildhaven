@@ -342,3 +342,13 @@ Played the Scout at `http://127.0.0.1:5173` in Pinefall Woods.
 - Pines on screen stood still (the sway was removed).
 
 Not checked by hand: the other two characters, other regions, regrowth after 180 s, a chopped tree still falling and breaking, and 390 px wide.
+
+## Stone and iron mining/chopping animations (2026-11-20)
+
+- `npm test`: 208 passed. Added a regression covering both tools and tiers, facing, action completion and cancellation.
+- `npm run build` and `npm run format:check`: passed. Build retains the existing JSON-import and large-bundle warnings.
+- Built-in generated art: four source sheets, twelve packed character strips, 48 frames. Packing asserts clear gutters and enough padding for every pose. Prompts and layout are in `assets/characters/tools/`.
+- Edge through Playwright: selected all four clips for all three characters in Preview animations, checked east and west, and resolved all 48 frames without empty frames or invalid scales. Screenshots: `output/playwright/{scout,builder,survivor}-pickaxe-preview.png`.
+- Completed real E-key gathering actions in the production preview at `http://127.0.0.1:5180`: Scout with stone axe, Builder with stone pickaxe, Survivor with iron pickaxe and iron axe. All awarded exactly the expected resources and saved the target's regrowth timer. No page errors. Screenshots: `output/playwright/scout-axe-stone-game.png`, `builder-pickaxe-stone-game.png`, `survivor-pickaxe-iron-game.png`, `survivor-axe-iron-game.png`.
+- Verification used an isolated browser context and fixture saves. A dev-server run was interrupted by concurrent live reloads; final gameplay checks used the built preview to avoid those reloads.
+- No layout changes. Mobile and separate north/south tool art were not tested; actions follow the existing east/west convention.

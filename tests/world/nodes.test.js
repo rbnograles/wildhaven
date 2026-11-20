@@ -169,7 +169,9 @@ test('every supply and wild patch can be walked to and gathered from each spawn'
     const i = near(node.x, node.y, 90);
     assert.notEqual(i, undefined, node.id);
 
+    // Some supplies need an axe or a pickaxe; this test is about reaching them, so carry both.
     const game = createGame('scout');
+    game.tools = { axe: { tier: 'iron' }, pickaxe: { tier: 'iron' } };
     game.player.x = (i % cols) * G;
     game.player.y = Math.floor(i / cols) * G;
     assert.equal(finishGather(game, node.id)?.id, node.id);

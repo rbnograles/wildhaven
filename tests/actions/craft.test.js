@@ -49,7 +49,8 @@ test('a stone tool costs its recipe, is made anywhere, and starts with every use
 
 // Guards a short backpack: the craft is refused, says what is missing, and spends nothing.
 test('a craft short of materials is refused, says what is missing, and spends nothing', () => {
-  const game = createGame('survivor'); // 2 wood, no stone
+  const game = createGame('survivor');
+  Object.assign(game.resources, { wood: 2, stone: 0 });
   const before = { ...game.resources };
   const result = finishCraft(game, 'pickaxe');
   assert.equal(result.ok, false);

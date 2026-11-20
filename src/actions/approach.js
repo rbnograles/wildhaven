@@ -4,7 +4,15 @@
 // soon as the target is in reach. Nothing here is saved: a walk is forgotten when the game closes.
 
 import { footing } from './move.js';
-import { GATHER_RANGE, APPROACH_CELL, APPROACH_SPAN, APPROACH_MARGIN } from '../data/balance.js';
+import { OBJECT_SPECS } from '../world/map.js';
+import {
+  GATHER_RANGE,
+  APPROACH_CELL,
+  APPROACH_SPAN,
+  APPROACH_MARGIN,
+  STAND_SIDE,
+  STAND_GAP,
+} from '../data/balance.js';
 
 // How far apart (in units) the spots checked along a straight line are when a path is smoothed.
 // The thinnest solid thing is wider than this, so a line can't slip through one unseen.
@@ -214,6 +222,51 @@ export function planApproach(state, node) {
 export function beginApproach(state, node) {
   const path = planApproach(state, node);
   return path && { node, path, i: 0, stuck: 0, retried: false };
+}
+
+/**
+ * Finds the spot beside a hand-picked node where the player should stand to gather it.
+ *
+ * The bending picture faces east or west, so the player looks right only when the berries or
+ * stones are at their side, like kneeling next to a flower bed rather than with your back to it.
+ * The spot is level with the node, on the side the player is already on; if something is in the
+ * way there, the other side is tried. Trees and rocks keep their own swing and get no spot.
+ *
+ * @param {object} state - The game being played.
+ * @param {object} node - The node about to be gathered.
+ * @returns {{x: number, y: number}|null} The spot to step to, or null when no step is needed:
+ *   the node needs a tool, the player already stands there, or neither side can be walked to in
+ *   a straight line.
+ */
+export function standSpot(state, node) {
+  if (node.tool || state.aboard) return null;
+
+  // A solid supply (a berry bush with a base) is stood beside its base, not inside it.
+  const free = footing(state),
+    base = (OBJECT_SPECS[node.sprite]?.footprint?.[0] ?? 0) * (node.scale ?? 1),
+    side = Math.max(STAND_SIDE, base + STAND_GAP),
+    here = { x: state.player.x, y: state.player.y },
+    first = here.x <= node.x ? -1 : 1;
+
+  for (const way of [first, -first]) {
+    const spot = { x: node.x + way * side, y: node.y + 2 };
+    if (Math.hypot(spot.x - here.x, spot.y - here.y) < 4) return null;
+    if (free(spot.x, spot.y) && clearLine(free, here, spot)) return spot;
+  }
+  return null;
+}
+
+/**
+ * Starts the short step to the spot beside a hand-picked node that is already in reach.
+ *
+ * @param {object} state - The game being played.
+ * @param {object} node - The node to gather.
+ * @returns {object|null} A walk like beginApproach's, marked `placing`, whose path is just the
+ *   spot. Null when no step is needed (see standSpot), so the gathering can start at once.
+ */
+export function beginPlacing(state, node) {
+  const spot = standSpot(state, node);
+  return spot && { node, path: [spot], i: 0, stuck: 0, retried: false, placing: true };
 }
 
 /**
