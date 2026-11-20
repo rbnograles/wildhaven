@@ -10,6 +10,8 @@ import {
   hitsObstacle,
   isWalkable,
   mapProperty,
+  MAP_OBJECTS,
+  elevationAt,
   isDryLand,
   surfaceAt,
 } from '../../src/world/map.js';
@@ -88,4 +90,19 @@ test('surfaceAt tells sand, snow and earth apart on dry land', () => {
   assert.ok(seen.sand > 200 && seen.snow > 200 && seen.earth > 2000, JSON.stringify(seen));
   // Nearly all of the snowy region is snow underfoot (its beach is sand).
   assert.ok(snowyAsSnow / snowy > 0.8, `${snowyAsSnow} of ${snowy}`);
+});
+
+// Guards the footpaths the map builder lays between the starting places and the signposts: a piece
+// in a river, on a hill or under a tree would be a path nobody can follow.
+test('every piece of footpath lies on dry, level ground with nothing solid on it', () => {
+  const pieces = MAP_OBJECTS.filter((o) => o.name.startsWith('path-'));
+  assert.ok(pieces.length > 500, `${pieces.length} pieces`);
+
+  for (const piece of pieces) {
+    const where = `${piece.name} at ${piece.x},${piece.y}`;
+    assert.ok(isDryLand(piece.x, piece.y), `${where} is in water`);
+    assert.equal(elevationAt(piece.x, piece.y), '0', `${where} is on a hill`);
+    assert.ok(!hitsObstacle(piece.x, piece.y), `${where} is under something solid`);
+    assert.ok(piece.rotation >= 0 && piece.rotation < 360, `${where} has no turn`);
+  }
 });

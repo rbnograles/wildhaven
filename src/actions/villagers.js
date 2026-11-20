@@ -1,10 +1,11 @@
 // What the villagers of Hollowstead do each frame: rest, find a way to their work, do it, carry
-// what it gave to their drop spot, set it down, and start again. Each has their own job (see
-// data/npcs.js). Nothing here is saved; world/npcs.js holds where they are meanwhile.
+// what it gave to their drop spot, set it down, and start again. Each has their own jobs (see
+// data/npcs.js) and changes to another one when the thing they work on has been taken. Nothing
+// here is saved; world/npcs.js holds where they are meanwhile.
 
 import { VILLAGERS, toward } from '../world/npcs.js';
 import { isWalkable } from '../world/map.js';
-import { nodeBases, goneSupplies, wreckBases } from '../world/nodes.js';
+import { NODES, isAvailable, nodeBases, goneSupplies, wreckBases } from '../world/nodes.js';
 import { campBases } from '../world/camps.js';
 import { findPath } from './approach.js';
 import {
@@ -37,6 +38,32 @@ export function villagerFooting(state) {
 }
 
 /**
+ * Says whether the thing a job works on is there right now.
+ *
+ * Maren can only chop the scrap timber while it lies there, and Bram can only break the boulder
+ * while it stands. Once the player has gathered it, it is gone until it grows back. A job that
+ * needs nothing can always be done.
+ *
+ * @param {object} state - The game being played.
+ * @param {{needs?: string}} job - One of a villager's jobs.
+ * @returns {boolean} True if the job can be done now.
+ */
+export function canDo(state, job) {
+  if (!job.needs) return true;
+  const node = NODES.find((n) => n.id === job.needs);
+  return !!node && isAvailable(state, node);
+}
+
+/**
+ * Picks the job a villager should do now: the first one on their list that can be done.
+ *
+ * @param {object} state - The game being played.
+ * @param {object} npc - The villager's entry in `NPCS`.
+ * @returns {object} The job; the last one on the list if none of the others can be done.
+ */
+export const pickJob = (state, npc) => npc.jobs.find((job) => canDo(state, job)) ?? npc.jobs.at(-1);
+
+/**
  * Plans a villager's walk to their work spot or their drop spot.
  *
  * The path search brings them close to the spot; the spot itself is added as the last step, so
@@ -47,7 +74,7 @@ export function villagerFooting(state) {
  * @returns {{x: number, y: number}[]|null} The spots to walk through, or null if there is no way.
  */
 export function planErrand(state, villager) {
-  const spot = villager.npc.job[villager.heading],
+  const spot = villager.job[villager.heading],
     path = findPath(villagerFooting(state), villager, spot, NPC_ARRIVE);
 
   return path && [...path, { x: spot.x, y: spot.y }];
@@ -73,7 +100,7 @@ function settle(villager, phase, seconds) {
  * @param {number} dt - Seconds since the last frame.
  */
 function walkOn(villager, free, dt) {
-  const { job } = villager.npc;
+  const { job } = villager;
 
   // Arrived at the last spot: turn the way the job faces and begin.
   if (villager.i >= villager.path.length) {
@@ -130,7 +157,10 @@ function walkOn(villager, free, dt) {
  * Each villager does the same round over and over, like a baker's morning: rest a moment, walk
  * to the work spot, work, carry the result to the drop spot, set it down, rest again. A walking
  * villager stops whenever the player is close, so they never bump into the player and are easy
- * to walk up to. If the way is blocked they wait a moment and look for another way.
+ * to walk up to. If the way is blocked they wait a moment and look for another way. If the thing
+ * they work on is taken while they are on their way to it or busy with it (the player gathers
+ * the boulder Bram is breaking), they stop, look up for a moment, and take up another job; they
+ * go back to the first one once it has grown back.
  *
  * @param {object} state - The game being played (the player's spot and what is solid are read).
  * @param {number} dt - Seconds since the last frame.
@@ -140,6 +170,11 @@ export function tickVillagers(state, dt, random = Math.random) {
   const free = villagerFooting(state);
 
   for (const villager of VILLAGERS) {
+    // The thing they were going to work on, or are working on, is gone: stop and think again.
+    // A villager already carrying a load finishes taking it to the drop spot first.
+    const busyWithWork = villager.phase !== 'rest' && villager.heading === 'work';
+    if (busyWithWork && !canDo(state, villager.job)) settle(villager, 'rest', NPC_RETRY);
+
     // Walking: stand still for a player who is close, otherwise step on.
     if (villager.phase === 'walk') {
       const close =
@@ -164,6 +199,8 @@ export function tickVillagers(state, dt, random = Math.random) {
       villager.carrying = false;
       settle(villager, 'rest', NPC_REST_MIN + random() * (NPC_REST_MAX - NPC_REST_MIN));
     } else if (villager.phase === 'rest') {
+      // Rested: take the first job that can be done now, and set off for it.
+      villager.job = pickJob(state, villager.npc);
       villager.heading = 'work';
       settle(villager, 'wait', 0);
     }

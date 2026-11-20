@@ -131,6 +131,9 @@ const TILE_LAYERS = mapData.layers.filter((l) => l.type === 'tilelayer').map((l)
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;
 
+// Footpaths are drawn just above the ground tiles and under every other flat thing (those are at -1).
+const PATH_DEPTH = -1.5;
+
 // How far above a villager's head their name floats, in world units.
 const NAME_GAP = 10;
 
@@ -301,7 +304,10 @@ export async function createRenderer(container, miniCanvas) {
             .image(object.x, object.y, anim ? `anim-${object.name}` : `object-${object.name}`, 0)
             .setOrigin(...(anim ?? spec).origin)
             .setScale(spec.scale ?? 1)
-            .setDepth(spec.flat ? -1 : object.y)
+            // A piece of footpath lies under the other flat things (small stones, stairs, bridges)
+            // and is the only kind of object the map turns, to follow its route.
+            .setDepth(spec.flat ? (spec.path ? PATH_DEPTH : -1) : object.y)
+            .setAngle(object.rotation ?? 0)
             .setVisible(false);
           const key = `${Math.floor(object.x / CHUNK)},${Math.floor(object.y / CHUNK)}`;
           if (!chunks.has(key)) chunks.set(key, []);

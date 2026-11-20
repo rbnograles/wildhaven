@@ -15,7 +15,7 @@ The home continent sits inside a sea border; water far from any land becomes the
 The game reads collision from the JSON (water and deep tiles, the elevation grid and object footprints) and regions
 from its region grid. Run: python tools/build-map.py [preview.png]
 """
-import json, math, os, random, sys
+import heapq, json, math, os, random, sys
 import numpy as np
 from PIL import Image
 
@@ -757,6 +757,127 @@ DETAIL = {
 fixed_bases = [(ox - spec[n]['footprint'][0] * spec[n].get('scale', 1) - 30, oy - spec[n]['footprint'][1] * spec[n].get('scale', 1) - 30,
                 ox + spec[n]['footprint'][0] * spec[n].get('scale', 1) + 30, oy + 30)
                for n, ox, oy in fixed if 'footprint' in spec[n]]
+# ---- footpaths ---------------------------------------------------------------------------
+# Worn paths join the three starting places and the fourteen signposts into one network, so a player who follows
+# a path always comes to somewhere. The network is the shortest set of links that reaches every one of them (a
+# "minimum spanning tree"): no loops, and no place left out. Each link is then walked out on the tile grid by a
+# path finder (A*), which keeps to dry flat ground: it crosses a river only at a ford or bridge and goes round
+# hills, pools and buildings. Landmarks get no path on purpose: finding them is the exploring.
+PATH_ENDS = list(SPAWN.values()) + [land((w['x'], w['y'])) for w in PLACES['waypoints']]
+PATH_STEP = 80          # one piece of path is laid every this many units along a route (a piece is about 140 long)
+PATH_TREES = 85         # trees, rocks and flowers are cleared this far to each side of a path...
+PATH_SOUTH = 170        # ...and this far south of it, where a tall tree's crown would hide the path
+PATH_DETAIL = 60        # grass tufts, small stones, berries and sticks keep this far from the middle of a path
+PATH_STONE = 'DCS'      # regions whose paths are cobbles; the leafy dirt path would look wrong on sand, rock and snow
+
+# Which map tiles a path may cross: all four corners dry, on level ground (no hill, wall or stairs) and not under a
+# hand-placed object. `roomy` tiles also have such tiles all round them; a path prefers those, so it does not hug a
+# river bank or the foot of a cliff.
+path_open = ~(wet[:-1, :-1] | wet[1:, :-1] | wet[:-1, 1:] | wet[1:, 1:]) & (elevation == '0')
+for left_, top_, right_, bottom_ in fixed_bases:
+    path_open[max(0, int((top_ + PAD - 40) // TILE)):int((bottom_ + PAD + 40) // TILE) + 1,
+              max(0, int((left_ + PAD - 40) // TILE)):int((right_ + PAD + 40) // TILE) + 1] = False
+# The hand-placed supplies (a boulder, a log, a berry bush) are solid too, but the game draws them, not this
+# script, so they are not among the bases above: the tiles within 110 units of each are closed as well.
+for sx_, sy_ in (land(p) for p in PLACES['supplies'].values()):
+    path_open[int((sy_ + PAD - 110) // TILE):int((sy_ + PAD + 110) // TILE) + 1,
+              int((sx_ + PAD - 110) // TILE):int((sx_ + PAD + 110) // TILE) + 1] = False
+roomy = path_open.copy()
+for dy in (-1, 0, 1):
+    for dx in (-1, 0, 1):
+        roomy[1:-1, 1:-1] &= path_open[1 + dy:ROWS - 1 + dy, 1 + dx:COLS - 1 + dx]
+# What one step onto each tile costs. Open ground costs about 1; a slow wave over the land makes some ground a
+# little dearer, so a path wanders the way a real one does instead of running dead straight; a tile beside water
+# or a cliff costs much more; a beach costs a little more, so paths stay inland.
+tile_y, tile_x = np.mgrid[0:ROWS, 0:COLS]
+step_cost = (1 + 0.5 * np.sin(tile_x / 11 + 1.7) * np.cos(tile_y / 9 + 0.6) + np.where(roomy, 0, 4)
+             + np.where(corner[:-1, :-1] == SAND, 0.6, 0))
+PATH_REUSE = 0.3        # a tile that already has a path costs this share of its price, so routes join into one trunk
+has_path = np.zeros((ROWS, COLS), bool)
+
+# The map tile (column, row) a LAND point is in; if a path can't go there, the nearest tile where it can.
+def path_tile(x, y):
+    c, r = int((x + PAD) // TILE), int((y + PAD) // TILE)
+    if path_open[r, c]: return c, r
+    rows_, cols_ = np.nonzero(path_open[r - 6:r + 7, c - 6:c + 7])
+    best = np.argmin(np.hypot(rows_ - 6, cols_ - 6))
+    return int(c - 6 + cols_[best]), int(r - 6 + rows_[best])
+
+# Finds the cheapest way over the tiles from one tile to another (A*: it always tries next the tile that looks
+# closest to the goal, like someone crossing a field towards a far tree). Returns the tiles in order, or None if
+# there is no way.
+def path_route(start, goal):
+    best = {start: 0.0}; came = {}; queue = [(0.0, start)]
+    while queue:
+        _, at = heapq.heappop(queue)
+        if at == goal:
+            route = [at]
+            while route[-1] in came: route.append(came[route[-1]])
+            return route[::-1]
+        c, r = at
+        for dc, dr in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
+            nc, nr = c + dc, r + dr
+            if not (0 <= nc < COLS and 0 <= nr < ROWS) or not path_open[nr, nc]: continue
+            if dc and dr and not (path_open[r, nc] and path_open[nr, c]): continue   # no squeezing between two blocked tiles
+            cost = best[at] + step_cost[nr, nc] * (PATH_REUSE if has_path[nr, nc] else 1) * (1.414 if dc and dr else 1)
+            if cost < best.get((nc, nr), 1e18):
+                best[(nc, nr)] = cost; came[(nc, nr)] = at
+                heapq.heappush(queue, (cost + PATH_REUSE * 0.5 * math.hypot(goal[0] - nc, goal[1] - nr), (nc, nr)))
+    return None
+
+# Rounds the corners of a line of points: each pass cuts every corner off a quarter of the way along both sides
+# (Chaikin's method), like sanding a square stick round. The two ends stay where they are.
+def rounded(points, passes=3):
+    for _ in range(passes):
+        out = [points[0]]
+        for (ax, ay), (bx, by) in zip(points, points[1:]):
+            out += [(ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25), (ax * 0.25 + bx * 0.75, ay * 0.25 + by * 0.75)]
+        points = out + [points[-1]]
+    return points
+
+# The links: start from one place and keep adding the nearest place not yet joined (Prim's method).
+joined, links = [0], []
+while len(joined) < len(PATH_ENDS):
+    _, a, b_ = min((math.hypot(PATH_ENDS[i][0] - PATH_ENDS[j][0], PATH_ENDS[i][1] - PATH_ENDS[j][1]), i, j)
+                   for i in joined for j in range(len(PATH_ENDS)) if j not in joined)
+    joined.append(b_); links.append((a, b_))
+
+# Walk out every link, round it, and lay a piece of path every PATH_STEP units. Where two routes share a trunk the
+# second one lays nothing new: a spot already within reach of a laid piece is skipped.
+paths, laid = [], {}
+for a, b_ in links:
+    route = path_route(path_tile(*PATH_ENDS[a]), path_tile(*PATH_ENDS[b_]))
+    if route is None:
+        print('no path between', PATH_ENDS[a], 'and', PATH_ENDS[b_]); continue
+    for c, r in route: has_path[r, c] = True
+    line = rounded([PATH_ENDS[a]] + [((c + 0.5) * TILE - PAD, (r + 0.5) * TILE - PAD) for c, r in route[2:-2:3]] + [PATH_ENDS[b_]])
+    walked, due = 0.0, 0.0
+    for (ax, ay), (bx, by) in zip(line, line[1:]):
+        length = math.hypot(bx - ax, by - ay)
+        while length and due <= walked + length:
+            t = (due - walked) / length; x, y = ax + (bx - ax) * t, ay + (by - ay) * t; due += PATH_STEP
+            cell = (int(x // PATH_STEP), int(y // PATH_STEP))
+            if any(math.hypot(x - px, y - py) < PATH_STEP * 0.6
+                   for dx in (-1, 0, 1) for dy in (-1, 0, 1) for px, py in laid.get((cell[0] + dx, cell[1] + dy), [])): continue
+            laid.setdefault(cell, []).append((x, y))
+            # Two looks per kind of path, each also turned end for end at random, so the same stones don't repeat.
+            rng = random.Random(int(x) * 92821 ^ int(y) * 40503 ^ 0x9a7)
+            name = ('path-stone-' if region_key(x, y) in PATH_STONE else 'path-dirt-') + rng.choice('ab')
+            paths.append((name, round(x), round(y), round(math.degrees(math.atan2(by - ay, bx - ax)) + rng.choice((0, 180))) % 360))
+        walked += length
+path_xy = np.array([(x, y) for _, x, y, _ in paths], float)
+
+# Says whether the LAND point (x, y) is within r units of the middle of a path.
+def on_path(x, y, r): return bool((np.hypot(path_xy[:, 0] - x, path_xy[:, 1] - y) < r).any())
+
+# Says whether a tree or rock at the LAND point (x, y) would stand on a path or just south of one, hiding it.
+def crowds_path(x, y):
+    dx, dy = np.abs(path_xy[:, 0] - x), y - path_xy[:, 1]
+    return bool(((np.hypot(dx, dy) < PATH_TREES) | ((dx < PATH_TREES) & (dy > 0) & (dy < PATH_SOUTH))).any())
+
+# The scenery scattered above did not know about the paths, so whatever stands in their way is taken out again.
+scattered = [s for s in scattered if not crowds_path(s[1], s[2])]
+
 details = []
 DETAIL_STEP = 150
 # Like the scatter above, the grid starts before the old map's corner (14 squares, just past the sea border) so it
@@ -774,7 +895,7 @@ for gy in range(DETAIL_STEP // 2 - 14 * DETAIL_STEP, LAND_H + PAD, DETAIL_STEP):
         if (roll >= chance or not on_flat(x, y, 40) or near_water(x, y, 45)
                 or any(math.hypot(x - px, y - py) < 70 for px, py in POINTS)
                 or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
-                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)): continue
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases) or on_path(x, y, PATH_DETAIL)): continue
         details.append((name, x, y))
 
 # Small stones: little piles the player picks up with bare hands (WILD.pebbles in src/data/supplies.js), so there is
@@ -798,7 +919,7 @@ for gy in range(PEBBLE_STEP // 2 - 10 * PEBBLE_STEP, LAND_H + PAD, PEBBLE_STEP):
                 or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
                 or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
                 or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
-                or (np.hypot(scenery_xy[:, 0] - x, scenery_xy[:, 1] - y) < 130).any()): continue
+                or (np.hypot(scenery_xy[:, 0] - x, scenery_xy[:, 1] - y) < 130).any() or on_path(x, y, PATH_DETAIL)): continue
         pebbles.append(('pebbles', x, y))
 
 # Wild berries: small bushes picked with bare hands (WILD['wild-berries']), so food is found while exploring and not
@@ -819,7 +940,7 @@ for gy in range(BERRY_STEP // 2 - 8 * BERRY_STEP, LAND_H + PAD, BERRY_STEP):
                 or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
                 or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
                 or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
-                or (np.hypot(taken_xy[:, 0] - x, taken_xy[:, 1] - y) < 130).any()): continue
+                or (np.hypot(taken_xy[:, 0] - x, taken_xy[:, 1] - y) < 130).any() or on_path(x, y, PATH_DETAIL)): continue
         berries.append(('wild-berries', x, y))
 
 # Small sticks: fallen branches the player picks up with bare hands (WILD.sticks in src/data/supplies.js), so there
@@ -842,7 +963,7 @@ for gy in range(STICK_STEP // 2 - 9 * STICK_STEP, LAND_H + PAD, STICK_STEP):
                 or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
                 or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
                 or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
-                or (np.hypot(crowded_xy[:, 0] - x, crowded_xy[:, 1] - y) < 110).any()): continue
+                or (np.hypot(crowded_xy[:, 0] - x, crowded_xy[:, 1] - y) < 110).any() or on_path(x, y, PATH_DETAIL)): continue
         sticks.append(('sticks', x, y))
 
 # Water ripples: small looping animations on open water, so rivers, pools and the sea are never perfectly still.
@@ -876,10 +997,12 @@ for gy in range(RIPPLE_STEP // 2 - PAD, LAND_H + PAD, RIPPLE_STEP):
         ripples.append((name, x, y))
 # Everything above is in LAND units; the map file is in WORLD units.
 objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + sticks + ripples]
+# The pieces of path come last and are the only objects that are turned: `rotation` is in degrees, clockwise.
+path_objects = [(n, x + PAD, y + PAD, turn) for n, x, y, turn in paths]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
-    'width': COLS, 'height': ROWS, 'tilewidth': TILE, 'tileheight': TILE, 'nextlayerid': len(TILE_LAYERS) + 2, 'nextobjectid': len(objects) + 1,
+    'width': COLS, 'height': ROWS, 'tilewidth': TILE, 'tileheight': TILE, 'nextlayerid': len(TILE_LAYERS) + 2, 'nextobjectid': len(objects) + len(path_objects) + 1,
     'tilesets': [{'firstgid': 1, 'name': 'terrain', 'image': 'tileset.png', 'imagewidth': sheet.shape[1], 'imageheight': sheet.shape[0],
                   'tilewidth': TILE, 'tileheight': TILE, 'margin': 1, 'spacing': 2, 'columns': TS_COLS, 'tilecount': len(tiles)}],
     'properties': [{'name': 'firstWaterGid', 'type': 'int', 'value': first['water']},
@@ -896,7 +1019,9 @@ tiled = {
                for i, n in enumerate(TILE_LAYERS)]
             + [{'id': len(TILE_LAYERS) + 1, 'name': 'objects', 'type': 'objectgroup', 'x': 0, 'y': 0, 'opacity': 1, 'visible': True, 'draworder': 'topdown',
                 'objects': [{'id': i + 1, 'name': n, 'type': n, 'x': x, 'y': y, 'width': 0, 'height': 0, 'rotation': 0, 'point': True, 'visible': True}
-                            for i, (n, x, y) in enumerate(objects)]}],
+                            for i, (n, x, y) in enumerate(objects)]
+                           + [{'id': len(objects) + i + 1, 'name': n, 'type': n, 'x': x, 'y': y, 'width': 0, 'height': 0, 'rotation': turn, 'point': True, 'visible': True}
+                              for i, (n, x, y, turn) in enumerate(path_objects)]}],
 }
 map_path = os.path.join(OUT, 'wildhaven.json')
 json.dump(tiled, open(map_path, 'w'), separators=(',', ':'))
@@ -912,11 +1037,15 @@ sprites = {n: Image.open(os.path.join(SRC, 'objects', spec[n]['kind'], f'{n}.png
 # Shrinks a sprite to overview size, allowing for the sprite's own `scale` in objects.json.
 def shrink(n, im): sc = spec[n].get('scale', 1); return im.resize((max(1, int(im.width * sc) // S), max(1, int(im.height * sc) // S)), Image.LANCZOS)
 sprites = {n: shrink(n, im) for n, im in sprites.items()}
+# The paths go on first, under everything else. PIL turns a picture anticlockwise, so the turn is negated.
+for n, x, y, turn in path_objects:
+    im = sprites[n].rotate(-turn, expand=True)
+    full.alpha_composite(im, (round(x / S - im.width / 2), round(y / S - im.height / 2)))
 for n, x, y in sorted(objects, key=lambda o: (not spec[o[0]].get('flat', False), o[2])):
     im = sprites[n]; ox, oy = spec[n]['origin']
     px, py = round(x / S - im.width * ox), round(y / S - im.height * oy)
     if px >= 0 and py >= 0 and px + im.width <= full.width and py + im.height <= full.height: full.alpha_composite(im, (px, py))
 full.convert('RGB').resize((1568, 1120), Image.LANCZOS).save(os.path.join(OUT, 'overview.webp'), quality=85)   # 7:5, the map's own shape
 if len(sys.argv) > 1: full.convert('RGB').save(sys.argv[1])
-print(len(tiles), 'tiles,', len(objects), 'objects,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file,',
+print(len(tiles), 'tiles,', len(objects), 'objects,', len(path_objects), 'pieces of path,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file,',
       len(flights), 'flights of stairs,', len(cliff_gid), 'cliff tiles; hills per kit:', HILL_COUNT)

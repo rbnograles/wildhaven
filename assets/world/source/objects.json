@@ -1,5 +1,5 @@
 {
-  "_comment": "One entry per sprite. kind = the folder under objects/ that holds <name>.png and its prompt (trees, plants, rocks, buildings or props). origin = the ground contact point of the sprite as a fraction of its width/height. footprint = [halfWidth, depth] of the solid base in world units, measured up from the origin (omit for walk-through). flat = drawn under characters. scale = draw size wherever the map places this sprite (the footprint scales with it).",
+  "_comment": "One entry per sprite. kind = the folder under objects/ that holds <name>.png and its prompt (trees, plants, rocks, buildings or props). origin = the ground contact point of the sprite as a fraction of its width/height. footprint = [halfWidth, depth] of the solid base in world units, measured up from the origin (omit for walk-through). flat = drawn under characters. path = a piece of footpath: drawn under the other flat things, and turned by the map's `rotation`. scale = draw size wherever the map places this sprite (the footprint scales with it).",
   "tent": { "kind": "buildings", "origin": [0.5, 0.973], "footprint": [84, 65] },
   "log": { "kind": "props", "origin": [0.5, 0.944], "footprint": [62, 30] },
   "campfire": { "kind": "props", "origin": [0.49, 0.989], "footprint": [30, 45] },
@@ -41,6 +41,10 @@
   "wild-berries": { "kind": "plants", "origin": [0.5, 0.9], "scale": 0.65 },
   "pebbles": { "kind": "rocks", "origin": [0.5, 0.7], "flat": true, "scale": 0.5 },
   "sticks": { "kind": "props", "origin": [0.5, 0.6], "flat": true, "scale": 0.5 },
+  "path-dirt-a": { "kind": "props", "origin": [0.5, 0.5], "flat": true, "path": true, "scale": 0.5 },
+  "path-dirt-b": { "kind": "props", "origin": [0.5, 0.5], "flat": true, "path": true, "scale": 0.5 },
+  "path-stone-a": { "kind": "props", "origin": [0.5, 0.5], "flat": true, "path": true, "scale": 0.5 },
+  "path-stone-b": { "kind": "props", "origin": [0.5, 0.5], "flat": true, "path": true, "scale": 0.5 },
   "old-boat": { "kind": "props", "origin": [0.5, 0.78], "footprint": [70, 26] },
   "rowboat": { "kind": "props", "origin": [0.5, 0.55] },
   "river-ripple": { "kind": "props", "origin": [0.5, 0.5], "flat": true },

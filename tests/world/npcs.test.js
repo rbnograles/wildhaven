@@ -1,6 +1,7 @@
 // Checks the villagers of Hollowstead village: that all three live in the village on ground the
 // player can reach, that they are solid and look at a player who comes close, and that each one's
-// job (walk to work, work, carry, set down, rest) runs round on paths that avoid what is solid.
+// job (walk to work, work, carry, set down, rest) runs round on paths that avoid what is solid,
+// and that they change jobs when the supply they work on has been gathered.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,17 +19,22 @@ import {
   resetVillagers,
   villagerPose,
 } from '../../src/world/npcs.js';
-import { tickVillagers, planErrand, villagerFooting } from '../../src/actions/villagers.js';
+import {
+  tickVillagers,
+  planErrand,
+  pickJob,
+  villagerFooting,
+} from '../../src/actions/villagers.js';
 import { createGame } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
 
 /**
- * Lists every spot a villager's job names: home, the work spot and the drop spot.
+ * Lists every spot a villager's jobs name: home, and each job's work spot and drop spot.
  *
  * @param {object} npc - The villager's entry in `NPCS`.
- * @returns {{x: number, y: number}[]} The three spots.
+ * @returns {{x: number, y: number}[]} The spots.
  */
-const spotsOf = (npc) => [npc, npc.job.work, npc.job.drop];
+const spotsOf = (npc) => [npc, ...npc.jobs.flatMap((job) => [job.work, job.drop])];
 
 /**
  * Runs the villagers for a while, in frames of a twentieth of a second.
@@ -74,11 +80,72 @@ test('each home, work and drop spot is clear ground, away from start spots', () 
 
 // Guards against a job whose work only faces a way the pictures don't have, or an unknown kind of work.
 test('each job is a kind of work the pictures have, facing sideways', () => {
-  for (const { id, job } of NPCS) {
-    assert.ok(['chop', 'mine', 'pickup'].includes(job.work.clip), id);
-    assert.ok([1, 2].includes(job.work.facing) && [1, 2].includes(job.drop.facing), id);
+  for (const { id, jobs } of NPCS) {
+    for (const job of jobs) {
+      assert.ok(['chop', 'mine', 'pickup'].includes(job.work.clip), id);
+      assert.ok([1, 2].includes(job.work.facing) && [1, 2].includes(job.drop.facing), id);
+      if (job.needs)
+        assert.ok(
+          NODES.some((node) => node.id === job.needs),
+          `${id}: ${job.needs}`,
+        );
+    }
+    // The last job is the one to fall back on, so it must not wait on anything.
+    assert.equal(jobs.at(-1).needs, undefined, `${id} always has something to do`);
   }
-  assert.equal(new Set(NPCS.map((npc) => npc.job.work.clip)).size, 3, 'each has their own work');
+  assert.equal(
+    new Set(NPCS.map((npc) => npc.jobs[0].work.clip)).size,
+    3,
+    'each has their own work',
+  );
+});
+
+// Guards the switch: a villager who keeps swinging at a boulder that is no longer there, or who
+// never goes back to it once it has grown back.
+test('a villager takes up another job while the thing they work on is gone', () => {
+  const game = createGame('scout');
+  resetVillagers();
+  const bram = VILLAGERS[1],
+    [mining, hauling] = bram.npc.jobs;
+  assert.equal(pickJob(game, bram.npc), mining);
+
+  // He is at the boulder, swinging, when the player gathers it.
+  run(game, 240, () => bram.phase === 'work');
+  assert.equal(villagerPose(bram, game.player).sheet, 'mine');
+  game.regrowAt[mining.needs] = game.time + 720;
+  run(game, 0.1);
+  assert.equal(bram.phase, 'rest', 'stopped swinging');
+  assert.equal(bram.carrying, false, 'got nothing from it');
+  assert.equal(villagerPose(bram, game.player).sheet, 'idle');
+
+  // He takes up the other job, and does it while the boulder is gone.
+  assert.equal(pickJob(game, bram.npc), hauling);
+  run(game, 240, () => bram.phase === 'work');
+  assert.equal(bram.job, hauling);
+  assert.deepEqual([bram.x, bram.y], [hauling.work.x, hauling.work.y]);
+  run(game, 240, () => bram.phase === 'deposit');
+  assert.deepEqual([bram.x, bram.y], [hauling.drop.x, hauling.drop.y]);
+
+  // The boulder grows back: after his next rest he goes back to mining.
+  game.time += 721;
+  run(game, 240, () => bram.phase === 'work');
+  assert.equal(bram.job, mining);
+  assert.equal(villagerPose(bram, game.player).sheet, 'mine');
+  resetVillagers();
+});
+
+// Guards against a villager dropping a load on the spot when their supply is taken mid-delivery.
+test('a villager already carrying a load still delivers it when the supply is taken', () => {
+  const game = createGame('scout');
+  resetVillagers();
+  const maren = VILLAGERS[0],
+    [chopping] = maren.npc.jobs;
+
+  run(game, 240, () => maren.carrying && maren.phase === 'walk');
+  game.regrowAt[chopping.needs] = game.time + 720;
+  run(game, 240, () => maren.phase === 'deposit');
+  assert.deepEqual([maren.x, maren.y], [chopping.drop.x, chopping.drop.y]);
+  resetVillagers();
 });
 
 // Guards against the villagers depending on who is played: every character must meet the same three.
@@ -123,18 +190,20 @@ test('the player cannot walk through a villager', () => {
 test('every leg of every job has a path that ends on its spot', () => {
   const game = createGame('scout');
 
-  for (const npc of NPCS) {
-    const legs = [
-      [npc, 'work'],
-      [npc.job.work, 'drop'],
-      [npc.job.drop, 'work'],
-    ];
-    for (const [from, heading] of legs) {
-      const path = planErrand(game, { npc, x: from.x, y: from.y, heading });
-      assert.ok(path, `${npc.id} can walk to ${heading}`);
-      assert.deepEqual(path.at(-1), { x: npc.job[heading].x, y: npc.job[heading].y });
+  // A villager may start any of their jobs from home or from any of their drop spots.
+  for (const npc of NPCS)
+    for (const job of npc.jobs) {
+      const legs = [
+        [npc, 'work'],
+        [job.work, 'drop'],
+        ...npc.jobs.map((other) => [other.drop, 'work']),
+      ];
+      for (const [from, heading] of legs) {
+        const path = planErrand(game, { npc, job, x: from.x, y: from.y, heading });
+        assert.ok(path, `${npc.id} can walk to ${heading}`);
+        assert.deepEqual(path.at(-1), { x: job[heading].x, y: job[heading].y });
+      }
     }
-  }
 });
 
 // Guards the whole round: a villager who never sets off, never works, or never puts the load
@@ -154,7 +223,7 @@ test('a villager walks to work, works, carries the load to the drop spot and res
   };
 
   for (const villager of [...VILLAGERS, ...VILLAGERS]) {
-    const { work, drop } = villager.npc.job;
+    const { work, drop } = villager.job;
 
     walk(240, () => villager.phase === 'work');
     assert.equal(villager.phase, 'work', `${villager.npc.id} reached work`);

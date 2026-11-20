@@ -360,3 +360,17 @@ Browser at `http://127.0.0.1:5179` (800×600), new Builder journey: the woodswor
 Walking, same day, same address, Builder's save continued: after her first rest Maren walked north-east with the east walking frames at the same size as her standing pose, stopped beside the player, turned to face them and showed "Maren · Woodsworker". No console errors. Bram and Tilly were not watched walking in the browser; their routes and the stop-for-the-player rule are covered by `tests/world/npcs.test.js`.
 
 Jobs and path finding, same day and address, Builder's save set to morning with the player south of the square: Bram walked to the boulder and swung his pickaxe at it, Maren left the scrap timber carrying logs, and Tilly carried a wheat sheaf to her drop spot, set it down and then stood resting, turned to the player with her name shown. All were the player's size. No console errors. The deposit and pick-up frames were not caught in a screenshot; the round and the detour round a campfire are covered by `tests/world/npcs.test.js`.
+
+## 2026-11-20: sticks and footprints
+
+- Survivor, new game at `127.0.0.1`: walking on the beach leaves sand boot prints behind the player, alternating left and right and turned to the heading; on grass the prints are faint earth marks. They fade after a few seconds. No console errors.
+- A pile of sticks west of the Survivor's beach shows the E cap and "Pick up sticks"; picking it up raised wood from 4 to 6 and the pile faded out.
+- Not checked in the browser: snow prints in Frostpeak, and that no print is left on a bridge or stairs.
+
+Changing jobs, same day at `http://127.0.0.1:5181`, Scout's save moved to the village with `village-stone` marked gathered: Bram did not walk to the boulder; he bent to lift a crate at his pile by the workshop (the hauling job). No console errors. The switch while he is mid-swing and the return to mining after regrowth are covered by `tests/world/npcs.test.js`.
+
+## 2026-11-20: footpaths
+
+- `python tools/build-map.py preview.png`: 754 pieces of path join the three starts and the fourteen signposts; in the preview the routes go round every hill, cross the rivers only at fords and bridges, and merge into shared trunks.
+- Builder, new game at `127.0.0.1`: the painted dirt path runs into Hollowstead Square from the north, turned along its curve, under the character and the villagers; the small boulder and log supplies are clear of it. No console errors.
+- Not checked in the browser: the cobble paths in the desert, canyons and snow, and a path under a bridge.

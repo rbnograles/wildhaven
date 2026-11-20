@@ -11,6 +11,7 @@ Inputs : source/animations/<name>.png              tree, rock, fire and water-ri
          assets/items/tools-stone-iron.png, axes-stone-iron.png   the painted hammer, pickaxe and axe, stone and iron
          source/effects/footprints.png             six boot prints: left and right, in soil, sand and snow
          source/originals/props/sticks.png         the painted pile of sticks
+         source/paths/path-dirt.png, path-cobblestone.png   the painted path modules (only the straight piece is used)
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
@@ -20,6 +21,7 @@ Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite
          assets/ui/game/tool-<id>-<tier>.png       the tool pictures for the tools row above the item box
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
          assets/world/effects/footprints.png, footprints.json   the boot prints the player leaves, and their cell size
+         source/objects/props/path-<kind>-<a|b>.png  short pieces of path the map builder lays end to end
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
 Run: python tools/prepare-sprite-art.py, then python tools/build-map.py
@@ -342,3 +344,30 @@ print(f'footprints: sheet cell {w}x{h}')
 source = os.path.join(SRC, 'originals', 'props', 'sticks.png')
 pile = trimmed(load(source))
 save(shrink(pile, 170 / pile.shape[1]), os.path.join(SRC, 'objects', 'props', 'sticks.png'), source)
+
+# ---- paths: short straight pieces the map builder lays end to end along a route ----------------------
+# Each path sheet has four modules (straight, bend, T, crossroads). A route across the map winds at every angle,
+# which the square modules can't follow, so only the straight one (top left) is used: two overlapping windows are
+# cut from it, and tools/build-map.py lays them one after another, each turned to face along the route, like
+# laying short planks round a curve. Both ends of a piece fade out, so two pieces overlap without a seam.
+# Sheet name -> the sprite name its pieces are saved under.
+PATH_SHEETS = {'path-dirt': 'path-dirt', 'path-cobblestone': 'path-stone'}
+PATH_WIDTH = 110     # how wide a piece is drawn across the path, leafy edges included, in world units
+PATH_WINDOWS = {'a': 0.06, 'b': 0.44}   # where each window starts along the straight module, as a share of its length
+PATH_WINDOW = 0.5    # how long a window is, as a share of the module's length
+PATH_FADE = 0.2      # the share of a piece's length, at each end, over which it fades out
+
+for sheet_name, sprite_name in PATH_SHEETS.items():
+    source = os.path.join(SRC, 'paths', sheet_name + '.png')
+    path_sheet = load(source)
+    strip = trimmed(path_sheet[:path_sheet.shape[0] // 2, :path_sheet.shape[1] // 2])
+    length = int(strip.shape[1] * PATH_WINDOW)
+    # 0 at both ends of a piece, 1 along its middle.
+    ramp = np.clip(np.minimum(np.arange(length), length - 1 - np.arange(length)) / (length * PATH_FADE), 0, 1)
+    for letter, start in PATH_WINDOWS.items():
+        x0 = int(strip.shape[1] * start)
+        piece = strip[:, x0:x0 + length].copy()
+        piece[:, :, 3] = (piece[:, :, 3] * ramp[None, :]).astype('uint8')
+        # Saved at twice its game size (objects.json scales it by 0.5), so it stays sharp when turned.
+        save(shrink(piece, 2 * PATH_WIDTH / piece.shape[0]), os.path.join(SRC, 'objects', 'props', f'{sprite_name}-{letter}.png'), source)
+    print(f'{sprite_name}: pieces {round(length * PATH_WIDTH / strip.shape[0])} units long, {PATH_WIDTH} wide')

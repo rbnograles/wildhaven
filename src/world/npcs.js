@@ -28,8 +28,9 @@ const WALK_SHEETS = ['walkSouth', 'walkEast', 'walkEast', 'walkNorth'];
  * Makes one villager's starting state: at home, empty-handed, resting a little before work.
  *
  * @param {object} npc - The villager's entry in `NPCS`.
- * @returns {object} `{npc, x, y, facing, phase, heading, left, moving, carrying, clock, path, i}`:
- *   where they are and which way they look; `phase` is what they are doing (`rest`, `wait` for a
+ * @returns {object} `{npc, job, x, y, facing, phase, heading, left, moving, carrying, clock, path,
+ *   i}`: `job` is the one of `npc.jobs` they are doing now; then where they are and which way
+ *   they look; `phase` is what they are doing (`rest`, `wait` for a
  *   way to open, `walk`, `work` or `deposit`); `heading` is where a walk leads (`work` or `drop`);
  *   `left` is the seconds left of a timed phase; `moving` is true while their feet are moving;
  *   `carrying` is true while they hold a load; `clock` counts the seconds of the pictures being
@@ -38,6 +39,7 @@ const WALK_SHEETS = ['walkSouth', 'walkEast', 'walkEast', 'walkNorth'];
 function atHome(npc) {
   return {
     npc,
+    job: npc.jobs[0],
     x: npc.x,
     y: npc.y,
     facing: npc.facing,
@@ -116,7 +118,7 @@ export function npcFacing(villager, player) {
  *   picture in the villager's row, and whether to mirror it.
  */
 export function villagerPose(villager, player) {
-  const { phase, clock, npc } = villager,
+  const { phase, clock } = villager,
     facing = npcFacing(villager, player),
     flip = facing === 1;
 
@@ -124,7 +126,7 @@ export function villagerPose(villager, player) {
   const once = (seconds) => Math.min(FRAMES - 1, Math.floor((clock / seconds) * FRAMES));
 
   if (phase === 'work') {
-    const { clip } = npc.job.work;
+    const { clip } = villager.job.work;
 
     // Picking a load up is setting one down, played backwards.
     if (clip === 'pickup')
