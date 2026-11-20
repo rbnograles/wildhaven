@@ -5,13 +5,14 @@
 
 import { remember } from './model.js';
 
-/** Sprites other parts of the map build own, so they can't be edited as loose objects. */
+/**
+ * Sprites that can't be edited as loose objects, with the reason. A signpost stands where its
+ * waypoint is, so it moves in Places mode. (Hill stairs are locked too, by their name: they
+ * belong to their hill and are edited with the hill tools.) Everything else on the map, path
+ * pieces, ripples and bridges included, can be removed, and placed from the palette.
+ */
 const LOCKED = {
   signpost: 'Signposts are moved in Places mode',
-  bridge: 'Bridges belong to their river crossing',
-  'sea-wave': 'Water ripples are scattered by the map build',
-  'river-ripple': 'Water ripples are scattered by the map build',
-  'lake-ripple': 'Water ripples are scattered by the map build',
 };
 
 /** How far north of a landmark its `object` sprite stands (the same 60 as in build-map.py). */
@@ -32,8 +33,19 @@ const same = (a, b) => a.name === b.name && a.x === b.x && a.y === b.y;
 /** Turns an entry into one piece of text, so entries can be looked up quickly in a Set. */
 const keyOf = (o) => `${o.name}|${o.x}|${o.y}`;
 
-/** Keeps only the three fields the file stores. */
-const entry = (o) => ({ name: o.name, x: o.x, y: o.y });
+/**
+ * Keeps only the fields the file stores: the sprite, its spot, and how far it is turned when it
+ * is turned at all (only path pieces are; `rotation` is in degrees, clockwise).
+ */
+const entry = (o) => ({
+  name: o.name,
+  x: o.x,
+  y: o.y,
+  ...(o.rotation ? { rotation: o.rotation } : {}),
+});
+
+/** Says whether two entries are also turned the same way. */
+const sameTurn = (a, b) => (a.rotation ?? 0) === (b.rotation ?? 0);
 
 /**
  * Says why a sprite can't be edited as a loose object, if it can't.
@@ -45,7 +57,6 @@ const entry = (o) => ({ name: o.name, x: o.x, y: o.y });
 export function lockReason(name, specs) {
   const spec = specs[name];
   if (!spec) return `There is no sprite called "${name}"`;
-  if (spec.path) return 'Path pieces are laid by the map build';
   if (name.endsWith('-stairs')) return 'Hill stairs belong to their hill';
   return LOCKED[name] ?? null;
 }
@@ -93,7 +104,7 @@ export function baseObjects(mapObjects, builtEdits, builtStale) {
   const stale = new Set(builtStale.map(keyOf));
   for (const r of builtEdits.removed)
     if (!present.has(keyOf(r)) && !stale.has(keyOf(r)))
-      base.push({ ...entry(r), rotation: 0, own: false });
+      base.push({ ...entry(r), rotation: r.rotation ?? 0, own: false });
 
   return base;
 }
@@ -113,7 +124,7 @@ export function applyEdits(base, edits) {
   return {
     objects: [
       ...base.filter((o) => !gone.has(keyOf(o))),
-      ...edits.added.map((a) => ({ ...entry(a), rotation: 0, own: true })),
+      ...edits.added.map((a) => ({ ...entry(a), rotation: a.rotation ?? 0, own: true })),
     ],
     stale: edits.removed.filter((r) => !present.has(keyOf(r))).map(entry),
   };
@@ -153,13 +164,13 @@ export function markEditsSaved(editor) {
  * @returns {object} The object as it now is, `own` false when the entries cancelled.
  */
 function put(edits, at) {
-  const i = edits.removed.findIndex((r) => same(r, at));
+  const i = edits.removed.findIndex((r) => same(r, at) && sameTurn(r, at));
   if (i >= 0) {
     edits.removed.splice(i, 1);
-    return { ...at, rotation: 0, own: false };
+    return { ...entry(at), rotation: at.rotation ?? 0, own: false };
   }
-  edits.added.push(at);
-  return { ...at, rotation: 0, own: true };
+  edits.added.push(entry(at));
+  return { ...entry(at), rotation: at.rotation ?? 0, own: true };
 }
 
 /**
@@ -181,11 +192,12 @@ function take(edits, obj) {
  * @param {string} name - The sprite's name.
  * @param {number} x - Where it goes, in world units.
  * @param {number} y - Where it goes, in world units.
+ * @param {number} [rotation] - How far it is turned, in degrees; only path pieces are turned.
  * @returns {object} The new object.
  */
-export function addObject(editor, name, x, y) {
+export function addObject(editor, name, x, y, rotation = 0) {
   remember(editor);
-  return put(editor.edits, { name, x: Math.round(x), y: Math.round(y) });
+  return put(editor.edits, { name, x: Math.round(x), y: Math.round(y), rotation });
 }
 
 /**
@@ -219,7 +231,33 @@ export function moveObjects(editor, objs, dx, dy, record = true) {
   // against each other's old spot half way through.
   for (const obj of objs) take(editor.edits, obj);
   return objs.map((obj) =>
-    put(editor.edits, { name: obj.name, x: Math.round(obj.x + dx), y: Math.round(obj.y + dy) }),
+    put(editor.edits, {
+      name: obj.name,
+      x: Math.round(obj.x + dx),
+      y: Math.round(obj.y + dy),
+      rotation: obj.rotation,
+    }),
+  );
+}
+
+/**
+ * Turns objects on the spot. Used for path pieces, which are the only sprites drawn turned.
+ *
+ * @param {object} editor - The editing session.
+ * @param {object[]} objs - The objects to turn.
+ * @param {number} degrees - How far to turn them, clockwise; negative turns the other way.
+ * @returns {object[]} The same objects as they are after the turn, to keep as the selection.
+ */
+export function rotateObjects(editor, objs, degrees) {
+  remember(editor);
+  for (const obj of objs) take(editor.edits, obj);
+  return objs.map((obj) =>
+    put(editor.edits, {
+      name: obj.name,
+      x: obj.x,
+      y: obj.y,
+      rotation: (((obj.rotation + degrees) % 360) + 360) % 360,
+    }),
   );
 }
 
@@ -255,11 +293,16 @@ export function shapeErrors(edits) {
       const ok =
         typeof o === 'object' &&
         o !== null &&
-        Object.keys(o).length === 3 &&
+        Object.keys(o).every((key) => ['name', 'x', 'y', 'rotation'].includes(key)) &&
         typeof o.name === 'string' &&
         Number.isSafeInteger(o.x) &&
-        Number.isSafeInteger(o.y);
-      if (!ok) errors.push(`${list}[${i}] must be { name, x, y } with whole numbers`);
+        Number.isSafeInteger(o.y) &&
+        (o.rotation === undefined ||
+          (Number.isSafeInteger(o.rotation) && o.rotation > 0 && o.rotation < 360));
+      if (!ok)
+        errors.push(
+          `${list}[${i}] must be { name, x, y } in whole numbers, with an optional rotation`,
+        );
     });
   }
 
@@ -365,7 +408,8 @@ function block(name, list) {
     (a, b) => a.y - b.y || a.x - b.x || (a.name > b.name) - (a.name < b.name),
   );
   const lines = sorted.map(
-    (o) => `    { "name": ${JSON.stringify(o.name)}, "x": ${o.x}, "y": ${o.y} }`,
+    (o) =>
+      `    { "name": ${JSON.stringify(o.name)}, "x": ${o.x}, "y": ${o.y}${o.rotation ? `, "rotation": ${o.rotation}` : ''} }`,
   );
   return `  "${name}": [\n${lines.join(',\n')}\n  ]`;
 }

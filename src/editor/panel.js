@@ -26,7 +26,8 @@ function el(tag, props = {}, children = []) {
  * @param {Document} root - The page.
  * @param {object} on - What to call when the person does something. Places: `pick(ref)`,
  *   `field(name, value)`, `move(x, y)`, `remove()`, `add(kind)`. Objects: `mode(name)`,
- *   `armSprite(name)`, `objectMove(x, y)`, `removeObjects()`, `dropStale()`, `pickObject(obj)`.
+ *   `armSprite(name)`, `objectMove(x, y)`, `objectTurn(degrees)`, `removeObjects()`,
+ *   `dropStale()`, `pickObject(obj)`.
  *   Terrain: `tool(kind)`, `brush(size)`.
  *   Both: `undo()`, `redo()`, `save()`, `rebuild()`, `overlay(name, shown)`. Also `specs`, the
  *   sprites of objects.json, for the palette.
@@ -232,8 +233,9 @@ export function createPanel(root, on) {
   function drawObject(state) {
     const chosen = state.objects;
     if (!chosen.length) {
+      const turn = state.turns(state.armed) ? `R turns it (now ${state.turn}°). ` : '';
       const hint = state.armed
-        ? `Click the map to place ${state.armed}. Escape stops.`
+        ? `Click the map to place ${state.armed}. ${turn}Escape stops.`
         : 'Click a sprite to select it, Shift+drag to select several, or pick one below to place.';
       return objectForm.replaceChildren(el('p', { className: 'wide', textContent: hint }));
     }
@@ -252,6 +254,13 @@ export function createPanel(root, on) {
           'y',
           box(o.y, (v) => on.objectMove(o.x, Number(v)), 'number'),
         ),
+        // Only path pieces are drawn turned, so only they get a turn box.
+        ...(state.turns(o.name)
+          ? row(
+              'turn',
+              box(o.rotation, (v) => on.objectTurn(Number(v)), 'number'),
+            )
+          : []),
         el('p', { className: 'wide', textContent: tags }),
       );
     } else {

@@ -97,7 +97,8 @@ const sameObject = (a, b) => a.name === b.name && a.x === b.x && a.y === b.y && 
  *   `flagged()`, `adding()`, `select(ref|null)`, `move(ref, x, y, first)`, `add(x, y)`. Objects:
  *   `mode()` ('places' or 'objects'), `specs`, `objectSelection()`, `armed()` (the sprite waiting
  *   for a click, or null), `lockedWhy(obj)`, `selectObjects(list)`, `moveObjects(dx, dy, first)`,
- *   `placeObject(x, y)` and `hint(text)` for the status line. Terrain: `ground()` (the
+ *   `turn()` (how far the armed sprite is turned, in degrees), `placeObject(x, y)` and
+ *   `hint(text)` for the status line. Terrain: `ground()` (the
  *   hand-painted corners), `tool()` (the ground being painted, or null), `brush()` (its side in
  *   boxes) and `paint(col, row, first)`.
  * @returns {{draw: Function, centerOn: Function, setOverlay: Function, setObjects: Function}} The
@@ -301,7 +302,12 @@ export function createView(canvas, on) {
 
     // The armed sprite follows the pointer, faint, to show where a click would put it.
     if (ghost && on.armed())
-      sprites.draw(ctx, { name: on.armed(), x: ghost[0], y: ghost[1], rotation: 0 }, cam, 0.6);
+      sprites.draw(
+        ctx,
+        { name: on.armed(), x: ghost[0], y: ghost[1], rotation: on.turn() },
+        cam,
+        0.6,
+      );
 
     // The selection box being dragged out.
     if (action?.box) {

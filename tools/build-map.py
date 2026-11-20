@@ -1080,29 +1080,36 @@ path_objects = [(n, x + PAD, y + PAD, turn) for n, x, y, turn in paths]
 # ("removed") and objects placed by hand ("added"), in WORLD units. It is applied here, after every pass above has
 # run, so an edit can never reshuffle the rest of the map. Nothing is cleared around an added object on purpose:
 # the person deletes what is in the way, so there are no surprises.
-EDIT_LOCKED = {'signpost', 'bridge', 'sea-wave', 'river-ripple', 'lake-ripple'}
+EDIT_LOCKED = {'signpost'}
 
-# Says whether a sprite may be named in edits.json. Path pieces, hill stairs, ripples, signposts and bridges are
-# made by other parts of this script and may not. (The editor has the same rule: lockReason in src/editor/edits.js.)
-def editable(n): return n in spec and not spec[n].get('path') and not n.endswith('-stairs') and n not in EDIT_LOCKED
+# Says whether a sprite may be named in edits.json. Hill stairs belong to their hill and signposts to their
+# waypoint, so those may not; everything else may, path pieces, ripples and bridges included.
+# (The editor has the same rule: lockReason in src/editor/edits.js.)
+def editable(n): return n in spec and not n.endswith('-stairs') and n not in EDIT_LOCKED
 
-# Reads one list of edits.json as (name, x, y) rows. A wrong entry stops the build with a plain message.
+# Reads one list of edits.json as (name, x, y, rotation) rows. `rotation` (degrees, clockwise) may only be given
+# for a path piece, the one kind of sprite that is drawn turned. A wrong entry stops the build with a plain message.
 def edit_rows(edits, key):
     rows = edits.get(key, []) if isinstance(edits, dict) else None
     if not isinstance(rows, list): sys.exit(f'edits.json: "{key}" must be a list')
     for r in rows:
-        if not (isinstance(r, dict) and isinstance(r.get('name'), str) and type(r.get('x')) is int and type(r.get('y')) is int):
+        if not (isinstance(r, dict) and isinstance(r.get('name'), str) and type(r.get('x')) is int and type(r.get('y')) is int
+                and type(r.get('rotation', 0)) is int and 0 <= r.get('rotation', 0) < 360):
             sys.exit(f'edits.json: bad entry in "{key}": {r}')
         if not editable(r['name']): sys.exit(f'edits.json: "{r["name"]}" in "{key}" is not a sprite that can be edited by hand')
-    return [(r['name'], r['x'], r['y']) for r in rows]
+        if r.get('rotation') and not spec[r['name']].get('path'): sys.exit(f'edits.json: only path pieces can be turned, not "{r["name"]}"')
+    return [(r['name'], r['x'], r['y'], r.get('rotation', 0)) for r in rows]
 
 edits_path = os.path.join(SRC, 'edits.json')
 try: edits = json.load(open(edits_path, encoding='utf-8')) if os.path.exists(edits_path) else {}
 except ValueError as e: sys.exit(f'edits.json is not valid JSON: {e}')
-removed, added = set(edit_rows(edits, 'removed')), edit_rows(edits, 'added')
+# An object is known by its sprite and its spot; the turn of a removed path piece is only kept for the editor.
+removed, added = {r[:3] for r in edit_rows(edits, 'removed')}, edit_rows(edits, 'added')
 # A removal that matches no generated object is "stale": the editor lists these so they can be cleaned up.
-stale_edits = sorted(removed - set(objects))
-objects = [o for o in objects if o not in removed] + added
+stale_edits = sorted(removed - set(objects) - {p[:3] for p in path_objects})
+# Path pieces live in their own list (they are the only objects written with a turn), so each edit goes to its list.
+objects = [o for o in objects if o not in removed] + [a[:3] for a in added if not spec[a[0]].get('path')]
+path_objects = [p for p in path_objects if p[:3] not in removed] + [a for a in added if spec[a[0]].get('path')]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,

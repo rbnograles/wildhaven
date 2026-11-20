@@ -17,6 +17,7 @@ import {
   addObject,
   removeObjects,
   moveObjects,
+  rotateObjects,
   dropStale,
   shapeErrors,
   checkEdits,
@@ -60,12 +61,12 @@ const session = (edits = emptyEdits()) => {
 /** The name and position of each object, as short text, so lists are easy to compare. */
 const spots = (objects) => objects.map((o) => `${o.name}@${o.x},${o.y}${o.own ? '*' : ''}`);
 
-// Guards the lock list: path pieces, stairs and signposts are made by other parts of the build,
-// and the tent of a landmark moves with its landmark, so none of them may be edited here.
+// Guards the lock list: stairs belong to their hill and signposts to their waypoint, and the
+// tent of a landmark moves with its landmark. Path pieces can be edited like any other sprite.
 test('locked sprites are named with a reason, and editable ones are not', () => {
   assert.equal(lockReason('pine', specs), null);
   assert.equal(lockReason('flowers', specs), null);
-  assert.match(lockReason('path-dirt-a', specs), /path/i);
+  assert.equal(lockReason('path-dirt-a', specs), null);
   assert.match(lockReason('meadow-stairs', specs), /stairs/i);
   assert.match(lockReason('signpost', specs), /Places/);
   assert.match(lockReason('dragon', specs), /no sprite/);
@@ -152,6 +153,35 @@ test('moving a generated object is a removal and an addition, and moving it back
   const [home] = moveObjects(editor, [again], -10, -5, false);
   assert.deepEqual(editor.edits, emptyEdits());
   assert.equal(home.own, false);
+});
+
+// Guards path pieces, the only sprites that are turned: the turn is kept through placing, moving
+// and turning, written to the file, and a turned piece put back exactly as it was leaves no trace.
+test('a path piece keeps its turn when placed, moved and turned', () => {
+  const editor = session();
+  const mine = addObject(editor, 'path-dirt-a', 100, 100, 90);
+  assert.deepEqual(editor.edits.added, [{ name: 'path-dirt-a', x: 100, y: 100, rotation: 90 }]);
+
+  const [moved] = moveObjects(editor, [mine], 10, 0);
+  assert.equal(moved.rotation, 90);
+  const [turned] = rotateObjects(editor, [moved], -105);
+  assert.deepEqual(editor.edits.added, [{ name: 'path-dirt-a', x: 110, y: 100, rotation: 345 }]);
+  assert.match(writeEdits(editor.edits), /"x": 110, "y": 100, "rotation": 345 \}/);
+  assert.deepEqual(shapeErrors(editor.edits), []);
+
+  // A generated piece that is turned and turned back is the generated piece again.
+  const laid = { name: 'path-dirt-a', x: 500, y: 500, rotation: 80, own: false };
+  const [off] = rotateObjects(editor, [laid], 15);
+  assert.deepEqual(editor.edits.removed, [{ name: 'path-dirt-a', x: 500, y: 500, rotation: 80 }]);
+  const [back] = rotateObjects(editor, [off], -15);
+  assert.equal(back.own, false);
+  assert.deepEqual(editor.edits.removed, []);
+  assert.equal(turned.own, true);
+
+  // A piece turned by a full circle has no rotation to write.
+  const flat = addObject(editor, 'pine', 5, 5, 0);
+  assert.equal('rotation' in editor.edits.added.at(-1), false);
+  assert.equal(flat.rotation, 0);
 });
 
 // Guards undo: object edits share the history with place edits, and a drag is one step however

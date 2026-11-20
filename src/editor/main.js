@@ -41,6 +41,7 @@ const app = {
   base: [],
   chosen: [],
   armed: null,
+  turn: 0,
   tool: null,
   brush: 1,
   builtGround: {},
@@ -53,6 +54,17 @@ const app = {
 
 /** Says whether two objects are the same one: sprite, spot, and whose it is. */
 const sameObject = (a, b) => a.name === b.name && a.x === b.x && a.y === b.y && a.own === b.own;
+
+/** How far one press of R turns a path piece, in degrees. */
+const TURN_STEP = 15;
+
+/**
+ * Says whether a sprite is drawn turned. Only path pieces are.
+ *
+ * @param {string|null} name - The sprite's name.
+ * @returns {boolean} True for a path piece.
+ */
+const turns = (name) => Boolean(objectWorld.specs[name]?.path);
 
 /**
  * Says why an object can't be edited, if it can't.
@@ -82,6 +94,8 @@ const view = createView(document.getElementById('map'), {
   objectSelection: () => app.chosen,
   // The sprite waiting to be placed, or null.
   armed: () => app.armed,
+  // How far the armed sprite is turned, in degrees (path pieces only).
+  turn: () => (turns(app.armed) ? app.turn : 0),
   // The painted boxes the built map does not show yet, 'row,col' to ground kind.
   ground: () => app.pending,
   // The ground being painted, or null when dragging should move the map.
@@ -125,7 +139,7 @@ const view = createView(document.getElementById('map'), {
   },
   // The map was clicked while a sprite was armed: place one there and stay armed.
   placeObject: (x, y) => {
-    app.chosen = [edits.addObject(app.editor, app.armed, x, y)];
+    app.chosen = [edits.addObject(app.editor, app.armed, x, y, turns(app.armed) ? app.turn : 0)];
     refresh();
   },
   // The view has something to say in the status line (a locked object, "zoom in").
@@ -165,6 +179,18 @@ const panel = createPanel(document, {
     if (obj && Number.isFinite(x) && Number.isFinite(y))
       edit(() => {
         app.chosen = edits.moveObjects(app.editor, app.chosen, x - obj.x, y - obj.y);
+      });
+  },
+  // The turn box of a path piece was changed.
+  objectTurn: (degrees) => {
+    const [obj] = app.chosen;
+    if (obj && Number.isFinite(degrees))
+      edit(() => {
+        app.chosen = edits.rotateObjects(
+          app.editor,
+          app.chosen,
+          Math.round(degrees) - obj.rotation,
+        );
       });
   },
   remove: removeSelected,
@@ -276,6 +302,8 @@ function refresh() {
     sprites: world.sprites,
     objects: app.chosen,
     armed: app.armed,
+    turn: app.turn,
+    turns,
     tool: app.tool,
     brush: app.brush,
     painted: Object.keys(app.editor.terrain.ground).length,
@@ -461,6 +489,21 @@ addEventListener('keydown', (event) => {
     return refresh();
   }
   if (key === 'delete') return app.mode === 'objects' ? removeChosen() : removeSelected();
+
+  // R turns path pieces: the armed one before it is placed, or the selected ones. Shift turns back.
+  if (key === 'r' && app.mode === 'objects') {
+    const by = event.shiftKey ? -TURN_STEP : TURN_STEP;
+    if (turns(app.armed)) {
+      app.turn = (app.turn + by + 360) % 360;
+      return refresh();
+    }
+    const pieces = app.chosen.filter((o) => turns(o.name));
+    if (pieces.length && pieces.length === app.chosen.length)
+      edit(() => {
+        app.chosen = edits.rotateObjects(app.editor, app.chosen, by);
+      });
+    return;
+  }
 
   const step = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] }[key];
   if (!step) return;

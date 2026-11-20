@@ -429,3 +429,11 @@ Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server).
 - With no overrides the tile layers are identical to before; land painted within 20 tiles of the edge stops the build with one plain line.
 - Seen and left alone: running `build-map.py` from a shell while a page is open makes Vite read the half-written map and log JSON errors until the file is complete. The editor's own Rebuild holds reloads back, so it is not affected.
 - Not checked in the browser: Space+drag, the 5-box brush, painting in Places or Objects mode being impossible, walking onto painted land and being stopped by painted water in the game, and the plain message when a signpost has no dry ground.
+
+## 2026-11-20: world editor (path pieces and other map sprites)
+
+- The palette now lists `path-dirt-a/b`, `path-stone-a/b`, the three ripples and `bridge`; only `signpost` and the stairs stay locked.
+- Objects mode, zoomed in on a footpath in Pinefall: clicking a piece selected it ("path-dirt-b, 12135, 4217, turn 139, generated"); R turned it to 154; Delete removed it and left a gap in the path.
+- Arming `path-stone-a` and pressing R twice showed "R turns it (now 30°)"; a click placed it turned 30. No console errors.
+- `python tools/build-map.py` with one generated path piece and one sea wave removed and one path piece added at 45°: "2 objects removed by hand, 1 added by hand, 0 stale edits"; the map held the new piece with rotation 45 and neither removed one; the edits, map and places tests passed.
+- Not checked in the browser: Save and Rebuild of path edits from the page, the turn box, and a path piece placed across a river (the map test should fail the rebuild).
