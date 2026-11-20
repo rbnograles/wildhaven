@@ -12,6 +12,8 @@ import { BUILDINGS } from '../data/buildings.js';
 import { repel } from '../actions/wolves.js';
 import { campInReach } from '../world/camps.js';
 import { nearbyBuilding } from '../world/buildings.js';
+import { canSleep } from '../actions/camp.js';
+import { BUILDING_REACH } from '../data/balance.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -152,8 +154,9 @@ export function setupInput(session, ui) {
    * overlap under the mouse, one in reach wins over one that is merely in front. The mouse also
    * turns into a pointing hand over anything a click would gather or walk to.
    *
-   * @returns {{node: object, state: string}|null} The node and its aimState ('ready', 'far' or
-   *   'locked'), or null when the mouse is over nothing that can be gathered.
+   * @returns {{node?: object, tent?: object, camp?: object, state: string}|null} The node and its
+   *   aimState ('ready', 'far' or 'locked'); or, over one of the player's tents, the `tent`, its
+   *   `camp` and its tentState; or null when the mouse is over neither.
    */
   function hover() {
     const { state, renderer, pointer, build } = session;
@@ -165,9 +168,41 @@ export function setupInput(session, ui) {
         .map((node) => ({ node, state: aimState(state, node) }))
         .filter((a) => a.state);
       aim = aims.find((a) => a.state === 'ready') ?? aims[0] ?? null;
+
+      // With nothing to gather there, one of the player's own tents under the mouse can be slept in.
+      const found = !aim && !state.aboard && renderer.tentAt(pointer.x, pointer.y, state);
+      if (found) aim = { ...found, state: tentState(state, found.tent) };
     }
-    world.style.cursor = aim && aim.state !== 'locked' ? 'pointer' : '';
+    world.style.cursor = aim && aim.state !== 'locked' && aim.state !== 'day' ? 'pointer' : '';
     return aim;
+  }
+
+  /**
+   * Says what a click on one of the player's tents would do right now.
+   *
+   * @param {object} state - The game being played.
+   * @param {object} tent - The tent, from a camp's buildings.
+   * @returns {'ready'|'far'|'day'} 'day' while it is too early to sleep, 'far' when the player
+   *   stands too far from it, and 'ready' when a click would put them to bed.
+   */
+  function tentState(state, tent) {
+    if (!canSleep(state)) return 'day';
+    const away = Math.hypot(tent.x - state.player.x, tent.y - state.player.y);
+    return away <= BUILDING_REACH ? 'ready' : 'far';
+  }
+
+  /**
+   * Does what a click on one of the player's tents means: sleep in it, or say why not yet.
+   *
+   * @param {{camp: object, state: string}} aim - What `hover` found under the mouse.
+   */
+  function clickTent({ camp, state: how }) {
+    if (how === 'day') ui.hud.notify('You can sleep in the tent from dusk.');
+    else if (how === 'far') ui.hud.notify('Walk up to the tent to sleep in it.');
+    else if (!session.animator.pending && !(session.animator.asleep > 0)) {
+      keys.clear();
+      ui.camp.restNight(camp);
+    }
   }
 
   /**
@@ -339,7 +374,8 @@ export function setupInput(session, ui) {
     if (event.button !== 0 || session.screen !== 'game') return;
     if (!session.build.active) {
       const aim = hover();
-      if (aim) clickNode(aim);
+      if (aim?.tent) clickTent(aim);
+      else if (aim) clickNode(aim);
       return;
     }
     // Stop the click from also focusing the world afterwards, which would pull the keyboard out

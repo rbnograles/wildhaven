@@ -120,9 +120,10 @@ const WATER_SWELL_SECONDS = 7;
 // The badge over the thing under the mouse (the tool a tree or rock needs, or what a hand-picked
 // patch gives): how many screen-sized units wide its dark slot is drawn, and how see-through the
 // badge is in each aim state (see aimState in actions/gather.js). One too far to work on is faint;
-// one whose tool is missing stays clear, because its crossed-out tool is the message.
+// one whose tool is missing stays clear, because its crossed-out tool is the message. A tent under
+// the mouse shows "Zz" in the same slot, faint while it is too far or too early in the day ('day').
 const BADGE_SIZE = 46;
-const BADGE_ALPHA = { ready: 1, far: 0.7, locked: 1 };
+const BADGE_ALPHA = { ready: 1, far: 0.7, locked: 1, day: 0.7 };
 
 // Berries, small stones and flowers are tiny pictures, so the mouse counts as over one anywhere in
 // a box at least this many world units wide and tall around it. Otherwise they are fiddly to hit.
@@ -242,7 +243,8 @@ async function loadMapIcons() {
  * @param {HTMLCanvasElement} miniCanvas - The small canvas for the minimap in the corner.
  * @returns {Promise<object>} The renderer: `draw(state, dt, animator, build)` for each frame,
  *   `drawMap(canvas, state)` for the big map, `screenToWorld(clientX, clientY)` for the build
- *   ghost, `nodesAt(clientX, clientY, state)` for the trees and rocks under the mouse, and
+ *   ghost, `nodesAt(clientX, clientY, state)` for the trees and rocks under the mouse,
+ *   `tentAt(clientX, clientY, state)` for the player's tent under it, and
  *   `resetCamera()` after switching characters.
  */
 export async function createRenderer(container, miniCanvas) {
@@ -541,12 +543,24 @@ export async function createRenderer(container, miniCanvas) {
           .lineBetween(-13, -13, 13, 13)
           .lineStyle(3, 0xd9503f, 1)
           .lineBetween(-13, -13, 13, 13);
+        // A tent under the mouse has no painted picture of its own, so the slot says "Zz" instead.
+        const words = this.add
+          .text(0, 0, 'Zz', {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '17px',
+            fontStyle: 'bold',
+            color: '#f7f1de',
+          })
+          .setOrigin(0.5)
+          .setResolution(2)
+          .setVisible(false);
         badge = this.add
-          .container(0, 0, [slot, tool, strike])
+          .container(0, 0, [slot, tool, strike, words])
           .setDepth(WORLD.height + 1)
           .setVisible(false);
         badge.tool = tool;
         badge.strike = strike;
+        badge.words = words;
 
         /**
          * Registers a character sheet with Phaser and names each frame "row-column".
@@ -706,6 +720,38 @@ export async function createRenderer(container, miniCanvas) {
     const found = supplies.filter(under);
     for (const key of shown) found.push(...(harvestChunks.get(key) ?? []).filter(under));
     return found.map((entry) => entry.node).sort((a, b) => b.y - a.y);
+  }
+
+  /**
+   * Finds the player's own tent whose picture is under a spot on the screen.
+   *
+   * Only tents the player built count (they are the only ones that can be slept in), and the whole
+   * picture counts: a tent is big, so there is no need to grow or trim its box.
+   *
+   * @param {number} clientX - Pixels from the left edge of the page.
+   * @param {number} clientY - Pixels from the top edge of the page.
+   * @param {object} state - The game being played.
+   * @returns {{tent: object, camp: object}|null} The tent and the camp it stands in, or null.
+   */
+  function tentAt(clientX, clientY, state) {
+    const box = scene.game.canvas.getBoundingClientRect();
+    const { x, y } = scene.cameras.main.getWorldPoint(clientX - box.left, clientY - box.top);
+
+    for (const camp of state.camps)
+      for (const tent of camp.buildings ?? []) {
+        const image = tent.kind === 'tent' && built.get(`${state.character}:${tent.id}`);
+        if (!image) continue;
+        const left = image.x - image.displayWidth * image.originX,
+          top = image.y - image.displayHeight * image.originY;
+        if (
+          x >= left &&
+          x <= left + image.displayWidth &&
+          y >= top &&
+          y <= top + image.displayHeight
+        )
+          return { tent, camp };
+      }
+    return null;
   }
 
   /**
@@ -1032,27 +1078,38 @@ export async function createRenderer(container, miniCanvas) {
     // The badge over the thing under the mouse. A tree or rock shows the tool it needs, in the tier
     // the player owns (stone when they own none), crossed out while they lack it. Something picked
     // by hand shows what it gives (berries show food, flowers herbs). It sits above the E cap, and
-    // gives way to the progress bar on the one being worked on.
-    const pointed = hover && hover.node.id !== busy ? entryOf(hover.node) : null;
-    badge.setVisible(!!pointed);
-    if (pointed) {
-      const locked = hover.state === 'locked',
-        { tool, type } = hover.node,
-        picture = tool ? `tool-${tool}-${toolTier(state, tool) ?? 'stone'}` : `item-${type}`;
-      // The pictures are different sizes, so each is fitted to the slot when it is put on.
-      if (badge.tool.texture.key !== picture) {
-        badge.tool.setTexture(picture);
-        badge.tool.setScale((BADGE_SIZE * 0.8) / Math.max(badge.tool.width, badge.tool.height));
+    // gives way to the progress bar on the one being worked on. One of the player's tents under the
+    // mouse shows "Zz" in the same slot: it can be slept in.
+    const pointed = hover?.node && hover.node.id !== busy ? entryOf(hover.node) : null,
+      tentImage = hover?.tent ? built.get(`${state.character}:${hover.tent.id}`) : null,
+      over = pointed
+        ? { x: pointed.node.x, top: pointed.top }
+        : tentImage
+          ? { x: tentImage.x, top: tentImage.y - tentImage.displayHeight * tentImage.originY }
+          : null;
+    badge.setVisible(!!over);
+    if (over) {
+      const locked = hover.state === 'locked';
+      badge.tool.setVisible(!!pointed);
+      badge.words.setVisible(!pointed);
+      if (pointed) {
+        const { tool, type } = hover.node,
+          picture = tool ? `tool-${tool}-${toolTier(state, tool) ?? 'stone'}` : `item-${type}`;
+        // The pictures are different sizes, so each is fitted to the slot when it is put on.
+        if (badge.tool.texture.key !== picture) {
+          badge.tool.setTexture(picture);
+          badge.tool.setScale((BADGE_SIZE * 0.8) / Math.max(badge.tool.width, badge.tool.height));
+        }
+        badge.tool.setAlpha(locked ? 0.75 : 1);
       }
-      badge.tool.setAlpha(locked ? 0.75 : 1);
       badge.strike.setVisible(locked);
       badge
         .setAlpha(BADGE_ALPHA[hover.state])
         .setScale(1 / zoom)
         .setPosition(
-          pointed.node.x,
-          pointed.top -
-            (capped === pointed ? 62 : 30) / zoom +
+          over.x,
+          over.top -
+            (pointed && capped === pointed ? 62 : 30) / zoom +
             (reducedMotion || hover.state !== 'ready'
               ? 0
               : Math.sin(performance.now() / 260) * 2.5),
@@ -1227,6 +1284,7 @@ export async function createRenderer(container, miniCanvas) {
     },
 
     nodesAt,
+    tentAt,
 
     /**
      * Makes the next frame jump straight to the player instead of gliding there.

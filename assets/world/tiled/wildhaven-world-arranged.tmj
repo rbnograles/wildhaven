@@ -1742819,19 +1742819,6 @@
      "y": 20380.5
     },
     {
-     "gid": 3418,
-     "height": 51,
-     "id": 7702,
-     "name": "",
-     "opacity": 1,
-     "rotation": 0,
-     "type": "campfire",
-     "visible": true,
-     "width": 64,
-     "x": 14049,
-     "y": 9478
-    },
-    {
      "gid": 3409,
      "height": 163.37252173913,
      "id": 7728,
@@ -1742895,19 +1742882,6 @@
    "id": 14,
    "name": "objects",
    "objects": [
-    {
-     "gid": 3404,
-     "height": 185,
-     "id": 1,
-     "name": "",
-     "opacity": 1,
-     "rotation": 0,
-     "type": "tent",
-     "visible": true,
-     "width": 250,
-     "x": 14485,
-     "y": 3992.99
-    },
     {
      "gid": 3415,
      "height": 90,
@@ -1743089,19 +1743063,6 @@
      "width": 280,
      "x": 6348,
      "y": 6894.6
-    },
-    {
-     "gid": 3404,
-     "height": 185,
-     "id": 12,
-     "name": "",
-     "opacity": 1,
-     "rotation": 0,
-     "type": "tent",
-     "visible": true,
-     "width": 250,
-     "x": 4248,
-     "y": 7092.99
     },
     {
      "gid": 3375,
@@ -1743364,19 +1743325,6 @@
      "y": 9293.1
     },
     {
-     "gid": 3404,
-     "height": 185,
-     "id": 33,
-     "name": "",
-     "opacity": 1,
-     "rotation": 0,
-     "type": "tent",
-     "visible": true,
-     "width": 250,
-     "x": 3348,
-     "y": 16992.99
-    },
-    {
      "gid": 3402,
      "height": 220,
      "id": 34,
@@ -1743401,19 +1743349,6 @@
      "width": 202.5,
      "x": 17648.0,
      "y": 15391.84
-    },
-    {
-     "gid": 3404,
-     "height": 185,
-     "id": 36,
-     "name": "",
-     "opacity": 1,
-     "rotation": 0,
-     "type": "tent",
-     "visible": true,
-     "width": 250,
-     "x": 7462,
-     "y": 16680.99
     },
     {
      "gid": 3390,
