@@ -92,7 +92,8 @@ export function objectLookups() {
 /**
  * Reads the ground the map build generated at each tile corner, before any hand painting.
  *
- * @returns {{rows: number, cols: number, kindAt: Function}} The map's size in boxes, and
+ * @returns {{rows: number, cols: number, builtHash: string, kindAt: Function}} The map's size in
+ *   boxes, the fingerprint of the terrain file the map was built from, and
  *   `kindAt(row, col)`: the generated ground kind at a corner ('grass' for a map older than
  *   this feature, which has no record).
  */
@@ -104,10 +105,18 @@ export function groundLookups() {
     // An older map has no record of its ground.
   }
 
+  let builtHash = '';
+  try {
+    builtHash = mapProperty('terrainHash');
+  } catch {
+    // An older map has no fingerprint either.
+  }
+
   const cols = MAP.width;
   return {
     rows: MAP.height,
     cols,
+    builtHash,
     // The ground kind the build made at one corner.
     kindAt: (row, col) => KINDS[Number(digits[row * (cols + 1) + col] ?? 0)],
   };

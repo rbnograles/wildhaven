@@ -269,3 +269,40 @@ main {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---- Terrain pane ---- */
+#terrain-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#terrain-pane[hidden] {
+  display: none;
+}
+
+#terrain-pane p {
+  margin: 0;
+  color: #a9b5ab;
+}
+
+#grounds {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+/* Each ground button carries a swatch of its preview colour, set from panel.js. */
+#grounds button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#grounds .swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #10140f;
+  border-radius: 3px;
+}

@@ -10,6 +10,7 @@
       <strong>Wildhaven world</strong>
       <button type="button" data-mode="places">Places</button>
       <button type="button" data-mode="objects">Objects</button>
+      <button type="button" data-mode="terrain">Terrain</button>
       <span class="places-only">
         <button type="button" data-add="landmark">+ Landmark</button>
         <button type="button" data-add="waypoint">+ Signpost</button>
@@ -35,6 +36,33 @@
           <form id="object"></form>
           <h2>Place a sprite</h2>
           <div id="palette"></div>
+        </section>
+        <section id="terrain-pane" hidden>
+          <p id="terrain-help">
+            Pick a ground, then click or drag on the map to paint boxes. The Eraser turns boxes to
+            sea. With no ground picked, dragging moves the map; holding Space does too. A painted
+            box shows its new ground at once; the soft edges, the shore banks and the trees and
+            grass that belong on it are made when you rebuild.
+          </p>
+          <div id="grounds">
+            <button type="button" data-ground="grass">Grass</button>
+            <button type="button" data-ground="dirt">Dirt</button>
+            <button type="button" data-ground="soil">Soil</button>
+            <button type="button" data-ground="jungle">Jungle</button>
+            <button type="button" data-ground="rock">Rock</button>
+            <button type="button" data-ground="snow">Snow</button>
+            <button type="button" data-ground="sand">Sand</button>
+            <button type="button" data-ground="water">Eraser</button>
+          </div>
+          <label
+            >Brush
+            <select id="brush">
+              <option value="1">1 box</option>
+              <option value="3">3 boxes</option>
+              <option value="5">5 boxes</option>
+            </select></label
+          >
+          <p id="painted"></p>
         </section>
         <h2>Problems</h2>
         <p id="stale" hidden>

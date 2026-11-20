@@ -12,6 +12,7 @@ import {
   isTerrainDirty,
   markTerrainSaved,
   paintBoxes,
+  pendingGround,
   groundAt,
   encodeRuns,
   decodeRuns,
@@ -54,38 +55,29 @@ test('the ground kinds are in the map build order', () => {
   assert.deepEqual(KINDS, ['grass', 'dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water']);
 });
 
-// Guards the brush: one box is its four corners, and a bigger brush is centred on the box.
-test('painting one box sets its four corners, and a 3-box brush sets sixteen', () => {
+// Guards the brush: one box is exactly one corner, so what is drawn in a box is what the map
+// build paints there, and a bigger brush is a square of boxes centred on the pointer.
+test('painting one box sets one corner, and a 3-box brush sets nine', () => {
   const one = session();
   paintBoxes(one, 2, 3, 1, 'sand', base);
-  assert.deepEqual(Object.keys(one.terrain.ground).sort(), ['3,2', '3,3', '4,2', '4,3']);
+  assert.deepEqual(Object.keys(one.terrain.ground), ['3,2']);
   assert.equal(groundAt(one.terrain, base, 3, 2), 'sand');
   assert.equal(groundAt(one.terrain, base, 0, 0), 'grass');
 
   const three = session();
   paintBoxes(three, 2, 3, 3, 'sand', base);
-  assert.equal(Object.keys(three.terrain.ground).length, 16);
-  assert.ok('2,1' in three.terrain.ground && '5,4' in three.terrain.ground);
+  assert.equal(Object.keys(three.terrain.ground).length, 9);
+  assert.ok('2,1' in three.terrain.ground && '4,3' in three.terrain.ground);
 });
 
 // Guards the edge of the world: a brush hanging off the map paints only the corners that exist.
 test('a brush at the edge of the map stays inside the corner grid', () => {
   const editor = session();
   paintBoxes(editor, 0, 0, 3, 'sand', base);
-  assert.deepEqual(Object.keys(editor.terrain.ground).sort(), [
-    '0,0',
-    '0,1',
-    '0,2',
-    '1,0',
-    '1,1',
-    '1,2',
-    '2,0',
-    '2,1',
-    '2,2',
-  ]);
+  assert.deepEqual(Object.keys(editor.terrain.ground).sort(), ['0,0', '0,1', '1,0', '1,1']);
 
-  paintBoxes(editor, 9, 9, 3, 'rock', base);
-  assert.ok('10,10' in editor.terrain.ground);
+  paintBoxes(editor, 10, 10, 3, 'rock', base);
+  assert.ok('10,10' in editor.terrain.ground && '9,9' in editor.terrain.ground);
   assert.equal('11,11' in editor.terrain.ground, false);
 });
 
@@ -99,7 +91,10 @@ test('land is not painted within the strip of sea round the edge of the map', ()
   assert.deepEqual(editor.terrain.ground, {});
 
   paintBoxes(editor, 19, 150, 1, 'sand', real);
-  assert.deepEqual(Object.keys(editor.terrain.ground).sort(), ['150,20', '151,20']);
+  assert.deepEqual(editor.terrain.ground, {});
+
+  paintBoxes(editor, 20, 150, 1, 'sand', real);
+  assert.deepEqual(Object.keys(editor.terrain.ground), ['150,20']);
 });
 
 // Guards the file against noise: painting the ground that is already there is not an override,
@@ -110,7 +105,7 @@ test('painting the generated ground back removes the override', () => {
   assert.deepEqual(editor.terrain.ground, {});
 
   paintBoxes(editor, 1, 1, 1, 'water', base);
-  assert.equal(Object.keys(editor.terrain.ground).length, 4);
+  assert.equal(Object.keys(editor.terrain.ground).length, 1);
   paintBoxes(editor, 1, 1, 1, 'grass', base);
   assert.deepEqual(editor.terrain.ground, {});
 
@@ -138,6 +133,21 @@ test('the terrain is dirty only while it differs from what was last saved', () =
   assert.equal(isTerrainDirty(editor), true);
   markTerrainSaved(editor);
   assert.equal(isTerrainDirty(editor), false);
+});
+
+// Guards the picture after a rebuild: a box the map already shows must not be covered by the
+// flat preview, while a new box, a repainted one and one put back to its generated ground must.
+test('only boxes that differ from the built map are previewed', () => {
+  const built = { '1,1': 'sand', '2,2': 'sand', '3,3': 'sand' };
+  const now = { '1,1': 'sand', '2,2': 'rock', '4,4': 'water' };
+
+  assert.deepEqual(pendingGround(now, built, base), {
+    '2,2': 'rock',
+    '3,3': 'grass',
+    '4,4': 'water',
+  });
+  assert.deepEqual(pendingGround(built, built, base), {});
+  assert.deepEqual(pendingGround(now, {}, base), now);
 });
 
 // Guards the file's size and its git diff: neighbours of one kind in a row become one run, and

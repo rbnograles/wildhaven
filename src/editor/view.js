@@ -10,6 +10,7 @@ import { LANDMARK_RADIUS, WAYPOINT_RADIUS } from '../data/balance.js';
 import { listPlaces, getPlace } from './model.js';
 import { createTiles } from './tiles.js';
 import { createSprites, bucketObjects, drawOrder } from './sprites.js';
+import { BOX } from './terrain.js';
 
 /** The marker colour of each kind of place. The side panel's list uses the same colours. */
 export const COLORS = {
@@ -20,6 +21,36 @@ export const COLORS = {
   wreck: '#b07a4a',
   launch: '#7fd1c7',
 };
+
+/** The flat colour a hand-painted corner is shown in until the map is rebuilt, by ground kind. */
+export const GROUND_COLORS = {
+  grass: '#6f9a3c',
+  dirt: '#9a7b4f',
+  soil: '#6b5a3a',
+  jungle: '#2f6b2f',
+  rock: '#8d8d8d',
+  snow: '#f2f4f8',
+  sand: '#e6cf8a',
+  water: '#3f84b5',
+};
+
+/**
+ * The game's own ground pictures, by kind, so a painted box shows the real ground and not a flat
+ * colour. Each picture repeats every `GROUND_TILE` world units, the same as in the tileset.
+ */
+const GROUND_URLS = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/world/source/ground/*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
+);
+const GROUND_TILE = 256;
+
+/** The grid of boxes is drawn once a box is at least this many screen pixels wide. */
+const GRID_PIXELS = 8;
 
 /** How far the map builder keeps scenery from a place, in world units (150 in build-map.py). */
 const CLEAR_RING = 150;
@@ -66,7 +97,9 @@ const sameObject = (a, b) => a.name === b.name && a.x === b.x && a.y === b.y && 
  *   `flagged()`, `adding()`, `select(ref|null)`, `move(ref, x, y, first)`, `add(x, y)`. Objects:
  *   `mode()` ('places' or 'objects'), `specs`, `objectSelection()`, `armed()` (the sprite waiting
  *   for a click, or null), `lockedWhy(obj)`, `selectObjects(list)`, `moveObjects(dx, dy, first)`,
- *   `placeObject(x, y)` and `hint(text)` for the status line.
+ *   `placeObject(x, y)` and `hint(text)` for the status line. Terrain: `ground()` (the
+ *   hand-painted corners), `tool()` (the ground being painted, or null), `brush()` (its side in
+ *   boxes) and `paint(col, row, first)`.
  * @returns {{draw: Function, centerOn: Function, setOverlay: Function, setObjects: Function}} The
  *   view's controls.
  */
@@ -91,6 +124,22 @@ export function createView(canvas, on) {
 
   /** True while a redraw is already booked for the next frame. */
   let booked = false;
+
+  /** The box under the pointer in terrain mode, as [col, row], for the brush outline. */
+  let brushAt = null;
+
+  /** True while the Space bar is held: dragging then moves the map instead of painting. */
+  let space = false;
+
+  /** The ground pictures, loading in the background; a box uses its flat colour until then. */
+  const groundImages = Object.fromEntries(
+    Object.entries(GROUND_URLS).map(([kind, url]) => {
+      const img = new Image();
+      img.onload = later;
+      img.src = url;
+      return [kind, img];
+    }),
+  );
 
   /** Books one redraw for the next frame, however many times it is asked for. */
   function later() {
@@ -242,7 +291,8 @@ export function createView(canvas, on) {
   /** Draws the sprites on screen, then frames the hand-placed and the selected ones. */
   function drawObjects() {
     const list = visible();
-    for (const o of list) sprites.draw(ctx, o, cam);
+    // Generated scenery on a box erased to sea is left out: the rebuild won't grow it in water.
+    for (const o of list) if (o.own || !erased(o.x, o.y)) sprites.draw(ctx, o, cam);
     if (on.mode() !== 'objects') return;
 
     const chosen = on.objectSelection();
@@ -265,10 +315,101 @@ export function createView(canvas, on) {
     }
   }
 
-  /** Draws every place marker. In objects mode they are small and can't be picked. */
+  /**
+   * Makes the paint for one kind of ground: its real picture, lined up with the world.
+   *
+   * The picture is used as a repeating pattern pinned to the world's corner, so it lines up
+   * from box to box and doesn't swim when the map is moved, like wallpaper on a wall.
+   *
+   * @param {string} kind - The ground kind.
+   * @returns {CanvasPattern|string} The pattern, or the flat colour while the picture loads.
+   */
+  function groundPaint(kind) {
+    const img = groundImages[kind];
+    if (!img?.complete || !img.naturalWidth) return GROUND_COLORS[kind];
+
+    const pattern = ctx.createPattern(img, 'repeat');
+    const size = (GROUND_TILE / img.naturalWidth) * cam.scale;
+    pattern.setTransform(new DOMMatrix([size, 0, 0, size, -cam.x * cam.scale, -cam.y * cam.scale]));
+    return pattern;
+  }
+
+  /**
+   * Says whether a world spot is in a box that was erased to sea by hand.
+   *
+   * @param {number} x - World x.
+   * @param {number} y - World y.
+   * @returns {boolean} True when the nearest painted corner is water.
+   */
+  function erased(x, y) {
+    return on.ground()[`${Math.round(y / BOX)},${Math.round(x / BOX)}`] === 'water';
+  }
+
+  /**
+   * Shows every hand-painted box with its real ground, covering what the map has there now.
+   *
+   * A box is the square around one tile corner, so it is drawn centred on that corner. The
+   * rebuilt map shows the same patch with softened edges and, beside water, a bank.
+   */
+  function drawGround() {
+    const ground = on.ground();
+    const side = BOX * cam.scale;
+    const paints = {};
+
+    for (const key in ground) {
+      const [row, col] = key.split(',').map(Number);
+      const [x, y] = toScreen(col * BOX - BOX / 2, row * BOX - BOX / 2);
+      if (x > canvas.width || y > canvas.height || x + side < 0 || y + side < 0) continue;
+
+      const kind = ground[key];
+      ctx.fillStyle = paints[kind] ??= groundPaint(kind);
+      // Whole pixels with a pixel of overlap, so no hairline shows between two painted boxes.
+      ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(side) + 1, Math.ceil(side) + 1);
+    }
+  }
+
+  /**
+   * Draws the grid of boxes and the outline of the brush, in terrain mode.
+   *
+   * The lines run half a tile off the tile edges, because each box is centred on a tile corner.
+   */
+  function drawGrid() {
+    const side = BOX * cam.scale;
+
+    if (side >= GRID_PIXELS) {
+      const [x0, y0] = toWorld(0, 0);
+      const [x1, y1] = toWorld(canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+
+      for (let c = Math.floor(x0 / BOX) - 1; (c + 0.5) * BOX <= x1; c++) {
+        const x = Math.round(toScreen((c + 0.5) * BOX, 0)[0]) + 0.5;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+      }
+      for (let r = Math.floor(y0 / BOX) - 1; (r + 0.5) * BOX <= y1; r++) {
+        const y = Math.round(toScreen(0, (r + 0.5) * BOX)[1]) + 0.5;
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+      }
+      ctx.stroke();
+    }
+
+    // The boxes the next click would paint.
+    if (brushAt && on.tool()) {
+      const half = (on.brush() - 1) / 2;
+      const [x, y] = toScreen((brushAt[0] - half - 0.5) * BOX, (brushAt[1] - half - 0.5) * BOX);
+      ctx.strokeStyle = '#ffe14a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, on.brush() * side, on.brush() * side);
+    }
+  }
+
+  /** Draws every place marker. In objects and terrain mode they are small and can't be picked. */
   function drawMarkers() {
     const places = on.places();
-    const small = on.mode() === 'objects';
+    const small = on.mode() !== 'places';
     const selected = small ? null : on.selected();
     const flagged = on.flagged();
 
@@ -313,11 +454,15 @@ export function createView(canvas, on) {
     if (sharp()) {
       // Chunks are painted a few per frame; keep drawing until none are waiting.
       if (tiles.draw(ctx, cam, canvas.width, canvas.height)) later();
+      if (on.places()) drawGround();
       drawObjects();
     } else if (picture.complete && picture.naturalWidth) {
       const [x, y] = toScreen(0, 0);
       ctx.drawImage(picture, x, y, WORLD.width * cam.scale, WORLD.height * cam.scale);
     }
+
+    if (on.places() && !sharp()) drawGround();
+    if (on.mode() === 'terrain') drawGrid();
 
     if (overlays.blocked && cam.scale >= BLOCK_ZOOM) drawBlocked();
     if (overlays.regions) drawRegions();
@@ -333,6 +478,34 @@ export function createView(canvas, on) {
     if (!fitted) cam.scale = fitScale();
     fitted = true;
     draw();
+  }
+
+  /**
+   * Works out which box a world spot is in.
+   *
+   * @param {number} x - World x.
+   * @param {number} y - World y.
+   * @returns {number[]} `[col, row]` of the box.
+   */
+  const boxAt = (x, y) => [Math.round(x / BOX), Math.round(y / BOX)];
+
+  /**
+   * Starts whatever a press in terrain mode means: paint, or move the map.
+   *
+   * @param {PointerEvent} event - The press.
+   * @param {number} x - World x under the pointer.
+   * @param {number} y - World y under the pointer.
+   */
+  function pressTerrain(event, x, y) {
+    // No ground picked, the Space bar held, or the middle button: this drag moves the map.
+    if (!on.tool() || space || event.button === 1) {
+      action = { pan: true, sx: event.offsetX, sy: event.offsetY, moved: true };
+      return;
+    }
+
+    const [col, row] = boxAt(x, y);
+    action = { paint: true, col, row };
+    on.paint(col, row, true);
   }
 
   /**
@@ -372,6 +545,7 @@ export function createView(canvas, on) {
   canvas.addEventListener('pointerdown', (event) => {
     const [x, y] = toWorld(event.offsetX, event.offsetY);
     canvas.setPointerCapture(event.pointerId);
+    if (on.mode() === 'terrain') return pressTerrain(event, x, y);
     if (on.mode() === 'objects') return pressObjects(event, x, y);
 
     // Waiting to add a place: this click says where.
@@ -395,6 +569,10 @@ export function createView(canvas, on) {
     if (!action) {
       if (on.mode() === 'objects' && on.armed()) {
         ghost = [Math.round(x), Math.round(y)];
+        later();
+      }
+      if (on.mode() === 'terrain') {
+        brushAt = boxAt(x, y);
         later();
       }
       return;
@@ -422,6 +600,17 @@ export function createView(canvas, on) {
       action.x1 = x;
       action.y1 = y;
       later();
+      return;
+    }
+
+    if (action.paint) {
+      // Paint again only when the pointer has reached another box.
+      const [col, row] = boxAt(x, y);
+      brushAt = [col, row];
+      if (col === action.col && row === action.row) return;
+      action.col = col;
+      action.row = row;
+      on.paint(col, row, false);
       return;
     }
 
@@ -458,6 +647,7 @@ export function createView(canvas, on) {
 
   canvas.addEventListener('pointerleave', () => {
     ghost = null;
+    brushAt = null;
     later();
   });
 
@@ -476,6 +666,17 @@ export function createView(canvas, on) {
     },
     { passive: false },
   );
+
+  // Holding Space turns painting into moving the map, as in most paint programs.
+  addEventListener('keydown', (event) => {
+    if (event.code === 'Space' && !event.target.closest?.('input, select, textarea')) {
+      space = true;
+      if (on.mode() === 'terrain') event.preventDefault();
+    }
+  });
+  addEventListener('keyup', (event) => {
+    if (event.code === 'Space') space = false;
+  });
 
   new ResizeObserver(resize).observe(canvas);
   picture.onload = later;

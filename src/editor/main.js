@@ -7,7 +7,8 @@ import { MAP_OBJECTS } from '../world/map.js';
 import { regionOf } from '../world/regions.js';
 import * as model from './model.js';
 import * as edits from './edits.js';
-import { gameLookups, objectLookups } from './lookups.js';
+import * as terrain from './terrain.js';
+import { gameLookups, objectLookups, groundLookups } from './lookups.js';
 import { loadFile, saveFile, rebuild } from './api.js';
 import { createView } from './view.js';
 import { createPanel } from './panel.js';
@@ -27,11 +28,12 @@ const LOOK_ZOOM = 0.6;
 /** The game facts the checks read. They describe the map as it was last built. */
 const world = gameLookups();
 const objectWorld = objectLookups();
+const ground = groundLookups();
 
 /** Everything the page knows: the editing session, the selections and a few flags. */
 const app = {
   editor: null,
-  hash: { places: '', edits: '' },
+  hash: { places: '', edits: '', terrain: '' },
   stale: false,
   mode: 'places',
   selected: null,
@@ -39,6 +41,10 @@ const app = {
   base: [],
   chosen: [],
   armed: null,
+  tool: null,
+  brush: 1,
+  builtGround: {},
+  pending: {},
   staleEdits: [],
   busy: false,
   status: '',
@@ -76,6 +82,17 @@ const view = createView(document.getElementById('map'), {
   objectSelection: () => app.chosen,
   // The sprite waiting to be placed, or null.
   armed: () => app.armed,
+  // The painted boxes the built map does not show yet, 'row,col' to ground kind.
+  ground: () => app.pending,
+  // The ground being painted, or null when dragging should move the map.
+  tool: () => app.tool,
+  // The brush's side in boxes.
+  brush: () => app.brush,
+  // A box was clicked or dragged over with a ground picked; only the first box of a stroke is an undo step.
+  paint: (col, row, first) => {
+    terrain.paintBoxes(app.editor, col, row, app.brush, app.tool, ground, first);
+    refresh();
+  },
   lockedWhy,
   // A marker (or empty map, with null) was clicked.
   select: (ref) => {
@@ -166,13 +183,23 @@ const panel = createPanel(document, {
   },
   // A mode button was pressed.
   mode: (name) => {
-    Object.assign(app, { mode: name, adding: null, armed: null, status: '' });
+    Object.assign(app, { mode: name, adding: null, armed: null, tool: null, status: '' });
     refresh();
   },
   // A palette sprite was clicked: arm it, or disarm it if it was armed already.
   armSprite: (name) => {
     app.armed = app.armed === name ? null : name;
     app.chosen = [];
+    refresh();
+  },
+  // A ground button was pressed: pick it, or put it down if it was picked already.
+  tool: (kind) => {
+    app.tool = app.tool === kind ? null : kind;
+    refresh();
+  },
+  // The brush size was changed.
+  brush: (size) => {
+    app.brush = size;
     refresh();
   },
   save,
@@ -215,7 +242,8 @@ function removeChosen() {
 }
 
 /** Says whether anything differs from what is on disk. */
-const isDirty = () => model.isDirty(app.editor) || edits.isEditsDirty(app.editor);
+const isDirty = () =>
+  model.isDirty(app.editor) || edits.isEditsDirty(app.editor) || terrain.isTerrainDirty(app.editor);
 
 /** Re-runs the checks and redraws the panel and the map from the model. */
 function refresh() {
@@ -225,6 +253,9 @@ function refresh() {
   const applied = edits.applyEdits(app.base, app.editor.edits);
   app.staleEdits = applied.stale;
   view.setObjects(applied.objects);
+
+  // Preview only the painted boxes the built map does not show yet.
+  app.pending = terrain.pendingGround(app.editor.terrain.ground, app.builtGround, ground);
 
   // An undo or a delete can leave a selection pointing at something that is gone.
   if (app.selected && !model.getPlace(places, app.selected)) app.selected = null;
@@ -245,6 +276,9 @@ function refresh() {
     sprites: world.sprites,
     objects: app.chosen,
     armed: app.armed,
+    tool: app.tool,
+    brush: app.brush,
+    painted: Object.keys(app.editor.terrain.ground).length,
     tags: objectWorld.tags,
     staleEdits: applied.stale.length > 0,
     problems: app.problems,
@@ -259,19 +293,39 @@ function refresh() {
   view.draw();
 }
 
-/** Reads both files from disk and starts a fresh editing session on them. */
+/**
+ * Makes the same fingerprint of a text that the map build stores (sha256, as hex).
+ *
+ * @param {string} text - The text to fingerprint.
+ * @returns {Promise<string>} The fingerprint.
+ */
+async function fingerprint(text) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Reads the three files from disk and starts a fresh editing session on them. */
 async function load() {
-  const [places, objects] = await Promise.all([loadFile('places'), loadFile('edits')]);
+  const [places, objects, painted] = await Promise.all([
+    loadFile('places'),
+    loadFile('edits'),
+    loadFile('terrain'),
+  ]);
   const built = JSON.parse(objects.text);
 
   const editor = model.createEditor(JSON.parse(places.text));
   edits.loadEdits(editor, built);
+  terrain.loadTerrain(editor, JSON.parse(painted.text));
+
+  // If the map was built from this very terrain file, its painted boxes are already in the map.
+  const upToDate = (await fingerprint(painted.text)) === ground.builtHash;
 
   Object.assign(app, {
     editor,
-    hash: { places: places.hash, edits: objects.hash },
+    hash: { places: places.hash, edits: objects.hash, terrain: painted.hash },
     stale: places.stale,
     base: edits.baseObjects(MAP_OBJECTS, built, objectWorld.builtStale),
+    builtGround: upToDate ? structuredClone(editor.terrain.ground) : {},
     selected: null,
     chosen: [],
   });
@@ -279,21 +333,50 @@ async function load() {
 }
 
 /**
+ * How each file is saved: whether it changed, what to send, and how to note it as saved.
+ * The terrain is sent as runs, the shape terrain.json has on disk.
+ */
+const SAVERS = {
+  places: {
+    // Whether the places changed.
+    dirty: () => model.isDirty(app.editor),
+    // The places, as the file holds them.
+    data: () => app.editor.places,
+    // Notes the places as saved.
+    saved: () => model.markSaved(app.editor),
+  },
+  edits: {
+    // Whether the object edits changed.
+    dirty: () => edits.isEditsDirty(app.editor),
+    // The removed and added lists.
+    data: () => app.editor.edits,
+    // Notes the object edits as saved.
+    saved: () => edits.markEditsSaved(app.editor),
+  },
+  terrain: {
+    // Whether the painted ground changed.
+    dirty: () => terrain.isTerrainDirty(app.editor),
+    // The painted corners, packed into runs.
+    data: () => ({ ground: terrain.encodeRuns(app.editor.terrain.ground) }),
+    // Notes the painted ground as saved.
+    saved: () => terrain.markTerrainSaved(app.editor),
+  },
+};
+
+/**
  * Saves one file if it changed.
  *
- * @param {string} name - 'places' or 'edits'.
+ * @param {string} name - 'places', 'edits' or 'terrain'.
  * @returns {Promise<boolean>} False when the file changed on disk, so nothing was written.
  */
 async function saveOne(name) {
-  const places = name === 'places';
-  if (!(places ? model.isDirty(app.editor) : edits.isEditsDirty(app.editor))) return true;
+  const saver = SAVERS[name];
+  if (!saver.dirty()) return true;
 
-  const data = places ? app.editor.places : app.editor.edits;
-  const result = await saveFile(name, data, app.hash[name]);
+  const result = await saveFile(name, saver.data(), app.hash[name]);
   if (!result.ok) return false;
 
-  if (places) model.markSaved(app.editor);
-  else edits.markEditsSaved(app.editor);
+  saver.saved();
   app.hash[name] = result.hash;
   app.stale = result.stale;
   return true;
@@ -302,7 +385,7 @@ async function saveOne(name) {
 /** Saves what changed, or offers to reload when a file changed on disk in the meantime. */
 async function save() {
   try {
-    const ok = (await saveOne('places')) && (await saveOne('edits'));
+    const ok = (await saveOne('places')) && (await saveOne('edits')) && (await saveOne('terrain'));
 
     if (!ok) {
       const reload = confirm(
@@ -352,7 +435,8 @@ async function runRebuild() {
 /** Brings back the mode and the log of the rebuild that ran just before this page load. */
 function restoreSession() {
   try {
-    if (sessionStorage.getItem(MODE_KEY) === 'objects') app.mode = 'objects';
+    const mode = sessionStorage.getItem(MODE_KEY);
+    if (['objects', 'terrain'].includes(mode)) app.mode = mode;
     sessionStorage.removeItem(MODE_KEY);
 
     const text = sessionStorage.getItem(LOG_KEY);

@@ -11,7 +11,13 @@ import { remember } from './model.js';
  */
 export const KINDS = ['grass', 'dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water'];
 
-/** The side of one box (one map tile) in world units. */
+/**
+ * The side of one box of the editor's grid, in world units: the same as one map tile.
+ *
+ * The map build decides ground at tile corners, so a box here is the square around ONE corner
+ * (half a tile each way), not a tile. That way one painted box is one corner: the box drawn in
+ * the editor is the patch of ground the rebuilt map shows, with its edges softened.
+ */
 export const BOX = 64;
 
 /**
@@ -100,11 +106,34 @@ export function groundAt(terrain, base, row, col) {
 }
 
 /**
+ * Works out which boxes the map does not show yet, and what ground each will have.
+ *
+ * After a rebuild the map already shows the painted ground, with its soft edges and banks, so
+ * drawing the flat preview over it would only hide the real thing. A box needs the preview only
+ * while what it will be differs from what the built map has: newly painted, repainted, or put
+ * back to the generated ground since the last build.
+ *
+ * @param {object} ground - The overrides now, 'row,col' to kind.
+ * @param {object} built - The overrides the map was last built with.
+ * @param {{kindAt: Function}} base - The generated ground.
+ * @returns {object} 'row,col' to the kind to preview, for the boxes that differ.
+ */
+export function pendingGround(ground, built, base) {
+  const pending = {};
+  for (const key of new Set([...Object.keys(ground), ...Object.keys(built)])) {
+    const [row, col] = key.split(',').map(Number);
+    const generated = base.kindAt(row, col);
+    const now = ground[key] ?? generated;
+    if (now !== (built[key] ?? generated)) pending[key] = now;
+  }
+  return pending;
+}
+
+/**
  * Paints a square of boxes with one ground kind.
  *
- * A box is painted by setting its four corners. A corner that is given the ground the map build
- * would have made there anyway needs no override, so its entry is removed: the file only ever
- * holds real changes. Land is never painted within `EDGE_SEA` boxes of the map's edge.
+ * Each box is one tile corner. A corner that is given the ground the map build would have made
+ * there anyway needs no override, so its entry is removed: the file only ever holds real changes. Land is never painted within `EDGE_SEA` boxes of the map's edge.
  *
  * @param {object} editor - The editing session.
  * @param {number} col - The column of the box under the pointer.
@@ -121,9 +150,8 @@ export function paintBoxes(editor, col, row, size, kind, base, record = true) {
   const half = (size - 1) / 2;
   const { ground } = editor.terrain;
 
-  // Boxes col-half..col+half own corners col-half..col+half+1 (and the same for rows).
-  for (let r = Math.max(0, row - half); r <= Math.min(base.rows, row + half + 1); r++)
-    for (let c = Math.max(0, col - half); c <= Math.min(base.cols, col + half + 1); c++) {
+  for (let r = Math.max(0, row - half); r <= Math.min(base.rows, row + half); r++)
+    for (let c = Math.max(0, col - half); c <= Math.min(base.cols, col + half); c++) {
       // Land stays out of the strip of sea round the edge of the map.
       const edge = Math.min(r, base.rows - r, c, base.cols - c);
       if (kind !== ERASER && edge < (base.edge ?? EDGE_SEA)) continue;

@@ -3,7 +3,7 @@
 // the rebuild log. It shows what main.js gives it and reports clicks and typed values back; it
 // never changes the places or the objects itself.
 
-import { COLORS } from './view.js';
+import { COLORS, GROUND_COLORS } from './view.js';
 import { createPalette } from './palette.js';
 
 /**
@@ -27,6 +27,7 @@ function el(tag, props = {}, children = []) {
  * @param {object} on - What to call when the person does something. Places: `pick(ref)`,
  *   `field(name, value)`, `move(x, y)`, `remove()`, `add(kind)`. Objects: `mode(name)`,
  *   `armSprite(name)`, `objectMove(x, y)`, `removeObjects()`, `dropStale()`, `pickObject(obj)`.
+ *   Terrain: `tool(kind)`, `brush(size)`.
  *   Both: `undo()`, `redo()`, `save()`, `rebuild()`, `overlay(name, shown)`. Also `specs`, the
  *   sprites of objects.json, for the palette.
  * @returns {{render: Function, log: Function, setLog: Function, palette: object}} The controls.
@@ -43,6 +44,7 @@ export function createPanel(root, on) {
     filter = $('filter');
   const addButtons = [...root.querySelectorAll('[data-add]')];
   const modeButtons = [...root.querySelectorAll('[data-mode]')];
+  const groundButtons = [...root.querySelectorAll('[data-ground]')];
   const palette = createPalette($('palette'), {
     specs: on.specs,
     // A palette sprite was clicked.
@@ -59,6 +61,14 @@ export function createPanel(root, on) {
   $('drop-stale').onclick = () => on.dropStale();
   for (const button of addButtons) button.onclick = () => on.add(button.dataset.add);
   for (const button of modeButtons) button.onclick = () => on.mode(button.dataset.mode);
+  for (const button of groundButtons) {
+    // A swatch of the colour this ground is previewed in on the map.
+    const swatch = el('span', { className: 'swatch' });
+    swatch.style.background = GROUND_COLORS[button.dataset.ground];
+    button.prepend(swatch);
+    button.onclick = () => on.tool(button.dataset.ground);
+  }
+  $('brush').onchange = () => on.brush(Number($('brush').value));
   for (const box of root.querySelectorAll('[data-overlay]'))
     box.onchange = () => on.overlay(box.dataset.overlay, box.checked);
   filter.oninput = () => last && drawList(last);
@@ -296,7 +306,14 @@ export function createPanel(root, on) {
       $('rebuild').disabled = state.dirty || state.busy;
       $('status').textContent = state.status;
       $('places-pane').hidden = !places;
-      $('objects-pane').hidden = places;
+      $('objects-pane').hidden = state.mode !== 'objects';
+      $('terrain-pane').hidden = state.mode !== 'terrain';
+      for (const button of groundButtons)
+        button.classList.toggle('on', state.tool === button.dataset.ground);
+      $('brush').value = String(state.brush);
+      $('painted').textContent = state.painted
+        ? `${state.painted} boxes painted by hand.`
+        : 'Nothing painted yet.';
       root.querySelector('.places-only').hidden = !places;
 
       for (const button of modeButtons)

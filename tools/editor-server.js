@@ -1,5 +1,6 @@
 // The world editor's back end: a Vite plugin that exists only in `npm run dev`. It lets the
-// editor page read and save places.json and edits.json (in assets/world/source/) and run the map build and its tests.
+// editor page read and save places.json, edits.json and terrain.json (in assets/world/source/), and run the
+// map build and its tests.
 // The file path and the commands are fixed here; nothing a request sends reaches either.
 
 import { createHash } from 'node:crypto';
@@ -8,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { shapeErrors as placesShape, writePlaces } from '../src/editor/model.js';
 import { shapeErrors as editsShape, writeEdits } from '../src/editor/edits.js';
+import { shapeErrors as terrainShape, writeTerrain, decodeRuns } from '../src/editor/terrain.js';
 
 /**
  * The files the editor may read and save, by the name used in the URL. `path` is inside the
@@ -21,6 +23,14 @@ const FILES = {
     shape: editsShape,
     write: writeEdits,
     empty: '{\n  "removed": [],\n  "added": []\n}\n',
+  },
+  terrain: {
+    path: 'assets/world/source/terrain.json',
+    // The page sends the file's own shape: a list of runs.
+    shape: terrainShape,
+    // The writer wants the overrides one per corner, so the runs are unpacked first.
+    write: (data) => writeTerrain({ ground: decodeRuns(data.ground) }),
+    empty: '{\n  "ground": []\n}\n',
   },
 };
 
@@ -40,14 +50,16 @@ const QUIET = 3000;
 const STEPS = [
   { label: 'python tools/build-map.py', cmd: 'python', args: ['tools/build-map.py'] },
   {
-    label: 'node --test (places, sea, map, edits)',
+    label: 'node --test (places, sea, map, cliffs, edits, terrain)',
     cmd: process.execPath,
     args: [
       '--test',
       'tests/world/places.test.js',
       'tests/world/sea.test.js',
       'tests/world/map.test.js',
+      'tests/world/cliffs.test.js',
       'tests/world/edits.test.js',
+      'tests/world/terrain.test.js',
     ],
   },
 ];
@@ -77,7 +89,12 @@ function readFile(root, name) {
 }
 
 /** One fingerprint for everything the map is built from: the places and the edits together. */
-const sourceHash = (root) => hashOf(readFile(root, 'places').hash + readFile(root, 'edits').hash);
+const sourceHash = (root) =>
+  hashOf(
+    Object.keys(FILES)
+      .map((name) => readFile(root, name).hash)
+      .join(''),
+  );
 
 /**
  * Says whether the places or the edits have changed since the editor last rebuilt the map.
