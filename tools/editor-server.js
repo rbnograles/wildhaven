@@ -137,7 +137,9 @@ function readBody(req) {
 function runStep(root, step, res) {
   return new Promise((resolve) => {
     res.write(`\n$ ${step.label}\n`);
-    const child = spawn(step.cmd, step.args, { cwd: root });
+    // The log is shown as plain text, so the commands are asked not to print colour codes.
+    const env = { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' };
+    const child = spawn(step.cmd, step.args, { cwd: root, env });
 
     child.stdout.on('data', (text) => res.write(text));
     child.stderr.on('data', (text) => res.write(text));
