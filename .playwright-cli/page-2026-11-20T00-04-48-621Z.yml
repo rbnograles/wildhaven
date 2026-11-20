@@ -1,0 +1,78 @@
+- generic [ref=f5e1]:
+    - main [ref=f5e3]:
+        - link "Wildhaven home" [ref=f5e4] [cursor=pointer]:
+            - /url: ./
+            - generic [ref=f5e9]: WILDHAVEN
+        - group "Choose your character" [ref=f5e10]:
+            - generic [ref=f5e11]:
+                - button "Choose Frontier Scout" [pressed] [ref=f5e13]
+                - region "Your chosen character" [ref=f5e14]:
+                    - paragraph [ref=f5e15]: Pinefall Woods
+                    - heading "The Frontier Scout" [level=2] [ref=f5e16]
+                    - paragraph [ref=f5e17]: Follow the trail. Find your home.
+                    - generic [ref=f5e18]:
+                        - button "Begin your journey" [ref=f5e19] [cursor=pointer]
+                        - button "Preview animations" [ref=f5e22] [cursor=pointer]
+                        - paragraph [ref=f5e23]: Your own path through a shared world.
+            - generic [ref=f5e24]:
+                - button "Choose Wandering Builder" [ref=f5e26] [cursor=pointer]
+                - generic [aria-hidden]:
+                    - generic: The Wandering Builder
+                    - generic: Hollowstead Village
+            - generic [ref=f5e27]:
+                - button "Choose Shipwreck Survivor" [ref=f5e29] [cursor=pointer]
+                - generic [aria-hidden]:
+                    - generic: The Shipwreck Survivor
+                    - generic: Driftwood Coast
+    - dialog "Character animations" [ref=f5e30]:
+        - banner [ref=f5e31]:
+            - heading "Character animations" [level=2] [ref=f5e32]
+            - button "Close preview" [active] [ref=f5e33] [cursor=pointer]: Close
+        - generic [ref=f5e34]:
+            - text: Character
+            - combobox "Character" [ref=f5e35]:
+                - option "Frontier Scout" [selected]
+                - option "Wandering Builder"
+                - option "Shipwreck Survivor"
+        - generic "Animated character" [ref=f5e36]
+        - generic [ref=f5e37]:
+            - generic [ref=f5e38]:
+                - text: Animation
+                - combobox "Animation" [ref=f5e39]:
+                    - option "Idle"
+                    - option "Walking" [selected]
+                    - option "Running"
+                    - option "Gathering"
+                    - option "Building"
+                    - option "Crafting"
+                    - option "Fighting"
+                    - option "Swimming"
+                    - option "Chopping — stone axe"
+                    - option "Chopping — iron axe"
+                    - option "Mining — stone pickaxe"
+                    - option "Mining — iron pickaxe"
+                    - option "Sleeping"
+                    - option "Waking up"
+                    - option "Hungry"
+                    - option "Hurt by hunger"
+                    - option "Hurt by cold"
+                    - option "Hurt by an attack"
+                    - option "Collapsing"
+            - generic [ref=f5e40]:
+                - text: Facing
+                - combobox "Facing" [ref=f5e41]:
+                    - option "South"
+                    - option "West"
+                    - option "East" [selected]
+                    - option "North"
+                    - option "North-east"
+                    - option "North-west"
+                    - option "South-east"
+                    - option "South-west"
+            - generic [ref=f5e42]:
+                - text: Speed
+                - combobox "Speed" [ref=f5e43]:
+                    - option "Half speed"
+                    - option "Normal" [selected]
+            - button "Pause" [ref=f5e44] [cursor=pointer]
+        - status

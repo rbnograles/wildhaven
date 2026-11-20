@@ -56,7 +56,7 @@
     { "id": "l-tidepool", "region": "lagoon", "name": "Tidewater Pool", "x": 21448, "y": 13248, "pool": 200 },
     { "id": "l-dunes", "region": "lagoon", "name": "Gullwing Dunes", "x": 21548, "y": 9048 },
     { "id": "l-jetty", "region": "lagoon", "name": "Old Jetty", "x": 23398, "y": 10248, "object": "log" },
-    { "id": "l-gull-isle", "region": "lagoon", "name": "Gull Isle", "x": 25348, "y": 10048, "object": "palm" },
+    { "id": "l-gull-isle", "region": "lagoon", "name": "Gull Isle", "x": 25287, "y": 10111, "object": "palm" },
     { "id": "l-turtle-isle", "region": "lagoon", "name": "Turtle Isle", "x": 25748, "y": 14548, "object": "beach-rock" },
     { "id": "l-lantern-islet", "region": "lagoon", "name": "Lantern Islet", "x": 25048, "y": 16848 },
     { "id": "c-mine", "region": "canyons", "name": "Old Stonewater Mine", "x": 6648, "y": 9648, "object": "workshop" },
@@ -72,7 +72,10 @@
     { "id": "j-camp", "region": "jungle", "name": "Overgrown Camp", "x": 7248, "y": 16848, "object": "tent" },
     { "id": "j-idol", "region": "jungle", "name": "Sleeping Idol", "x": 20648, "y": 16948, "object": "boulder" },
     { "id": "j-garden", "region": "jungle", "name": "Hanging Garden", "x": 12048, "y": 13298 },
-    { "id": "j-mangrove", "region": "jungle", "name": "Mangrove Edge", "x": 22248, "y": 15548 }
+    { "id": "j-mangrove", "region": "jungle", "name": "Mangrove Edge", "x": 22248, "y": 15548 },
+    { "id": "h-new-1", "region": "meadows", "name": "New place", "x": 12663, "y": 11437 },
+    { "id": "h-new-2", "region": "meadows", "name": "New place", "x": 10005, "y": 10619 },
+    { "id": "h-new-3", "region": "meadows", "name": "New place", "x": 11155, "y": 8599 }
   ],
   "waypoints": [
     { "id": "d-wp-oasis", "region": "desert", "name": "Oasis Signpost", "x": 5448, "y": 4748 },
