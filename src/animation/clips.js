@@ -169,8 +169,7 @@ export const CLIPS = {
     reaction: true,
     every: 3,
   },
-  // Struck by an attack: brace, recoil, stagger, regain balance. Nothing attacks the player yet,
-  // so the game never plays this one; it can only be seen in the preview dialog.
+  // Struck by an attack: brace, recoil, stagger, regain balance. It plays when a wolf bites.
   hurtAttack: {
     label: 'Hurt by an attack',
     frames: 4,
@@ -181,6 +180,18 @@ export const CLIPS = {
     east: true,
     reaction: true,
     every: 1,
+  },
+  // Driving wolves back: fists up, arms thrown wide, a two-handed shove, fists up again. A short
+  // timed action with no target (R); the push itself happens when it starts (actions/wolves.js).
+  repel: {
+    label: 'Repel',
+    frames: 4,
+    fps: 8,
+    loop: false,
+    sheet: 'repel',
+    row: 0,
+    east: true,
+    action: true,
   },
   // Falling down when health runs out: sagging, knees buckling, kneeling, hip on the ground,
   // rolling onto the back, lying still. It plays where the player stood, before they wake by a fire.

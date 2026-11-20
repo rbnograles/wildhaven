@@ -58,7 +58,7 @@ export const NPCS = [
     jobs: [
       {
         needs: 'village-stone',
-        work: { clip: 'mine', x: 14140, y: 9372, facing: 2 },
+        work: { clip: 'mine', x: 14330, y: 9362, facing: 1 },
         drop: { x: 14620, y: 9580, facing: 2 },
       },
       {

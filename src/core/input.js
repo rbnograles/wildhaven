@@ -8,7 +8,10 @@ import { lockedNode, aimState } from '../actions/gather.js';
 import { beginApproach, beginPlacing } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { GEAR } from '../data/gear.js';
+import { BUILDINGS } from '../data/buildings.js';
+import { repel } from '../actions/wolves.js';
 import { campInReach } from '../world/camps.js';
+import { nearbyBuilding } from '../world/buildings.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -61,8 +64,9 @@ export function setupInput(session, ui) {
 
   /**
    * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
-   * order. With none of those in reach, E beside one of the player's fires opens that camp; beside a
-   * tree or rock it says which tool to make; anywhere else it says why nothing happened.
+   * order; a chest opens its window and a tent (from dusk) is slept in. With none of those in reach,
+   * E beside one of the player's fires opens that camp; beside a tree or rock it says which tool to
+   * make; beside a tent by day it says to come back at dusk; anywhere else it says why nothing happened.
    *
    * Landing and boarding happen at once and save straight away. Repairing and gathering start a
    * timed action that core/loop.js finishes. Held movement keys are forgotten so the player
@@ -81,6 +85,23 @@ export function setupInput(session, ui) {
       return;
 
     const result = beginInteraction(session.state, session.animator);
+    if (result.ok && result.kind === 'chest') {
+      keys.clear();
+      ui.chest.open(result.chest);
+      return;
+    }
+    // A tent, from dusk: sleep in it until dawn, the same rest the camp's own button gives.
+    if (result.ok && result.kind === 'sleep') {
+      keys.clear();
+      ui.camp.restNight(result.camp);
+      return;
+    }
+    // A wheat bed with nothing to do right now (no seed, or tended and growing) says why, and so
+    // does a hunt without an axe.
+    if (!result.ok && (result.kind === 'farm' || result.kind === 'hunt')) {
+      if (result.message) ui.hud.notify(result.message);
+      return;
+    }
     if (result.ok) {
       keys.clear();
       if (result.kind === 'board')
@@ -102,10 +123,14 @@ export function setupInput(session, ui) {
     }
     // A tree or rock in reach that needs a tool the player doesn't have yet: say how to get one.
     const locked = !session.state.aboard && lockedNode(session.state);
+    // Beside a tent by day (it is only slept in from dusk): say when it can be used.
+    const tent = !locked && !session.state.aboard && nearbyBuilding(session.state, ['tent']);
     ui.hud.notify(
       locked
         ? `You need ${toolInfo(locked.tool).aName}. Make one in the Build menu (B).`
-        : 'Move closer to something you can use.',
+        : tent
+          ? 'You can sleep in the tent from dusk.'
+          : 'Move closer to something you can use.',
     );
   }
 
@@ -224,6 +249,14 @@ export function setupInput(session, ui) {
       return;
     }
 
+    // With the build menu open, 9, 0, - and = pick the tent, the chest, the wheat bed and the centre.
+    const camp = BUILDINGS.find((b) => b.key === key);
+    if (camp && !event.repeat && session.build.menu) {
+      event.preventDefault();
+      ui.build.building(camp.id);
+      return;
+    }
+
     // With the build menu open, 5 to 8 make the torch, the coat, the grip and the boat.
     const gear = GEAR.find((g) => g.key === key);
     if (gear && !event.repeat && session.build.menu) {
@@ -241,6 +274,21 @@ export function setupInput(session, ui) {
     if (key === 'h' && !event.repeat) {
       event.preventDefault();
       ui.camp.useHerbs();
+      return;
+    }
+
+    // R drives back any wolves close by (the repel shove), once every few seconds.
+    if (key === 'r' && !event.repeat && !ui.dialogs.isPaused()) {
+      event.preventDefault();
+      const result = repel(session.state, session.animator);
+      if (result.ok) {
+        keys.clear();
+        if (result.pushed)
+          ui.hud.notify(
+            `You drove back ${result.pushed === 1 ? 'a wolf' : `${result.pushed} wolves`}`,
+          );
+      }
+      ui.hud.update();
       return;
     }
 

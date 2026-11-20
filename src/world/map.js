@@ -34,13 +34,29 @@ export const mapProperty = (name) => MAP.properties.find((p) => p.name === name)
 /** Every object the map placed: trees, rocks, houses, flowers and so on, each with a name and x/y. */
 export const MAP_OBJECTS = layer('objects').objects;
 
+/**
+ * Says how many times its usual size the map draws one object.
+ *
+ * A map brought in from Tiled (tools/import-tiled-world.py) lets each tree, rock or house have its own
+ * size, kept in the object's `scale` property. The usual size is the sprite's `scale` in objects.json.
+ *
+ * @param {object} object - A map object.
+ * @returns {number} The object's own size factor: 1 when it has none.
+ */
+export function objectScale(object) {
+  const props = object.properties;
+  if (Array.isArray(props)) return props.find((p) => p.name === 'scale')?.value ?? 1;
+  return props?.scale ?? 1;
+}
+
 // The solid base of every placed object, as [left, top, right, bottom, id] boxes. An object's
-// `footprint` in objects.json is [halfWidth, depth], grown by its `scale`; objects without one are walk-through.
+// `footprint` in objects.json is [halfWidth, depth], grown by its `scale` and its own size
+// (objectScale); objects without one are walk-through.
 // The id is `<name>-<x>-<y>`, the same id a tree or rock node has, so a chopped tree's box can be skipped.
 export const OBSTACLES = MAP_OBJECTS.flatMap((o) => {
   const spec = OBJECT_SPECS[o.name],
     base = spec?.footprint,
-    s = spec?.scale ?? 1;
+    s = (spec?.scale ?? 1) * objectScale(o);
   return base
     ? [[o.x - base[0] * s, o.y - base[1] * s, o.x + base[0] * s, o.y, `${o.name}-${o.x}-${o.y}`]]
     : [];
@@ -98,6 +114,31 @@ function cover(data, first, x, y) {
 
 /** Says how wet a spot is, from 0 (dry land) to 1 (sea, shallow or deep). */
 const waterAt = (x, y) => cover(water, firstWater, x, y);
+
+// The plank bridges' decks, as [left, top, right, bottom] boxes the player may walk on even over water.
+// A deck runs the bridge's whole length and the middle BRIDGE_WALK share of its width (the rails and
+// posts at the sides are not walked on). BRIDGE_PICTURE is the bridge sprite's size in world units.
+// A bridge turned a quarter (rotation 90) runs north to south, so its box is turned too.
+const BRIDGE_PICTURE = [460, 179],
+  BRIDGE_WALK = 0.55;
+const BRIDGE_DECKS = MAP_OBJECTS.filter((o) => o.name === 'bridge').map((o) => {
+  const s = (OBJECT_SPECS.bridge?.scale ?? 1) * objectScale(o),
+    long = (BRIDGE_PICTURE[0] * s) / 2,
+    wide = (BRIDGE_PICTURE[1] * s * BRIDGE_WALK) / 2,
+    turned = Math.round((o.rotation ?? 0) / 90) % 2 !== 0,
+    [halfX, halfY] = turned ? [wide, long] : [long, wide];
+  return [o.x - halfX, o.y - halfY, o.x + halfX, o.y + halfY];
+});
+
+/**
+ * Says whether a spot is on the deck of a plank bridge.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {boolean} True on a bridge's planks.
+ */
+export const onBridge = (x, y) =>
+  BRIDGE_DECKS.some(([left, top, right, bottom]) => x > left && x < right && y > top && y < bottom);
 
 /**
  * Says whether a spot is dry land, with no more water than the player may wade through.
@@ -298,8 +339,8 @@ const insideWorld = (x, y) =>
 /**
  * Says whether the player is allowed to stand on a spot.
  *
- * A spot is fine when it's inside the world's border, mostly dry, not inside a solid object, and
- * not on a cliff wall or edge.
+ * A spot is fine when it's inside the world's border, mostly dry (or on a bridge's deck), not
+ * inside a solid object, and not on a cliff wall or edge.
  *
  * @param {number} x - World x position.
  * @param {number} y - World y position.
@@ -313,7 +354,7 @@ const insideWorld = (x, y) =>
 export function isWalkable(x, y, extra = [], cliffs = true, skip = undefined) {
   if (!insideWorld(x, y)) return false;
   return (
-    waterAt(x, y) < 0.35 &&
+    (waterAt(x, y) < 0.35 || onBridge(x, y)) &&
     !hitsObstacle(x, y, skip) &&
     !blocks(extra, x, y) &&
     !(cliffs && hitsCliff(x, y))

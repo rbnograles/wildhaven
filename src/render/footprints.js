@@ -2,7 +2,7 @@
 // a few seconds. They are only a picture: nothing is saved and no game rule reads them. The prints
 // are cut from the painted sheet by tools/prepare-sprite-art.py (soil, sand and snow; left and right).
 
-import { MAP_OBJECTS, isDryLand, surfaceAt, elevationAt } from '../world/map.js';
+import { isDryLand, surfaceAt, elevationAt, onBridge } from '../world/map.js';
 import sheetUrl from '../../assets/world/effects/footprints.png';
 import sheetSpec from '../../assets/world/effects/footprints.json';
 
@@ -36,12 +36,6 @@ const JUMP = 120;
 // stones are at -1), under everything that stands up.
 const DEPTH = -0.9;
 
-// The plank bridges: [x, y] of each one's middle. No prints are left on the planks, which reach
-// about this far left/right and up/down from the middle.
-const BRIDGES = MAP_OBJECTS.filter((o) => o.name === 'bridge'),
-  BRIDGE_HALF_WIDTH = 240,
-  BRIDGE_HALF_HEIGHT = 70;
-
 /**
  * Says whether a spot is ground that can take a boot print.
  *
@@ -53,9 +47,7 @@ const BRIDGES = MAP_OBJECTS.filter((o) => o.name === 'bridge'),
  */
 function holdsPrint(x, y) {
   if (!isDryLand(x, y) || elevationAt(x, y) === 's') return false;
-  return !BRIDGES.some(
-    (b) => Math.abs(x - b.x) < BRIDGE_HALF_WIDTH && Math.abs(y - b.y) < BRIDGE_HALF_HEIGHT,
-  );
+  return !onBridge(x, y);
 }
 
 /**

@@ -3,13 +3,13 @@
 // and src/world/, input in src/core/input.js. This file also paints the minimap through render/maps.js.
 
 import * as Phaser from 'phaser';
-import { WORLD } from '../world/map.js';
+import { WORLD, objectScale } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
-import { WRECKS } from '../data/places.js';
+import { LANDMARKS, WRECKS } from '../data/places.js';
 import { VILLAGERS, villagerPose } from '../world/npcs.js';
 import { WILD } from '../data/supplies.js';
 import { FIRE_RADIUS, NPC_NOTICE } from '../data/balance.js';
-import { drawMap } from './maps.js';
+import { drawMap, MINI_VIEWS, miniZoom } from './maps.js';
 import { createLighting } from './lighting.js';
 import { createSnow } from './snow.js';
 import { preloadFootprints, createFootprints } from './footprints.js';
@@ -22,9 +22,27 @@ import { waterBlend } from '../animation/water.js';
 import mapData from '../../assets/world/map/wildhaven.json';
 import objectSpecs from '../../assets/world/source/objects.json';
 import animSpecs from '../../assets/world/animations/animations.json';
-import tilesetUrl from '../../assets/world/map/tileset.png';
 import overviewUrl from '../../assets/world/map/overview.webp';
+import tentSleepUrl from '../../assets/world/buildings/tent-sleep.png';
+import tentSleepSpec from '../../assets/world/buildings/tent-sleep.json';
+import creatureSpecs from '../../assets/world/creatures/creatures.json';
+import { WILD_ANIMALS } from '../world/animals.js';
+import { WOLVES } from '../world/wolves.js';
+import { BUILDINGS, buildingInfo, buildingSprite } from '../data/buildings.js';
+import { readBuildTarget, BUILDING_PREFIX, FARM_PREFIX } from '../actions/building.js';
 import slotUrl from '../../assets/ui/game/item-slot.png';
+
+// Tileset picture name (`tileset.png`, and the ground and path kits tools/import-tiled-world.py copies
+// next to it) → the URL Vite serves it from. The map file lists which of them it uses.
+const tilesetUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/world/map/*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/([\w-]+\.png)$/)[1], url]),
+);
 
 // Object sprite name (the PNG file name without `.png`) → the URL Vite serves it from.
 // Sprites sit in kind folders (objects/trees/, objects/rocks/, ...), but only the file name is kept,
@@ -34,6 +52,18 @@ import slotUrl from '../../assets/ui/game/item-slot.png';
 export const objectUrls = Object.fromEntries(
   Object.entries(
     import.meta.glob('../../assets/world/source/objects/*/*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
+);
+
+// Animal name → the URL of its flip-book sheet (assets/world/creatures/, made by
+// tools/prepare-creature-art.py): a row per state, every picture facing east.
+const creatureUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/world/creatures/*.png', {
       eager: true,
       query: '?url',
       import: 'default',
@@ -81,11 +111,9 @@ const itemUrls = Object.fromEntries(
   ).map(([path, url]) => [path.match(/item-([\w-]+)\.png$/)[1], url]),
 );
 
-// Moving water: a see-through copy of each of these tile layers drifts in a small circle over the
-// real one, so the painted waves seem to swell. WATER_DRIFT is how far the copy strays, in world
+// Moving water (see WATER_LAYERS): WATER_DRIFT is how far the drifting copy strays, in world
 // units: small enough that the painted bank (56 units wide) always hides its edge on the shore.
 // WATER_SWELL_SECONDS is the time for one trip round the circle.
-const WATER_LAYERS = ['water', 'deep'];
 const WATER_DRIFT = 9;
 const WATER_SWELL_SECONDS = 7;
 
@@ -101,8 +129,8 @@ const BADGE_ALPHA = { ready: 1, far: 0.7, locked: 1 };
 const HOVER_MIN = 56;
 
 // How far above the player's feet (world units) the progress bar sits while they pick something
-// by hand: just clear of the head of the bending picture.
-const BAR_OVER_HEAD = 118;
+// by hand: just clear of the head of the bending picture (about PLAYER_HEIGHT plus a little).
+const BAR_OVER_HEAD = 82;
 
 // What a gathered supply plays before it fades, by how many rows its sheet has: a tree (3 rows)
 // falls and breaks into firewood (frames 4-11), a rock (1 row) cracks into rubble (frames 0-3).
@@ -111,6 +139,19 @@ const BREAK = {
   3: { frames: [4, 5, 6, 7, 8, 9, 10, 11], fps: 8, hold: 0.7 },
   1: { frames: [0, 1, 2, 3], fps: 6, hold: 0.7 },
 };
+
+// A tent shows the player asleep inside it while they nap within this many world units of it, and
+// the sleeping sheet's rows are the characters in this order.
+const SLEEP_IN_TENT = 400;
+const SLEEP_ROWS = ['scout', 'builder', 'survivor'];
+
+// How much wider and taller the sleeping picture is drawn than the tent's own draw size, so the
+// tent keeps its size when the player lies down in it. The sleeping frames were painted smaller and
+// narrower: the tent in them is 150×153 px, and the standing tent's picture is 203×177 px.
+const SLEEP_FIT = [203 / 150, 177 / 153];
+
+// Animals farther than this from the middle of the screen (world units, either way) are not drawn.
+const ANIMAL_VIEW = 1400;
 
 // How many flame pictures the campfire shows per second.
 const FIRE_FPS = 8;
@@ -129,10 +170,23 @@ const rippleStart = (x, y) => (Math.abs(Math.sin(x * 12.9898 + y * 78.233)) * 40
 
 // The map's tile layers, bottom to top: the ground terrains, then the painted banks along the
 // water's edge and the cliffs (lips, walls and their shadows) over them. Each one is painted over the one before. tools/build-map.py decides the order.
-const TILE_LAYERS = mapData.layers.filter((l) => l.type === 'tilelayer').map((l) => l.name);
+// A hidden layer is left out: a map brought in from Tiled keeps the game's own ground layers hidden, for
+// collision only, and draws Tiled's ground layers instead.
+const TILE_LAYERS = mapData.layers
+  .filter((l) => l.type === 'tilelayer' && l.visible !== false)
+  .map((l) => l.name);
 
-// How tall the player is drawn on screen, in world units.
-const PLAYER_HEIGHT = 112;
+// Moving water: a see-through copy of each of these tile layers drifts in a small circle over the
+// real one, so the painted waves seem to swell (see WATER_DRIFT). The game's own map calls them
+// 'water' and 'deep'; a map from Tiled calls them '02 water' and '01 deep'.
+const WATER_LAYERS = TILE_LAYERS.filter((name) => /(^| )(water|deep)$/.test(name));
+
+// How tall the player (and every villager) is drawn on screen, in world units. It was 112, which made
+// people about one and a half times as tall as a house door; at 76 they fit through the doors.
+const PLAYER_HEIGHT = 76;
+
+// The soft shadow under a person's feet: width and height in world units, sized to PLAYER_HEIGHT.
+const SHADOW = [26, 10];
 
 // Footpaths are drawn just above the ground tiles and under every other flat thing (those are at -1).
 const PATH_DEPTH = -1.5;
@@ -148,6 +202,34 @@ const CHUNK = 1024;
 
 // How far past the screen edge scenery is still shown, so a tall tree just off screen doesn't pop in.
 const CULL_MARGIN = 640;
+
+/**
+ * Loads the small pictures the maps show on their markers.
+ *
+ * The maps are plain 2D canvases, not part of the Phaser scene, so they need their own copies of
+ * a few sprites: the signpost, campfire and boats, and whatever stands at each named place. A
+ * picture that fails to load is simply left out (its marker shows a flag or an empty badge),
+ * because a missing map icon must never stop the game from starting.
+ *
+ * @returns {Promise<Object<string, HTMLImageElement>>} Sprite name to its loaded picture.
+ */
+async function loadMapIcons() {
+  const names = new Set(['signpost', 'campfire', 'old-boat', 'rowboat']);
+  for (const place of LANDMARKS) if (place.object) names.add(place.object);
+
+  const icons = {};
+  await Promise.all(
+    [...names].map(async (name) => {
+      if (!objectUrls[name]) return;
+      try {
+        icons[name] = await loadImage(objectUrls[name], 'map icons');
+      } catch {
+        // Left out on purpose: see above.
+      }
+    }),
+  );
+  return icons;
+}
 
 /**
  * Loads all the artwork and builds the Phaser scene that draws the world.
@@ -170,9 +252,10 @@ export async function createRenderer(container, miniCanvas) {
       'This browser does not support the game canvas. Please try a current desktop browser.',
     );
 
-  const [overview, sheets] = await Promise.all([
+  const [overview, sheets, mapIcons] = await Promise.all([
     loadImage(overviewUrl, 'world map'),
     loadCharacterSheets(),
+    loadMapIcons(),
   ]);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -204,9 +287,15 @@ export async function createRenderer(container, miniCanvas) {
   // `loopers` holds, per chunk key, the water ripples that play round and round. `clock` counts the
   // seconds drawn. Standing trees show one still picture: their sheets have sway frames, but the
   // sway looked odd in play, so it was taken out (the fall and break frames are still used).
+  // `built` maps "<character>:<building id>" to that camp building's picture; `site` is the picture
+  // of a building going up while the player works on it.
   const chunks = new Map(),
     loopers = new Map(),
-    fires = new Map();
+    fires = new Map(),
+    built = new Map(),
+    // `beasts` maps an animal's id to its picture, made the first time it comes near the camera.
+    beasts = new Map();
+  let site = null;
   let clock = 0;
   // The drifting copies of the water layers (see WATER_LAYERS); empty with reduced motion.
   const swells = [];
@@ -249,13 +338,25 @@ export async function createRenderer(container, miniCanvas) {
         this.load.on('loaderror', () =>
           fail('We could not load the world artwork. Check the connection and try again.'),
         );
-        this.load.image('terrain', tilesetUrl);
+        for (const set of mapData.tilesets)
+          this.load.image(`tiles-${set.name}`, tilesetUrls[set.image]);
         this.load.image('ui-slot', slotUrl);
         preloadFootprints(this);
         for (const [name, url] of Object.entries(toolUrls)) this.load.image(`tool-${name}`, url);
         for (const [name, url] of Object.entries(itemUrls)) this.load.image(`item-${name}`, url);
         for (const [name, url] of Object.entries(objectUrls))
           this.load.image(`object-${name}`, url);
+        // The animals: one sheet each, cut into even cells (creatures.json says how big).
+        for (const [name, url] of Object.entries(creatureUrls))
+          this.load.spritesheet(`creature-${name}`, url, {
+            frameWidth: creatureSpecs[name].cell[0],
+            frameHeight: creatureSpecs[name].cell[1],
+          });
+        // Each character asleep inside a tent, a row each (prepare-building-art.py).
+        this.load.spritesheet('tent-sleep', tentSleepUrl, {
+          frameWidth: tentSleepSpec.cell[0],
+          frameHeight: tentSleepSpec.cell[1],
+        });
         for (const [name, url] of Object.entries(animUrls))
           this.load.spritesheet(`anim-${name}`, url, {
             frameWidth: animSpecs[name].cell[0],
@@ -277,7 +378,9 @@ export async function createRenderer(container, miniCanvas) {
           data: mapData,
         });
         const map = this.make.tilemap({ key: 'world' });
-        const tiles = map.addTilesetImage('terrain', 'terrain');
+        const tiles = mapData.tilesets.map((set) =>
+          map.addTilesetImage(set.name, `tiles-${set.name}`),
+        );
         TILE_LAYERS.forEach((name, i) => map.createLayer(name, tiles, 0, 0).setDepth(i - 20));
 
         // Moving water: each water layer gets a see-through twin just above it, which draw() slides
@@ -306,7 +409,7 @@ export async function createRenderer(container, miniCanvas) {
           const image = this.add
             .image(object.x, object.y, anim ? `anim-${object.name}` : `object-${object.name}`, 0)
             .setOrigin(...(anim ?? spec).origin)
-            .setScale(spec.scale ?? 1)
+            .setScale((spec.scale ?? 1) * objectScale(object))
             // A piece of footpath lies under the other flat things (small stones, stairs, bridges)
             // and is the only kind of object the map turns, to follow its route.
             .setDepth(spec.flat ? (spec.path ? PATH_DEPTH : -1) : object.y)
@@ -325,7 +428,7 @@ export async function createRenderer(container, miniCanvas) {
               const nextImage = this.add
                 .image(object.x, object.y, `anim-${object.name}`, 1)
                 .setOrigin(...anim.origin)
-                .setScale(spec.scale ?? 1)
+                .setScale((spec.scale ?? 1) * objectScale(object))
                 .setDepth(image.depth)
                 .setAlpha(0)
                 .setVisible(false);
@@ -472,7 +575,7 @@ export async function createRenderer(container, miniCanvas) {
           sheets.settlers.idle.referenceHeight;
         villagers = VILLAGERS.map((villager) => {
           const { npc } = villager;
-          const shade = this.add.ellipse(0, 0, 38, 14, 0x172e34, 0.22);
+          const shade = this.add.ellipse(0, 0, SHADOW[0], SHADOW[1], 0x172e34, 0.22);
           const sprite = this.add.image(0, 0, 'settlers-idle', `${npc.row}-0`).setOrigin(0.5, 1);
           const label = this.add
             .text(0, 0, `${npc.name} · ${npc.role}`, {
@@ -492,7 +595,7 @@ export async function createRenderer(container, miniCanvas) {
 
         // The player and the soft shadow under their feet. Drawing switches the player to the
         // chosen character's pose; the scout facing south is only the starting picture.
-        shadow = this.add.ellipse(0, 0, 38, 14, 0x172e34, 0.22);
+        shadow = this.add.ellipse(0, 0, SHADOW[0], SHADOW[1], 0x172e34, 0.22);
         player = this.add.image(0, 0, 'scout-idle', '0-0').setOrigin(0.5, 1);
 
         // The ghost campfire shown while placing one, and the ring of warmth it would give.
@@ -500,10 +603,13 @@ export async function createRenderer(container, miniCanvas) {
         ghost = this.add
           .image(0, 0, 'anim-campfire', 0)
           .setOrigin(...animSpecs.campfire.origin)
+          .setScale(objectSpecs.campfire.scale ?? 1)
           .setAlpha(0.75)
           .setDepth(WORLD.height + 0.75)
           .setVisible(false);
         ring = this.add.graphics().setDepth(WORLD.height + 0.74);
+        // A camp building going up: its construction stage (or its finished picture fading up).
+        site = this.add.image(0, 0, `object-${BUILDINGS[0].sprite}`).setVisible(false);
 
         // The night layer and the light around fires (render/lighting.js).
         lighting = createLighting(this, reducedMotion);
@@ -738,6 +844,7 @@ export async function createRenderer(container, miniCanvas) {
           scene.add
             .image(camp.x, camp.y, 'anim-campfire', 0)
             .setOrigin(...animSpecs.campfire.origin)
+            .setScale(objectSpecs.campfire.scale ?? 1) // one tile wide, like the map's fires
             .setDepth(camp.y),
         );
     }
@@ -745,6 +852,114 @@ export async function createRenderer(container, miniCanvas) {
     // The flames flicker through their four pictures (one still picture with reduced motion).
     const flame = reducedMotion ? 1 : Math.floor(clock * FIRE_FPS) % 4;
     for (const sprite of fires.values()) sprite.setFrame(flame);
+
+    // Camp buildings: one picture each, showing how it looks now (a full chest, the wheat's stage,
+    // the centre's tier). Keys include the character, like the fires'. While the player naps after
+    // resting at a camp with a tent, the tent shows them asleep inside it and the player is hidden.
+    const builtKeys = new Set();
+    let sleepingIn = null;
+    for (const camp of state.camps)
+      for (const b of camp.buildings ?? []) {
+        const key = `${state.character}:${b.id}`;
+        builtKeys.add(key);
+        if (!built.has(key)) built.set(key, scene.add.image(b.x, b.y, 'object-tent'));
+        const image = built.get(key).setPosition(b.x, b.y).setDepth(b.y);
+        const asleep =
+          b.kind === 'tent' &&
+          animator.clip === 'sleep' &&
+          Math.hypot(state.player.x - b.x, state.player.y - b.y) < SLEEP_IN_TENT;
+        if (asleep) {
+          sleepingIn = b;
+          const row = SLEEP_ROWS.indexOf(state.character),
+            frame = reducedMotion ? 0 : Math.floor(clock * 2) % tentSleepSpec.columns,
+            size = buildingInfo('tent').scale * (objectSpecs.tent.scale ?? 1);
+          image
+            .setTexture('tent-sleep', row * tentSleepSpec.columns + frame)
+            .setOrigin(...tentSleepSpec.origin)
+            .setScale(size * SLEEP_FIT[0], size * SLEEP_FIT[1]);
+        } else {
+          const sprite = buildingSprite(b),
+            spec = objectSpecs[sprite];
+          image
+            .setTexture(`object-${sprite}`)
+            .setOrigin(...spec.origin)
+            .setScale(buildingInfo(b.kind).scale * (spec.scale ?? 1));
+        }
+      }
+    for (const [key, image] of built)
+      if (!builtKeys.has(key)) {
+        image.destroy();
+        built.delete(key);
+      }
+
+    // Animals near the camera: the row for what each is doing (grazing, walking, running, lying
+    // down), turned to face its way (the art faces east). A hunted one fades out as it lies there.
+    // Wolves are drawn the same way, with two rows of their own: the growl (snarl) and the lunge.
+    for (const a of [...WILD_ANIMALS, ...WOLVES]) {
+      const kind = a.den ? 'wolf' : a.kind;
+      const near =
+        a.phase !== 'gone' &&
+        Math.abs(a.x - camera.x) < ANIMAL_VIEW &&
+        Math.abs(a.y - camera.y) < ANIMAL_VIEW;
+      let image = beasts.get(a.id);
+      if (!near) {
+        image?.setVisible(false);
+        continue;
+      }
+      if (!image) {
+        image = scene.add.image(a.x, a.y, `creature-${kind}`, 0);
+        beasts.set(a.id, image);
+      }
+      const spec = creatureSpecs[kind],
+        row = spec.rows[spec.rows[a.phase] ? a.phase : 'idle'],
+        fps = { run: 10, down: 3, walk: 6, snarl: 5, lunge: 8 }[a.phase] ?? 2,
+        step = Math.floor(a.clock * fps),
+        frame =
+          a.phase === 'down'
+            ? Math.min(step, row.frames - 1)
+            : reducedMotion && a.phase === 'idle'
+              ? 0
+              : step % row.frames;
+      image
+        .setVisible(true)
+        .setFrame(row.row * spec.columns + frame)
+        .setOrigin(...spec.origin)
+        .setFlipX(a.facing === 1)
+        .setPosition(a.x, a.y)
+        .setDepth(a.y)
+        .setAlpha(a.phase === 'down' ? Math.max(0, 1 - Math.max(0, a.clock - 1)) : 1);
+    }
+
+    // A building going up shows its stage while the hammering lasts: the tent climbs through its
+    // construction pictures; the others, and a centre being raised a tier, fade up from faint.
+    const job = readBuildTarget(animator.pending?.target);
+    site.setVisible(!!job);
+    if (job) {
+      const progress = actionProgress(animator);
+      let kind = job.kind,
+        at = job,
+        sprite;
+      if (kind === 'raise') {
+        const camp = state.camps.find((c) => c.id === job.campId),
+          centre = camp?.buildings.find((b) => b.kind === 'centre');
+        kind = 'centre';
+        at = centre ?? { x: 0, y: 0 };
+        sprite = `centre-${Math.min(3, (centre?.tier ?? 0) + 1)}`;
+      }
+      const info = buildingInfo(kind),
+        stages = info.stages;
+      sprite ??= stages.length
+        ? stages[Math.min(stages.length - 1, Math.floor(progress * stages.length))]
+        : info.sprite;
+      const spec = objectSpecs[sprite];
+      site
+        .setTexture(`object-${sprite}`)
+        .setOrigin(...spec.origin)
+        .setScale(stages.length && sprite !== info.sprite ? 1 : info.scale * (spec.scale ?? 1))
+        .setAlpha(stages.length && sprite !== info.sprite ? 1 : 0.3 + 0.7 * progress)
+        .setPosition(at.x, at.y)
+        .setDepth(at.y + 0.5);
+    }
 
     // Gathered supplies fade out and regrown patches fade back in; switching characters (resetCamera) snaps them to that save instead.
     // What E would do now: a supply or old boat it targets glows with an E cap over it.
@@ -846,6 +1061,17 @@ export async function createRenderer(container, miniCanvas) {
 
     // The progress bar fills up while a timed action runs.
     bar.clear();
+    const target = animator.pending?.target ?? '';
+    if (!working && (target.startsWith(BUILDING_PREFIX) || target.startsWith(FARM_PREFIX))) {
+      // Building and farming have no node to float over, so the bar sits above the player's head.
+      const w = 64,
+        x = state.player.x - w / 2,
+        y = state.player.y - BAR_OVER_HEAD,
+        progress = actionProgress(animator);
+      bar.fillStyle(0x254432, 0.88).fillRoundedRect(x - 2, y - 2, w + 4, 13, 6.5);
+      if (progress > 0)
+        bar.fillStyle(0xf7f1de, 1).fillRoundedRect(x, y, Math.max(9, w * progress), 9, 4.5);
+    }
     if (working) {
       // Over a tree or rock the bar floats above it. Something picked by hand is low and the
       // player kneels right beside it, so there the bar goes above the player's head instead of
@@ -879,7 +1105,8 @@ export async function createRenderer(container, miniCanvas) {
       .setOrigin(pose.flip ? 1 - pivot : pivot, 1)
       .setFlipX(pose.flip)
       .setScale(PLAYER_HEIGHT / pose.sheet.referenceHeight)
-      .setDepth(state.player.y);
+      .setDepth(state.player.y)
+      .setVisible(!sleepingIn);
     if (state.aboard) {
       // Show only the top of the character and sink the cut line into the hull, so they sit in the boat.
       player
@@ -891,7 +1118,7 @@ export async function createRenderer(container, miniCanvas) {
     } else
       player.setCrop().setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift);
     shadow
-      .setVisible(!state.aboard)
+      .setVisible(!state.aboard && !sleepingIn)
       .setPosition(state.player.x, state.player.y - 1)
       .setDepth(state.player.y - 0.5);
 
@@ -924,9 +1151,27 @@ export async function createRenderer(container, miniCanvas) {
     ring.clear();
     ghost.setVisible(!!build?.active);
     if (build?.active) {
-      const ok = !!build.check?.ok;
+      const ok = !!build.check?.ok,
+        fire = !build.kind || build.kind === 'campfire';
+      if (fire)
+        ghost
+          .setTexture('anim-campfire', 0)
+          .setOrigin(...animSpecs.campfire.origin)
+          .setScale(objectSpecs.campfire.scale ?? 1);
+      else {
+        // A building's ghost is its finished picture (a tent, a closed chest, an empty bed...).
+        const info = buildingInfo(build.kind),
+          spec = objectSpecs[info.sprite];
+        ghost
+          .setTexture(`object-${info.sprite}`)
+          .setOrigin(...spec.origin)
+          .setScale(info.scale * (spec.scale ?? 1));
+      }
       ghost.setPosition(build.x, build.y).setTint(ok ? 0xb6f0a0 : 0xff8a7a);
-      ring.lineStyle(2, ok ? 0xf7f1de : 0xff8a7a, 0.85).strokeCircle(build.x, build.y, FIRE_RADIUS);
+      if (fire)
+        ring
+          .lineStyle(2, ok ? 0xf7f1de : 0xff8a7a, 0.85)
+          .strokeCircle(build.x, build.y, FIRE_RADIUS);
     }
 
     // Walking leaves boot prints on the ground, which fade after a few seconds.
@@ -947,7 +1192,11 @@ export async function createRenderer(container, miniCanvas) {
     });
 
     // The minimap's arrow tilts while the player walks diagonally, like the character does.
-    drawMap(mini, overview, state, miniCanvas.width, miniCanvas.height, true, animator.diagonal);
+    drawMap(mini, overview, state, miniCanvas.width, miniCanvas.height, {
+      view: MINI_VIEWS[miniZoom()],
+      diagonal: animator.diagonal,
+      icons: mapIcons,
+    });
   }
 
   return {
@@ -960,7 +1209,9 @@ export async function createRenderer(container, miniCanvas) {
      * @param {object} state - The game being played.
      */
     drawMap: (canvas, state) =>
-      drawMap(canvas.getContext('2d'), overview, state, canvas.width, canvas.height),
+      drawMap(canvas.getContext('2d'), overview, state, canvas.width, canvas.height, {
+        icons: mapIcons,
+      }),
 
     /**
      * Turns a spot on the screen (such as the mouse) into a spot in the world.
