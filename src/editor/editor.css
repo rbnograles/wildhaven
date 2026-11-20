@@ -1,0 +1,196 @@
+/* Styles for the world editor page (editor.html). It is a developer tool, separate from the
+   game's style.css: a toolbar on top, the map on the left and a side panel on the right. */
+
+/* ---- Page ---- */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: #1c2420;
+  color: #e8e6dc;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Toolbar ---- */
+/* The bar never wraps: a second row appearing mid-drag would slide the map under the pointer.
+   On a narrow screen it scrolls sideways instead. */
+#bar {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #263b31;
+}
+
+#status {
+  flex: 1;
+  min-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  color: #f2c14e;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  padding: 4px 10px;
+  border: 1px solid #55695d;
+  border-radius: 4px;
+  background: #33493e;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The "add" button that is waiting for a click on the map. */
+button.on {
+  background: #e4572e;
+}
+
+/* ---- Map and side panel ---- */
+main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#map {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  cursor: grab;
+}
+
+#side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 340px;
+  padding: 10px;
+  overflow-y: auto;
+  background: #222d27;
+}
+
+#side h2 {
+  margin: 6px 0 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a9b5ab;
+}
+
+#filter {
+  width: 100%;
+  padding: 4px 6px;
+}
+
+/* ---- Place list ---- */
+#list,
+#problems {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The list scrolls on its own so the form below it stays in view. */
+#list {
+  flex: 0 0 220px;
+  overflow-y: auto;
+  border: 1px solid #3a4a40;
+}
+
+#list li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+#list li.selected {
+  background: #3d5648;
+}
+
+/* The coloured dot that says what kind of place a row is; the colour is set from view.js. */
+#list .dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+#list .flag {
+  margin-left: auto;
+  color: #f2c14e;
+}
+
+/* ---- Form ---- */
+#form {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+#form input,
+#form select {
+  width: 100%;
+  padding: 3px 5px;
+}
+
+#form .wide {
+  grid-column: 1 / -1;
+}
+
+/* ---- Problems and log ---- */
+#problems li {
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+#problems .error {
+  color: #ff8a70;
+}
+
+#problems .warning {
+  color: #f2c14e;
+}
+
+#stale {
+  margin: 0;
+  color: #a9b5ab;
+  font-style: italic;
+}
+
+#log {
+  min-height: 80px;
+  max-height: 300px;
+  margin: 0;
+  padding: 6px;
+  overflow: auto;
+  background: #141a17;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
