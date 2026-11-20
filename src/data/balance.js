@@ -46,6 +46,37 @@ export const APPROACH_STUCK = 0.4;
 // shorten it as a "fix".
 export const GATHER_SECONDS = 6;
 
+/** How close the player must come before a villager turns to look at them. */
+export const NPC_NOTICE = 280;
+
+/** How fast a villager walks, in world units a second (the player walks at 155). */
+export const NPC_SPEED = 55;
+
+/**
+ * How long a villager spends on each kind of work before carrying the result away, in seconds:
+ * chopping, mining, or picking a bundle up off the ground.
+ */
+export const NPC_WORK_SECONDS = { chop: 6, mine: 6, pickup: 1.6 };
+
+/** How long a villager takes to set their load down, in seconds. */
+export const NPC_DEPOSIT_SECONDS = 1.6;
+
+/** How close to a work or drop spot a villager's planned path must bring them, in world units. */
+export const NPC_ARRIVE = 20;
+
+/** How long a villager whose way is blocked waits before looking for another way, in seconds. */
+export const NPC_RETRY = 1.5;
+
+/** How close the player must come for a walking villager to stop and wait for them. */
+export const NPC_STOP = 110;
+
+/** The shortest and longest time, in seconds, a villager rests between two errands. */
+export const NPC_REST_MIN = 3;
+export const NPC_REST_MAX = 9;
+
+/** The solid ground under a villager's feet, as [half width, depth] in world units. */
+export const NPC_BASE = [16, 12];
+
 /** How close the player must come to a landmark to find it. */
 export const LANDMARK_RADIUS = 200;
 

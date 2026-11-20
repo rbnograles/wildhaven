@@ -3,6 +3,7 @@
 // A supply hidden behind water or trees would be a promise the game can't keep.
 
 import { test } from 'node:test';
+import { npcBases } from '../../src/world/npcs.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import OBJECT_SPECS from '../../assets/world/source/objects.json' with { type: 'json' };
@@ -76,18 +77,25 @@ test('wild patches are walk-through, regrowing and drawn smaller than a characte
 });
 
 // Guards what each wild patch gives: flowers are the only source of herbs, driftwood on the
-// beaches gives the wood an old boat's repair needs, and small stones and wild berries give stone
-// and food to bare hands.
-test('flowers give herbs, driftwood gives wood, small stones give stone and wild berries give food', () => {
+// beaches gives the wood an old boat's repair needs, and small stones, wild berries and sticks
+// give stone, food and wood to bare hands.
+test('flowers give herbs, driftwood and sticks give wood, small stones give stone and wild berries give food', () => {
   const flowers = wild.filter((n) => n.sprite === 'flowers'),
     driftwood = wild.filter((n) => n.sprite === 'driftwood'),
     pebbles = wild.filter((n) => n.sprite === 'pebbles'),
-    berries = wild.filter((n) => n.sprite === 'wild-berries');
+    berries = wild.filter((n) => n.sprite === 'wild-berries'),
+    sticks = wild.filter((n) => n.sprite === 'sticks');
   assert.ok(flowers.length >= 30);
   assert.ok(driftwood.length >= 20);
   assert.ok(pebbles.length >= 400);
   assert.ok(berries.length >= 200);
-  assert.equal(flowers.length + driftwood.length + pebbles.length + berries.length, wild.length);
+  assert.ok(sticks.length >= 250);
+  assert.equal(
+    flowers.length + driftwood.length + pebbles.length + berries.length + sticks.length,
+    wild.length,
+  );
+  for (const n of sticks)
+    assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['wood', 2, undefined, 180], n.id);
   for (const n of berries)
     assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['food', 1, undefined, 180], n.id);
   for (const n of pebbles)
@@ -196,12 +204,12 @@ test('a gathered supply stops being solid until it grows back', () => {
 });
 
 // Guards the one list of solid things walking, landing, building and waking all share: standing
-// supplies, old boats still on the beach and campfires, and nothing that has gone.
-test('solidBases holds standing supplies, beached old boats and campfires', () => {
+// supplies, old boats still on the beach, campfires and the villagers, and nothing that has gone.
+test('solidBases holds standing supplies, beached old boats, campfires and villagers', () => {
   const game = createGame('scout');
   /** Counts the solid boxes the game has right now. */
   const count = () => solidBases(game).length;
-  const all = nodeBases([]).length + wreckBases(null).length;
+  const all = nodeBases([]).length + wreckBases(null).length + npcBases().length;
   assert.equal(count(), all);
 
   game.regrowAt['pine-wood'] = game.time + 10; // chopped: no longer solid

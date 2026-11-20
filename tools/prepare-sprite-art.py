@@ -9,6 +9,8 @@ Inputs : source/animations/<name>.png              tree, rock, fire and water-ri
          assets/ui/character-portraits-normal-winter.png    the three characters' round portraits
          assets/ui/item-box-10-slots.png           the item box with ten painted slots
          assets/items/tools-stone-iron.png, axes-stone-iron.png   the painted hammer, pickaxe and axe, stone and iron
+         source/effects/footprints.png             six boot prints: left and right, in soil, sand and snow
+         source/originals/props/sticks.png         the painted pile of sticks
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
@@ -17,6 +19,7 @@ Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite
          assets/ui/game/item-box.png               the ten-slot item box, trimmed and shrunk
          assets/ui/game/tool-<id>-<tier>.png       the tool pictures for the tools row above the item box
          assets/ui/game/hud-<name>.png             the HUD panels, cut from assets/ui/normal/normal-hud-components.png
+         assets/world/effects/footprints.png, footprints.json   the boot prints the player leaves, and their cell size
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
 Run: python tools/prepare-sprite-art.py, then python tools/build-map.py
@@ -306,3 +309,36 @@ for sheet_name, tool_rows in TOOL_SHEETS.items():
         for c, tier in enumerate(TOOL_COLS):
             art = trimmed(tool_sheet[r * cell_h:(r + 1) * cell_h, c * cell_w:(c + 1) * cell_w])
             save(shrink(art, 64 / max(art.shape[:2])), os.path.join(UI, f'tool-{tool}-{tier}.png'), source)
+
+# ---- footprints: six boot prints the player leaves behind when walking --------------------------------
+# The sheet has two columns (left boot, right boot) and three rows (soil, sand, snow), toes pointing up. Each
+# print is painted with a faint glow around it, which would show as a smudge on the grass, so anything fainter
+# than FOOT_GLOW is dropped. Every print is then trimmed, shrunk to FOOT_HEIGHT pixels tall (twice the size the
+# game draws it, so it stays sharp) and centred in a cell; all six cells are the same size.
+FOOT_COLS, FOOT_ROWS, FOOT_HEIGHT, FOOT_GLOW = 2, 3, 40, 70
+source = os.path.join(SRC, 'effects', 'footprints.png')
+foot_sheet = load(source).copy()
+foot_sheet[foot_sheet[:, :, 3] < FOOT_GLOW, 3] = 0
+cell_h, cell_w = foot_sheet.shape[0] // FOOT_ROWS, foot_sheet.shape[1] // FOOT_COLS
+prints = []
+for row in range(FOOT_ROWS):
+    for col in range(FOOT_COLS):
+        art = trimmed(foot_sheet[row * cell_h:(row + 1) * cell_h, col * cell_w:(col + 1) * cell_w])
+        prints.append(shrink(art, FOOT_HEIGHT / art.shape[0]))
+w, h = max(im.width for im in prints) + 2 * PAD, FOOT_HEIGHT + 2 * PAD
+out = Image.new('RGBA', (w * FOOT_COLS, h * FOOT_ROWS))
+for i, im in enumerate(prints):
+    out.alpha_composite(im, ((i % FOOT_COLS) * w + (w - im.width) // 2, (i // FOOT_COLS) * h + PAD))
+EFFECTS = os.path.join(ROOT, 'world', 'effects')
+save(out, os.path.join(EFFECTS, 'footprints.png'), source)
+json.dump({'_comment': 'Made by tools/prepare-sprite-art.py. cell = the size of one boot print in pixels. The sheet has two '
+                       'columns (left boot, right boot) and three rows (soil, sand, snow); toes point up.',
+           'cell': [w, h]},
+          open(os.path.join(EFFECTS, 'footprints.json'), 'w', encoding='utf-8', newline='\n'), indent=2)
+print(f'footprints: sheet cell {w}x{h}')
+
+# ---- the sticks: the painted pile of fallen branches, trimmed and shrunk ---------------------------
+# Saved 170 px wide, twice the size the game draws it (objects.json scales it by 0.5), like the small stones.
+source = os.path.join(SRC, 'originals', 'props', 'sticks.png')
+pile = trimmed(load(source))
+save(shrink(pile, 170 / pile.shape[1]), os.path.join(SRC, 'objects', 'props', 'sticks.png'), source)

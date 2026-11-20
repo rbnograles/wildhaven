@@ -8,6 +8,7 @@ import { createSaveSession, setActive } from '../game/saves.js';
 import { createAnimator } from '../animation/clips.js';
 import { discover } from '../actions/discover.js';
 import { hasJournalPage } from '../world/journal.js';
+import { resetVillagers } from '../world/npcs.js';
 import { createRenderer } from '../render/renderer.js';
 import { logStart, logFinds } from './playtest.js';
 import { $ } from '../ui/layout.js';
@@ -154,6 +155,8 @@ export async function start(session, ui, fresh = false) {
     session.saveFailure = '';
     session.animator = createAnimator();
     Object.assign(session.build, { active: false, menu: false });
+    // The villagers' strolls are not saved: each time a game opens they start again from home.
+    resetVillagers();
 
     // Fill in the HUD and switch to the game screen.
     const c = CHARACTERS.find((c) => c.id === state.character);

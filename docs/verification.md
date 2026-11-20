@@ -352,3 +352,11 @@ Not checked by hand: the other two characters, other regions, regrowth after 180
 - Completed real E-key gathering actions in the production preview at `http://127.0.0.1:5180`: Scout with stone axe, Builder with stone pickaxe, Survivor with iron pickaxe and iron axe. All awarded exactly the expected resources and saved the target's regrowth timer. No page errors. Screenshots: `output/playwright/scout-axe-stone-game.png`, `builder-pickaxe-stone-game.png`, `survivor-pickaxe-iron-game.png`, `survivor-axe-iron-game.png`.
 - Verification used an isolated browser context and fixture saves. A dev-server run was interrupted by concurrent live reloads; final gameplay checks used the built preview to avoid those reloads.
 - No layout changes. Mobile and separate north/south tool art were not tested; actions follow the existing east/west convention.
+
+## Villagers in Hollowstead (2026-11-20)
+
+Browser at `http://127.0.0.1:5179` (800×600), new Builder journey: the woodsworker stands west of the spawn, turned east to face the player with her name over her head, and the stoneworker stands by the workshop; both are the player's size and depth-sorted with the houses. No console errors. That the three stand in the village for every character, on clear ground, and are solid is covered by `tests/world/npcs.test.js`; the Scout and Survivor were not walked there in the browser.
+
+Walking, same day, same address, Builder's save continued: after her first rest Maren walked north-east with the east walking frames at the same size as her standing pose, stopped beside the player, turned to face them and showed "Maren · Woodsworker". No console errors. Bram and Tilly were not watched walking in the browser; their routes and the stop-for-the-player rule are covered by `tests/world/npcs.test.js`.
+
+Jobs and path finding, same day and address, Builder's save set to morning with the player south of the square: Bram walked to the boulder and swung his pickaxe at it, Maren left the scrap timber carrying logs, and Tilly carried a wheat sheaf to her drop spot, set it down and then stood resting, turned to the player with her name shown. All were the player's size. No console errors. The deposit and pick-up frames were not caught in a screenshot; the round and the detour round a campfire are covered by `tests/world/npcs.test.js`.

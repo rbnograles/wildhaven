@@ -10,6 +10,7 @@ import { beginApproach, beginPlacing, approachStep, eightWay } from '../actions/
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
+import { tickVillagers } from '../actions/villagers.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
 import { REPAIR_COST, HUNGRY_BELOW, APPROACH_STUCK, STAND_STUCK } from '../data/balance.js';
@@ -242,6 +243,8 @@ export function startLoop(session, ui) {
         state.elapsed += dt;
         // The world clock, the meters and each camp's dawn update move with the survival tick.
         const events = tickSurvival(state, dt);
+        // The villagers of Hollowstead get on with their work (and wait while the player is near).
+        tickVillagers(state, dt);
         ui.build.update(); // keep the build ghost on the pointer
 
         // Rowing into deep water: say why the boat won't go on, but not every frame.

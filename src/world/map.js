@@ -52,7 +52,11 @@ const TILE = MAP.tilewidth,
   water = layer('water').data,
   firstWater = mapProperty('firstWaterGid'),
   deep = layer('deep').data,
-  firstDeep = mapProperty('firstDeepGid');
+  firstDeep = mapProperty('firstDeepGid'),
+  sand = layer('sand').data,
+  firstSand = mapProperty('firstSandGid'),
+  snow = layer('snow').data,
+  firstSnow = mapProperty('firstSnowGid');
 
 /** How many world units of sea surround the home continent on every side (PAD in tools/build-map.py). */
 export const SEA_BORDER = mapProperty('seaBorder');
@@ -114,6 +118,23 @@ export const isDryLand = (x, y) => waterAt(x, y) < 0.35;
  * @returns {boolean} True for deep water.
  */
 export const isDeep = (x, y) => cover(deep, firstDeep, x, y) >= 0.35;
+
+/**
+ * Says what kind of ground is underfoot at a dry spot: sand, snow or plain earth.
+ *
+ * Only the look of the player's footprints uses this. The map paints sand over snow, and both over
+ * everything else, so sand is asked first. A spot counts as sand or snow when that layer covers at
+ * least half of it. Ask only about dry land: the sand layer also runs on under the sea.
+ *
+ * @param {number} x - World x position.
+ * @param {number} y - World y position.
+ * @returns {'sand' | 'snow' | 'earth'} The ground at the spot.
+ */
+export function surfaceAt(x, y) {
+  if (cover(sand, firstSand, x, y) >= 0.5) return 'sand';
+  if (cover(snow, firstSnow, x, y) >= 0.5) return 'snow';
+  return 'earth';
+}
 
 /**
  * Checks whether a spot is inside any of the given boxes, with 10 units of padding.

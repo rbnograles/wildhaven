@@ -65,6 +65,14 @@ import survivorRunNE from '../../assets/characters/survivor/survivor-run-ne.png'
 import scoutRunSE from '../../assets/characters/scout/scout-run-se.png';
 import builderRunSE from '../../assets/characters/builder/builder-run-se.png';
 import survivorRunSE from '../../assets/characters/survivor/survivor-run-se.png';
+import settlersIdle from '../../assets/characters/settlers/settlers-idle.png';
+import settlersWalkSouth from '../../assets/characters/settlers/settlers-walk-south.png';
+import settlersWalkEast from '../../assets/characters/settlers/settlers-walk-east.png';
+import settlersWalkNorth from '../../assets/characters/settlers/settlers-walk-north.png';
+import settlersCarry from '../../assets/characters/settlers/settlers-carry.png';
+import settlersDeposit from '../../assets/characters/settlers/settlers-deposit.png';
+import settlersChop from '../../assets/characters/settlers/settlers-chop.png';
+import settlersMine from '../../assets/characters/settlers/settlers-mine.png';
 import { CHARACTERS } from '../data/characters.js';
 import { sampleAnimation, steadyAnchors } from './clips.js';
 
@@ -167,6 +175,53 @@ const SOURCES = {
 };
 
 /**
+ * The villagers' sheets: each has one row per villager (woodsworker, stoneworker, grower).
+ * `idle` is standing, with four poses across (south, west, east, north). `walkSouth`, `walkEast`
+ * and `walkNorth` are four walking frames each; walking west mirrors the east frames. The work
+ * sheets all face east and are mirrored for west: `carry` (walking with a load: logs, a crate of
+ * stones or a sheaf of wheat), `deposit` (holding the load, bending, setting it down, standing
+ * empty-handed; played backwards it is picking a load up), `chop` (an axe swing) and `mine` (a
+ * pickaxe swing). All three villagers were painted in one picture per sheet, so they share one
+ * size and stay as tall next to each other as they were painted.
+ *
+ * `edges` are measured from the see-through gaps between the rows, like the character sheets
+ * above. `cuts` are the x positions where one frame ends and the next begins, for a sheet whose
+ * poses are too wide for equal quarters (a swung axe reaches into the next quarter). `feet` lines
+ * the frames up by the boots, so a swing or a bend doesn't slide the body about.
+ */
+const SETTLERS = {
+  idle: { url: settlersIdle, edges: [0, 421, 841, 1254] },
+  walkSouth: { url: settlersWalkSouth, edges: [0, 361, 723, 1086], steady: true },
+  walkEast: { url: settlersWalkEast, edges: [0, 420, 836, 1254], steady: true },
+  walkNorth: { url: settlersWalkNorth, edges: [0, 418, 836, 1254], steady: true },
+  carry: { url: settlersCarry, edges: [0, 361, 720, 1086], steady: true },
+  deposit: { url: settlersDeposit, edges: [0, 418, 836, 1254], feet: true },
+  chop: {
+    url: settlersChop,
+    edges: [0, 412, 830, 1254],
+    cuts: [0, 303, 592, 970, 1254],
+    feet: true,
+  },
+  mine: { url: settlersMine, edges: [0, 412, 828, 1254], feet: true },
+};
+
+/**
+ * How tall the first frame of each villager work or walking sheet is, as a share of standing
+ * straight (knees bend a little while walking or holding a tool ready). `loadCharacterSheets`
+ * uses it to size these sheets, which were painted at their own sizes, so a busy villager is as
+ * big as a standing one.
+ */
+const SETTLER_STOOP = {
+  walkSouth: 0.97,
+  walkEast: 0.97,
+  walkNorth: 0.97,
+  carry: 0.97,
+  deposit: 1,
+  chop: 0.97,
+  mine: 0.97,
+};
+
+/**
  * How tall the first pose of each standing survival sheet is, as a share of standing straight.
  * `loadCharacterSheets` uses it to size those sheets, so a hunched pose isn't stretched to full height.
  */
@@ -213,10 +268,14 @@ export function loadImage(url, label = 'character artwork') {
  * @param {number[]} edges - The y positions where each row of frames starts and ends.
  * @param {boolean} [steady=false] - Line frames up by the head (see `steadyAnchors`) instead of the cell centre.
  * @param {number} [columns=4] - How many equal-width columns the sheet has.
+ * @param {number[]} [cuts] - The x positions where each column starts and ends, when they are
+ *   not equal widths.
+ * @param {boolean} [feet=false] - Line frames up by the boots (the middle of the lowest pixels)
+ *   instead of the cell centre.
  * @returns {{image: HTMLImageElement, frames: object[][], referenceHeight: number}} The image, each
  *   frame's box as `frames[row][column]`, and the height used to size the whole sheet.
  */
-function measureFrames(image, edges, steady = false, columns = 4) {
+function measureFrames(image, edges, steady = false, columns = 4, cuts = null, feet = false) {
   // Copy the image onto a hidden canvas so its pixels can be read.
   const canvas = document.createElement('canvas');
   canvas.width = image.width;
@@ -230,8 +289,8 @@ function measureFrames(image, edges, steady = false, columns = 4) {
   for (let row = 0; row < edges.length - 1; row++) {
     const strip = [];
     for (let col = 0; col < columns; col++) {
-      const left = Math.round((col * image.width) / columns),
-        right = Math.round(((col + 1) * image.width) / columns),
+      const left = cuts ? cuts[col] : Math.round((col * image.width) / columns),
+        right = cuts ? cuts[col + 1] : Math.round(((col + 1) * image.width) / columns),
         top = edges[row],
         bottom = edges[row + 1];
 
@@ -263,12 +322,22 @@ function measureFrames(image, edges, steady = false, columns = 4) {
           }
         }
 
+      // The middle of the boots: the middle one of all the drawn pixels in the lowest strip of
+      // the pose. A tool tip or a load resting on the ground is small next to two boots, so it
+      // barely moves that middle.
+      const soles = [];
+      if (feet)
+        for (let y = maxY - Math.round((maxY - minY) * 0.07); y <= maxY; y++)
+          for (let x = minX; x <= maxX; x++)
+            if (data[(y * image.width + x) * 4 + 3] > 40) soles.push(x);
+      soles.sort((a, b) => a - b);
+
       strip.push({
         x: minX,
         y: minY,
         width: maxX - minX + 1,
         height: maxY - minY + 1,
-        anchorX: (left + right) / 2,
+        anchorX: feet ? soles[soles.length >> 1] : (left + right) / 2,
         headX: headSum / headCount,
       });
     }
@@ -297,18 +366,34 @@ let cached;
  *
  * The first call starts the downloads; later calls get the same answer without loading again.
  * If loading fails, the memory is cleared so the next call (a retry) can try again.
- * Resolves to {atlases:{[characterId]:{idle, profile, locomotion, run, actions}}}; each sheet is
- * {image, frames[row][col], referenceHeight}.
+ * Resolves to {atlases:{[characterId]:{idle, profile, locomotion, run, actions}}, settlers:{idle,
+ * walkSouth, walkEast, walkNorth, carry, deposit, chop, mine}};
+ * each sheet is {image, frames[row][col], referenceHeight}. `settlers` holds the villagers' sheets.
  *
- * @returns {Promise<{atlases: object}>} Every measured sheet, by character and sheet name.
+ * @returns {Promise<{atlases: object, settlers: object}>} Every measured sheet, by character (or
+ *   `settlers`) and sheet name.
  */
 export function loadCharacterSheets() {
   if (cached) return cached;
   cached = (async () => {
     // Every character's sheets, all loaded side by side.
     const atlases = {};
-    await Promise.all(
-      CHARACTERS.map(async (character) => {
+    const settlers = {};
+    /** Loads and measures the villagers' sheets, next to the characters' ones. */
+    const loadSettlers = async () => {
+      for (const [name, source] of Object.entries(SETTLERS))
+        settlers[name] = measureFrames(
+          await loadImage(source.url, 'villager artwork'),
+          source.edges,
+          source.steady,
+          source.columns,
+          source.cuts,
+          source.feet,
+        );
+    };
+    await Promise.all([
+      loadSettlers(),
+      ...CHARACTERS.map(async (character) => {
         const sheets = await Promise.all(
           Object.entries(SOURCES[character.id]).map(async ([name, source]) => [
             name,
@@ -317,7 +402,13 @@ export function loadCharacterSheets() {
         );
         atlases[character.id] = Object.fromEntries(sheets);
       }),
-    );
+    ]);
+
+    // Size each villager walking and work sheet so its first frame is as tall as the standing
+    // pose (a touch shorter where the knees are bent).
+    const standingTall = settlers.idle.frames[0][0].height / settlers.idle.referenceHeight;
+    for (const [name, stoop] of Object.entries(SETTLER_STOOP))
+      settlers[name].referenceHeight = settlers[name].frames[0][0].height / (standingTall * stoop);
 
     // The idle and side-walk art was painted as one picture of all three characters, and the
     // game has always sized it by the scout's row. Every character keeps that one size, so each
@@ -346,7 +437,7 @@ export function loadCharacterSheets() {
       atlas.idle.referenceHeight = atlases.scout.idle.referenceHeight;
       atlas.profile.referenceHeight = atlases.scout.profile.referenceHeight;
     }
-    return { atlases };
+    return { atlases, settlers };
   })().catch((error) => {
     cached = null;
     throw error;

@@ -1,0 +1,7 @@
+{
+  "_comment": "Made by tools/prepare-sprite-art.py. cell = the size of one boot print in pixels. The sheet has two columns (left boot, right boot) and three rows (soil, sand, snow); toes point up.",
+  "cell": [
+    27,
+    44
+  ]
+}

@@ -6,11 +6,13 @@ import * as Phaser from 'phaser';
 import { WORLD } from '../world/map.js';
 import { NODES } from '../world/nodes.js';
 import { WRECKS } from '../data/places.js';
+import { VILLAGERS, villagerPose } from '../world/npcs.js';
 import { WILD } from '../data/supplies.js';
-import { FIRE_RADIUS } from '../data/balance.js';
+import { FIRE_RADIUS, NPC_NOTICE } from '../data/balance.js';
 import { drawMap } from './maps.js';
 import { createLighting } from './lighting.js';
 import { createSnow } from './snow.js';
+import { preloadFootprints, createFootprints } from './footprints.js';
 import { isAvailable } from '../actions/gather.js';
 import { toolTier } from '../world/tools.js';
 import { chooseInteraction } from '../actions/interact.js';
@@ -129,6 +131,9 @@ const TILE_LAYERS = mapData.layers.filter((l) => l.type === 'tilelayer').map((l)
 // How tall the player is drawn on screen, in world units.
 const PLAYER_HEIGHT = 112;
 
+// How far above a villager's head their name floats, in world units.
+const NAME_GAP = 10;
+
 // How much of the character shows above the hull while sitting in the boat, from the top down.
 const SEATED = 0.6;
 
@@ -171,8 +176,12 @@ export async function createRenderer(container, miniCanvas) {
   // Scene objects filled in by create() below. `snap` makes the next draw skip fade animations.
   // `chunks` maps a chunk key to the scenery images in it; `shown` holds the keys now visible.
   // `fires` maps "<character>:<camp id>" to that camp's campfire sprite.
+  // `villagers` holds one {villager, sprite, shade, label} per villager of Hollowstead village.
+  // `reach` is how tall a standing villager is drawn, for placing the name over their head.
   let player,
     shadow,
+    villagers,
+    reach,
     supplies,
     boat,
     cue,
@@ -182,6 +191,7 @@ export async function createRenderer(container, miniCanvas) {
     ring,
     lighting,
     snow,
+    footprints,
     webgl = false,
     snap = true,
     shown = new Set();
@@ -235,6 +245,7 @@ export async function createRenderer(container, miniCanvas) {
         );
         this.load.image('terrain', tilesetUrl);
         this.load.image('ui-slot', slotUrl);
+        preloadFootprints(this);
         for (const [name, url] of Object.entries(toolUrls)) this.load.image(`tool-${name}`, url);
         for (const [name, url] of Object.entries(itemUrls)) this.load.image(`item-${name}`, url);
         for (const [name, url] of Object.entries(objectUrls))
@@ -442,6 +453,34 @@ export async function createRenderer(container, miniCanvas) {
         for (const [id, atlas] of Object.entries(sheets.atlases))
           for (const [name, sheet] of Object.entries(atlas)) addFrames(`${id}-${name}`, sheet);
 
+        // The villagers of Hollowstead: each has a soft shadow and is sorted by their feet like
+        // the player, so you can walk in front of or behind them. Their name floats over their
+        // head while the player is close. Drawing moves them to where they are each frame.
+        for (const [name, sheet] of Object.entries(sheets.settlers))
+          addFrames(`settlers-${name}`, sheet);
+        reach =
+          (PLAYER_HEIGHT * sheets.settlers.idle.frames[1][0].height) /
+          sheets.settlers.idle.referenceHeight;
+        villagers = VILLAGERS.map((villager) => {
+          const { npc } = villager;
+          const shade = this.add.ellipse(0, 0, 38, 14, 0x172e34, 0.22);
+          const sprite = this.add.image(0, 0, 'settlers-idle', `${npc.row}-0`).setOrigin(0.5, 1);
+          const label = this.add
+            .text(0, 0, `${npc.name} · ${npc.role}`, {
+              fontFamily: 'system-ui, sans-serif',
+              fontSize: '13px',
+              fontStyle: 'bold',
+              color: '#f7f1de',
+              stroke: '#172e24',
+              strokeThickness: 4,
+            })
+            .setOrigin(0.5, 1)
+            .setResolution(2)
+            .setDepth(WORLD.height + 1)
+            .setVisible(false);
+          return { villager, sprite, shade, label };
+        });
+
         // The player and the soft shadow under their feet. Drawing switches the player to the
         // chosen character's pose; the scout facing south is only the starting picture.
         shadow = this.add.ellipse(0, 0, 38, 14, 0x172e34, 0.22);
@@ -461,6 +500,8 @@ export async function createRenderer(container, miniCanvas) {
         lighting = createLighting(this, reducedMotion);
         // Falling snow over the snowy regions (render/snow.js).
         snow = createSnow(this, reducedMotion);
+        // The boot prints the player leaves while walking (render/footprints.js).
+        footprints = createFootprints(this);
         this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height).setRoundPixels(true);
 
         clearTimeout(timer);
@@ -845,6 +886,30 @@ export async function createRenderer(container, miniCanvas) {
       .setPosition(state.player.x, state.player.y - 1)
       .setDepth(state.player.y - 0.5);
 
+    // Villagers turn to look at the player when they come close, and show their name then.
+    // A busy one shows the pictures for what they are doing (see villagerPose).
+    for (const { villager, sprite, shade, label } of villagers) {
+      const { npc, x, y } = villager,
+        { sheet: name, column, flip } = villagerPose(villager, state.player),
+        sheet = sheets.settlers[name],
+        frame = sheet.frames[npc.row][column],
+        pivot = (frame.anchorX - frame.x) / frame.width;
+
+      sprite
+        .setTexture(`settlers-${name}`, `${npc.row}-${column}`)
+        .setOrigin(flip ? 1 - pivot : pivot, 1)
+        .setFlipX(flip)
+        .setScale(PLAYER_HEIGHT / sheet.referenceHeight)
+        .setPosition(x, y + 4)
+        .setDepth(y);
+      shade.setPosition(x, y - 1).setDepth(y - 0.5);
+      label
+        .setPosition(x, y - reach - NAME_GAP)
+        .setVisible(
+          Math.hypot(state.player.x - x, state.player.y - y) <= NPC_NOTICE && !state.aboard,
+        );
+    }
+
     // The ghost campfire while placing one: tinted green where it may stand and red where it may
     // not, with a ring showing how far a new fire's warmth reaches.
     ring.clear();
@@ -854,6 +919,9 @@ export async function createRenderer(container, miniCanvas) {
       ghost.setPosition(build.x, build.y).setTint(ok ? 0xb6f0a0 : 0xff8a7a);
       ring.lineStyle(2, ok ? 0xf7f1de : 0xff8a7a, 0.85).strokeCircle(build.x, build.y, FIRE_RADIUS);
     }
+
+    // Walking leaves boot prints on the ground, which fade after a few seconds.
+    footprints.draw(state, dt);
 
     // Snow falls over the screen while the player is in a snowy region.
     snow.draw(state, dt, camera, zoom);

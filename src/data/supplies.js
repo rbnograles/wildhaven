@@ -23,7 +23,7 @@ export const SUPPLIES = [
     id: 'pine-wood',
     ...SUPPLY_SPOTS['pine-wood'],
     type: 'wood',
-    amount: 3,
+    amount: 7,
     label: 'Pine tree',
     verb: 'Chop',
     clip: 'chop',
@@ -35,7 +35,7 @@ export const SUPPLIES = [
     id: 'camp-stone',
     ...SUPPLY_SPOTS['camp-stone'],
     type: 'stone',
-    amount: 2,
+    amount: 5,
     label: 'Small boulder',
     verb: 'Mine',
     clip: 'build',
@@ -58,7 +58,7 @@ export const SUPPLIES = [
     id: 'village-wood',
     ...SUPPLY_SPOTS['village-wood'],
     type: 'wood',
-    amount: 3,
+    amount: 4,
     label: 'Scrap timber',
     verb: 'Chop',
     clip: 'chop',
@@ -70,7 +70,7 @@ export const SUPPLIES = [
     id: 'village-stone',
     ...SUPPLY_SPOTS['village-stone'],
     type: 'stone',
-    amount: 3,
+    amount: 5,
     label: 'Small boulder',
     verb: 'Mine',
     clip: 'build',
@@ -105,7 +105,7 @@ export const SUPPLIES = [
     id: 'coast-stone',
     ...SUPPLY_SPOTS['coast-stone'],
     type: 'stone',
-    amount: 2,
+    amount: 5,
     label: 'Beach boulder',
     verb: 'Mine',
     clip: 'build',
@@ -133,6 +133,8 @@ export const SUPPLIES = [
 // washes up on the sea beaches, so there is always wood for mending a boat. Pebbles are small stones lying all
 // over the land, picked up with bare hands, so there is always stone for a first campfire and pickaxe.
 // Wild berries are small bushes in the green regions, so food is not only at the three big berry bushes.
+// Sticks are fallen branches under the trees of the wooded regions: a little wood for bare hands, so a
+// first axe or campfire does not wait on a walk to the beach for driftwood.
 export const WILD = {
   'wild-berries': {
     type: 'food',
@@ -146,6 +148,14 @@ export const WILD = {
     type: 'stone',
     amount: 1,
     label: 'Small stones',
+    verb: 'Pick up',
+    clip: 'gather',
+    regrow: 180,
+  },
+  sticks: {
+    type: 'wood',
+    amount: 2,
+    label: 'Sticks',
     verb: 'Pick up',
     clip: 'gather',
     regrow: 180,
@@ -210,19 +220,19 @@ const rock = (label, type, amount) => ({
 // Trees play the `chop` clip (the axe swing); rocks play `build` (an overhead swing) until a mining
 // animation exists.
 export const HARVEST = {
-  pine: tree('Pine tree', 2),
-  'snowy-pine': tree('Snowy pine', 2),
-  palm: tree('Palm tree', 2),
-  oak: tree('Oak tree', 2),
-  pines: tree('Pine cluster', 3),
-  'big-oak': tree('Big oak', 3),
-  'jungle-tree': tree('Jungle tree', 3),
+  pine: tree('Pine tree', 7),
+  'snowy-pine': tree('Snowy pine', 7),
+  palm: tree('Palm tree', 7),
+  oak: tree('Oak tree', 7),
+  pines: tree('Pine cluster', 10),
+  'big-oak': tree('Big oak', 10),
+  'jungle-tree': tree('Jungle tree', 10),
   // A fallen log is wood like a tree, so it is chopped with an axe too, not picked up by hand.
-  log: tree('Fallen log', 2),
+  log: tree('Fallen log', 4),
   'rocks-a': rock('Rocks', 'stone', 2),
   'rocks-b': rock('Rocks', 'stone', 2),
   'beach-rock': rock('Beach rock', 'stone', 2),
-  boulder: rock('Boulder', 'stone', 3),
+  boulder: rock('Boulder', 'stone', 10),
   'cliff-rock': rock('Iron-streaked rock', 'iron', 1),
   'ice-rock': rock('Iron-streaked rock', 'iron', 1),
 };

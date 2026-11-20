@@ -1,11 +1,12 @@
 // Every spot in the world the player can gather from (a "node"): the hand-placed supplies plus
-// each wild patch (flowers, driftwood), tree and rock the map scattered. Also says which nodes can
+// each wild patch (flowers, driftwood, sticks), tree and rock the map scattered. Also says which nodes can
 // be gathered now and works out what is solid: standing supplies, old boats on the beach and campfires.
 
 import { SUPPLIES, WILD, HARVEST } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
 import { MAP_OBJECTS, OBJECT_SPECS } from './map.js';
 import { campBases } from './camps.js';
+import { npcBases } from './npcs.js';
 
 // The fixed supplies plus every wild patch, tree and rock the map scattered; a map node's position
 // is its id (`flowers-<x>-<y>`, `pine-<x>-<y>`). Map nodes copy their fields from WILD or HARVEST and
@@ -124,7 +125,7 @@ export function wreckBases(boat) {
 
 /**
  * Lists everything solid that isn't part of the map itself: supplies standing right now, old
- * boats still on the beach and the player's campfires.
+ * boats still on the beach, the player's campfires and the villagers.
  *
  * Walking, landing from the boat, placing a fire and waking up all use this one list, so they
  * agree on what is in the way.
@@ -136,4 +137,5 @@ export const solidBases = (state) => [
   ...nodeBases(goneSupplies(state)),
   ...wreckBases(state.boat),
   ...campBases(state),
+  ...npcBases(),
 ];

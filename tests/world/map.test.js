@@ -10,7 +10,10 @@ import {
   hitsObstacle,
   isWalkable,
   mapProperty,
+  isDryLand,
+  surfaceAt,
 } from '../../src/world/map.js';
+import { inSnow } from '../../src/world/regions.js';
 import { CHARACTERS } from '../../src/data/characters.js';
 
 // Guards against a map rebuild putting water, a tree or a rock on a character's start spot.
@@ -61,4 +64,28 @@ test('mapProperty reads a named value from the map file', () => {
 test('the world is 448 by 320 tiles of 64 units: the old 384 by 256 map plus a sea border', () => {
   assert.equal(WORLD.width, 28672);
   assert.equal(WORLD.height, 20480);
+});
+
+// Guards the ground lookup the footprints use: if the sand or snow layer were read wrongly, every
+// print would be the earth one (or snow prints would show up on a beach).
+test('surfaceAt tells sand, snow and earth apart on dry land', () => {
+  const seen = { sand: 0, snow: 0, earth: 0 };
+  let snowy = 0,
+    snowyAsSnow = 0;
+
+  // Look at one spot in every 128-unit square of the world.
+  for (let y = 64; y < WORLD.height; y += 128)
+    for (let x = 64; x < WORLD.width; x += 128) {
+      if (!isDryLand(x, y)) continue;
+      const surface = surfaceAt(x, y);
+      seen[surface]++;
+      if (inSnow(x, y)) {
+        snowy++;
+        if (surface === 'snow') snowyAsSnow++;
+      }
+    }
+
+  assert.ok(seen.sand > 200 && seen.snow > 200 && seen.earth > 2000, JSON.stringify(seen));
+  // Nearly all of the snowy region is snow underfoot (its beach is sand).
+  assert.ok(snowyAsSnow / snowy > 0.8, `${snowyAsSnow} of ${snowy}`);
 });

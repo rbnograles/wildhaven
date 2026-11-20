@@ -753,7 +753,9 @@ DETAIL = {
     'S': (0.22, ['snow-grass']),
 }
 # Solid bases of the hand-placed objects, grown a little, so no tuft pokes out of a house wall.
-fixed_bases = [(ox - spec[n]['footprint'][0] - 30, oy - spec[n]['footprint'][1] - 30, ox + spec[n]['footprint'][0] + 30, oy + 30)
+# A footprint shrinks or grows with the sprite's own `scale`, the same as in the game.
+fixed_bases = [(ox - spec[n]['footprint'][0] * spec[n].get('scale', 1) - 30, oy - spec[n]['footprint'][1] * spec[n].get('scale', 1) - 30,
+                ox + spec[n]['footprint'][0] * spec[n].get('scale', 1) + 30, oy + 30)
                for n, ox, oy in fixed if 'footprint' in spec[n]]
 details = []
 DETAIL_STEP = 150
@@ -820,6 +822,29 @@ for gy in range(BERRY_STEP // 2 - 8 * BERRY_STEP, LAND_H + PAD, BERRY_STEP):
                 or (np.hypot(taken_xy[:, 0] - x, taken_xy[:, 1] - y) < 130).any()): continue
         berries.append(('wild-berries', x, y))
 
+# Small sticks: fallen branches the player picks up with bare hands (WILD.sticks in src/data/supplies.js), so there
+# is a little wood on the forest floor before anyone owns an axe. The same kind of pass as the small stones and the
+# berries, with its own seeds, so adding it moved nothing else. Only regions with trees get them: most in the pine
+# forest and the jungle, a few in the snow, none in the desert or the canyons, and none on beach sand (driftwood
+# lies there).
+STICKS = {'P': 0.25, 'h': 0.16, 'L': 0.14, 'J': 0.22, 'S': 0.07}
+STICK_STEP = 240
+crowded_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered + pebbles + berries], float)
+sticks = []
+for gy in range(STICK_STEP // 2 - 9 * STICK_STEP, LAND_H + PAD, STICK_STEP):
+    for gx in range(STICK_STEP // 2 - 9 * STICK_STEP, LAND_W + PAD, STICK_STEP):
+        rng = random.Random(gx * 73856093 ^ gy * 19349663 ^ 0x571c)
+        x, y = gx + rng.randint(-90, 90), gy + rng.randint(-90, 90)
+        k, ground, roll = region_key(x, y), terrain(x, y), rng.random()
+        if (roll >= STICKS.get(k, 0) or not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30)
+                or ground in (WATER, DIRT, SAND) or inland(x, y) < BEACH
+                or not on_flat(x, y, 60) or near_water(x, y, 60)
+                or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
+                or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
+                or (np.hypot(crowded_xy[:, 0] - x, crowded_xy[:, 1] - y) < 110).any()): continue
+        sticks.append(('sticks', x, y))
+
 # Water ripples: small looping animations on open water, so rivers, pools and the sea are never perfectly still.
 # The renderer plays each one from its sheet in assets/world/animations/ (made by tools/prepare-sprite-art.py).
 # Another separate pass with its own seeds. Per kind of water (see water_kind): the sprite, how far it reaches
@@ -850,7 +875,7 @@ for gy in range(RIPPLE_STEP // 2 - PAD, LAND_H + PAD, RIPPLE_STEP):
                 or (kind != 1 and dry_near(x, y, rx, ry)) or any(math.hypot(x - bx_, y - by_) < 300 for bx_, by_ in BRIDGES)): continue
         ripples.append((name, x, y))
 # Everything above is in LAND units; the map file is in WORLD units.
-objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + ripples]
+objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + sticks + ripples]
 
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
@@ -859,6 +884,9 @@ tiled = {
                   'tilewidth': TILE, 'tileheight': TILE, 'margin': 1, 'spacing': 2, 'columns': TS_COLS, 'tilecount': len(tiles)}],
     'properties': [{'name': 'firstWaterGid', 'type': 'int', 'value': first['water']},
                    {'name': 'firstDeepGid', 'type': 'int', 'value': first['deep']},
+                   # The game reads these two to tell sand and snow underfoot, for the look of a footprint.
+                   {'name': 'firstSandGid', 'type': 'int', 'value': first['sand']},
+                   {'name': 'firstSnowGid', 'type': 'int', 'value': first['snow']},
                    {'name': 'seaBorder', 'type': 'int', 'value': PAD},
                    {'name': 'regionCell', 'type': 'int', 'value': REGION_CELL},
                    {'name': 'regionCols', 'type': 'int', 'value': REGION_COLS},

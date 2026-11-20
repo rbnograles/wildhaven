@@ -1,0 +1,3 @@
+Made from world/source/originals/props/sticks.png by tools/prepare-sprite-art.py.
+Painted art supplied by the project owner on 2026-11-20: a small pile of three fallen branches, on real transparency.
+Its generation prompt was not recorded.

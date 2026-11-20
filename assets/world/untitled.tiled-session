@@ -1,16 +1,17 @@
 {
-    "activeFile": "map/wildhaven.json",
+    "activeFile": "",
     "expandedProjectPaths": [
-        "map",
-        "."
+        ".",
+        "map"
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "map/wildhaven.json": {
-            "scale": 0.75,
-            "selectedLayer": 9,
+            "scale": 0.015625,
+            "selectedLayer": 11,
             "viewCenter": {
-                "x": 15080,
-                "y": 5073.333333333333
+                "x": 11072,
+                "y": 12352
             }
         },
         "map/wildhaven.json#terrain": {
@@ -18,7 +19,6 @@
         }
     },
     "openFiles": [
-        "map/wildhaven.json"
     ],
     "project": "untitled.tiled-project",
     "recentFiles": [

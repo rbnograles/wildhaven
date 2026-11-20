@@ -84,26 +84,24 @@ function straighten(free, start, points) {
 }
 
 /**
- * Finds a way on foot from the player to within reach of a node.
+ * Finds a way on foot from one spot to within reach of another.
  *
- * The ground around the player is treated as squared paper. Starting from the player's square,
+ * The ground around the start is treated as squared paper. Starting from the walker's square,
  * the search keeps trying the most promising square next (the one whose steps so far plus the
- * straight distance still to go is smallest, known as A*), and never steps onto water, a cliff
- * edge or anything solid. It stops at the first square close enough to gather from.
+ * straight distance still to go is smallest, known as A*), and never steps onto a square the
+ * `free` check refuses. It stops at the first square close enough to the goal. The player's
+ * click-to-walk and the villagers' errands both use it, each with its own `free` check.
  *
- * @param {object} state - The game being played.
- * @param {{x: number, y: number}} node - The tree or rock to walk to.
+ * @param {Function} free - `(x, y)` → true if the walker may stand there.
+ * @param {{x: number, y: number}} start - Where the walker stands.
+ * @param {{x: number, y: number}} node - The spot to walk to.
+ * @param {number} reach - How close to the spot counts as there, in world units.
  * @returns {{x: number, y: number}[]|null} The spots to walk through in order (empty when the
- *   node is already in reach), or null when there is no way there on foot.
+ *   spot is already in reach), or null when there is no way there on foot.
  */
-export function planApproach(state, node) {
-  if (state.aboard) return null;
-
-  // Setup: the grid is centred on the player, so square (0, 0) is exactly where they stand.
-  const free = footing(state),
-    start = { x: state.player.x, y: state.player.y },
-    reach = GATHER_RANGE - APPROACH_MARGIN,
-    radius = Math.ceil(APPROACH_SPAN / APPROACH_CELL),
+export function findPath(free, start, node, reach) {
+  // Setup: the grid is centred on the walker, so square (0, 0) is exactly where they stand.
+  const radius = Math.ceil(APPROACH_SPAN / APPROACH_CELL),
     side = radius * 2 + 1;
 
   /** How far a grid square's middle is from the node. */
@@ -167,7 +165,7 @@ export function planApproach(state, node) {
 
   // The search itself.
   cost[at(0, 0)] = 0;
-  ground[at(0, 0)] = 1; // the player is standing there, whatever the map says
+  ground[at(0, 0)] = 1; // the walker is standing there, whatever the map says
   push([gap(0, 0), 0, 0]);
 
   while (heap.length) {
@@ -176,7 +174,7 @@ export function planApproach(state, node) {
     if (settled[here]) continue;
     settled[here] = 1;
 
-    // Close enough to gather: walk the trail of "came from" notes back to the player.
+    // Close enough: walk the trail of "came from" notes back to the start.
     if (gap(i, j) < reach) {
       const points = [];
       for (let k = here; k !== at(0, 0); k = cameFrom[k])
@@ -207,6 +205,24 @@ export function planApproach(state, node) {
   }
 
   return null;
+}
+
+/**
+ * Finds a way on foot from the player to within reach of a node.
+ *
+ * It never steps onto water, a cliff edge or anything solid (see `footing`), and stops at the
+ * first square close enough to gather from.
+ *
+ * @param {object} state - The game being played.
+ * @param {{x: number, y: number}} node - The tree or rock to walk to.
+ * @returns {{x: number, y: number}[]|null} The spots to walk through in order (empty when the
+ *   node is already in reach), or null when there is no way there on foot.
+ */
+export function planApproach(state, node) {
+  if (state.aboard) return null;
+
+  const start = { x: state.player.x, y: state.player.y };
+  return findPath(footing(state), start, node, GATHER_RANGE - APPROACH_MARGIN);
 }
 
 /**
