@@ -15,7 +15,7 @@ The home continent sits inside a sea border; water far from any land becomes the
 The game reads collision from the JSON (water and deep tiles, the elevation grid and object footprints) and regions
 from its region grid. Run: python tools/build-map.py [preview.png]
 """
-import heapq, json, math, os, random, sys
+import hashlib, heapq, json, math, os, random, sys
 import numpy as np
 from PIL import Image
 
@@ -39,6 +39,34 @@ LAND_W, LAND_H = LAND_COLS * TILE, LAND_ROWS * TILE  # the home continent's old 
 # the two top ranks, so `>= WATER` means "any river, pool or sea".
 GRASS, DIRT, SOIL, JUNGLE, ROCK, SNOW, SAND, WATER, DEEP = range(9)
 OVERLAYS = ['dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep']   # rank 1..8; grass (rank 0) is the full ground layer
+
+# ---- hand-painted ground -----------------------------------------------------------------
+# assets/world/source/terrain.json holds ground a person painted in the world editor: runs of tile CORNERS
+# ([row, first column, last column, kind], in map corner rows and columns) that take the place of whatever the
+# rules below would put there. `terrain()` asks these first, so the banks, the deep sea, the scatter and the hills
+# all follow a painted coast by themselves. "water" is what the editor's eraser paints.
+TERRAIN_KINDS = {'grass': GRASS, 'dirt': DIRT, 'soil': SOIL, 'jungle': JUNGLE, 'rock': ROCK, 'snow': SNOW, 'sand': SAND, 'water': WATER}
+EDGE_SEA = 20   # how many tiles from the map edge must stay sea (the same number as in src/editor/terrain.js)
+terrain_path = os.path.join(SRC, 'terrain.json')
+terrain_bytes = open(terrain_path, 'rb').read().replace(b'\r\n', b'\n') if os.path.exists(terrain_path) else b''
+try: terrain_file = json.loads(terrain_bytes) if terrain_bytes else {}
+except ValueError as e: sys.exit(f'terrain.json is not valid JSON: {e}')
+
+# Reads the "ground" runs of terrain.json into {(row, column): kind}. A wrong run stops the build with a plain message.
+def read_paint(runs):
+    paint = {}
+    if not isinstance(runs, list): sys.exit('terrain.json: "ground" must be a list')
+    for run in runs:
+        ok = (isinstance(run, list) and len(run) == 4 and all(type(v) is int for v in run[:3]) and run[3] in TERRAIN_KINDS
+              and 0 <= run[0] <= ROWS and 0 <= run[1] <= run[2] <= COLS)
+        if not ok: sys.exit(f'terrain.json: bad run in "ground": {run}')
+        # Land may not be painted close to the map's edge: the sea there must stay deep, or the small boat could
+        # sail off the world (water within DEEP_FROM = 1200 units of land is shallow). EDGE_SEA is that, in tiles.
+        if run[3] != 'water' and (min(run[0], ROWS - run[0], run[1], COLS - run[2]) < EDGE_SEA):
+            sys.exit(f'terrain.json: land is painted within {EDGE_SEA} tiles of the map edge, where the sea must stay deep: {run}')
+        for c in range(run[1], run[2] + 1): paint[(run[0], c)] = TERRAIN_KINDS[run[3]]
+    return paint
+PAINT = read_paint(terrain_file.get('ground', []) if isinstance(terrain_file, dict) else None)
 
 # ---- regions -----------------------------------------------------------------------------
 # The world is an 8x8 grid of blocks, one letter per block. The letters are the `key` of each region in places.json.
@@ -101,7 +129,7 @@ POINTS = (list(SPAWN.values()) + [land(p) for p in PLACES['supplies'].values()]
           + [land((p['x'], p['y'])) for p in PLACES['landmarks'] + PLACES['waypoints'] + PLACES['wrecks']])
 
 # Says what the ground is at one point of the world.
-def terrain(x, y):
+def generated_terrain(x, y):
     k = region_key(x, y); t = BASE[k]
     if k == 'D' and line_dist(DRY_BED, x, y) < 90: t = DIRT
     if k == 'L':
@@ -123,13 +151,26 @@ def terrain(x, y):
     if t == WATER and any(math.hypot(x - px, y - py) < 130 for px, py in POINTS): t = SAND
     return t
 
+# The ground at the LAND point (x, y): the kind painted by hand on the nearest tile corner if there is one, else
+# what the rules above generate. Painted water within 130 units of a place still becomes sand, the same safety
+# rule the generated ground has, so a place can never be drowned by the eraser.
+def terrain(x, y):
+    t = PAINT.get((round((y + PAD) / TILE), round((x + PAD) / TILE)))
+    if t is None: return generated_terrain(x, y)
+    if t == WATER and any(math.hypot(x - px, y - py) < 130 for px, py in POINTS): t = SAND
+    return t
+
 # Says whether a grassy spot is bare forest soil instead: patches of it under the Pinefall pines, and the middle
 # of each grove in the meadows (the same wave pattern that groups the meadow's trees, see the scatter below).
 def is_soil(k, x, y):
     if k == 'P': return math.sin(x / 520 + 0.8) * math.cos(y / 470 + 2.2) + 0.3 * math.sin(x / 150 + y / 190) > 0.5
     return k == 'h' and math.sin(x / 610 + 1.3) * math.cos(y / 520 + 0.4) > 0.7
 
-corner = np.array([[terrain(x * TILE - PAD, y * TILE - PAD) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+# The generated ground at every tile corner, kept as it is for the world editor (map property `baseGround`), and
+# the same grid with the hand-painted corners laid over it, which everything below uses.
+base_corner = np.array([[generated_terrain(x * TILE - PAD, y * TILE - PAD) for x in range(COLS + 1)] for y in range(ROWS + 1)])
+corner = base_corner.copy()
+for (r, c) in PAINT: corner[r, c] = terrain(c * TILE - PAD, r * TILE - PAD)
 
 # ---- deep sea ----------------------------------------------------------------------------
 # Water more than DEEP_FROM units from any land becomes DEEP. To find "near land", the land map is slid over itself
@@ -356,11 +397,64 @@ level = np.pad(level, SEA)
 kit_of = np.pad(kit_of, SEA, constant_values=-1)
 flights = [(kit, c + SEA, y + SEA) for kit, c, y in flights]
 
+# ---- hand-made hills ---------------------------------------------------------------------
+# terrain.json can also hold hills made in the world editor: "levels" are runs of map TILES
+# ([row, first column, last column, level, kit]) that set a tile's level outright, level 0 included, which is how a
+# generated hill is flattened; "stairs" lists flights added and removed by hand as [left column, edge row]. They are
+# laid over the generated hills here, before the walls, the collision grid and the cliff tiles are worked out, so
+# a hand-made hill gets its walls, lips and shadows the same way a generated one does.
+base_level, base_kit, base_flights = level.copy(), kit_of.copy(), [[c, y] for _, c, y in flights]   # kept for the editor
+
+# Reads the "levels" runs of terrain.json. A wrong run stops the build with a plain message.
+def read_levels(runs):
+    if not isinstance(runs, list): sys.exit('terrain.json: "levels" must be a list')
+    for run in runs:
+        ok = (isinstance(run, list) and len(run) == 5 and all(type(v) is int for v in run[:4]) and run[4] in KITS
+              and 0 <= run[0] < ROWS and 0 <= run[1] <= run[2] < COLS and 0 <= run[3] <= 3)
+        if not ok: sys.exit(f'terrain.json: bad run in "levels": {run}')
+    return runs
+
+# Reads one list of flights from the "stairs" part of terrain.json as (left column, edge row) pairs.
+def read_flights(stairs, key):
+    rows = stairs.get(key, []) if isinstance(stairs, dict) else None
+    if not isinstance(rows, list) or not all(isinstance(f, list) and len(f) == 2 and all(type(v) is int for v in f) for f in rows):
+        sys.exit(f'terrain.json: "stairs.{key}" must be a list of [left column, edge row]')
+    return [tuple(f) for f in rows]
+
+# Says whether a flight of stairs can stand at (left column c, edge row y): both of its tiles on a plateau one
+# level above the ground it comes down to, and that lower ground running on for the wall rows and the landing.
+def flight_fits(c, y):
+    return (0 <= c < COLS - 1 and 0 <= y < ROWS - WALL_ROWS - 1 and level[y, c] >= 1 and level[y, c] == level[y, c + 1]
+            and bool((level[y + 1:y + WALL_ROWS + 2, c:c + 2] == level[y, c] - 1).all()))
+
+hand_levels = read_levels(terrain_file.get('levels', []) if isinstance(terrain_file, dict) else None)
+hand_stairs = terrain_file.get('stairs', {}) if isinstance(terrain_file, dict) else {}
+for row, c0, c1, lvl, kit in hand_levels:
+    level[row, c0:c1 + 1] = lvl
+    if lvl > 0: kit_of[row, c0:c1 + 1] = KITS.index(kit)
+for row, c0, c1, lvl, kit in hand_levels:
+    # A hill needs dry ground under it: a raised tile with a water corner would put a cliff in a river.
+    if lvl > 0 and (corner[row:row + 2, c0:c1 + 2] >= WATER).any(): sys.exit(f'terrain.json: a hill is raised on water at row {row}, columns {c0} to {c1}')
+if hand_levels and max(np.abs(np.diff(level, axis=0)).max(), np.abs(np.diff(level, axis=1)).max()) > 1:
+    sys.exit('terrain.json: two tiles side by side differ by more than one level; a hill must step up one level at a time')
+gone_flights = set(read_flights(hand_stairs, 'removed'))
+flights = [f for f in flights if (f[1], f[2]) not in gone_flights]
+# A generated flight whose edge was flattened or changed by hand is dropped, so no stairs are left hanging.
+if hand_levels: flights = [f for f in flights if flight_fits(f[1], f[2])]
+flights += [(KITS[kit_of[y, c]], c, y) for c, y in read_flights(hand_stairs, 'added') if flight_fits(c, y) and kit_of[y, c] >= 0]
+
 # Walls hang below every south edge; stairs replace two tiles of wall. The elevation grid holds one letter per
 # tile for the game's collision (src/world/map.js): '0'-'3' is the level, 'w' a wall, 's' stairs.
 wall_row = np.full((ROWS, COLS), -1)       # which row of its wall a tile is (0 = top), or -1 if not a wall
 edge = level[:-1] > level[1:]
 for r in range(WALL_ROWS): wall_row[1 + r:][edge[:ROWS - 1 - r]] = r
+# The generated hills marked which kit draws each of their tiles. Hand-raised ground only marks its own tiles, so
+# the kit is spread from there over its walls and the ring of ground around it, where lips and shadows are drawn.
+if hand_levels:
+    kit_need = grow_box((level > 0) | (wall_row >= 0), 1, 1, 1, 1)
+    for _ in range(WALL_ROWS + 2):
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            near = np.roll(kit_of, (dy, dx), (0, 1)); fill = kit_need & (kit_of < 0) & (near >= 0); kit_of[fill] = near[fill]
 on_stairs = np.zeros((ROWS, COLS), bool)
 keep_clear = np.zeros((ROWS, COLS), bool)  # the stairs and the ground just above and below them
 for _, c, y in flights:
@@ -800,6 +894,8 @@ def path_tile(x, y):
     c, r = int((x + PAD) // TILE), int((y + PAD) // TILE)
     if path_open[r, c]: return c, r
     rows_, cols_ = np.nonzero(path_open[r - 6:r + 7, c - 6:c + 7])
+    # No tile a path may start from within six tiles: say which place it is instead of crashing on an empty list.
+    if not len(rows_): sys.exit(f'No dry, level ground for a footpath near the place at world ({round(x + PAD)}, {round(y + PAD)}): move the place, or change the ground around it')
     best = np.argmin(np.hypot(rows_ - 6, cols_ - 6))
     return int(c - 6 + cols_[best]), int(r - 6 + rows_[best])
 
@@ -1032,6 +1128,42 @@ objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scatter
 # The pieces of path come last and are the only objects that are turned: `rotation` is in degrees, clockwise.
 path_objects = [(n, x + PAD, y + PAD, turn) for n, x, y, turn in paths]
 
+# ---- hand edits --------------------------------------------------------------------------
+# assets/world/source/edits.json holds what a person changed in the world editor: generated objects to leave out
+# ("removed") and objects placed by hand ("added"), in WORLD units. It is applied here, after every pass above has
+# run, so an edit can never reshuffle the rest of the map. Nothing is cleared around an added object on purpose:
+# the person deletes what is in the way, so there are no surprises.
+EDIT_LOCKED = {'signpost'}
+
+# Says whether a sprite may be named in edits.json. Hill stairs belong to their hill and signposts to their
+# waypoint, so those may not; everything else may, path pieces, ripples and bridges included.
+# (The editor has the same rule: lockReason in src/editor/edits.js.)
+def editable(n): return n in spec and not n.endswith('-stairs') and n not in EDIT_LOCKED
+
+# Reads one list of edits.json as (name, x, y, rotation) rows. `rotation` (degrees, clockwise) may only be given
+# for a path piece, the one kind of sprite that is drawn turned. A wrong entry stops the build with a plain message.
+def edit_rows(edits, key):
+    rows = edits.get(key, []) if isinstance(edits, dict) else None
+    if not isinstance(rows, list): sys.exit(f'edits.json: "{key}" must be a list')
+    for r in rows:
+        if not (isinstance(r, dict) and isinstance(r.get('name'), str) and type(r.get('x')) is int and type(r.get('y')) is int
+                and type(r.get('rotation', 0)) is int and 0 <= r.get('rotation', 0) < 360):
+            sys.exit(f'edits.json: bad entry in "{key}": {r}')
+        if not editable(r['name']): sys.exit(f'edits.json: "{r["name"]}" in "{key}" is not a sprite that can be edited by hand')
+        if r.get('rotation') and not spec[r['name']].get('path'): sys.exit(f'edits.json: only path pieces can be turned, not "{r["name"]}"')
+    return [(r['name'], r['x'], r['y'], r.get('rotation', 0)) for r in rows]
+
+edits_path = os.path.join(SRC, 'edits.json')
+try: edits = json.load(open(edits_path, encoding='utf-8')) if os.path.exists(edits_path) else {}
+except ValueError as e: sys.exit(f'edits.json is not valid JSON: {e}')
+# An object is known by its sprite and its spot; the turn of a removed path piece is only kept for the editor.
+removed, added = {r[:3] for r in edit_rows(edits, 'removed')}, edit_rows(edits, 'added')
+# A removal that matches no generated object is "stale": the editor lists these so they can be cleaned up.
+stale_edits = sorted(removed - set(objects) - {p[:3] for p in path_objects})
+# Path pieces live in their own list (they are the only objects written with a turn), so each edit goes to its list.
+objects = [o for o in objects if o not in removed] + [a[:3] for a in added if not spec[a[0]].get('path')]
+path_objects = [p for p in path_objects if p[:3] not in removed] + [a for a in added if spec[a[0]].get('path')]
+
 tiled = {
     'type': 'map', 'version': '1.10', 'tiledversion': '1.11.0', 'orientation': 'orthogonal', 'renderorder': 'right-down', 'infinite': False,
     'width': COLS, 'height': ROWS, 'tilewidth': TILE, 'tileheight': TILE, 'nextlayerid': len(TILE_LAYERS) + 2, 'nextobjectid': len(objects) + len(path_objects) + 1,
@@ -1046,7 +1178,18 @@ tiled = {
                    {'name': 'regionCell', 'type': 'int', 'value': REGION_CELL},
                    {'name': 'regionCols', 'type': 'int', 'value': REGION_COLS},
                    {'name': 'regionGrid', 'type': 'string', 'value': region_grid},
-                   {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())}],
+                   {'name': 'elevation', 'type': 'string', 'value': ''.join(elevation.ravel())},
+                   # The world editor reads these two: the generated ground at every tile corner (one digit per corner,
+                   # row by row, before any hand painting), and a fingerprint of the terrain.json this map was built from.
+                   # The generated hills before any hand edit, for the world editor: the level of every tile (one digit
+                   # each, row by row), the kit of every tile ('.' for none, else its index in cliffs.json), and the flights.
+                   {'name': 'baseLevels', 'type': 'string', 'value': ''.join(str(v) for v in base_level.ravel())},
+                   {'name': 'baseKits', 'type': 'string', 'value': ''.join('.' if v < 0 else str(v) for v in base_kit.ravel())},
+                   {'name': 'baseStairs', 'type': 'string', 'value': json.dumps(base_flights)},
+                   {'name': 'baseGround', 'type': 'string', 'value': ''.join(str(v) for v in base_corner.ravel())},
+                   {'name': 'terrainHash', 'type': 'string', 'value': hashlib.sha256(terrain_bytes).hexdigest()},
+                   # The world editor reads this to list removals in edits.json that matched nothing.
+                   {'name': 'staleEdits', 'type': 'string', 'value': json.dumps([{'name': n, 'x': x, 'y': y} for n, x, y in stale_edits])}],
     'layers': [{'id': i + 1, 'name': n, 'type': 'tilelayer', 'x': 0, 'y': 0, 'width': COLS, 'height': ROWS, 'opacity': 1, 'visible': True, 'data': layers[n]}
                for i, n in enumerate(TILE_LAYERS)]
             + [{'id': len(TILE_LAYERS) + 1, 'name': 'objects', 'type': 'objectgroup', 'x': 0, 'y': 0, 'opacity': 1, 'visible': True, 'draworder': 'topdown',
@@ -1081,3 +1224,4 @@ full.convert('RGB').resize((1568, 1120), Image.LANCZOS).save(os.path.join(OUT, '
 if len(sys.argv) > 1: full.convert('RGB').save(sys.argv[1])
 print(len(tiles), 'tiles,', len(objects), 'objects,', len(path_objects), 'pieces of path,', round(os.path.getsize(map_path) / 1e6, 1), 'MB map file,',
       len(flights), 'flights of stairs,', len(cliff_gid), 'cliff tiles; hills per kit:', HILL_COUNT)
+print(len(removed) - len(stale_edits), 'objects removed by hand,', len(added), 'added by hand,', len(stale_edits), 'stale edits', stale_edits or '')

@@ -1,31 +1,33 @@
-// The world editor's calls to the dev server (see tools/editor-server.js): read the places file,
-// save it, and run a rebuild while passing on what the build prints.
+// The world editor's calls to the dev server (see tools/editor-server.js): read and save the
+// two files the editor edits, and run a rebuild while passing on what the build prints.
 
 /**
- * Reads the places file from disk.
+ * Reads one of the editor's files from disk.
  *
+ * @param {string} name - 'places' or 'edits'.
  * @returns {Promise<{text: string, hash: string, stale: boolean}>} The file's text, a fingerprint
- *   to send back when saving, and whether the map is older than the file.
+ *   to send back when saving, and whether the map is older than the files.
  */
-export async function loadPlaces() {
-  const res = await fetch('/__editor/places');
-  if (!res.ok) throw new Error(`Could not read the places file (${res.status})`);
+export async function loadFile(name) {
+  const res = await fetch(`/__editor/${name}`);
+  if (!res.ok) throw new Error(`Could not read the ${name} file (${res.status})`);
   return res.json();
 }
 
 /**
- * Saves the places.
+ * Saves one of the editor's files.
  *
- * @param {object} places - The places to write.
+ * @param {string} name - 'places' or 'edits'.
+ * @param {object} data - What to write.
  * @param {string} hash - The fingerprint of the file as this page loaded or last saved it.
  * @returns {Promise<object>} `{ok: true, hash, stale}` when saved, or `{ok: false, conflict: true}`
  *   when the file changed on disk in the meantime. Any other failure throws with the reason.
  */
-export async function savePlaces(places, hash) {
-  const res = await fetch('/__editor/places', {
+export async function saveFile(name, data, hash) {
+  const res = await fetch(`/__editor/${name}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ places, hash }),
+    body: JSON.stringify({ data, hash }),
   });
 
   if (res.status === 409) return { ok: false, conflict: true };

@@ -401,3 +401,47 @@ Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server), pane
 - Rebuild with Oasis Signpost moved into the sea (y 300): `build-map.py` crashed in `path_tile`, the log showed the traceback and "RESULT: fail", status "Rebuild FAILED: see the log." It left `tileset.png` changed; restoring `places.json` and rebuilding brought it back.
 - `npm run build`: no editor file in `dist/`.
 - Not checked in the browser: the blocked-ground overlay, dragging an old boat's launch point, a renamed id clashing with another, a moved landmark being found at its new spot in the game, and the rebuild log when Python is missing. The first fix after loading (a draw before the places arrived threw an error) was confirmed by the markers drawing; the console buffer still showed the earlier message.
+
+## 2026-11-20: world editor (objects)
+
+Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server), pane 800 px wide.
+
+- Places mode still loads: 82 rows, markers, "No problems found."
+- Zooming in past 0.25 swaps the overview for the real tiles and sprites: hills with their stairs, trees, rocks, tufts and a house, in the game's draw order, with no seams between chunks. Seventeen zoom steps, the first sharp frame included, took about 180 ms.
+- Objects mode: clicking an oak framed it and the form read "oak, generated, solid, chop or mine". Dragging it changed x and y and the form read "placed by hand"; Ctrl+Z put it back in one step and Save was disabled again.
+- A boulder was selected and removed with the Delete key.
+- Arming `pine` in the palette and clicking twice placed two pines with dashed outlines; Escape disarmed.
+- A Shift+drag box (sent as pointer events with the Shift key, because the pane's drag tool does not hold Shift) selected 23 objects and the form offered "Delete these objects".
+- Save wrote `edits.json` with one removed `rocks-a` and two added pines, one per line, and the page did not reload.
+- Rebuild: "1 objects removed by hand, 2 added by hand, 0 stale edits", "RESULT: pass"; after the reload the editor was still in Objects mode and the out-of-date note was gone. The map file then held both pines and not the boulder.
+- `python tools/build-map.py` with an empty edits file: same 9,012 objects, tileset and overview unchanged; with a locked sprite in the file it stopped with one plain line and no traceback.
+- Not checked in the browser: the dashed outline and deleting a hand-placed object after a rebuild (the logic is covered by `tests/editor/edits.test.js`), the warnings for water, paths and places, clicking a locked sprite, the stale-edits button, and chopping a hand-placed pine in the game.
+
+## 2026-11-20: world editor (ground)
+
+Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server).
+
+- Terrain mode shows the grid when zoomed in. With Sand and a 3-box brush, a drag painted a band with no gaps; Undo removed the whole stroke and Redo brought it back.
+- The Eraser painted water boxes; painting Grass back over one removed its override and the count dropped.
+- Save wrote `terrain.json` as runs, one per line, and the page did not reload. Rebuild from the page passed (places, sea, map, cliffs, edits, terrain) and came back in Terrain mode.
+- After the owner's report that one box covered two by two off the grid and showed flat colour: a box is now one tile corner, drawn on the grid, with the real ground picture. One click of Sand, Snow and Eraser each filled exactly one grid box; the brush outline matched the box.
+- `python tools/build-map.py` with one sand corner, a 2×2 snow patch and a 3×3 water patch: the sand came out as one soft patch about a box wide and the water as a pond about three boxes wide with a bank, both sitting on the grid; the preview was not drawn over them.
+- With no overrides the tile layers are identical to before; land painted within 20 tiles of the edge stops the build with one plain line.
+- Seen and left alone: running `build-map.py` from a shell while a page is open makes Vite read the half-written map and log JSON errors until the file is complete. The editor's own Rebuild holds reloads back, so it is not affected.
+- Not checked in the browser: Space+drag, the 5-box brush, painting in Places or Objects mode being impossible, walking onto painted land and being stopped by painted water in the game, and the plain message when a signpost has no dry ground.
+
+## 2026-11-20: world editor (path pieces and other map sprites)
+
+- The palette now lists `path-dirt-a/b`, `path-stone-a/b`, the three ripples and `bridge`; only `signpost` and the stairs stay locked.
+- Objects mode, zoomed in on a footpath in Pinefall: clicking a piece selected it ("path-dirt-b, 12135, 4217, turn 139, generated"); R turned it to 154; Delete removed it and left a gap in the path.
+- Arming `path-stone-a` and pressing R twice showed "R turns it (now 30°)"; a click placed it turned 30. No console errors.
+- `python tools/build-map.py` with one generated path piece and one sea wave removed and one path piece added at 45°: "2 objects removed by hand, 1 added by hand, 0 stale edits"; the map held the new piece with rotation 45 and neither removed one; the edits, map and places tests passed.
+- Not checked in the browser: Save and Rebuild of path edits from the page, the turn box, and a path piece placed across a river (the map test should fail the rebuild).
+
+## 2026-11-20: world editor (hills and stairs)
+
+- `python tools/build-map.py` with no hand hills: tile layers and the elevation grid identical to before, 25 flights.
+- A hill written by hand into `terrain.json` (8 by 6 tiles at level 1 on open meadow, one flight added): 26 flights; cliffs, places, map, sea and terrain tests passed. In the editor's sharp view it had its lips, a two-tile south wall with end pieces and the stairs art, with a pine left standing on the plateau.
+- Hill tools in the editor: Raise on a block at the plateau's edge was refused with "next-door boxes may differ by one level only"; a Raise drag on flat ground made a strip of level-1 blocks shown tinted with "1" and a dark band where the wall will hang; Stairs on its south edge added a flight (pale, with steps); Lower inside the first hill showed dark "0" tiles and four warnings about walls without room, which Undo cleared.
+- Save, then Rebuild from the page: 27 flights, "RESULT: pass", back in Terrain mode; the new L-shaped hill showed real cliff edges, walls and stairs, and the tint was gone.
+- Not checked: a second level on top of a hand-made hill, removing a generated flight, the Cliff art choice (canyon, snow), a hill raised on water (the build should stop with one line), walking up hand-made stairs in the game, and a hill with no stairs failing the rebuild.

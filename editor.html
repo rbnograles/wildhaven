@@ -7,10 +7,15 @@
   </head>
   <body>
     <header id="bar">
-      <strong>Wildhaven places</strong>
-      <button type="button" data-add="landmark">+ Landmark</button>
-      <button type="button" data-add="waypoint">+ Signpost</button>
-      <button type="button" data-add="wreck">+ Old boat</button>
+      <strong>Wildhaven world</strong>
+      <button type="button" data-mode="places">Places</button>
+      <button type="button" data-mode="objects">Objects</button>
+      <button type="button" data-mode="terrain">Terrain</button>
+      <span class="places-only">
+        <button type="button" data-add="landmark">+ Landmark</button>
+        <button type="button" data-add="waypoint">+ Signpost</button>
+        <button type="button" data-add="wreck">+ Old boat</button>
+      </span>
       <button type="button" id="undo">Undo</button>
       <button type="button" id="redo">Redo</button>
       <label><input type="checkbox" data-overlay="regions" checked /> Region borders</label>
@@ -22,14 +27,69 @@
     <main>
       <canvas id="map"></canvas>
       <aside id="side">
-        <input id="filter" type="search" placeholder="Find a place" aria-label="Find a place" />
-        <ul id="list"></ul>
-        <form id="form"></form>
+        <section id="places-pane">
+          <input id="filter" type="search" placeholder="Find a place" aria-label="Find a place" />
+          <ul id="list"></ul>
+          <form id="form"></form>
+        </section>
+        <section id="objects-pane" hidden>
+          <form id="object"></form>
+          <h2>Place a sprite</h2>
+          <div id="palette"></div>
+        </section>
+        <section id="terrain-pane" hidden>
+          <p id="terrain-help">
+            Pick a ground, then click or drag on the map to paint boxes. The Eraser turns boxes to
+            sea. With no ground picked, dragging moves the map; holding Space does too. A painted
+            box shows its new ground at once; the soft edges, the shore banks and the trees and
+            grass that belong on it are made when you rebuild.
+          </p>
+          <div id="grounds">
+            <button type="button" data-ground="grass">Grass</button>
+            <button type="button" data-ground="dirt">Dirt</button>
+            <button type="button" data-ground="soil">Soil</button>
+            <button type="button" data-ground="jungle">Jungle</button>
+            <button type="button" data-ground="rock">Rock</button>
+            <button type="button" data-ground="snow">Snow</button>
+            <button type="button" data-ground="sand">Sand</button>
+            <button type="button" data-ground="water">Eraser</button>
+          </div>
+          <label
+            >Brush
+            <select id="brush">
+              <option value="1">1 box</option>
+              <option value="3">3 boxes</option>
+              <option value="5">5 boxes</option>
+            </select></label
+          >
+          <h2>Hills</h2>
+          <p>
+            Raise and Lower work on blocks of 2 by 2 boxes, one level at a time. Stairs: click the
+            south edge or the wall of a hill to add a flight, or an existing flight to remove it.
+            The walls and edges of the hill are drawn when you rebuild.
+          </p>
+          <div id="hill-tools">
+            <button type="button" data-ground="raise">Raise</button>
+            <button type="button" data-ground="lower">Lower</button>
+            <button type="button" data-ground="stairs">Stairs</button>
+          </div>
+          <label
+            >Cliff art
+            <select id="kit">
+              <option value="auto">By region</option>
+              <option value="meadow">Meadow</option>
+              <option value="canyon">Canyon</option>
+              <option value="snow">Snow</option>
+            </select></label
+          >
+          <p id="painted"></p>
+        </section>
         <h2>Problems</h2>
         <p id="stale" hidden>
-          Places changed since the map was last built, so the position warnings may be out of date.
-          Rebuild for the real answer.
+          Places or objects changed since the map was last built, so the position warnings may be
+          out of date. Rebuild for the real answer.
         </p>
+        <button type="button" id="drop-stale" hidden>Remove stale edits</button>
         <ul id="problems"></ul>
         <h2>Rebuild log</h2>
         <pre id="log"></pre>

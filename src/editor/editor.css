@@ -194,3 +194,122 @@ main {
   font-size: 12px;
   white-space: pre-wrap;
 }
+
+/* ---- Modes ---- */
+/* The two panes share the side panel; the one for the other mode is hidden with [hidden]. */
+#places-pane,
+#objects-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#places-pane[hidden],
+#objects-pane[hidden],
+.places-only[hidden] {
+  display: none;
+}
+
+.places-only {
+  display: inline-flex;
+  gap: 8px;
+}
+
+/* ---- Object form ---- */
+#object {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+#object input {
+  width: 100%;
+  padding: 3px 5px;
+}
+
+#object .wide {
+  grid-column: 1 / -1;
+}
+
+/* ---- Sprite palette ---- */
+#palette h3 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  text-transform: capitalize;
+  color: #a9b5ab;
+}
+
+#palette .sprites {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+#palette button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+/* Thumbnails keep their shape inside a fixed box, whatever the sprite's size. */
+#palette img {
+  width: 100%;
+  height: 48px;
+  object-fit: contain;
+}
+
+#palette span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Terrain pane ---- */
+#terrain-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#terrain-pane[hidden] {
+  display: none;
+}
+
+#terrain-pane p {
+  margin: 0;
+  color: #a9b5ab;
+}
+
+#grounds {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+/* Each ground button carries a swatch of its preview colour, set from panel.js. */
+#grounds button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#grounds .swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #10140f;
+  border-radius: 3px;
+}
+
+/* The hill tools sit in a row of three under the ground kinds. */
+#hill-tools {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
