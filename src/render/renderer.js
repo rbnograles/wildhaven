@@ -145,6 +145,11 @@ const BREAK = {
 const SLEEP_IN_TENT = 400;
 const SLEEP_ROWS = ['scout', 'builder', 'survivor'];
 
+// How much wider and taller the sleeping picture is drawn than the tent's own draw size, so the
+// tent keeps its size when the player lies down in it. The sleeping frames were painted smaller and
+// narrower: the tent in them is 150×153 px, and the standing tent's picture is 203×177 px.
+const SLEEP_FIT = [203 / 150, 177 / 153];
+
 // Animals farther than this from the middle of the screen (world units, either way) are not drawn.
 const ANIMAL_VIEW = 1400;
 
@@ -866,11 +871,12 @@ export async function createRenderer(container, miniCanvas) {
         if (asleep) {
           sleepingIn = b;
           const row = SLEEP_ROWS.indexOf(state.character),
-            frame = reducedMotion ? 0 : Math.floor(clock * 2) % tentSleepSpec.columns;
+            frame = reducedMotion ? 0 : Math.floor(clock * 2) % tentSleepSpec.columns,
+            size = buildingInfo('tent').scale * (objectSpecs.tent.scale ?? 1);
           image
             .setTexture('tent-sleep', row * tentSleepSpec.columns + frame)
             .setOrigin(...tentSleepSpec.origin)
-            .setScale(1);
+            .setScale(size * SLEEP_FIT[0], size * SLEEP_FIT[1]);
         } else {
           const sprite = buildingSprite(b),
             spec = objectSpecs[sprite];

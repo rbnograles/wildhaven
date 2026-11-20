@@ -194,7 +194,7 @@ test('resting at a camp with a tent costs half the night’s hunger', () => {
   assert.ok(Math.abs(80 - sheltered.meters.hunger - lost / 2) < 0.01);
 });
 
-// Guards E at a tent: nothing by day (so E can still open the camp), and from dusk it offers a sleep
+// Guards E at a tent: no sleep by day (so E can still open the camp), and from dusk it offers a sleep
 // at the tent's own camp, even when the player stands too far from the fire to open the camp.
 test('E beside a tent sleeps in it from dusk, and not by day', () => {
   const game = campGame();
@@ -202,7 +202,7 @@ test('E beside a tent sleeps in it from dusk, and not by day', () => {
   Object.assign(game.player, { x: tent.x, y: tent.y + 30 });
 
   game.time = 100;
-  assert.equal(chooseInteraction(game), null);
+  assert.notEqual(chooseInteraction(game)?.kind, 'sleep');
 
   game.time = 300;
   const choice = chooseInteraction(game);

@@ -35,7 +35,7 @@ import {
  *
  * Only one thing happens per press, so the choices are tried in order, like a queue at a counter:
  * step ashore when in the boat, get in when next to it, repair an old boat, hunt, use a chest or
- * wheat bed, gather, and last of all sleep in a tent (from dusk). The HUD uses the answer for the
+ * wheat bed, sleep in a tent (from dusk only), and last of all gather. The HUD uses the answer for the
  * button's words and the renderer for its highlight.
  *
  * @param {object} state - The game being played.
@@ -59,12 +59,12 @@ export function chooseInteraction(state) {
   const near = nearbyBuilding(state, ['chest', 'farm']);
   if (near?.building.kind === 'chest') return { kind: 'chest', target: near.building };
   if (near) return { kind: 'farm', target: near.building, job: farmJob(state, near.building) };
-  const node = nearbyNode(state);
-  if (node) return { kind: 'gather', target: node };
-  // A tent comes last and only once it is late enough to sleep, so by day E beside a tent still
-  // opens the camp when the fire is close.
+  // A tent is offered only once it is late enough to sleep, so by day E beside one still gathers
+  // or opens the camp. From dusk it comes before the supplies round it, like the chest.
   const tent = canSleep(state) && nearbyBuilding(state, ['tent']);
-  return tent ? { kind: 'sleep', target: tent.building, camp: tent.camp } : null;
+  if (tent) return { kind: 'sleep', target: tent.building, camp: tent.camp };
+  const node = nearbyNode(state);
+  return node ? { kind: 'gather', target: node } : null;
 }
 
 /**
