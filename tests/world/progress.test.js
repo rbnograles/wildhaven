@@ -12,12 +12,15 @@ test('region progress counts only that region’s places and signposts', () => {
   game.landmarks.push('h-oak', 'h-pond', 'd-oasis');
   game.waypoints.push('h-wp-east');
 
+  // The totals are counted from the places file, so adding a place to the map can't break this.
+  const placesIn = (region) => LANDMARKS.filter((place) => place.region === region).length;
+
   assert.deepEqual(regionProgress(game, 'meadows'), {
-    places: { found: 2, total: 7 },
+    places: { found: 2, total: placesIn('meadows') },
     signposts: { found: 1, total: 2 },
   });
   assert.deepEqual(regionProgress(game, 'jungle'), {
-    places: { found: 0, total: 7 },
+    places: { found: 0, total: placesIn('jungle') },
     signposts: { found: 0, total: 2 },
   });
 });
