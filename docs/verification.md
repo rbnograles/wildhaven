@@ -455,3 +455,11 @@ Checked in the `wildhaven` preview at 127.0.0.1 with the Builder, at night besid
 - The pass-out and pause windows wear the painted HUD (wooden frame, dark slot button, paper buttons), at desktop size and at 375 px wide.
 - Phaser's "no frame -1" warnings for the campfire and deer are gone (a negative first-frame `dt`).
 - Not checked: the den and night-wolf markers on the big map (too small to read in the hidden pane), the camp, naming and chest windows in their new frame, and dens in the desert, canyons and jungle.
+
+## Snowy banks round Frostpeak (2026-11-20)
+
+`python tools/build-snow-banks.py`, then `python tools/import-tiled-world.py`, checked in the `wildhaven` preview at 127.0.0.1 with the Scout moved to Frostpeak's north coast (21120, 1990):
+- The script moved 4,474 snow tiles from the sand and banks layers to the snow layer, made 380 different bank tiles and gave 1,190 squares one. A second run changed nothing.
+- The north coast showed the snowy bank (snow, ice crust, gravel, foam) along the water, round an outside and an inside corner, with no console errors. The player stood on snow the game used to take for water, and walking north stopped at the bank.
+- `npm test`: the same two failures as before the change (`progress.test.js`, a `gather.test.js` case). Two boat tests that rowed east from the lagoon's old boat now row south from the jungle's: a spit of snow painted in Tiled crosses the lagoon boat's row.
+- Not checked: the south-east channels and the river's banks in play, the world editor's view of the new tiles, and the minimap picture up close.

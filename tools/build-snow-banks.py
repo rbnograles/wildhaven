@@ -56,6 +56,45 @@ for i, g in enumerate(KIT):
         ty, tx = divmod(at, COLS)
         for bit, (dy, dx) in zip((1, 2, 4, 8), ((0, 0), (0, 1), (1, 0), (1, 1))):
             if found[1] & bit: corner[ty + dy, tx + dx] = max(corner[ty + dy, tx + dx], i)
+
+# ---- snow painted on the wrong layer --------------------------------------------------------------------
+# Snow stamped by hand onto the sand layer or the banks layer looks like snow in Tiled, but the game reads each
+# ground only from its own layer, so it took that snow for water. Here it is moved to the snow layer: each such
+# tile's corners become snow corners (on the sand layer only where nothing drawn above covers them), the tile is
+# taken off the layer it was on, and the snow layer is laid again from the corners. A snow tile covers its whole
+# square but a corner belongs to four squares, so the snow's edge moves out by half a tile and gets the kit's
+# rounded outline, as if it had been painted with Tiled's Terrain Brush.
+snow_mask = {first['terrain-redrawn.tsx'] + tile: int(m) for m, tile in kit['snow'].items()}
+BITS = ((1, 0, 0), (2, 0, 1), (4, 1, 0), (8, 1, 1))
+moved = 0
+sand_layer, snow_layer, bank_layer = layers['03 sand']['data'], layers['07 snow']['data'], layers['banks']['data']
+seen = corner.copy()   # the corners as they were, so one moved tile does not hide the next one's corners
+for data, on_top in ((sand_layer, False), (bank_layer, True)):
+    for at, gid in enumerate(data):
+        mask = snow_mask.get(gid & 0x1FFFFFFF)
+        if mask is None: continue
+        ty, tx = divmod(at, COLS)
+        for bit, dy, dx in BITS:
+            if mask & bit and (on_top or seen[ty + dy, tx + dx] <= KIT.index('sand')): corner[ty + dy, tx + dx] = SNOW
+        data[at] = -1; moved += 1
+
+# Gives the kit tile of one ground for every square: the tile whose corners are that ground or one drawn above it.
+def kit_tiles(g):
+    covered = (corner >= KIT.index(g)).astype(int)
+    mask = covered[:-1, :-1] + 2 * covered[:-1, 1:] + 4 * covered[1:, :-1] + 8 * covered[1:, 1:]
+    return [first['terrain-redrawn.tsx'] + kit[g][str(m)] if m else 0 for m in mask.ravel()]
+
+if moved:
+    fresh_sand = kit_tiles('sand')
+    for at, gid in enumerate(sand_layer):
+        if gid == -1: sand_layer[at] = fresh_sand[at]
+    for at, gid in enumerate(bank_layer):
+        if gid == -1: bank_layer[at] = 0
+    relaid = kit_tiles('snow')
+    regrown = sum(a != b for a, b in zip(snow_layer, relaid))
+    snow_layer[:] = relaid
+    print(f'{moved} snow tiles moved from the sand and banks layers to the snow layer ({regrown} squares of it redrawn)')
+
 land = corner > WATER
 snow = corner == SNOW
 

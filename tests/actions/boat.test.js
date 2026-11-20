@@ -34,6 +34,10 @@ import {
 /** The old boat on the lagoon shore, near the survivor's start. */
 const east = WRECKS.find((w) => w.id === 'wreck-east');
 
+// The jungle beach's old boat. Open sea lies straight south of it, so the tests that row out to deep
+// water start here: east of the lagoon's boat a spit of snow painted in Tiled is in the way.
+const south = WRECKS.find((w) => w.id === 'wreck-south');
+
 /**
  * Makes a game whose player stands just south of the lagoon's old boat with exactly enough wood
  * and stone to repair it.
@@ -162,16 +166,16 @@ test('by every old boat, the player can step ashore and get back in', () => {
 // Guards the boat's water: it rows across shallow sea, deep water stops it (with a warning ahead),
 // and the shallows stop it short of the sand. The boat always stays under the player.
 test('the boat sails only on shallow sea: deep water and the beach stop it', () => {
-  const game = afloat(east);
-  for (let i = 0; i < 600; i++) movePlayer(game, 1, 0, 0.1);
+  const game = afloat(south);
+  for (let i = 0; i < 600; i++) movePlayer(game, 0, 1, 0.1);
   assert.ok(isSailable(game.player.x, game.player.y));
-  assert.ok(deepAhead(game, 1, 0));
+  assert.ok(deepAhead(game, 0, 1));
   assert.deepEqual([game.boat.x, game.boat.y], [game.player.x, game.player.y]);
 
-  for (let i = 0; i < 900; i++) movePlayer(game, -1, 0, 0.1);
+  for (let i = 0; i < 900; i++) movePlayer(game, 0, -1, 0.1);
   assert.ok(isSailable(game.player.x, game.player.y));
-  assert.ok(game.player.x > east.x);
-  assert.equal(deepAhead(game, -1, 0), false);
+  assert.ok(game.player.y > south.y);
+  assert.equal(deepAhead(game, 0, -1), false);
   assert.equal(deepAhead(createGame('scout'), 1, 0), false); // on foot there is no warning
 });
 
@@ -188,8 +192,8 @@ test('the boat is faster than walking, and faster again with Shift', () => {
 
 // Guards landing out at sea: with no land in reach, the player stays in the boat.
 test('far from land there is nowhere to step ashore', () => {
-  const game = afloat(east);
-  for (let i = 0; i < 600; i++) movePlayer(game, 1, 0, 0.1);
+  const game = afloat(south);
+  for (let i = 0; i < 600; i++) movePlayer(game, 0, 1, 0.1);
   assert.equal(landingSpot(game), null);
   assert.equal(disembark(game), false);
   assert.equal(game.aboard, true);

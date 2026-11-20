@@ -7,10 +7,12 @@ each thing as a point (where it touches the ground) with a name.
 Inputs : assets/world/tiled/wildhaven-world-arranged.tmj (or the map named on the command line)
          assets/world/tiled/terrain-redrawn.json, .png      the ground kit: which tile shows which corners
          assets/world/tiled/path-connectors.png              the path kit
+         assets/world/tiled/snow-banks.png                   the snowy bank tiles, when the map uses them
          assets/world/tiled/wildhaven-sheet.json, .png       where each object sprite sits on the sprite sheet
          assets/world/map/wildhaven.json, tileset.png        the game's current map: its hills, regions and
                                                              other stored values, and its own bank and cliff tiles
 Outputs: assets/world/map/ground-kit.png, path-kit.png   copies of the two kits, tilesets of the game map
+         assets/world/map/snow-banks.png                 a copy of the snowy bank tiles, likewise
          assets/world/map/wildhaven.json the nine ground layers in the game's own coding, hidden, which collision
                                          and the world editor read (water, deep, sand, snow...); then the Tiled
                                          map's tile layers, drawn as they are; every object as a point with its
@@ -77,6 +79,13 @@ TILESETS = [
      'tilewidth': TILE, 'tileheight': TILE, 'margin': 1, 'spacing': 2, 'columns': 8, 'tilecount': 64},
 ]
 report['tiles'] = f'{base_count} game tiles + 144 ground kit + 64 path kit'
+# A map with snowy banks (tools/build-snow-banks.py) brings their tileset along too, numbered after the path kit.
+snow_set = next((t for t in tiled['tilesets'] if t.get('name') == 'snow-banks'), None)
+SNOW_FIRST, FIRST_SNOW_TILE = (snow_set['firstgid'], FIRST_PATH_TILE + 64) if snow_set else (0, 0)
+if snow_set:
+    shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(SOURCE)), snow_set['image']), os.path.join(GAME_DIR, 'snow-banks.png'))
+    TILESETS.append(dict(snow_set, firstgid=FIRST_SNOW_TILE, image='snow-banks.png'))
+    report['tiles'] += f" + {snow_set['tilecount']} snowy banks"
 
 # Gives a Tiled tile number its number in the game's tileset. The top three bits (flips) are kept.
 dropped = [0]
@@ -86,6 +95,7 @@ def remap(gid):
     if KIT_FIRST <= t < KIT_FIRST + 144: return flips | (FIRST_KIT + t - KIT_FIRST)
     if PATH_FIRST <= t < PATH_FIRST + 64: return flips | (FIRST_PATH_TILE + t - PATH_FIRST)
     if GAME_FIRST <= t < GAME_FIRST + base_count: return flips | (1 + t - GAME_FIRST)
+    if snow_set and SNOW_FIRST <= t < SNOW_FIRST + snow_set['tilecount']: return flips | (FIRST_SNOW_TILE + t - SNOW_FIRST)
     dropped[0] += 1; return 0
 
 drawn = [dict(l, data=[remap(g) for g in l['data']]) for l in tiled['layers'] if l['type'] == 'tilelayer']
