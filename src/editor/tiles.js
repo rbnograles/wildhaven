@@ -11,11 +11,20 @@ const TILE = MAP.tilewidth;
 /** A chunk is this many tiles wide and tall. */
 const CHUNK = 16;
 
-/** Each tile is painted this many pixels wide in a chunk canvas: enough to look sharp at zoom 0.5. */
-const PX = 32;
+/**
+ * How many pixels wide a tile is painted in a chunk canvas. Zoomed out, half size is plenty and
+ * keeps the canvases small. From `FULL_ZOOM` the ground is painted at the tileset's own size, so
+ * it is as crisp as the sprites standing on it instead of a stretched half-size copy.
+ */
+const HALF = TILE / 2;
+const FULL_ZOOM = 0.5;
 
-/** At most this many chunk canvases are kept (each is 512 by 512 pixels, about 1 MB). */
-const KEEP = 96;
+/**
+ * At most this many chunk canvases are kept at each size. A half-size chunk is 512 pixels square
+ * (about 1 MB) and a full-size one 1024 square (about 4 MB), so fewer of the big ones are kept;
+ * zoomed in that far, far fewer are on screen anyway.
+ */
+const KEEP = { [HALF]: 96, [TILE]: 40 };
 
 /** At most this many new chunks are painted per draw, so the first look at a place doesn't freeze. */
 const PER_DRAW = 6;
@@ -37,19 +46,23 @@ export function createTiles(onReady) {
   sheet.onload = onReady;
   sheet.src = tilesetUrl;
 
-  /** Chunk canvases by 'cx,cy', oldest first, so the least recently used can be dropped. */
-  const cache = new Map();
+  /**
+   * Chunk canvases for each tile size, by 'cx,cy', oldest first, so the least recently used can
+   * be dropped.
+   */
+  const caches = { [HALF]: new Map(), [TILE]: new Map() };
 
   /**
    * Paints one chunk: every layer's tiles for a 16 by 16 block.
    *
    * @param {number} cx - The chunk's column.
    * @param {number} cy - The chunk's row.
+   * @param {number} px - How many pixels wide each tile is painted.
    * @returns {HTMLCanvasElement} The painted chunk.
    */
-  function paint(cx, cy) {
+  function paint(cx, cy, px) {
     const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = CHUNK * PX;
+    canvas.width = canvas.height = CHUNK * px;
     const ctx = canvas.getContext('2d');
 
     for (const layer of LAYERS)
@@ -66,7 +79,7 @@ export function createTiles(onReady) {
           const n = gid - SET.firstgid;
           const sx = SET.margin + (n % SET.columns) * (TILE + SET.spacing);
           const sy = SET.margin + Math.floor(n / SET.columns) * (TILE + SET.spacing);
-          ctx.drawImage(sheet, sx, sy, TILE, TILE, tx * PX, ty * PX, PX, PX);
+          ctx.drawImage(sheet, sx, sy, TILE, TILE, tx * px, ty * px, px, px);
         }
 
     return canvas;
@@ -80,6 +93,8 @@ export function createTiles(onReady) {
     // still to be painted, so the caller should draw again soon.
     draw(ctx, cam, width, height) {
       const size = CHUNK * TILE;
+      const px = cam.scale >= FULL_ZOOM ? TILE : HALF;
+      const cache = caches[px];
       const c0 = Math.max(0, Math.floor(cam.x / size)),
         r0 = Math.max(0, Math.floor(cam.y / size));
       const c1 = Math.min(
@@ -103,7 +118,7 @@ export function createTiles(onReady) {
               waiting = true;
               continue;
             }
-            chunk = paint(cx, cy);
+            chunk = paint(cx, cy, px);
             painted++;
           }
 
@@ -118,7 +133,7 @@ export function createTiles(onReady) {
           ctx.drawImage(chunk, x, y, side, side);
         }
 
-      while (cache.size > KEEP) cache.delete(cache.keys().next().value);
+      while (cache.size > KEEP[px]) cache.delete(cache.keys().next().value);
       return waiting;
     },
   };
