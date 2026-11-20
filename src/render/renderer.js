@@ -71,6 +71,19 @@ const creatureUrls = Object.fromEntries(
   ).map(([path, url]) => [path.match(/([\w-]+)\.png$/)[1], url]),
 );
 
+// Character id → the URL of their rowing sheet (assets/characters/<id>/<id>-rowboat.png, packed by
+// tools/prepare-rowing-art.py): the whole boat with the character rowing it. Rows are bow east,
+// bow north, bow south; four oar-stroke pictures each.
+const rowingUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/characters/*/*-rowboat.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/([\w]+)-rowboat\.png$/)[1], url]),
+);
+
 // Animated sprite name → the URL of its flip-book sheet (assets/world/animations/, made by
 // tools/prepare-sprite-art.py). animations.json says how big one frame is and where its ground point is.
 const animUrls = Object.fromEntries(
@@ -195,8 +208,22 @@ const PATH_DEPTH = -1.5;
 // How far above a villager's head their name floats, in world units.
 const NAME_GAP = 10;
 
-// How much of the character shows above the hull while sitting in the boat, from the top down.
-const SEATED = 0.6;
+// The size of one picture on a rowing sheet, in pixels (CELL in tools/prepare-rowing-art.py).
+const ROWING_CELL = [320, 300];
+
+// How big a rowing picture is drawn: the sheets are painted at twice the game's size, which makes
+// the hull 150 world units long and the sitting character a little shorter than a standing one.
+const ROWING_SCALE = 0.5;
+
+// Which row of the rowing sheet shows the boat heading each way (0 south, 1 west, 2 east, 3 north).
+// West is the east row mirrored.
+const ROWING_ROW = [2, 0, 0, 1];
+
+// How many oar-stroke pictures show each second while the boat moves.
+const ROWING_FPS = 6;
+
+// The empty boat's picture is drawn this much smaller, so its hull is as long as the rowed one.
+const MOORED_SCALE = 0.75;
 
 // Scenery is grouped into squares this many world units wide; only squares near the camera are shown.
 const CHUNK = 1024;
@@ -264,6 +291,9 @@ export async function createRenderer(container, miniCanvas) {
   // The camera's own position, which glides after the player instead of jumping.
   const camera = { x: 0, y: 0, initialized: false };
 
+  // Where the boat was last frame, and how long it has been rowed, to move the oars only while it moves.
+  const rowed = { x: 0, y: 0, time: 0 };
+
   // Scene objects filled in by create() below. `snap` makes the next draw skip fade animations.
   // `chunks` maps a chunk key to the scenery images in it; `shown` holds the keys now visible.
   // `fires` maps "<character>:<camp id>" to that camp's campfire sprite.
@@ -275,6 +305,7 @@ export async function createRenderer(container, miniCanvas) {
     reach,
     supplies,
     boat,
+    rower,
     cue,
     bar,
     badge,
@@ -353,6 +384,12 @@ export async function createRenderer(container, miniCanvas) {
           this.load.spritesheet(`creature-${name}`, url, {
             frameWidth: creatureSpecs[name].cell[0],
             frameHeight: creatureSpecs[name].cell[1],
+          });
+        // Each character rowing their boat (prepare-rowing-art.py).
+        for (const [name, url] of Object.entries(rowingUrls))
+          this.load.spritesheet(`rowing-${name}`, url, {
+            frameWidth: ROWING_CELL[0],
+            frameHeight: ROWING_CELL[1],
           });
         // Each character asleep inside a tent, a row each (prepare-building-art.py).
         this.load.spritesheet('tent-sleep', tentSleepUrl, {
@@ -504,6 +541,12 @@ export async function createRenderer(container, miniCanvas) {
         boat = this.add
           .image(0, 0, 'object-rowboat')
           .setOrigin(...objectSpecs.rowboat.origin)
+          .setScale(MOORED_SCALE)
+          .setVisible(false);
+        // The boat with the player rowing it, shown instead while they are aboard.
+        rower = this.add
+          .image(0, 0, `rowing-${Object.keys(rowingUrls)[0]}`, 0)
+          .setScale(ROWING_SCALE)
           .setVisible(false);
 
         // The floating "E" key cap over the supply in reach, and the progress bar that replaces it.
@@ -940,6 +983,8 @@ export async function createRenderer(container, miniCanvas) {
 
     // Animals near the camera: the row for what each is doing (grazing, walking, running, lying
     // down), turned to face its way (the art faces east). A hunted one fades out as it lies there.
+    // One running up or down the screen as well as sideways shows its north-east or south-east
+    // run instead (mirrored for the west side); only running has those pictures.
     // Wolves are drawn the same way, with two rows of their own: the growl (snarl) and the lunge.
     for (const a of [...WILD_ANIMALS, ...WOLVES]) {
       const kind = a.den ? 'wolf' : a.kind;
@@ -957,7 +1002,9 @@ export async function createRenderer(container, miniCanvas) {
         beasts.set(a.id, image);
       }
       const spec = creatureSpecs[kind],
-        row = spec.rows[spec.rows[a.phase] ? a.phase : 'idle'],
+        slanted =
+          a.phase === 'run' && a.slant ? spec.rows[a.slant === 'n' ? 'runNE' : 'runSE'] : null,
+        row = slanted ?? spec.rows[spec.rows[a.phase] ? a.phase : 'idle'],
         fps = { run: 10, down: 3, walk: 6, snarl: 5, lunge: 8 }[a.phase] ?? 2,
         step = Math.floor(a.clock * fps),
         frame =
@@ -1053,17 +1100,32 @@ export async function createRenderer(container, miniCanvas) {
       else capped = litTree;
     }
 
-    // The player's boat, pointing the way it last went and rocking gently on the water.
-    // The art's bow points east: it is mirrored for west and turned a quarter for north and south.
+    // The player's boat, rocking gently on the water. With the player aboard it is one painted
+    // picture of the boat and the rower, with its own art for heading east, north and south (west
+    // mirrors east); the oars only move while the boat does. The empty boat has side-on art only,
+    // so it always lies sideways, mirrored if it last headed west.
     const bob = reducedMotion ? 0 : Math.sin(performance.now() / 500) * 2;
-    boat.setVisible(!!state.boat);
+    boat.setVisible(!!state.boat && !state.aboard);
+    rower.setVisible(!!state.boat && state.aboard);
     if (state.boat) {
       const { x, y, dir } = state.boat;
       boat
         .setPosition(x, y + bob)
         .setFlipX(dir === 1)
-        .setAngle(dir === 0 ? 90 : dir === 3 ? -90 : 0)
         .setDepth(y - 1);
+      if (state.aboard) {
+        if (x !== rowed.x || y !== rowed.y) rowed.time += dt;
+        rower
+          .setTexture(
+            `rowing-${state.character}`,
+            ROWING_ROW[dir] * 4 + (Math.floor(rowed.time * ROWING_FPS) % 4),
+          )
+          .setPosition(x, y + bob)
+          .setFlipX(dir === 1)
+          .setDepth(y - 1);
+      }
+      rowed.x = x;
+      rowed.y = y;
       if (choice?.kind === 'board') capped = { node: { x, y }, top: y - 40 };
     }
 
@@ -1145,12 +1207,11 @@ export async function createRenderer(container, miniCanvas) {
 
     // A timed action is longer than one pass of its clip, so it loops until the action ends.
     // A `once` action (the collapse) holds its last picture instead: nobody falls down twice.
-    // In the boat the player sits still, so the idle pose is used.
     const pose = resolvePose(
       sheets,
       state.character,
-      state.aboard ? 'idle' : animator.clip,
-      state.aboard ? 0 : animator.time,
+      animator.clip,
+      animator.time,
       state.player.direction,
       animator.pending && !CLIPS[animator.clip]?.once ? true : undefined,
       animator.diagonal,
@@ -1163,17 +1224,9 @@ export async function createRenderer(container, miniCanvas) {
       .setFlipX(pose.flip)
       .setScale(PLAYER_HEIGHT / pose.sheet.referenceHeight)
       .setDepth(state.player.y)
-      .setVisible(!sleepingIn);
-    if (state.aboard) {
-      // Show only the top of the character and sink the cut line into the hull, so they sit in the boat.
-      player
-        .setCrop(0, 0, pose.frame.width, pose.frame.height * SEATED)
-        .setPosition(
-          state.player.x,
-          state.player.y + bob + 10 + player.displayHeight * (1 - SEATED),
-        );
-    } else
-      player.setCrop().setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift);
+      // Aboard, the rowing picture already shows the character sitting in the boat.
+      .setVisible(!sleepingIn && !state.aboard)
+      .setPosition(state.player.x, state.player.y + 4 - PLAYER_HEIGHT * pose.lift);
     shadow
       .setVisible(!state.aboard && !sleepingIn)
       .setPosition(state.player.x, state.player.y - 1)
