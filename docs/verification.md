@@ -416,3 +416,16 @@ Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server), pane
 - Rebuild: "1 objects removed by hand, 2 added by hand, 0 stale edits", "RESULT: pass"; after the reload the editor was still in Objects mode and the out-of-date note was gone. The map file then held both pines and not the boulder.
 - `python tools/build-map.py` with an empty edits file: same 9,012 objects, tileset and overview unchanged; with a locked sprite in the file it stopped with one plain line and no traceback.
 - Not checked in the browser: the dashed outline and deleting a hand-placed object after a rebuild (the logic is covered by `tests/editor/edits.test.js`), the warnings for water, paths and places, clicking a locked sprite, the stale-edits button, and chopping a hand-placed pine in the game.
+
+## 2026-11-20: world editor (ground)
+
+Checked at `http://127.0.0.1:5181/editor.html` (the worktree's dev server).
+
+- Terrain mode shows the grid when zoomed in. With Sand and a 3-box brush, a drag painted a band with no gaps; Undo removed the whole stroke and Redo brought it back.
+- The Eraser painted water boxes; painting Grass back over one removed its override and the count dropped.
+- Save wrote `terrain.json` as runs, one per line, and the page did not reload. Rebuild from the page passed (places, sea, map, cliffs, edits, terrain) and came back in Terrain mode.
+- After the owner's report that one box covered two by two off the grid and showed flat colour: a box is now one tile corner, drawn on the grid, with the real ground picture. One click of Sand, Snow and Eraser each filled exactly one grid box; the brush outline matched the box.
+- `python tools/build-map.py` with one sand corner, a 2×2 snow patch and a 3×3 water patch: the sand came out as one soft patch about a box wide and the water as a pond about three boxes wide with a bank, both sitting on the grid; the preview was not drawn over them.
+- With no overrides the tile layers are identical to before; land painted within 20 tiles of the edge stops the build with one plain line.
+- Seen and left alone: running `build-map.py` from a shell while a page is open makes Vite read the half-written map and log JSON errors until the file is complete. The editor's own Rebuild holds reloads back, so it is not affected.
+- Not checked in the browser: Space+drag, the 5-box brush, painting in Places or Objects mode being impossible, walking onto painted land and being stopped by painted water in the game, and the plain message when a signpost has no dry ground.
