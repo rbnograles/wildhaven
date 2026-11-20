@@ -14,6 +14,24 @@ export const MAX_MOVE_DT = 0.1;
 /** How close the player must stand to a supply to gather it. */
 export const GATHER_RANGE = 95;
 
+// ---- Click to walk ----
+// A click on a tree or rock out of reach walks the player to it (see actions/approach.js).
+
+// The path is planned on a grid of squares this many units wide. Smaller squares find tighter
+// gaps between trees but take longer to search; 24 is under half a tile.
+export const APPROACH_CELL = 24;
+
+// How far from the player (in units, each way) the path may wander. A clicked tree is on screen,
+// so this only needs to cover the screen plus room to walk round a pond or a hill.
+export const APPROACH_SPAN = 1800;
+
+// The path ends this many units inside GATHER_RANGE, so the player is surely in reach on arrival.
+export const APPROACH_MARGIN = 16;
+
+// Seconds the player may push at something without moving before the walk plans a new path
+// (once), and then gives up.
+export const APPROACH_STUCK = 0.4;
+
 // How many seconds a bare-hand gather takes. Tools shorten the gathers that need them (see
 // TOOL_SECONDS); bare-hand gathers always take the full time. This is a design decision, so don't
 // shorten it as a "fix".

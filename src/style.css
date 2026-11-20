@@ -198,6 +198,25 @@ button:active {
   transition: bottom 0.45s ease;
 }
 
+/* The moving character: a canvas over the still pose. ui/selection.js adds is-live once the */
+/* animation sheets have loaded, which swaps the still picture for the breathing one. With */
+/* reduced motion, or if the sheets fail to load, the still picture stays. */
+.realm-figure {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.realm .realm-sprite.is-live {
+  background-image: none;
+}
+
+.realm-sprite.is-live .realm-figure {
+  display: block;
+}
+
 /* ---- Character idle sheets ---- */
 /* Each character's own idle sheet, for its figure on the menu panel and its HUD face picture. */
 /* The menu panel carries data-realm; core/session.js sets data-portrait on the HUD face. */
@@ -315,42 +334,132 @@ button:active {
   text-shadow: 0 1px 3px #0b130ecc;
 }
 
-/* Begin fills the row; Start fresh and Preview sit side by side under it; the hint is last. */
+/* The journey card and, when there is a save to replace, the New journey button beside it. */
 .departure-actions {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 6px 14px;
-  max-width: 420px;
+  align-items: stretch;
+  gap: 10px;
+  max-width: 460px;
   margin: 0 auto;
 }
 
-.departure-actions .primary {
-  flex-basis: 100%;
-}
-
-/* Start fresh and Preview animations: light text on the dark fade, and at least 44px tall */
-/* so they are easy to tap. */
-.departure .text-button {
-  display: inline-flex;
+/* The journey card: a dark green plate with a gold double rim, like a stamped travel pass. */
+/* A round compass seal sits on the left, the title and the save's progress in the middle, and */
+/* an arrow on the right that slides forward on hover. The inner rim is drawn with box-shadow. */
+.journey {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
   align-items: center;
-  min-height: 44px;
+  gap: 14px;
+  min-height: 68px;
+  padding: 10px 18px 10px 12px;
+  text-align: left;
   color: #fbf8ec;
-  font-size: 13px;
-  text-decoration-color: #fbf8ec80;
+  background: linear-gradient(180deg, #2a4132f2, #16241bf2);
+  border: 1px solid #e2b85c99;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 0 0 3px #0b130e,
+    inset 0 0 0 4px #e2b85c40,
+    0 8px 22px #0b130e80;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
-/* On hover they turn gold. The shared dark-green hover colour would vanish on the dark fade. */
-.departure .text-button:hover {
+.journey:hover,
+.journey:focus-visible {
+  border-color: #e2b85c;
+  background: linear-gradient(180deg, #34513ef2, #1b2d22f2);
+}
+
+.journey-seal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #e2b85c99;
+  border-radius: 50%;
+  background: #0b130e80;
   color: #e2b85c;
 }
 
-.save-hint {
-  flex-basis: 100%;
-  margin: 4px 0 0;
+.journey-seal svg {
+  width: 22px;
+}
+
+/* A saved journey fills its seal with gold, so "continue" reads at a glance. */
+.journey.is-saved .journey-seal {
+  background: #e2b85c;
+  color: #16241b;
+}
+
+.journey-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.journey-title {
+  font: 400 20px / 1.15 var(--serif);
+}
+
+.journey-meta {
   font-size: 12px;
+  line-height: 1.3;
+  color: #d9d3bd;
+}
+
+.journey > svg {
+  flex: none;
+  width: 22px;
+  color: #e2b85c;
+  transition: transform 0.2s;
+}
+
+.journey:hover > svg,
+.journey:focus-visible > svg {
+  transform: translateX(4px);
+}
+
+/* New journey: a smaller, quieter plate with a dashed rim (an empty slot waiting to be filled). */
+/* It replaces the save, so it must never look like the main choice. */
+.journey-new {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 92px;
+  padding: 8px 6px;
   color: #e7e2cf;
+  font-size: 12px;
+  line-height: 1.2;
+  background: #0b130e80;
+  border: 1px dashed #fbf8ec66;
+  border-radius: 10px;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.journey-new span {
+  font: 400 24px / 1 var(--serif);
+}
+
+.journey-new:hover,
+.journey-new:focus-visible {
+  color: #e2b85c;
+  border-color: #e2b85c;
+}
+
+/* The hidden attribute must win over display: flex above. */
+.journey-new[hidden] {
+  display: none;
 }
 
 /* Only shown when the browser blocks storage. */
@@ -384,6 +493,25 @@ button:active {
   .departure {
     --fade: 70px;
     padding: 70px 18px 56px;
+  }
+  /* A tighter journey card, so its title stays on one line beside New journey. */
+  .journey {
+    gap: 10px;
+    padding-right: 12px;
+  }
+  .journey-seal {
+    width: 34px;
+    height: 34px;
+  }
+  .journey-title {
+    font-size: 17px;
+  }
+  /* The arrow gives its room to the title. */
+  .journey > svg {
+    display: none;
+  }
+  .journey-new {
+    width: 80px;
   }
   .realm-step {
     display: grid;
@@ -456,13 +584,14 @@ button:active {
     margin-bottom: 8px;
     font-size: 15px;
   }
-  .departure-actions {
-    row-gap: 2px;
+  .journey {
+    min-height: 54px;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
-  .departure-actions .primary {
-    min-height: 46px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+  .journey-seal {
+    width: 36px;
+    height: 36px;
   }
 }
 

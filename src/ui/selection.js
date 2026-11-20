@@ -4,10 +4,104 @@ import { CHARACTERS, nextCharacterId } from '../data/characters.js';
 import { restoreGame } from '../game/state.js';
 import { storageKey } from '../game/saves.js';
 import { start, cancelLoading } from '../core/session.js';
-import { $, icon } from './layout.js';
+import { dayOf } from '../world/clock.js';
+import { REGIONS } from '../world/regions.js';
+import { CLIPS } from '../animation/clips.js';
+import { loadCharacterSheets, loadCharacterPainter } from '../animation/sheets.js';
+import { $ } from './layout.js';
 
 // How far a finger must slide sideways, in CSS pixels, before it counts as a swipe.
 const SWIPE_MIN_PX = 50;
+
+/**
+ * Turns a steady 0-to-1 count into one that starts gently and ends gently.
+ *
+ * Like a swing: slow at each end, quickest in the middle. The menu uses it to melt one idle
+ * picture into the next without a sudden start or stop.
+ *
+ * @param {number} t - How far through the change we are, from 0 to 1.
+ * @returns {number} The eased amount, also from 0 to 1.
+ */
+const easeInOut = (t) => t * t * (3 - 2 * t);
+
+/**
+ * Brings the characters on the menu panels to life: each one breathes and blinks in place.
+ *
+ * Every panel first shows a still picture (set in the stylesheet), so the menu never waits for
+ * this. Once the animation sheets have loaded, each panel's canvas takes over and plays the
+ * character's idle loop, drawn at exactly the size and spot of the still picture so nothing
+ * jumps. If the sheets fail to load, or the player prefers reduced motion, the still stays.
+ *
+ * @param {object} session - The shared session; drawing pauses while the menu is not on screen.
+ */
+function animateFigures(session) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  Promise.all([loadCharacterSheets(), loadCharacterPainter()])
+    .then(([sheets, painter]) => {
+      const figures = [...document.querySelectorAll('[data-figure]')];
+      // The canvases now show the characters, so the still pictures behind them are hidden.
+      for (const canvas of figures) canvas.parentElement.classList.add('is-live');
+
+      /**
+       * Draws every panel's character for this moment, then asks to be called again.
+       *
+       * @param {number} now - The browser's timestamp for this frame, in milliseconds.
+       */
+      function draw(now) {
+        requestAnimationFrame(draw);
+        if (session.screen !== 'selection') return;
+
+        for (const canvas of figures) {
+          // Keep the canvas as sharp as its box on screen (a hidden panel measures 0: skip it).
+          const width = Math.round(canvas.clientWidth * devicePixelRatio),
+            height = Math.round(canvas.clientHeight * devicePixelRatio);
+          if (!width || !height) continue;
+          if (canvas.width !== width || canvas.height !== height)
+            Object.assign(canvas, { width, height });
+
+          // The still picture is the first pose of the idle sheet, one of four across, filling
+          // the box. Stand the moving character on the same feet at the same height.
+          const still = sheets.atlases[canvas.dataset.figure].idle,
+            pose = still.frames[0][0],
+            ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height);
+
+          // The idle loop is only a few pictures a second. In the game the character is small
+          // and that reads fine, but at menu size each change is a visible jump. So here every
+          // picture melts into the next one: the old one fades out as the new one fades in.
+          // 'lighter' adds the two together, so where both are solid the body stays solid.
+          const beat = (now / 1000) * CLIPS.idle.fps,
+            step = Math.floor(beat),
+            blend = easeInOut(beat - step);
+          ctx.globalCompositeOperation = 'lighter';
+          for (const [at, alpha] of [
+            [step, 1 - blend],
+            [step + 1, blend],
+          ]) {
+            if (alpha <= 0) continue;
+            ctx.globalAlpha = alpha;
+            painter.draw(
+              ctx,
+              canvas.dataset.figure,
+              'idle',
+              // The middle of the step, so rounding can never pick a neighbouring picture.
+              (at + 0.5) / CLIPS.idle.fps,
+              0,
+              (pose.anchorX / (still.image.width / 4)) * width,
+              ((pose.y + pose.height) / still.image.height) * height,
+              (still.referenceHeight / still.image.height) * height,
+            );
+          }
+          ctx.globalAlpha = 1;
+          ctx.globalCompositeOperation = 'source-over';
+        }
+      }
+      requestAnimationFrame(draw);
+    })
+    // The still pictures stay; the game itself reports a loading failure when it starts.
+    .catch(() => {});
+}
 
 /**
  * Wires up the character panels and buttons on the main menu.
@@ -48,7 +142,8 @@ export function setupSelection(session, ui) {
   /**
    * Picks a character: brightens their panel, moves the details panel into it, and shows their save status.
    *
-   * The big button says "Continue" when the character has a save and "Begin" when they don't.
+   * The journey card says "Continue" (with the day and finds of the save) when the character has
+   * a save, and "Begin" when they don't.
    *
    * @param {string} id - The character id, such as `scout`.
    */
@@ -73,11 +168,15 @@ export function setupSelection(session, ui) {
     $('departure-place').textContent = c.location;
     $('departure-name').textContent = c.name;
     $('tagline').textContent = c.tagline;
-    $('begin').innerHTML =
-      `${slot.value ? 'Continue your journey' : 'Begin your journey'} ${icon('arrow')}`;
-    $('fresh').hidden = !slot.value;
-    $('save-hint').textContent = slot.value
-      ? `${slot.value.discovered.length} of 7 regions discovered · Adventure saved`
+
+    // The journey card: a saved game shows how far it got (and gets the gold "saved" look, with
+    // the New journey button beside it); otherwise the card simply begins.
+    const game = slot.value;
+    $('begin').classList.toggle('is-saved', !!game);
+    $('begin-title').textContent = game ? 'Continue your journey' : 'Begin your journey';
+    $('fresh').hidden = !game;
+    $('save-hint').textContent = game
+      ? `Day ${dayOf(game.time)} · ${game.discovered.length} of ${REGIONS.length} regions · ${game.landmarks.length} ${game.landmarks.length === 1 ? 'place' : 'places'}`
       : slot.invalid
         ? 'This save could not be read. Start fresh to play.'
         : 'Your own path through a shared world.';
@@ -144,7 +243,7 @@ export function setupSelection(session, ui) {
 
   $('begin').addEventListener('click', () => start(session, ui));
 
-  // "Start a fresh adventure" asks first, because it replaces the saved game.
+  // "New journey" asks first, because it replaces the saved game.
   $('fresh').addEventListener('click', () => {
     $('reset-message').textContent =
       'This replaces this character’s saved adventure. Your other characters will be kept.';
@@ -152,6 +251,8 @@ export function setupSelection(session, ui) {
   });
 
   $('loading-back').addEventListener('click', () => cancelLoading(session));
+
+  animateFigures(session);
 
   return { readSlot, select };
 }

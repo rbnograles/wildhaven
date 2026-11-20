@@ -5,6 +5,7 @@
 import { beginInteraction } from '../actions/interact.js';
 import { listMissing } from '../actions/boat.js';
 import { lockedNode, aimState } from '../actions/gather.js';
+import { beginApproach } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { campInReach } from '../world/camps.js';
 import { save } from './session.js';
@@ -24,7 +25,8 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
  * Also handles E to step ashore, board, repair, gather or open a camp, B for the build menu (and
  * 1 to pick the campfire in it, 2 to 4 to craft a tool), F to eat, H to heal, M for the map, J for the journal, Escape to
  * pause (or to leave the build menu or build mode), the mouse over the world (a click on a tree or
- * rock in reach chops or mines it), and saving when the tab is hidden.
+ * rock chops or mines it, walking there first when it is out of reach), and saving when the tab
+ * is hidden.
  *
  * @param {object} session - The shared session; its `keys` set and `clock` are used here.
  * @param {object} ui - The UI helpers (`hud`, `dialogs`, `journal`) that key presses open or update.
@@ -89,7 +91,7 @@ export function setupInput(session, ui) {
    * The frame loop asks every frame, because the camera moves under a still mouse. Nothing is
    * aimed at while placing a campfire, with the build menu open, or while a dialog is up. When
    * two pictures overlap under the mouse, one in reach wins over one that is merely in front. The
-   * mouse also turns into a pointing hand over a tree or rock a click would work on.
+   * mouse also turns into a pointing hand over a tree or rock a click would work on or walk to.
    *
    * @returns {{node: object, state: string}|null} The node and its aimState ('ready', 'far' or
    *   'locked'), or null when the mouse is over nothing that needs a tool.
@@ -105,15 +107,16 @@ export function setupInput(session, ui) {
         .filter((a) => a.state);
       aim = aims.find((a) => a.state === 'ready') ?? aims[0] ?? null;
     }
-    world.style.cursor = aim?.state === 'ready' ? 'pointer' : '';
+    world.style.cursor = aim && aim.state !== 'locked' ? 'pointer' : '';
     return aim;
   }
 
   /**
    * Does what a click on the tree or rock under the mouse means.
    *
-   * In reach with the right tool, the click starts chopping or mining that very one, like E. With
-   * no tool it says which to make, and from too far it says to walk closer.
+   * In reach with the right tool, the click starts chopping or mining that very one, like E. From
+   * too far, the character walks there by themselves and starts the work on arriving (the frame
+   * loop follows the walk; any movement key takes over again). With no tool it says which to make.
    *
    * @param {{node: object, state: string}} aim - What `hover` found under the mouse.
    */
@@ -123,7 +126,10 @@ export function setupInput(session, ui) {
       return;
     }
     if (how === 'far') {
-      ui.hud.notify(`Walk closer to ${node.verb.toLowerCase()} the ${node.label.toLowerCase()}.`);
+      // Busy with an action or lying asleep: the click waits for another time.
+      if (session.animator.pending || session.animator.asleep > 0) return;
+      session.walk = beginApproach(session.state, node);
+      if (!session.walk) ui.hud.notify(`Can't find a way to the ${node.label.toLowerCase()}.`);
       return;
     }
     const result = beginInteraction(session.state, session.animator, node.id);

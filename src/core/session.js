@@ -34,7 +34,8 @@ export const tabStorage = (() => {
  *   (`build`: whether a fire is being placed, whether the build menu is open, the ghost's spot
  *   and its placement check; never saved), the mouse
  *   position over the world (`pointer`, or null) and the tree or rock under the mouse (`hover`:
- *   `{node, state}` with the state from aimState, or null; worked out every frame, never saved).
+ *   `{node, state}` with the state from aimState, or null; worked out every frame, never saved),
+ *   and the walk to a clicked tree or rock (`walk`, from beginApproach, or null; never saved).
  */
 export function createSession() {
   return {
@@ -51,6 +52,7 @@ export function createSession() {
     build: { active: false, menu: false, x: 0, y: 0, check: null },
     pointer: null,
     hover: null,
+    walk: null,
   };
 }
 
@@ -66,6 +68,7 @@ export function createSession() {
 export function changeScreen(session, next) {
   session.screen = next;
   session.keys.clear();
+  session.walk = null;
   for (const name of ['selection', 'loading', 'game']) $(name).hidden = name !== next;
   document.body.classList.toggle('playing', next === 'game');
 }

@@ -1,4 +1,4 @@
-// The "Preview animations" dialog: a small viewer that plays any character's animations on a
+// The animation preview dialog (console only: wildhavenPreview()): a small viewer that plays any character's animations on a
 // canvas. It lets you look at clips the game doesn't use yet (craft, fight, swim), so it is a
 // window into the art, not a sign that those actions work in play.
 import { CHARACTERS } from '../data/characters.js';
@@ -22,8 +22,8 @@ const FACINGS = {
 const DIAGONAL_FACING = { ne: 3, nw: 3, se: 0, sw: 0 };
 
 /**
- * Builds the animation preview dialog and adds a "Preview animations" button to the selection
- * screen and the pause menu.
+ * Builds the animation preview dialog. It has no button: `wildhavenPreview()` in the browser
+ * console opens it.
  *
  * Like a flip-book viewer: pick a character, an animation and a facing, and it plays the frames
  * on a canvas. The artwork loads the first time the dialog opens, not when the page loads.
@@ -192,26 +192,19 @@ export function setupPreview(getCharacter) {
   // Keys pressed in the dialog's dropdowns must not move the player or open the map.
   dialog.addEventListener('keydown', (e) => e.stopPropagation());
 
-  // Add an opening button to the selection screen and to the pause menu.
-  for (const [parent, before] of [
-    ['.departure-actions', '#save-hint'],
-    ['#pause-dialog', '#return'],
-  ]) {
-    const button = document.createElement('button');
-    button.textContent = 'Preview animations';
-    button.className = 'text-button';
-    document.querySelector(parent).insertBefore(button, document.querySelector(before));
-
-    // Open on the current character walking east, playing unless the player prefers less motion.
-    button.onclick = () => {
-      field('character').value = getCharacter();
-      field('clip').value = 'walk';
-      updateDirections();
-      field('direction').value = '2';
-      playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-      toggle.textContent = playing ? 'Pause' : 'Play';
-      dialog.showModal();
-      load();
-    };
-  }
+  // No menu has a button for this any more: players see the characters move on the main menu
+  // and in play. The viewer stays as a tool for checking art, opened by typing
+  // wildhavenPreview() in the browser console (like wildhavenPlaytest()).
+  // It opens on the current character walking east, playing unless the player prefers less motion.
+  window.wildhavenPreview = () => {
+    if (dialog.open) return;
+    field('character').value = getCharacter();
+    field('clip').value = 'walk';
+    updateDirections();
+    field('direction').value = '2';
+    playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    toggle.textContent = playing ? 'Pause' : 'Play';
+    dialog.showModal();
+    load();
+  };
 }

@@ -13,7 +13,7 @@ npm run dev
 
 Open the local URL printed by Vite, normally http://localhost:5173.
 
-Choose the Frontier Scout, Wandering Builder, or Shipwreck Survivor and press **Begin your journey**. Each enters the same world at a different location: Pinefall Woods, Hollowstead Village, or Driftwood Coast. A character with an existing save has **Continue your journey** instead. Use **Start a fresh adventure** to replace only that character's save, after confirmation.
+Choose the Frontier Scout, Wandering Builder, or Shipwreck Survivor and press **Begin your journey**. Each enters the same world at a different location: Pinefall Woods, Hollowstead Village, or Driftwood Coast. A character with an existing save has **Continue your journey** instead. Use **New journey** to replace only that character's save, after confirmation.
 
 ## Controls
 

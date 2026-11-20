@@ -122,7 +122,9 @@ export function mountLayout(app) {
               style="--index:${index}"
             >
               <span class="realm-scene" aria-hidden="true"></span>
-              <span class="realm-sprite" aria-hidden="true"></span>
+              <span class="realm-sprite" aria-hidden="true"
+                ><canvas class="realm-figure" data-figure="${c.id}"></canvas
+              ></span>
               <button
                 class="realm-pick"
                 data-character="${c.id}"
@@ -137,15 +139,25 @@ export function mountLayout(app) {
         ).join('')}
       </div>
       <!-- The chosen character's details and buttons. ui/selection.js fills these and moves the
-           whole panel into the chosen realm. preview.js adds its button inside .departure-actions. -->
+           whole panel into the chosen realm. The journey card (#begin) starts or continues the game:
+           its title and the line under it (the save's day and finds) are set per character. The
+           smaller New journey button shows only when there is a save to replace. -->
       <section id="departure" class="departure" aria-label="Your chosen character">
         <p id="departure-place" class="departure-place"></p>
         <h2 id="departure-name"></h2>
         <p id="tagline" class="tagline"></p>
         <div class="departure-actions">
-          <button id="begin" class="primary">Begin your journey ${icon('arrow')}</button
-          ><button id="fresh" class="text-button" hidden>Start a fresh adventure</button>
-          <p id="save-hint" class="save-hint">Your own path through a shared world.</p>
+          <button id="begin" class="journey">
+            <span class="journey-seal">${icon('compass')}</span
+            ><span class="journey-text"
+              ><span id="begin-title" class="journey-title">Begin your journey</span
+              ><span id="save-hint" class="journey-meta"
+                >Your own path through a shared world.</span
+              ></span
+            >${icon('arrow')}</button
+          ><button id="fresh" class="journey-new" hidden>
+            <span aria-hidden="true">+</span> New journey
+          </button>
         </div>
         <p id="storage-note" class="storage-note" hidden></p>
       </section>

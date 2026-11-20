@@ -3,14 +3,16 @@
 // survival clock, hands out gathered supplies, mended boats and crafted tools, checks for new
 // finds, lifts the fog, autosaves, and asks the renderer to draw.
 
-import { movePlayer } from '../actions/move.js';
-import { finishInteraction } from '../actions/interact.js';
+import { movePlayer, stepLength } from '../actions/move.js';
+import { beginInteraction, finishInteraction } from '../actions/interact.js';
+import { aimState } from '../actions/gather.js';
+import { beginApproach, approachStep, eightWay } from '../actions/approach.js';
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
-import { REPAIR_COST, HUNGRY_BELOW } from '../data/balance.js';
+import { REPAIR_COST, HUNGRY_BELOW, APPROACH_STUCK } from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
 import { revealAround } from '../world/fog.js';
 import { inSnow } from '../world/regions.js';
@@ -112,6 +114,51 @@ function handleSurvival(session, ui, events) {
 }
 
 /**
+ * Plans a fresh path for a walk that ran into trouble, or gives the walk up.
+ *
+ * A walk gets one second try (a tree may have grown back in the way, say). If that fails too, or
+ * no path exists any more, the walk ends and the player is told.
+ *
+ * @param {object} session - The shared session; its `walk` is replaced or cleared.
+ * @param {object} ui - The UI helpers (`hud`).
+ */
+function replanWalk(session, ui) {
+  const { walk, state } = session,
+    next = walk.retried ? null : beginApproach(state, walk.node);
+  session.walk = next && { ...next, retried: true };
+  if (!next) ui.hud.notify(`Can't find a way to the ${walk.node.label.toLowerCase()}.`);
+}
+
+/**
+ * Follows the walk to a clicked tree or rock for one frame.
+ *
+ * Once the target is in reach the walk ends and the chop or the mining starts, just as if the
+ * player had clicked it from beside it. If the target is gone (or its tool broke on the way) the
+ * walk is simply dropped. Otherwise it says which way to push the player this frame.
+ *
+ * @param {object} session - The shared session; its `walk` is followed and may be cleared.
+ * @param {object} ui - The UI helpers (`hud`).
+ * @param {number} dt - Seconds since the last frame.
+ * @param {boolean} running - True while Shift is held, so the walk becomes a run.
+ * @returns {{dx: number, dy: number}|null} The push for movePlayer, or null when not walking on.
+ */
+function followWalk(session, ui, dt, running) {
+  const { state, animator, walk } = session,
+    how = aimState(state, walk.node);
+
+  if (how !== 'far') {
+    session.walk = null;
+    if (how === 'ready' && beginInteraction(state, animator, walk.node.id).ok) ui.hud.update();
+    return null;
+  }
+
+  const push = approachStep(state, walk, stepLength(state, dt, running));
+  // The path ran out short of the target: plan again from here.
+  if (!push) replanWalk(session, ui);
+  return push;
+}
+
+/**
  * Starts the never-ending frame loop that keeps the game running.
  *
  * The browser calls us right before it paints the screen. Each time, we work out how much time
@@ -146,17 +193,36 @@ export function startLoop(session, ui) {
     if (session.screen === 'game' && state && renderer) {
       let moving = false;
 
+      // Opening a dialog (the map, a camp, pause) calls off a walk to a clicked tree or rock.
+      if (ui.dialogs.isPaused()) session.walk = null;
+
       // The simulation only runs while nothing is paused and the tab is visible.
       if (!ui.dialogs.isPaused() && !document.hidden) {
-        const { dx, dy, running } = ui.input.moveIntent();
+        const keys = ui.input.moveIntent(),
+          { running } = keys;
+        let { dx, dy } = keys;
 
         // Moving cancels an action in progress; nothing is awarded. A collapse can't be cancelled.
         if (animator.pending && (dx || dy) && cancelAction(animator)) ui.hud.update();
+
+        // A click on a far tree or rock walks the player to it. A movement key takes the player
+        // back, and so does anything that keeps them busy (an action, a nap, building).
+        const { build } = session;
+        if (dx || dy || animator.pending || animator.asleep > 0 || build.active || build.menu)
+          session.walk = null;
+        const push = session.walk && followWalk(session, ui, dt, running);
+        if (push) ({ dx, dy } = push);
 
         // Nobody walks while busy with an action or lying asleep.
         const free = !animator.pending && !(animator.asleep > 0);
         const from = { x: state.player.x, y: state.player.y };
         moving = free && movePlayer(state, dx, dy, dt, running);
+
+        // A walk that pushes at something without moving plans a new path, then gives up.
+        if (push && session.walk) {
+          session.walk.stuck = moving ? 0 : session.walk.stuck + dt;
+          if (session.walk.stuck > APPROACH_STUCK) replanWalk(session, ui);
+        }
         // The first real step hides the controls strip.
         if (moving) ui.hud.hideKeyStrip();
         state.elapsed += dt;
@@ -172,12 +238,14 @@ export function startLoop(session, ui) {
 
         // When a timed action finishes, hand out what it was aimed at (exactly once): supplies, a
         // mended boat or a crafted tool.
+        // The diagonal pictures follow where the player really went, so sliding along a wall
+        // with two keys held shows the straight walk, not a diagonal one. A walk to a clicked
+        // tree goes at any angle, so the movement is first rounded to the nearest of 8 directions.
+        const went = eightWay(state.player.x - from.x, state.player.y - from.y);
         const done = advanceAnimation(animator, dt, {
           moving,
           running,
-          // The diagonal pictures follow where the player really went, so sliding along a wall
-          // with two keys held shows the straight walk, not a diagonal one.
-          diagonal: diagonalOf(state.player.x - from.x, state.player.y - from.y),
+          diagonal: diagonalOf(went.dx, went.dy),
           hungry: !state.aboard && state.meters.hunger < HUNGRY_BELOW,
           hurt: hurtClip(state),
         });
@@ -228,8 +296,10 @@ export function startLoop(session, ui) {
 
       // Drawing still happens while paused, so the world stays on screen behind the dialog.
       // The tree or rock under the mouse gets a tool badge; the camera moves, so ask every frame.
+      // While walking to a clicked one, its badge stays up so the player sees where they are going.
       session.hover = ui.input.hover();
-      renderer.draw(state, dt, animator, session.build, session.hover);
+      const aim = session.hover ?? (session.walk && { node: session.walk.node, state: 'ready' });
+      renderer.draw(state, dt, animator, session.build, aim);
       clock.sinceHud += dt;
       if (clock.sinceHud > HUD_EVERY) {
         ui.hud.update();
