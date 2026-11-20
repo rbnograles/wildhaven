@@ -9,7 +9,12 @@ import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { shapeErrors as placesShape, writePlaces } from '../src/editor/model.js';
 import { shapeErrors as editsShape, writeEdits } from '../src/editor/edits.js';
-import { shapeErrors as terrainShape, writeTerrain, decodeRuns } from '../src/editor/terrain.js';
+import {
+  shapeErrors as terrainShape,
+  writeTerrain,
+  decodeFile,
+  emptyTerrain,
+} from '../src/editor/terrain.js';
 
 /**
  * The files the editor may read and save, by the name used in the URL. `path` is inside the
@@ -26,11 +31,11 @@ const FILES = {
   },
   terrain: {
     path: 'assets/world/source/terrain.json',
-    // The page sends the file's own shape: a list of runs.
+    // The page sends the file's own shape: runs of painted ground and of hill levels, and stairs.
     shape: terrainShape,
-    // The writer wants the overrides one per corner, so the runs are unpacked first.
-    write: (data) => writeTerrain({ ground: decodeRuns(data.ground) }),
-    empty: '{\n  "ground": []\n}\n',
+    // The writer wants one entry per corner and per tile, so the runs are unpacked first.
+    write: (data) => writeTerrain(decodeFile(data)),
+    empty: writeTerrain(emptyTerrain()),
   },
 };
 

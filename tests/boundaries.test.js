@@ -28,6 +28,7 @@ const PURE = [
   'editor/lookups.js',
   'editor/edits.js',
   'editor/terrain.js',
+  'editor/hills.js',
 ];
 
 /**

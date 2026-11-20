@@ -356,8 +356,8 @@ const SAVERS = {
   terrain: {
     // Whether the painted ground changed.
     dirty: () => terrain.isTerrainDirty(app.editor),
-    // The painted corners, packed into runs.
-    data: () => ({ ground: terrain.encodeRuns(app.editor.terrain.ground) }),
+    // The painted ground and the hills, packed into runs.
+    data: () => terrain.encodeFile(app.editor.terrain),
     // Notes the painted ground as saved.
     saved: () => terrain.markTerrainSaved(app.editor),
   },

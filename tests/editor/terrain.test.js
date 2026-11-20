@@ -180,11 +180,15 @@ test('shapeErrors accepts runs inside the grid and rejects anything else', () =>
 
 // Guards the layout of terrain.json: one run per line, and text that parses back.
 test('writeTerrain writes one run per line and parses back', () => {
-  const text = writeTerrain({ ground: { '3,2': 'sand', '3,3': 'sand', '2,9': 'water' } });
-  assert.equal(
-    text,
-    ['{', '  "ground": [', '    [2, 9, 9, "water"],', '    [3, 2, 3, "sand"]', '  ]', '}', ''].join(
-      '\n',
+  const text = writeTerrain({
+    ...emptyTerrain(),
+    ground: { '3,2': 'sand', '3,3': 'sand', '2,9': 'water' },
+  });
+  assert.ok(
+    text.startsWith(
+      ['{', '  "ground": [', '    [2, 9, 9, "water"],', '    [3, 2, 3, "sand"]', '  ],', ''].join(
+        '\n',
+      ),
     ),
   );
   assert.deepEqual(decodeRuns(JSON.parse(text).ground), {
@@ -192,5 +196,18 @@ test('writeTerrain writes one run per line and parses back', () => {
     '3,3': 'sand',
     '2,9': 'water',
   });
-  assert.equal(writeTerrain(emptyTerrain()), '{\n  "ground": []\n}\n');
+  assert.equal(
+    writeTerrain(emptyTerrain()),
+    [
+      '{',
+      '  "ground": [],',
+      '  "levels": [],',
+      '  "stairs": {',
+      '    "added": [],',
+      '    "removed": []',
+      '  }',
+      '}',
+      '',
+    ].join('\n'),
+  );
 });

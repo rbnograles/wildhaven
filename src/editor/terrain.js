@@ -4,6 +4,7 @@
 // file's text. It knows nothing about the page.
 
 import { remember } from './model.js';
+import { emptyHills, decodeLevels, encodeLevels, hillShapeErrors, writeHills } from './hills.js';
 
 /**
  * The ground kinds, in the map build's rank order (a higher one is painted over a lower one).
@@ -30,8 +31,11 @@ export const EDGE_SEA = 20;
 /** The kind the Eraser paints. */
 export const ERASER = 'water';
 
-/** Makes a terrain with no overrides. `ground` maps a corner, as 'row,col', to its kind. */
-export const emptyTerrain = () => ({ ground: {} });
+/**
+ * Makes a terrain with no overrides. `ground` maps a corner, as 'row,col', to its kind; `levels`
+ * and `stairs` are the hand-made hills (see hills.js).
+ */
+export const emptyTerrain = () => ({ ground: {}, ...emptyHills() });
 
 /**
  * Unpacks the file's runs into one entry per corner.
@@ -70,13 +74,45 @@ export function encodeRuns(ground) {
 }
 
 /**
+ * Unpacks a parsed terrain file into the shape the editor works on: one entry per corner and
+ * per tile instead of runs. Sections an older file lacks come out empty.
+ *
+ * @param {object} file - The parsed terrain file.
+ * @returns {object} `{ground, levels, stairs}`.
+ */
+export function decodeFile(file) {
+  return {
+    ground: decodeRuns(file.ground ?? []),
+    levels: decodeLevels(file.levels ?? []),
+    stairs: {
+      added: (file.stairs?.added ?? []).map((f) => [...f]),
+      removed: (file.stairs?.removed ?? []).map((f) => [...f]),
+    },
+  };
+}
+
+/**
+ * Packs the terrain into the shape terrain.json has on disk, for sending to the server.
+ *
+ * @param {object} terrain - The terrain being edited.
+ * @returns {object} `{ground, levels, stairs}` with runs.
+ */
+export function encodeFile(terrain) {
+  return {
+    ground: encodeRuns(terrain.ground),
+    levels: encodeLevels(terrain.levels),
+    stairs: terrain.stairs,
+  };
+}
+
+/**
  * Puts the terrain read from disk into an editing session.
  *
  * @param {object} editor - The editing session from `createEditor`.
  * @param {object} file - The parsed terrain file.
  */
 export function loadTerrain(editor, file) {
-  editor.terrain = { ground: decodeRuns(file.ground ?? []) };
+  editor.terrain = decodeFile(file);
   editor.savedTerrain = writeTerrain(editor.terrain);
 }
 
@@ -186,21 +222,24 @@ export function shapeErrors(file, grid = { rows: 320, cols: 448 }) {
       KINDS.includes(run[3]);
     if (!ok) errors.push(`ground[${i}] must be [row, firstCol, lastCol, kind] inside the map`);
   });
-  return errors;
+
+  // The hills sections may be missing in a file from before hills could be edited.
+  const hills = { levels: file.levels ?? [], stairs: file.stairs ?? { added: [], removed: [] } };
+  return [...errors, ...hillShapeErrors(hills, grid)];
 }
 
 /**
- * Turns the terrain into the text of terrain.json: one run per line, in a fixed order.
+ * Turns the terrain into the text of terrain.json: the painted ground, then the hills, one run
+ * per line in a fixed order.
  *
  * @param {object} terrain - The terrain being edited.
  * @returns {string} The file's text, ending with a newline.
  */
 export function writeTerrain(terrain) {
-  const runs = encodeRuns(terrain.ground);
-  if (!runs.length) return '{\n  "ground": []\n}\n';
-
-  const lines = runs.map(
+  const lines = encodeRuns(terrain.ground).map(
     ([row, first, last, kind]) => `    [${row}, ${first}, ${last}, "${kind}"]`,
   );
-  return `{\n  "ground": [\n${lines.join(',\n')}\n  ]\n}\n`;
+  const ground = lines.length ? `  "ground": [\n${lines.join(',\n')}\n  ]` : '  "ground": []';
+
+  return `{\n${[ground, ...writeHills(terrain)].join(',\n')}\n}\n`;
 }

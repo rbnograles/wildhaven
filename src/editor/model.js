@@ -69,7 +69,7 @@ export function createEditor(places) {
   return {
     places: copy(places),
     edits: { removed: [], added: [] },
-    terrain: { ground: {} },
+    terrain: { ground: {}, levels: {}, stairs: { added: [], removed: [] } },
     past: [],
     future: [],
     saved: writePlaces(places),
