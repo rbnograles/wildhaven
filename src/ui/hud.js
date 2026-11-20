@@ -181,6 +181,7 @@ export function describeFinish(finished) {
 function actionLabel(state, choice) {
   if (choice.kind === 'land') return 'Step ashore';
   if (choice.kind === 'chest') return 'Open the chest';
+  if (choice.kind === 'sleep') return 'Sleep in the tent';
   if (choice.kind === 'hunt' && choice.target.den)
     return state.tools.axe ? 'Fight the wolf' : 'Fight the wolf — needs an axe';
   if (choice.kind === 'hunt') {

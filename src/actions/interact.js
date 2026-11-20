@@ -1,6 +1,6 @@
 // What the E key (and the on-screen interact button) does right now. Several things share the
 // key, so this file picks one in a fixed order and does it: step ashore, board the boat, repair
-// an old boat, open a chest or work a wheat bed at a camp, or gather a supply. It also finishes
+// an old boat, open a chest or work a wheat bed at a camp, gather a supply, or sleep in a tent. It also finishes
 // timed actions: crafting a tool, putting up a building and farming included.
 
 import { WRECKS } from '../data/places.js';
@@ -11,6 +11,7 @@ import { finishMake } from './gear.js';
 import { GEAR_IDS } from '../data/gear.js';
 import { nearbyBuilding } from '../world/buildings.js';
 import { huntable, beginHunt, finishHunt, HUNT_PREFIX } from './animals.js';
+import { canSleep } from './camp.js';
 import {
   BUILDING_PREFIX,
   FARM_PREFIX,
@@ -33,12 +34,15 @@ import {
  * Picks what pressing E would do right now, without doing it.
  *
  * Only one thing happens per press, so the choices are tried in order, like a queue at a counter:
- * step ashore when in the boat, get in when next to it, repair an old boat, then gather. The HUD
- * uses the answer for the button's words and the renderer for its highlight.
+ * step ashore when in the boat, get in when next to it, repair an old boat, hunt, use a chest or
+ * wheat bed, gather, and last of all sleep in a tent (from dusk). The HUD uses the answer for the
+ * button's words and the renderer for its highlight.
  *
  * @param {object} state - The game being played.
- * @returns {{kind: string, target: object}|null} `kind` is 'land', 'board', 'repair' or 'gather';
- *   `target` is the landing spot, the boat, the old boat or the node. Null when nothing is in reach.
+ * @returns {{kind: string, target: object}|null} `kind` is 'land', 'board', 'repair', 'hunt',
+ *   'chest', 'farm', 'gather' or 'sleep'; `target` is the landing spot, the boat, the old boat, the
+ *   animal, the building or the node (a 'sleep' also carries the tent's `camp`). Null when nothing
+ *   is in reach.
  */
 export function chooseInteraction(state) {
   if (state.aboard) {
@@ -56,7 +60,11 @@ export function chooseInteraction(state) {
   if (near?.building.kind === 'chest') return { kind: 'chest', target: near.building };
   if (near) return { kind: 'farm', target: near.building, job: farmJob(state, near.building) };
   const node = nearbyNode(state);
-  return node ? { kind: 'gather', target: node } : null;
+  if (node) return { kind: 'gather', target: node };
+  // A tent comes last and only once it is late enough to sleep, so by day E beside a tent still
+  // opens the camp when the fire is close.
+  const tent = canSleep(state) && nearbyBuilding(state, ['tent']);
+  return tent ? { kind: 'sleep', target: tent.building, camp: tent.camp } : null;
 }
 
 /**
@@ -89,6 +97,8 @@ export function beginInteraction(state, animator, id) {
   // Opening a chest is not a timed action: the caller opens the chest window.
   if (choice.kind === 'chest') return { ok: true, kind: 'chest', chest: choice.target };
   if (choice.kind === 'farm') return { ...beginFarm(state, animator, choice.target), kind: 'farm' };
+  // Sleeping in a tent is not a timed action either: the caller rests at the tent's camp.
+  if (choice.kind === 'sleep') return { ok: true, kind: 'sleep', camp: choice.camp };
   return { ...beginGather(state, animator), kind: 'gather' };
 }
 

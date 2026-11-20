@@ -41,6 +41,7 @@ export const CONTROLS = [
       { keys: ['E'], does: 'Mend an old boat, step aboard, or step ashore' },
       { keys: ['E'], does: 'Open your camp beside its fire, or a storage chest' },
       { keys: ['E'], does: 'Sow, tend or harvest a wheat bed' },
+      { keys: ['E'], does: 'Sleep in your tent until dawn, from dusk' },
       { keys: ['F'], does: 'Eat food' },
       { keys: ['H'], does: 'Heal with herbs' },
       { keys: ['R'], does: 'Drive back wolves close by' },

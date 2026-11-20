@@ -20,7 +20,7 @@ export const BUILDINGS = [
     sprite: 'tent',
     scale: 0.6,
     stages: ['shelter-1', 'shelter-2', 'shelter-3'],
-    made: 'Tent pitched · Rest here at dusk to sleep inside',
+    made: 'Tent pitched · From dusk, press E beside it to sleep inside',
   },
   {
     id: 'chest',

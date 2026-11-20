@@ -21,6 +21,7 @@ import {
 import { growCrops, buildingBases } from '../../src/world/buildings.js';
 import { fireRadius } from '../../src/world/camps.js';
 import { rest } from '../../src/actions/camp.js';
+import { chooseInteraction, beginInteraction } from '../../src/actions/interact.js';
 import { isWalkable } from '../../src/world/map.js';
 import {
   BUILDING_COSTS,
@@ -28,6 +29,7 @@ import {
   GROW_SECONDS,
   HARVEST_FOOD,
   CENTRE_WARMTH,
+  DAY_SECONDS,
   PHASES,
 } from '../../src/data/balance.js';
 
@@ -190,4 +192,33 @@ test('resting at a camp with a tent costs half the night’s hunger', () => {
   const lost = 80 - plain.meters.hunger;
   assert.ok(lost > 0);
   assert.ok(Math.abs(80 - sheltered.meters.hunger - lost / 2) < 0.01);
+});
+
+// Guards E at a tent: nothing by day (so E can still open the camp), and from dusk it offers a sleep
+// at the tent's own camp, even when the player stands too far from the fire to open the camp.
+test('E beside a tent sleeps in it from dusk, and not by day', () => {
+  const game = campGame();
+  const tent = build(game, 'tent');
+  Object.assign(game.player, { x: tent.x, y: tent.y + 30 });
+
+  game.time = 100;
+  assert.equal(chooseInteraction(game), null);
+
+  game.time = 300;
+  const choice = chooseInteraction(game);
+  assert.equal(choice.kind, 'sleep');
+  assert.equal(choice.target, tent);
+  assert.deepEqual(beginInteraction(game, createAnimator()), {
+    ok: true,
+    kind: 'sleep',
+    camp: game.camps[0],
+  });
+
+  // The tent's camp is passed on, so the rest works from the tent's side of the camp.
+  game.camps[0].x -= 200;
+  assert.equal(rest(game).ok, false);
+  const slept = rest(game, choice.camp);
+  assert.equal(slept.ok, true);
+  assert.equal(slept.tent, true);
+  assert.equal(game.time, DAY_SECONDS);
 });

@@ -11,6 +11,7 @@ import { GEAR } from '../data/gear.js';
 import { BUILDINGS } from '../data/buildings.js';
 import { repel } from '../actions/wolves.js';
 import { campInReach } from '../world/camps.js';
+import { nearbyBuilding } from '../world/buildings.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -63,8 +64,9 @@ export function setupInput(session, ui) {
 
   /**
    * Does what E means outside build mode: step ashore, board, repair or gather, tried in that
-   * order. With none of those in reach, E beside one of the player's fires opens that camp; beside a
-   * tree or rock it says which tool to make; anywhere else it says why nothing happened.
+   * order; a chest opens its window and a tent (from dusk) is slept in. With none of those in reach,
+   * E beside one of the player's fires opens that camp; beside a tree or rock it says which tool to
+   * make; beside a tent by day it says to come back at dusk; anywhere else it says why nothing happened.
    *
    * Landing and boarding happen at once and save straight away. Repairing and gathering start a
    * timed action that core/loop.js finishes. Held movement keys are forgotten so the player
@@ -86,6 +88,12 @@ export function setupInput(session, ui) {
     if (result.ok && result.kind === 'chest') {
       keys.clear();
       ui.chest.open(result.chest);
+      return;
+    }
+    // A tent, from dusk: sleep in it until dawn, the same rest the camp's own button gives.
+    if (result.ok && result.kind === 'sleep') {
+      keys.clear();
+      ui.camp.restNight(result.camp);
       return;
     }
     // A wheat bed with nothing to do right now (no seed, or tended and growing) says why, and so
@@ -115,10 +123,14 @@ export function setupInput(session, ui) {
     }
     // A tree or rock in reach that needs a tool the player doesn't have yet: say how to get one.
     const locked = !session.state.aboard && lockedNode(session.state);
+    // Beside a tent by day (it is only slept in from dusk): say when it can be used.
+    const tent = !locked && !session.state.aboard && nearbyBuilding(session.state, ['tent']);
     ui.hud.notify(
       locked
         ? `You need ${toolInfo(locked.tool).aName}. Make one in the Build menu (B).`
-        : 'Move closer to something you can use.',
+        : tent
+          ? 'You can sleep in the tent from dusk.'
+          : 'Move closer to something you can use.',
     );
   }
 
