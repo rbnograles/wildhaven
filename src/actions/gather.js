@@ -15,6 +15,7 @@ import {
 } from '../data/balance.js';
 import { TREE_DROPS } from '../data/supplies.js';
 import { toolTier, hasTool } from '../world/tools.js';
+import { addItem, hasRoomFor } from '../world/bag.js';
 import { startAction } from '../animation/clips.js';
 
 /**
@@ -129,7 +130,8 @@ export function aimState(state, node) {
  * @param {string} [id] - Id of one node to gather, for a click on it. It must be in reach, have
  *   something to give and need no tool the player lacks. Without an id the nearest node is used.
  * @returns {{ok: boolean, reason?: string, node?: object}} `ok` with the node when it started;
- *   otherwise `reason` is 'busy' (already doing something) or 'none' (nothing in reach).
+ *   otherwise `reason` is 'busy' (already doing something), 'none' (nothing in reach) or 'full'
+ *   (the item box has no open slot for this kind of thing).
  */
 export function beginGather(state, animator, id) {
   if (animator.pending) return { ok: false, reason: 'busy' };
@@ -137,6 +139,8 @@ export function beginGather(state, animator, id) {
     ? nodesInReach(state).find((n) => n.id === id && hasToolFor(state, n))
     : nearbyNode(state);
   if (!node) return { ok: false, reason: 'none' };
+  // A new kind of thing needs an open slot in the item box.
+  if (!hasRoomFor(state, [node.type])) return { ok: false, reason: 'full', node };
 
   // Face the node, unless it's almost straight above or below the player.
   if (Math.abs(node.x - state.player.x) > 8)
@@ -166,9 +170,10 @@ export function finishGather(state, id = nearbyNode(state)?.id) {
   const node = NODES.find((n) => n.id === id);
   if (!node || !isAvailable(state, node) || !inReach(state, node) || !hasToolFor(state, node))
     return null;
+  // The bag is checked again: it may have filled while the player worked.
+  if (!addItem(state, node.type, node.amount)) return null;
 
   state.regrowAt[node.id] = state.time + node.regrow;
-  state.resources[node.type] += node.amount;
   return node;
 }
 
@@ -181,11 +186,11 @@ export function finishGather(state, id = nearbyNode(state)?.id) {
  * @param {object} state - The game being played. Its resources grow by one when something drops.
  * @param {object} node - The node that was just gathered.
  * @param {() => number} [roll] - Gives a number from 0 to 1; tests pass their own to load the dice.
- * @returns {string|null} The resource that dropped, or null when nothing did.
+ * @returns {string|null} The resource that dropped, or null when nothing did (or the bag was full).
  */
 export function dropFrom(state, node, roll = Math.random) {
   const drop = node.inScenery && TREE_DROPS[node.sprite];
   if (!drop || roll() >= DROP_CHANCE) return null;
-  state.resources[drop] += 1;
-  return drop;
+  // A find with no open slot to go to is left lying where it fell.
+  return addItem(state, drop) ? drop : null;
 }

@@ -463,3 +463,14 @@ Checked in the `wildhaven` preview at 127.0.0.1 with the Builder, at night besid
 - The north coast showed the snowy bank (snow, ice crust, gravel, foam) along the water, round an outside and an inside corner, with no console errors. The player stood on snow the game used to take for water, and walking north stopped at the bank.
 - `npm test`: the same two failures as before the change (`progress.test.js`, a `gather.test.js` case). Two boat tests that rowed east from the lagoon's old boat now row south from the jungle's: a spit of snow painted in Tiled crosses the lagoon boat's row.
 - Not checked: the south-east channels and the river's banks in play, the world editor's view of the new tiles, and the minimap picture up close.
+
+## Item box slots, backpack and taking things down (2026-11-20)
+
+Checked in the `wildhaven` preview at 127.0.0.1 (port 5175) with the Scout, on a version 10 save that was upgraded on load:
+- The item box showed only food (3) in the first slot, the other four top slots empty and the bottom row shut. Dragging the food to the fourth slot moved it and saved the order; dropping it on a shut slot left it where it was.
+- With six kinds carried (edited into the save), five filled the top row and the sixth showed in the shut row. Making the backpack (B, then P) took the feathers and antler and opened all ten slots.
+- A campfire was placed and named; with a tent at the camp, the camp window listed "Tent · Goes into your item box, to pitch again" with Pack up. Packing up removed the tent from the world and put a packed tent (count 1) in the fifth slot.
+- The list then showed "Campfire · Gives back 1 wood · 1 stone" with Put out. Putting it out removed the fire and the camp, gave 1 wood and 1 stone, and the goals card went back to "Build a campfire". No console errors.
+- At 375 px wide the item box and its ten slots sit above the touch arrows as before.
+- `npm test`: one failure that is there without this change too (`nodes.test.js`: the Scout has 2 small-stone piles within 1,500 units, the test wants 5).
+- Not checked in play: pitching the packed tent again, the "bag is full" toast on a gather, the chest's disabled Take all, dragging with a finger, and taking down a chest, wheat bed or camp centre (all covered by unit tests except the finger drag).

@@ -19,6 +19,7 @@ import { WOLVES } from '../world/wolves.js';
 import { nextDusk } from './wolves.js';
 import { hasTool, wearTool } from '../world/tools.js';
 import { facing } from './move.js';
+import { BAG_FULL, addItem, hasRoomFor } from '../world/bag.js';
 import { startAction } from '../animation/clips.js';
 
 /** The start of a timed hunting action's target: `hunt:<animal id>`. */
@@ -157,7 +158,7 @@ export function huntable(state) {
  * @param {object} animator - The player's animation state.
  * @param {object} animal - The animal.
  * @returns {{ok: boolean, reason?: string, message?: string}} Whether the hunt started, or why not:
- *   'busy', 'tool' (no axe) or 'far'.
+ *   'busy', 'tool' (no axe), 'far' or 'full' (no open slot for the food).
  */
 export function beginHunt(state, animator, animal) {
   if (animator.pending) return { ok: false, reason: 'busy' };
@@ -173,6 +174,9 @@ export function beginHunt(state, animator, animal) {
     Math.hypot(state.player.x - animal.x, state.player.y - animal.y) > HUNT_REACH
   )
     return { ok: false, reason: 'far' };
+  // A wolf gives nothing; any other animal's food needs a slot in the item box.
+  if (!animal.den && !hasRoomFor(state, ['food']))
+    return { ok: false, reason: 'full', message: BAG_FULL };
   state.player.direction = facing(animal.x - state.player.x, 0) === 1 ? 1 : 2;
   startAction(animator, 'chop', `${HUNT_PREFIX}${animal.id}`, HUNT_SECONDS);
   return { ok: true };
@@ -203,10 +207,13 @@ export function finishHunt(state, target, roll = Math.random) {
     Object.assign(a, { phase: 'down', clock: 0, respawnAt: nextDusk(state.time) });
     return { kind: 'hunt', animal: 'wolf', food: 0, antler: false, wear: wearTool(state, 'axe') };
   }
+  // The bag is checked again: it may have filled since the swing began.
+  if (!hasRoomFor(state, ['food'])) return null;
   const kind = ANIMALS[a.kind],
-    antler = roll() < kind.antler;
+    rolled = roll() < kind.antler;
   Object.assign(a, { phase: 'down', clock: 0, respawnAt: state.time + ANIMAL_RETURN });
-  state.resources.food += kind.food;
-  if (antler) state.resources.antler += 1;
+  addItem(state, 'food', kind.food);
+  // An antler with no open slot to go to is left behind.
+  const antler = rolled && addItem(state, 'antler');
   return { kind: 'hunt', animal: kind.name, food: kind.food, antler, wear: wearTool(state, 'axe') };
 }

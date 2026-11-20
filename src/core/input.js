@@ -10,6 +10,7 @@ import { TOOLS, toolInfo } from '../data/tools.js';
 import { GEAR } from '../data/gear.js';
 import { BUILDINGS } from '../data/buildings.js';
 import { repel } from '../actions/wolves.js';
+import { BAG_FULL, hasRoomFor } from '../world/bag.js';
 import { campInReach } from '../world/camps.js';
 import { nearbyBuilding } from '../world/buildings.js';
 import { canSleep } from '../actions/camp.js';
@@ -78,6 +79,11 @@ export function setupInput(session, ui) {
     // Something to gather or mend: step beside it first; the frame loop starts the work there.
     // A repair the backpack can't pay for skips the step, so E says at once what is missing.
     const choice = chooseInteraction(session.state);
+    // A new kind of thing with no open slot to go to: say so before walking up to it.
+    if (choice?.kind === 'gather' && !hasRoomFor(session.state, [choice.target.type])) {
+      ui.hud.notify(BAG_FULL);
+      return;
+    }
     if (choice?.kind === 'gather' && stepBeside(choice.target)) return;
     if (
       choice?.kind === 'repair' &&
@@ -217,6 +223,11 @@ export function setupInput(session, ui) {
   function clickNode({ node, state: how }) {
     if (how === 'locked') {
       ui.hud.notify(`You need ${toolInfo(node.tool).aName}. Make one in the Build menu (B).`);
+      return;
+    }
+    // A new kind of thing with no open slot to go to: say so before walking over.
+    if (!hasRoomFor(session.state, [node.type])) {
+      ui.hud.notify(BAG_FULL);
       return;
     }
     if (how === 'far') {

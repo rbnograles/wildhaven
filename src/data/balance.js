@@ -293,7 +293,19 @@ export const GEAR_RECIPES = {
   coat: { feather: 10, antler: 2 },
   grip: { antler: 1 },
   boat: { wood: 30, iron: 6 },
+  backpack: { wood: 8, feather: 4, antler: 1 },
 };
+
+/**
+ * How many item box slots are open: BAG_SLOTS at the start (the top row), BACKPACK_SLOTS once the
+ * backpack is made (both rows). A slot holds one kind of thing, however many of it, so the bag is
+ * "full" when a new kind has no open slot left; a chest holds the rest.
+ */
+export const BAG_SLOTS = 5;
+export const BACKPACK_SLOTS = 10;
+
+/** Seconds it takes to take a building or a campfire down. Moving stops it, and nothing changes. */
+export const TAKEDOWN_SECONDS = 3;
 
 /** Seconds a torch burns. It burns down by day too, like a real one. One torch at a time. */
 export const TORCH_SECONDS = 90;

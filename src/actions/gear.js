@@ -71,6 +71,7 @@ function alreadyHas(state, id) {
   if (id === 'torch' && state.torch > 0) return 'Your torch is still burning';
   if (id === 'coat' && state.coat) return 'You already wear a feather coat';
   if (id === 'boat' && state.boat) return 'You already have a boat';
+  if (id === 'backpack' && state.backpack) return 'You already carry a backpack';
   return '';
 }
 
@@ -82,7 +83,7 @@ function alreadyHas(state, id) {
  * sewn by one of their campfires, the boat is built beside water, the grip needs a stone tool).
  *
  * @param {object} state - The game being played.
- * @param {string} id - The gear's id: 'torch', 'coat', 'grip' or 'boat'.
+ * @param {string} id - The gear's id: 'torch', 'coat', 'grip', 'boat' or 'backpack'.
  * @returns {{ok: boolean, cost: object, reason?: string, message?: string, tool?: string,
  *   spot?: object}} `ok` with the cost (and the `tool` a grip goes on, or the water `spot` a boat
  *   is launched at); otherwise `reason` ('owned', 'aboard', 'cost', 'tool', 'fire' or 'water')
@@ -151,7 +152,7 @@ export function beginMake(state, animator, id) {
  *
  * Everything is checked again first, because the backpack or the player's spot may have changed
  * while they worked. Then the cost is paid and the gear takes effect in one step: the torch
- * starts burning, the coat is worn for good, the grip adds a new tool's worth of uses to the most
+ * starts burning, the coat is worn for good, the backpack opens the item box's second row, the grip adds a new tool's worth of uses to the most
  * worn stone tool (up to GRIP_MAX times a new one's), and the boat floats on the water beside the
  * player, which is also where it drifts back to if it is ever left behind.
  *
@@ -168,6 +169,7 @@ export function finishMake(state, id) {
   for (const [type, n] of Object.entries(check.cost)) state.resources[type] -= n;
   if (id === 'torch') state.torch = TORCH_SECONDS;
   if (id === 'coat') state.coat = true;
+  if (id === 'backpack') state.backpack = true;
   if (id === 'grip') {
     const tool = state.tools[check.tool];
     tool.uses = Math.min(tool.uses + TOOL_USES[check.tool], TOOL_USES[check.tool] * GRIP_MAX);

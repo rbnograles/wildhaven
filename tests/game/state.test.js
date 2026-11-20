@@ -28,6 +28,7 @@ import {
   restoreGame,
 } from '../../src/game/state.js';
 import { movePlayer } from '../../src/actions/move.js';
+import { tidyBag } from '../../src/world/bag.js';
 
 /** The wild flower patches: map scenery that can be picked and grows back quickly. */
 const flowers = NODES.filter((n) => n.sprite === 'flowers');
@@ -149,7 +150,7 @@ test('all characters begin at distinct, walkable locations with their own identi
 test('a new game starts on the morning of day 1 with full meters, on foot, and the fog lifted around the spawn', () => {
   const game = createGame('scout');
   assert.equal(game.version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 10);
+  assert.equal(SAVE_VERSION, 11);
   assert.equal(game.time, START_TIME);
   assert.deepEqual(game.meters, { health: 100, hunger: 100, warmth: 100 });
   assert.equal(game.tea, 0);
@@ -167,6 +168,7 @@ test('save restores character, coordinates and progress without sharing mutable 
   movePlayer(original, 1, 0, 0.1);
   original.resources.wood = 9;
   original.resources.herbs = 4;
+  tidyBag(original); // the herbs take a slot, as they would in play
   original.regrowAt[flowers[0].id] = 1042; // still growing back at time 1000
   original.landmarks.push('h-square');
   original.waypoints.push('h-wp-village');

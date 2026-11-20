@@ -2,7 +2,7 @@
 // meters, the item box and tools row, the build menu and build bar, region name and progress,
 // goals card, interact button) and the short pop-up messages called toasts. It only shows the game
 // state; it never changes it.
-import { RESOURCES, RESOURCE_NAMES } from '../data/supplies.js';
+import { RESOURCE_NAMES } from '../data/supplies.js';
 import { WRECKS } from '../data/places.js';
 import { CAMPFIRE_COST, REPAIR_COST, DAY_SECONDS, PHASES } from '../data/balance.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
@@ -24,8 +24,11 @@ import {
   FARM_PREFIX,
   readBuildTarget,
   checkRaise,
-  costOf,
+  priceOf,
+  hasTent,
 } from '../actions/building.js';
+import { TAKEDOWN_PREFIX, FIRE } from '../actions/takedown.js';
+import { renderItemBox } from './itembox.js';
 import { BUILDINGS, buildingInfo } from '../data/buildings.js';
 import { campAt, centreOf } from '../world/buildings.js';
 import { HUNT_PREFIX } from '../actions/animals.js';
@@ -57,7 +60,7 @@ const costWords = (cost) =>
     .join(' · ');
 
 // What a gear row says in place of its cost while the player already has that gear.
-const HAVE_WORDS = { torch: 'Burning', coat: 'Worn', boat: 'Owned' };
+const HAVE_WORDS = { torch: 'Burning', coat: 'Worn', boat: 'Owned', backpack: 'Carried' };
 
 // The camp centre's three tiers, by tier number less one.
 const CENTRE_NAMES = ['pavilion', 'small hall', 'big hall'];
@@ -128,6 +131,14 @@ function wearWords(tool, wear) {
  * @returns {string} The message.
  */
 export function describeFinish(finished) {
+  if (finished.kind === 'takedown') {
+    if (!finished.ok) return finished.message ?? 'Nothing was taken down';
+    const back = costWords(finished.refund);
+    if (finished.what === 'tent') return 'Tent packed up · Pitch it again from the Build menu (B)';
+    if (finished.what === FIRE)
+      return `${finished.camp.name} is no more · The fire is out${back ? ` · +${back}` : ''}`;
+    return `${capital(buildingInfo(finished.what).name)} taken down${back ? ` · +${back}` : ''}`;
+  }
   if (finished.built) {
     if (!finished.ok) return finished.message ?? 'Nothing was built';
     if (finished.raised)
@@ -225,6 +236,10 @@ function busyLabel(state, animator) {
       ? 'Raising the camp centre… move to stop'
       : `Building the ${buildingInfo(job.kind).name}… move to stop`;
   }
+  if (target.startsWith(TAKEDOWN_PREFIX))
+    return target.endsWith(`:${FIRE}`)
+      ? 'Putting out the fire… move to stop'
+      : 'Taking it down… move to stop';
   if (target.startsWith(HUNT_PREFIX + 'wolf-')) return 'Fighting the wolf… move to stop';
   if (target.startsWith(HUNT_PREFIX)) {
     const animal = animalById(target.slice(HUNT_PREFIX.length));
@@ -431,7 +446,7 @@ export function createHud(session) {
     const what =
       build.kind === 'campfire'
         ? `Campfire · ${costWords(CAMPFIRE_COST)}`
-        : `${capital(buildingInfo(build.kind).name)} · ${costWords(costOf(build.kind))}`;
+        : `${capital(buildingInfo(build.kind).name)} · ${costWords(priceOf(state, build.kind)) || 'Packed, free to pitch'}`;
     bar.textContent = ok
       ? `${what} · Click or E to place · Esc to cancel`
       : `${build.check?.message ?? 'Choose a spot'} · Esc to cancel`;
@@ -476,9 +491,12 @@ export function createHud(session) {
     for (const { id, name } of BUILDINGS) {
       const option = $(`build-${id}`);
       let title = capital(name),
-        cost = costOf(id),
+        cost = priceOf(state, id),
         why = camp ? '' : 'Build it within the warmth of your fire',
         done = false;
+      // One tent per player: while it stands somewhere, the row says so and can't be picked.
+      const pitched = id === 'tent' && hasTent(state);
+      if (pitched) why = 'You already have a tent · Pack it up at its camp to move it';
       if (id === 'centre' && camp && centreOf(camp)) {
         const raise = checkRaise(state);
         done = raise.reason === 'top';
@@ -487,12 +505,16 @@ export function createHud(session) {
         why = raise.ok ? '' : raise.message;
       }
       option.querySelector('.building-name').textContent = title;
-      option.querySelector('.building-cost').textContent = done ? 'Big hall' : costWords(cost);
+      option.querySelector('.building-cost').textContent = done
+        ? 'Big hall'
+        : pitched
+          ? 'Pitched'
+          : costWords(cost) || 'Packed · free';
       option.classList.toggle(
         'short',
         Object.entries(cost).some(([type, n]) => state.resources[type] < n),
       );
-      option.disabled = done;
+      option.disabled = done || pitched;
       option.title = why;
     }
 
@@ -542,11 +564,8 @@ export function createHud(session) {
   function update() {
     const { state } = session;
     if (!state) return;
-    // The item box: each slot's count, faded when there is none.
-    for (const resource of RESOURCES) {
-      $(resource).textContent = state.resources[resource];
-      $(resource).parentElement.classList.toggle('empty', state.resources[resource] === 0);
-    }
+    // The item box: a slot shows something only while the player carries it.
+    renderItemBox(state);
     updateTools(state);
     updateMeters(state);
 

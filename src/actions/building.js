@@ -16,6 +16,7 @@ import {
   FARM_SECONDS,
 } from '../data/balance.js';
 import { RESOURCES } from '../data/supplies.js';
+import { BAG_FULL, TENT_ITEM, addItem, hasRoomFor, tidyBag } from '../world/bag.js';
 import { buildingInfo } from '../data/buildings.js';
 import { isWalkable, blocks } from '../world/map.js';
 import { NODES, solidBases } from '../world/nodes.js';
@@ -41,6 +42,28 @@ const PROBE = 16;
  */
 export const costOf = (kind, tier = 1) =>
   kind === 'centre' ? BUILDING_COSTS.centre[tier - 1] : BUILDING_COSTS[kind];
+
+/**
+ * Says what putting up a building costs this player right now.
+ *
+ * It is costOf, but a tent carried packed in the item box is pitched for nothing: it was paid for
+ * when it was first made.
+ *
+ * @param {object} state - The game being played.
+ * @param {string} kind - The building's kind.
+ * @returns {object} The cost, such as {wood: 8, stone: 2}, or {} for a packed tent.
+ */
+export const priceOf = (state, kind) =>
+  kind === TENT_ITEM && state.packedTent ? {} : costOf(kind);
+
+/**
+ * Says whether the player has a tent standing at any of their camps.
+ *
+ * @param {object} state - The game being played.
+ * @returns {boolean} True when a tent stands somewhere.
+ */
+export const hasTent = (state) =>
+  state.camps.some((camp) => (camp.buildings ?? []).some((b) => b.kind === 'tent'));
 
 /**
  * Lists what the backpack is short of for a cost.
@@ -79,7 +102,8 @@ function plotIsClear(state, plot) {
  *
  * The first rule that fails is the answer: in the boat, not enough in the backpack, too far from
  * the player, not inside one of the player's fires' warmth, the camp already has as many as it may,
- * or something is in the way. The camp centre is raised a tier instead when its camp has one: see
+ * or something is in the way. A tent is refused before the rest while the player has one standing
+ * at any camp: there is one tent per player. A tent carried packed costs nothing. The camp centre is raised a tier instead when its camp has one: see
  * checkRaise.
  *
  * @param {object} state - The game being played.
@@ -91,10 +115,18 @@ function plotIsClear(state, plot) {
  *   'blocked') and a `message` to show.
  */
 export function checkBuilding(state, kind, x, y) {
-  const info = buildingInfo(kind),
-    cost = costOf(kind);
+  const info = buildingInfo(kind);
   if (!info) return { ok: false, reason: 'unknown', message: 'Nothing to build' };
+  const cost = priceOf(state, kind);
   if (state.aboard) return { ok: false, cost, reason: 'aboard', message: 'Step ashore to build' };
+  // A player owns one tent in the whole world: to move it, pack it up at its camp first.
+  if (kind === 'tent' && hasTent(state))
+    return {
+      ok: false,
+      cost,
+      reason: 'limit',
+      message: 'You already have a tent · Pack it up at its camp to move it',
+    };
   const missing = shortOf(state, cost);
   if (Object.keys(missing).length)
     return { ok: false, cost, reason: 'cost', message: `Needs ${listMissing(missing)} more` };
@@ -245,6 +277,9 @@ export function finishBuilding(state, target) {
   const check = checkBuilding(state, job.kind, job.x, job.y);
   if (!check.ok) return { ...check, kind: job.kind };
   for (const [type, n] of Object.entries(check.cost)) state.resources[type] -= n;
+  // A packed tent leaves the item box as it goes up.
+  if (job.kind === 'tent') state.packedTent = false;
+  tidyBag(state);
   const number =
     Math.max(
       0,
@@ -265,7 +300,7 @@ export function finishBuilding(state, target) {
  * @param {object} chest - The chest building. Its contents change.
  * @param {string} resource - Which resource, such as 'wood'.
  * @param {boolean} into - True to put it all in the chest, false to take it all out.
- * @returns {number} How many moved.
+ * @returns {number} How many moved: 0 when there was nothing to move, or no open slot to take it into.
  */
 export function moveAll(state, chest, resource, into) {
   if (chest?.kind !== 'chest' || !RESOURCES.includes(resource)) return 0;
@@ -275,8 +310,10 @@ export function moveAll(state, chest, resource, into) {
   if (into) {
     state.resources[resource] = 0;
     contents[resource] = (contents[resource] ?? 0) + n;
+    tidyBag(state);
   } else {
-    state.resources[resource] += n;
+    // Taking out a new kind of thing needs an open slot in the item box.
+    if (!addItem(state, resource, n)) return 0;
     delete contents[resource];
   }
   return n;
@@ -289,7 +326,8 @@ export function moveAll(state, chest, resource, into) {
  * @param {object} state - The game being played.
  * @param {object} bed - The wheat bed.
  * @returns {{ok: boolean, what?: string, reason?: string, message?: string}} The job ('sow', 'tend'
- *   or 'harvest'), or why there is none: 'seed' (no food to sow), 'tended' (wait for it to grow).
+ *   or 'harvest'), or why there is none: 'seed' (no food to sow), 'tended' (wait for it to grow),
+ *   'full' (ripe, but the item box has no open slot for food).
  */
 export function farmJob(state, bed) {
   const crop = bed.crop;
@@ -299,7 +337,10 @@ export function farmJob(state, bed) {
       ? { ok: false, reason: 'seed', message: `Needs ${listMissing(missing)} to sow` }
       : { ok: true, what: 'sow' };
   }
-  if (crop.stage >= 3) return { ok: true, what: 'harvest' };
+  if (crop.stage >= 3)
+    return hasRoomFor(state, ['food'])
+      ? { ok: true, what: 'harvest' }
+      : { ok: false, reason: 'full', message: BAG_FULL };
   return crop.tended
     ? { ok: false, reason: 'tended', message: 'Tended · Give the wheat time to grow' }
     : { ok: true, what: 'tend' };
@@ -345,7 +386,7 @@ export function finishFarm(state, target) {
     crop.readyAt = state.time + (crop.readyAt - state.time) / 2;
     crop.tended = true;
   } else {
-    state.resources.food += HARVEST_FOOD;
+    addItem(state, 'food', HARVEST_FOOD);
     Object.assign(crop, { stage: 0, readyAt: null, tended: false });
     return { ok: true, what, food: HARVEST_FOOD };
   }

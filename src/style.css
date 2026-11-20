@@ -984,14 +984,70 @@ button.slot:hover {
   filter: drop-shadow(0 2px 2px #1b0f08aa);
 }
 
-.slot.empty > img,
-.slot.empty > svg {
-  opacity: 0.45;
-  filter: grayscale(1);
+/* ---- Item box slots: empty, shut, and being dragged ---- */
+
+/* Every slot of the item box is a button, but only one holding something acts like one: it can be */
+/* picked up and dragged. touch-action: none keeps a finger's drag from scrolling the page. */
+.item-box .slot {
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.slot.empty b {
-  opacity: 0.7;
+.item-box .slot > img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.item-box .slot.filled {
+  cursor: grab;
+}
+
+.item-box .slot:not(.filled):hover {
+  filter: none;
+}
+
+/* A slot of the second row before the backpack is made: darkened, with a small bar across it like */
+/* a latch, so it reads as shut and not merely empty. */
+.item-box .slot.locked::before {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border-radius: 12%;
+  background: #120c08b8;
+}
+
+.item-box .slot.locked::after {
+  content: '';
+  position: absolute;
+  width: 34%;
+  height: 9%;
+  border-radius: 3px;
+  background: #8a6f4a;
+  box-shadow: 0 1px 0 #1b0f08;
+}
+
+/* The slot a drag started from fades while its picture is in the air. */
+.item-box .slot.dragging > img,
+.item-box .slot.dragging > b,
+.item-box .slot.dragging > kbd {
+  opacity: 0.25;
+}
+
+/* The slot the dragged thing would land in glows gold, like the Build button when it is open. */
+.item-box .slot.drop-target {
+  filter: brightness(1.2) drop-shadow(0 0 4px #ffd166);
+}
+
+/* The picture that follows the pointer during a drag (ui/itembox.js puts it on the page). */
+.slot-ghost {
+  position: fixed;
+  z-index: 50;
+  height: auto;
+  transform: translate(-50%, -50%) scale(0.8);
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px #1b0f08aa);
 }
 
 /* The Build button: the painted green button with its hammer in the middle. The picture says */

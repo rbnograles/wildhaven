@@ -12,6 +12,7 @@ import { GEAR_IDS } from '../data/gear.js';
 import { nearbyBuilding } from '../world/buildings.js';
 import { huntable, beginHunt, finishHunt, HUNT_PREFIX } from './animals.js';
 import { canSleep } from './camp.js';
+import { TAKEDOWN_PREFIX, finishTakeDown } from './takedown.js';
 import {
   BUILDING_PREFIX,
   FARM_PREFIX,
@@ -108,7 +109,8 @@ export function beginInteraction(state, animator, id) {
  *
  * @param {object} state - The game being played.
  * @param {string} target - The id the action was aimed at: an old boat's, a node's,
- *   `craft:<tool>` for a craft, `building:...` for a building, or `farm:...` for a wheat bed.
+ *   `craft:<tool>` for a craft, `building:...` for a building, `farm:...` for a wheat bed, or
+ *   `takedown:...` for a building or campfire being taken down (see finishTakeDown).
  *   A building reports `{kind: <its kind>, built: true, ok, ...}` (see finishBuilding).
  * @param {() => number} [roll] - Gives a number from 0 to 1, for the find a chopped tree may drop;
  *   tests pass their own.
@@ -128,6 +130,7 @@ export function finishInteraction(state, target, roll = Math.random) {
     };
   }
   if (target.startsWith(BUILDING_PREFIX)) return { ...finishBuilding(state, target), built: true };
+  if (target.startsWith(TAKEDOWN_PREFIX)) return finishTakeDown(state, target);
   if (target.startsWith(HUNT_PREFIX)) return finishHunt(state, target, roll);
   if (target.startsWith(FARM_PREFIX)) {
     const done = finishFarm(state, target);

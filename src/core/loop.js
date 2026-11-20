@@ -11,6 +11,7 @@ import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
 import { growCrops } from '../world/buildings.js';
+import { tidyBag } from '../world/bag.js';
 import { tickAnimals } from '../actions/animals.js';
 import { tickWolves } from '../actions/wolves.js';
 import { tickVillagers } from '../actions/villagers.js';
@@ -273,6 +274,8 @@ export function startLoop(session, ui) {
         const events = tickSurvival(state, dt);
         // Wheat beds grow by the world clock (a rest or passing out can bring several stages at once).
         growCrops(state);
+        // The item box: a slot whose thing was just used up is emptied, ready for something new.
+        tidyBag(state);
         // The villagers of Hollowstead get on with their work (and wait while the player is near).
         tickVillagers(state, dt);
         // The animals graze, wander and run from a player who comes too close (sooner when running).

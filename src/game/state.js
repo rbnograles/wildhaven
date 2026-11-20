@@ -26,13 +26,14 @@ import { REGIONS } from '../world/regions.js';
 import { emptyFog, isFogString, revealAround, revealRegions, growFog } from '../world/fog.js';
 import { startingTools } from '../world/tools.js';
 import { BUILDING_IDS } from '../data/buildings.js';
+import { emptySlots, isSlots, tidyBag } from '../world/bag.js';
 
 /**
- * The save format this code writes. Version 10 is version 9 (copper in the backpack) plus the
- * buildings at each camp: tents, chests and what is in them, wheat beds and how their crop is
- * growing, and the camp centre's tier. Version 3 to 9 saves are upgraded when loaded (see `upgrade`).
+ * The save format this code writes. Version 11 is version 10 (buildings at each camp) plus the
+ * item box: which kind of thing sits in which slot, whether the backpack is made, and whether a
+ * packed tent is carried. Version 3 to 10 saves are upgraded when loaded (see `upgrade`).
  */
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 /** The three survival meters. Each is a number from 0 to 100. */
 const METERS = ['health', 'hunger', 'warmth'];
@@ -55,7 +56,9 @@ export const BORDER_SQUARES = SEA_BORDER / FOG_CELL;
  *   `distance` is world units travelled; `time` is the world clock (game seconds since the dawn
  *   of day 1); `meters` holds health, hunger and warmth; `tea` is the seconds of tea warmth left;
  *   `camps` lists the camps built; `fog` records the squares of the world seen so far; `tools`
- *   holds the tools owned (see world/tools.js).
+ *   holds the tools owned (see world/tools.js); `slots` says which kind of thing sits in each
+ *   item box slot (see world/bag.js), `backpack` is true once the second row is open, and
+ *   `packedTent` is true while a tent that was taken down is carried.
  * @throws {Error} If the character id isn't one of the known characters.
  */
 export function createGame(characterId) {
@@ -81,9 +84,14 @@ export function createGame(characterId) {
     tea: 0,
     torch: 0,
     coat: false,
+    slots: emptySlots(),
+    backpack: false,
+    packedTent: false,
     camps: [],
     fog: emptyFog(),
   };
+  // The starting kit takes the first slots of the item box.
+  tidyBag(state);
   revealAround(state, state.player.x, state.player.y);
   return state;
 }
@@ -475,11 +483,26 @@ function addCopper(s) {
 function addBuildings(s) {
   return {
     ...s,
-    version: SAVE_VERSION,
+    version: 10,
     camps: Array.isArray(s.camps)
       ? s.camps.map((c) => (isPlainObject(c) ? { ...c, buildings: [] } : c))
       : s.camps,
   };
+}
+
+/**
+ * Brings a version 10 save (camp buildings, before the item box had slots) up to version 11.
+ *
+ * Version 10 had no slots, no backpack and no packed tent. The slots start empty here and
+ * restoreGame fills them with what is carried, in the old fixed order, like unpacking a bag onto
+ * a shelf. A save that carries more kinds than the top row holds keeps the extra ones in the
+ * closed row until they run out.
+ *
+ * @param {object} s - The parsed version 10 save.
+ * @returns {object} The same adventure in the version 11 shape.
+ */
+function addBag(s) {
+  return { ...s, version: SAVE_VERSION, slots: emptySlots(), backpack: false, packedTent: false };
 }
 
 /**
@@ -550,11 +573,12 @@ const stillThere = (ids, places) => ids.filter((id) => places.some((p) => p.id =
  *
  * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
  * every version 5 save then gains its tools, every version 6 save its pockets for the finds, and
- * every version 7 save its (unlit) torch and (unworn) coat, every version 8 save its copper, and
- * every version 9 save an empty list of buildings at each camp.
+ * every version 7 save its (unlit) torch and (unworn) coat, every version 8 save its copper,
+ * every version 9 save an empty list of buildings at each camp, and every version 10 save its
+ * item box slots.
  *
  * @param {*} parsed - The parsed save.
- * @returns {*} The save in the version 10 shape (still to be checked), or the save unchanged.
+ * @returns {*} The save in the version 11 shape (still to be checked), or the save unchanged.
  */
 function upgrade(parsed) {
   let s = parsed;
@@ -564,7 +588,8 @@ function upgrade(parsed) {
   if (s?.version === 6) s = addFinds(s);
   if (s?.version === 7) s = addGear(s);
   if (s?.version === 8) s = addCopper(s);
-  return s?.version === 9 ? addBuildings(s) : s;
+  if (s?.version === 9) s = addBuildings(s);
+  return s?.version === 10 ? addBag(s) : s;
 }
 
 /**
@@ -655,6 +680,10 @@ export function restoreGame(json) {
     )
       return null;
 
+    // The item box: ten slots of known things, and two yes-or-no facts.
+    if (!isSlots(s.slots) || typeof s.backpack !== 'boolean' || typeof s.packedTent !== 'boolean')
+      return null;
+
     // The discovered and found lists are short lists of ids, each listed once. A region must be
     // real. A found place the map no longer has is allowed here and dropped below (`stillThere`).
     for (const list of [s.discovered, s.landmarks, s.waypoints, s.wrecks]) {
@@ -711,7 +740,7 @@ export function restoreGame(json) {
 
     // Build the result fresh, copying only the fields we checked.
     const placed = placeBoat(s);
-    return {
+    const restored = {
       version: SAVE_VERSION,
       character: s.character,
       player: placed.player,
@@ -731,9 +760,15 @@ export function restoreGame(json) {
       tea,
       torch: s.torch,
       coat: s.coat,
+      slots: [...s.slots],
+      backpack: s.backpack,
+      packedTent: s.packedTent,
       camps: camps.map(copyCamp),
       fog: s.fog,
     };
+    // Give every kind carried a slot, and empty the slot of anything that has run out.
+    tidyBag(restored);
+    return restored;
   } catch {
     return null;
   }

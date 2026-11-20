@@ -19,12 +19,28 @@ import { CAMP_NAME_MAX, CAMPFIRE_COST } from '../data/balance.js';
 import { TOOLS } from '../data/tools.js';
 import { WORLD } from '../world/map.js';
 import { REGIONS } from '../world/regions.js';
-import { RESOURCES } from '../data/supplies.js';
+import tentIconUrl from '../../assets/world/source/objects/buildings/tent.png';
+import { BAG_MAX } from '../world/bag.js';
 import { GEAR } from '../data/gear.js';
 import { BUILDINGS } from '../data/buildings.js';
 
-// How many of the item box's ten painted slots are still empty: all but one per resource.
-const SPARE_SLOTS = 10 - RESOURCES.length;
+/**
+ * What the item box shows for each kind of thing a slot can hold: `icon` is its picture, `name` is
+ * the slot's tooltip, and `key` is the key that uses it (clicking the slot does the same), if any.
+ * The packed tent borrows the tent's own world picture until it has one painted for the box.
+ */
+export const ITEM_LOOKS = {
+  wood: { icon: woodIconUrl, name: 'Wood' },
+  stone: { icon: stoneIconUrl, name: 'Stone' },
+  iron: { icon: ironIconUrl, name: 'Iron' },
+  copper: { icon: copperIconUrl, name: 'Copper' },
+  food: { icon: foodIconUrl, name: 'Food · Click or press F to eat one', key: 'F' },
+  herbs: { icon: herbsIconUrl, name: 'Herbs · Click or press H to heal with 3', key: 'H' },
+  feather: { icon: featherIconUrl, name: 'Feathers' },
+  pinecone: { icon: pineconeIconUrl, name: 'Pine cones' },
+  antler: { icon: antlerIconUrl, name: 'Antlers' },
+  tent: { icon: tentIconUrl, name: 'Packed tent · Pitch it from the Build menu (B), for nothing' },
+};
 
 /**
  * Finds an element on the page by its id.
@@ -64,6 +80,7 @@ const icons = {
   hammer: '<path d="m14 3 7 7-3 3-7-7Z"/><path d="M12.5 8.5 3 18l3 3 9.5-9.5"/>',
   axe: '<path d="m4 20 10-10"/><path d="M12 5c2.5-2.5 6-2.5 8 0l-5 5c-2-.5-3.5-2.5-3-5Z"/>',
   pickaxe: '<path d="M4 9c5-5 11-5 16 0"/><path d="M12 5.5V21"/>',
+  bag: '<path d="M6 9h12l1.5 11h-15Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3M9 14h6"/>',
 };
 
 /**
@@ -266,10 +283,10 @@ export function mountLayout(app) {
           </div>
         </div>
 
-        <!-- The item box (ten slots: one per resource, the rest spare for items to come) and the
-             Build button beside it, with the build menu (the campfire and the Tools group) that
-             opens above it, and the row of tools owned. Clicking the food slot eats and the herbs
-             slot heals. -->
+        <!-- The item box (ten slots, empty until something is picked up; ui/itembox.js fills them
+             and lets them be dragged about) and the Build button beside it, with the build menu
+             that opens above it, and the row of tools owned. Clicking the food slot eats and the
+             herbs slot heals. -->
         <div class="hotbar-area">
           <div id="build-menu" class="build-menu hud-panel" hidden>
             <p class="build-menu-title">BUILD</p>
@@ -322,35 +339,15 @@ export function mountLayout(app) {
             ).join('')}
           </div>
           <div class="hotbar">
-            <div class="item-box" aria-label="Items">
-              <span class="slot" title="Wood"
-                ><img src="${woodIconUrl}" alt="" /><b id="wood">0</b
-                ><span class="slot-label">Wood</span></span
-              ><span class="slot" title="Stone"
-                ><img src="${stoneIconUrl}" alt="" /><b id="stone">0</b
-                ><span class="slot-label">Stone</span></span
-              ><span class="slot" title="Iron"
-                ><img src="${ironIconUrl}" alt="" /><b id="iron">0</b
-                ><span class="slot-label">Iron</span></span
-              ><span class="slot" title="Copper"
-                ><img src="${copperIconUrl}" alt="" /><b id="copper">0</b
-                ><span class="slot-label">Copper</span></span
-              ><button id="slot-food" class="slot" title="Eat one food (F)">
-                <img src="${foodIconUrl}" alt="" /><b id="food">0</b
-                ><span class="slot-label">Food</span><kbd>F</kbd></button
-              ><button id="slot-herbs" class="slot" title="Heal with 3 herbs (H)">
-                <img src="${herbsIconUrl}" alt="" /><b id="herbs">0</b
-                ><span class="slot-label">Herbs</span><kbd>H</kbd></button
-              ><span class="slot" title="Feathers"
-                ><img src="${featherIconUrl}" alt="" /><b id="feather">0</b
-                ><span class="slot-label">Feathers</span></span
-              ><span class="slot" title="Pine cones"
-                ><img src="${pineconeIconUrl}" alt="" /><b id="pinecone">0</b
-                ><span class="slot-label">Pine cones</span></span
-              ><span class="slot" title="Antlers"
-                ><img src="${antlerIconUrl}" alt="" /><b id="antler">0</b
-                ><span class="slot-label">Antlers</span></span
-              >${'<span class="slot spare" aria-hidden="true"></span>'.repeat(SPARE_SLOTS)}
+            <div id="item-box" class="item-box" aria-label="Items">
+              ${Array.from(
+                { length: BAG_MAX },
+                (_, i) =>
+                  /* HTML */ `<button type="button" class="slot" data-slot="${i}">
+                    <img alt="" hidden /><b hidden></b><span class="slot-label"></span
+                    ><kbd hidden></kbd>
+                  </button>`,
+              ).join('')}
             </div>
             <button
               id="build-button"
@@ -550,6 +547,10 @@ export function mountLayout(app) {
         ><button id="camp-heal" class="secondary">Heal<small></small></button
         ><button id="camp-rest" class="secondary">Rest until dawn<small></small></button>
       </div>
+      <!-- What stands at the camp, each with a button to take it down; ui/camp.js fills the list.
+           The fire comes last: putting it out ends the camp. -->
+      <h3 class="camp-heading">Standing here</h3>
+      <ol id="camp-buildings" class="camp-needs chest-rows"></ol>
     </dialog>
 
     <!-- A storage chest: what is in it, and putting things in or taking them out. ui/chest.js fills it. -->

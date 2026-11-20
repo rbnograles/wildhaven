@@ -4,6 +4,7 @@
 
 import { RESOURCES, RESOURCE_NAMES } from '../data/supplies.js';
 import { moveAll } from '../actions/building.js';
+import { hasRoomFor } from '../world/bag.js';
 import { save } from '../core/session.js';
 import { $ } from './layout.js';
 
@@ -50,7 +51,10 @@ export function setupChest(session, ui) {
       put.textContent = 'Put all in';
       take.textContent = 'Take all';
       put.disabled = !state.resources[resource];
-      take.disabled = !chest.contents?.[resource];
+      // Taking out a new kind of thing needs an open slot in the item box.
+      const fits = hasRoomFor(state, [resource]);
+      take.disabled = !chest.contents?.[resource] || !fits;
+      take.title = fits ? '' : 'Your bag is full';
       put.addEventListener('click', () => move(resource, true));
       take.addEventListener('click', () => move(resource, false));
       row.append(words, put, take);

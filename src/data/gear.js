@@ -7,7 +7,7 @@
  *
  * Fields: `id` is its key in GEAR_RECIPES; `name` is the word used in messages ("torch"); `use` is
  * the Build menu's short line about what it does; `key` is the number key that picks it while the
- * Build menu is open (1 to 4 are the campfire and the tools); `icon` names its line picture in
+ * Build menu is open (1 to 4 are the campfire and the tools; the backpack's is P); `icon` names its line picture in
  * ui/layout.js; `made` is the message shown when it is finished.
  */
 export const GEAR = [
@@ -42,6 +42,14 @@ export const GEAR = [
     key: '8',
     icon: 'wood',
     made: 'Boat built · Walk to the water’s edge and press E to board',
+  },
+  {
+    id: 'backpack',
+    name: 'backpack',
+    use: 'Opens the second row of the item box, for good',
+    key: 'p',
+    icon: 'bag',
+    made: 'Backpack made · The second row of your item box is open',
   },
 ];
 

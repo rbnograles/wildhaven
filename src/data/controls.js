@@ -44,6 +44,11 @@ export const CONTROLS = [
       { keys: ['E'], does: 'Sleep in your tent until dawn, from dusk' },
       { keys: ['F'], does: 'Eat food' },
       { keys: ['H'], does: 'Heal with herbs' },
+      { keys: ['Drag'], does: 'Move a thing to another slot of the item box' },
+      {
+        keys: ['E'],
+        does: 'At your camp: pack up the tent, take down buildings, put out the fire',
+      },
       { keys: ['R'], does: 'Drive back wolves close by' },
     ],
   },

@@ -15,6 +15,15 @@ import { fireRadius, nearestCamp } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { nameCamp } from '../actions/build.js';
 import { giveToNeed, eat, heal, brewTea, rest, passOut } from '../actions/camp.js';
+import {
+  FIRE,
+  checkTakeDown,
+  beginTakeDown,
+  refundOf,
+  takeDownVerb,
+  takeDownName,
+} from '../actions/takedown.js';
+import { RESOURCE_NAMES } from '../data/supplies.js';
 import { startSleep, wakeUp, NAP_SECONDS } from '../animation/clips.js';
 import { save } from '../core/session.js';
 import { describeEvent } from './hud.js';
@@ -108,7 +117,62 @@ export function setupCamp(session, ui) {
     $(id).querySelector('small').textContent = why || cost;
   }
 
-  /** Fills the camp dialog: its name, the clock, the fire's size, the needs and the four tasks. */
+  /**
+   * Builds one line of the "Standing here" list: a building (or the fire) and its take-down button.
+   *
+   * The small words say what comes back, or why it can't come down yet (a chest with things in it,
+   * a fire with buildings still round it). The button closes the camp and starts the work, which
+   * takes a few seconds and stops if the player walks away.
+   *
+   * @param {object|null} building - The building, or null for the campfire itself.
+   * @returns {HTMLLIElement} The line.
+   */
+  function standingItem(building) {
+    const what = building ? building.id : FIRE,
+      check = checkTakeDown(session.state, open.id, what),
+      back = Object.entries(refundOf(building))
+        .map(([type, n]) => `${n} ${RESOURCE_NAMES[type] ?? type}`)
+        .join(' · '),
+      item = document.createElement('li'),
+      words = document.createElement('span'),
+      button = document.createElement('button');
+
+    words.append(building ? takeDownName(building) : 'Campfire');
+    words.append(
+      note(
+        check.ok
+          ? building?.kind === 'tent'
+            ? ' · Goes into your item box, to pitch again'
+            : ` · Gives back ${back || 'nothing'}`
+          : ` · ${check.message}`,
+      ),
+    );
+    button.className = 'secondary';
+    button.textContent = building ? takeDownVerb(building) : 'Put out';
+    button.disabled = !check.ok;
+    button.addEventListener('click', () => takeDown(what));
+    item.append(words, button);
+    return item;
+  }
+
+  /**
+   * Starts taking a building (or the fire) of the open camp down, and closes the camp so the
+   * player can watch the work. A refusal says why and leaves the camp open.
+   *
+   * @param {string} what - A building's id, or FIRE.
+   */
+  function takeDown(what) {
+    const result = beginTakeDown(session.state, session.animator, open.id, what);
+    if (!result.ok) {
+      if (result.message) ui.hud.notify(result.message);
+      return;
+    }
+    $('camp-dialog').close();
+    session.keys.clear();
+    ui.hud.update();
+  }
+
+  /** Fills the camp dialog: its name, the clock, the fire's size, the needs, the tasks and what stands here. */
   function render() {
     const { state } = session,
       { meters, resources } = state;
@@ -117,6 +181,7 @@ export function setupCamp(session, ui) {
     $('camp-fire').textContent =
       `Warmth reaches ${fireRadius(open)} units · ${open.grown} of ${MAX_GROWN} needs met`;
     $('camp-needs').replaceChildren(...open.needs.map(needItem));
+    $('camp-buildings').replaceChildren(...[...open.buildings, null].map(standingItem));
 
     task(
       'camp-tea',
@@ -307,9 +372,6 @@ export function setupCamp(session, ui) {
   $('camp-eat').addEventListener('click', eatFood);
   $('camp-heal').addEventListener('click', useHerbs);
 
-  // The item box's food and herbs slots do the same as F and H.
-  $('slot-food').addEventListener('click', eatFood);
-  $('slot-herbs').addEventListener('click', useHerbs);
   $('camp-rest').addEventListener('click', () => restNight());
   $('passout-close').addEventListener('click', () => $('passout-dialog').close());
 
