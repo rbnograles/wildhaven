@@ -234,20 +234,25 @@ export function mountLayout(app) {
       <!-- The bottom bar: the player card on the left, the item box and Build button in the middle,
            and the round map on the right. It is a grid, so the three never overlap. -->
       <div class="game-bottom">
-        <!-- Who you are, the day clock and your survival meters. -->
-        <div class="identity hud-panel">
-          <span id="hud-portrait" class="hud-portrait"></span>
-          <span id="day-dial" class="day-dial" role="img"
-            ><i class="day-dial-face"></i><i class="day-dial-rim"></i><i class="day-dial-pin"></i
-          ></span>
-          <div class="identity-text">
-            <span id="hud-name" class="hud-name"></span
-            ><span id="identity-status" class="identity-status" data-phase="day"
-              ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
-              ><span id="clock"></span
+        <!-- Who you are, the day clock and your survival meters. Short pop-up messages such as
+             "+3 wood" stack up just above the card (ui/hud.js adds and removes them); screen readers
+             announce them too. -->
+        <div class="identity-area">
+          <div id="toasts" class="toasts" role="status"></div>
+          <div class="identity hud-panel">
+            <span id="hud-portrait" class="hud-portrait"></span>
+            <span id="day-dial" class="day-dial" role="img"
+              ><i class="day-dial-face"></i><i class="day-dial-rim"></i><i class="day-dial-pin"></i
             ></span>
-            <div class="meters">
-              ${meter('health', 'Health', healthIconUrl)}${meter('hunger', 'Hunger', hungerIconUrl)}${meter('warmth', 'Warmth', warmthIconUrl)}
+            <div class="identity-text">
+              <span id="hud-name" class="hud-name"></span
+              ><span id="identity-status" class="identity-status" data-phase="day"
+                ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
+                ><span id="clock"></span
+              ></span>
+              <div class="meters">
+                ${meter('health', 'Health', healthIconUrl)}${meter('hunger', 'Hunger', hungerIconUrl)}${meter('warmth', 'Warmth', warmthIconUrl)}
+              </div>
             </div>
           </div>
         </div>
@@ -349,9 +354,6 @@ export function mountLayout(app) {
           ><button data-move="right" aria-label="Move east">→</button>
         </div>
       </div>
-
-      <!-- Short pop-up messages such as "+3 wood". Screen readers announce them too. -->
-      <div id="toast" class="toast" role="status"></div>
     </section>
 
     <!-- Pause menu. Any open dialog pauses the game. -->

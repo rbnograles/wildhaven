@@ -25,6 +25,9 @@ import { canCraft, nextTier, toolName, CRAFT_PREFIX } from '../actions/craft.js'
 import { meterTrends } from '../actions/survive.js';
 import { $ } from './layout.js';
 
+// How many pop-up messages can show at once above the player card; an older one makes room.
+const TOAST_STACK = 4;
+
 // Turns a supply's verb into its "-ing" form for the busy button, e.g. Chop → Chopping.
 const DOING = {
   Chop: 'Chopping',
@@ -166,21 +169,31 @@ function busyLabel(state, animator) {
  * pop up a message, a way to redraw the HUD, and ways to show and hide the controls strip.
  */
 export function createHud(session) {
-  let toastTimer;
   let keyStripTimer;
 
   /**
-   * Shows a short message at the bottom of the screen for about three seconds.
+   * Shows a short message above the player card for about three seconds.
    *
-   * A new message replaces the old one and restarts the timer, so messages never pile up.
+   * Messages stack like sticky notes: a new one is added under the others, and each fades out on
+   * its own timer. Only the newest few are kept (TOAST_STACK), so a burst of messages can't climb
+   * up the screen, and the same message twice in a row just shows once.
    *
    * @param {string} message - The text to show.
    */
   function notify(message) {
-    clearTimeout(toastTimer);
-    $('toast').textContent = message;
-    $('toast').classList.add('visible');
-    toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 3200);
+    const stack = $('toasts');
+    if (stack.lastElementChild?.textContent === message) stack.lastElementChild.remove();
+    while (stack.children.length >= TOAST_STACK) stack.firstElementChild.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    stack.append(toast);
+
+    // The class is added a frame later, so the note fades and slides in instead of just appearing.
+    requestAnimationFrame(() => toast.classList.add('visible'));
+    setTimeout(() => toast.classList.remove('visible'), 3200);
+    setTimeout(() => toast.remove(), 3600);
   }
 
   /**
@@ -364,6 +377,8 @@ export function createHud(session) {
       option.querySelector('.craft-cost').textContent = check.cost
         ? costWords(check.cost)
         : 'Owned';
+      // The tier tells the stylesheet which painted picture to show: the stone tool or the iron one.
+      option.dataset.tier = check.tier ?? 'iron';
       option.classList.toggle('short', check.reason === 'cost');
       option.disabled = check.reason === 'owned';
       option.title = check.ok ? '' : check.message;

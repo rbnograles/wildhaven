@@ -23,7 +23,7 @@ Run: python tools/prepare-sprite-art.py, then python tools/build-map.py
 """
 import json, os, shutil
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'assets')
 SRC = os.path.join(ROOT, 'world', 'source')
@@ -234,9 +234,41 @@ def piece_of(sheet, box, size):
     cut = sheet[y0 - 2:y1 + 3, x0 - 2:x1 + 3]
     return shrink(cut, size / max(cut.shape[:2]))
 
+# The small pictures (wood, stone, berries, herbs, heart, fork and spoon, flame) were painted with a soft glow
+# behind them, which showed in the game as a murky square around each one. These are lifted off that glow.
+LIFTED = ('item-wood', 'item-stone', 'item-food', 'item-herbs',
+          'status-icon-health', 'status-icon-hunger', 'status-icon-warmth')
+LIFT_EDGE = 16   # how sharp a change in colour must be to count as a picture's outline (the glow is far softer)
+
+# Lifts a small picture off the soft glow painted behind it. The glow changes colour slowly and the picture's
+# outline changes sharply, so we start at the crop's rim and spread inward over every slowly-changing pixel,
+# like water filling a tray until it meets a wall. Whatever the water reached is glow and turns see-through.
+def lifted(cut):
+    c = cut.astype(float)
+    solid = (c[:, :, :3] * c[:, :, 3:] / 255).astype('uint8')
+    soft = np.asarray(Image.fromarray(solid).filter(ImageFilter.GaussianBlur(1))).astype(float)
+    gy, gx = np.gradient(soft, axis=(0, 1))
+    calm = np.pad(np.sqrt(gx ** 2 + gy ** 2).sum(axis=2) <= LIFT_EDGE, 1, constant_values=True)
+    glow = np.zeros_like(calm); glow[0] = glow[-1] = True; glow[:, 0] = glow[:, -1] = True
+    while True:
+        grown = glow.copy()
+        grown[1:] |= glow[:-1]; grown[:-1] |= glow[1:]; grown[:, 1:] |= glow[:, :-1]; grown[:, :-1] |= glow[:, 1:]
+        grown &= calm
+        if (grown == glow).all(): break
+        glow = grown
+    # Thin specks left outside the outline are rubbed off, and the cut edge is softened a little.
+    keep = Image.fromarray((~glow[1:-1, 1:-1] * 255).astype('uint8'))
+    keep = keep.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(0.7))
+    out = cut.copy(); out[:, :, 3] = np.minimum(cut[:, :, 3], np.asarray(keep))
+    return trimmed(out)
+
 source = os.path.join(ROOT, 'ui', 'normal', 'status-inventory-components.png')
 status_sheet = load(source)
 for name, (x0, y0, x1, y1, size) in STATUS.items():
+    if name in LIFTED:
+        art = lifted(status_sheet[y0 - 12:y1 + 13, x0 - 12:x1 + 13])
+        save(shrink(art, size / max(art.shape[:2])), os.path.join(UI, name + '.png'), source)
+        continue
     save(piece_of(status_sheet, (x0, y0, x1, y1), size), os.path.join(UI, name + '.png'), source)
 
 source = os.path.join(ROOT, 'ui', 'character-portraits-normal-winter.png')
