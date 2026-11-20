@@ -13,6 +13,7 @@ Inputs : source/animations/<name>.png              tree, rock, fire and water-ri
          source/originals/props/sticks.png         the painted pile of sticks
          source/paths/path-dirt.png, path-cobblestone.png   the painted path modules (only the straight piece is used)
          assets/items/keepsakes/pinefall-keepsakes.png      seven small finds: notebook, feather, pine cone, stones, antler
+         assets/items/ores/iron-copper.png         iron and copper chunks and ore rocks
 Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite, every cell the same size
          assets/world/animations/animations.json   each sheet's cell size, origin and rows
          source/objects/<kind>/<sprite>.png        the first frame, as the still picture the map builder uses
@@ -25,6 +26,7 @@ Outputs: assets/world/animations/<sprite>.png      one sheet per animated sprite
          source/objects/props/path-<kind>-<a|b>.png  short pieces of path the map builder lays end to end
          source/objects/<kind>/<find>.png          the finds lying in the world (feather, pine-cone, antler, three stones)
          assets/ui/game/item-<find>.png, icon-journal.png   the finds' item-box pictures and the journal button's notebook
+         assets/ui/game/item-iron.png, item-copper.png       the ores' item-box pictures
 The inputs are never changed, so it is safe to re-run. It prints the origin of each still picture; copy those
 into source/objects.json if they change.
 Run: python tools/prepare-sprite-art.py, then python tools/build-map.py
@@ -399,3 +401,13 @@ for col, row, world, ui in FINDS:
         kind, name, size = world
         save(shrink(art, size / max(art.shape[:2])), os.path.join(SRC, 'objects', kind, name + '.png'), source)
     if ui: save(shrink(art, 96 / max(art.shape[:2])), os.path.join(UI, ui + '.png'), source)
+
+# ---- the ores: iron and copper pictures for the item box ---------------------------------------------
+# The sheet has two columns and two rows of equal cells: the loose iron and copper chunks on top (the item-box
+# pictures), the two ore rocks below (the map's ore rocks are cut from the Tiled sprite sheet instead).
+source = os.path.join(ROOT, 'items', 'ores', 'iron-copper.png')
+ores_sheet = load(source)
+cell_h, cell_w = ores_sheet.shape[0] // 2, ores_sheet.shape[1] // 2
+for col, ui in ((0, 'item-iron'), (1, 'item-copper')):
+    art = trimmed(ores_sheet[:cell_h, col * cell_w:(col + 1) * cell_w])
+    save(shrink(art, 96 / max(art.shape[:2])), os.path.join(UI, ui + '.png'), source)

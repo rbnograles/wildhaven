@@ -1,0 +1,423 @@
+{
+  "status": "Generated source art; not a runtime atlas. Grids are nominal. Prepare per-frame pivots and crops before runtime integration.",
+  "generatedWith": "Built-in image_gen",
+  "assets": [
+    {
+      "file": "assets/characters/states/tent-sleeping-padded.png",
+      "cols": 4,
+      "rows": [
+        "scout sleep",
+        "builder sleep",
+        "survivor sleep"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5532
+    },
+    {
+      "file": "assets/creatures/deer/deer-states.png",
+      "cols": 4,
+      "rows": [
+        "idle",
+        "walk",
+        "run",
+        "dying"
+      ],
+      "staticSheet": false,
+      "width": 1261,
+      "height": 1247,
+      "transparentPixelFraction": 0.6521
+    },
+    {
+      "file": "assets/creatures/boar/boar-states.png",
+      "cols": 4,
+      "rows": [
+        "idle",
+        "walk",
+        "run",
+        "dying"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.4861
+    },
+    {
+      "file": "assets/creatures/rabbit/rabbit-states.png",
+      "cols": 4,
+      "rows": [
+        "idle",
+        "walk",
+        "run",
+        "dying"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.6123
+    },
+    {
+      "file": "assets/creatures/wolf/wolf-dying.png",
+      "cols": 6,
+      "rows": [
+        "dying"
+      ],
+      "staticSheet": false,
+      "width": 2172,
+      "height": 724,
+      "transparentPixelFraction": 0.844
+    },
+    {
+      "file": "assets/world/source/shorelines/snow-ocean-bank-clean.png",
+      "cols": 3,
+      "rows": [
+        "straight horizontal / straight vertical / convex",
+        "concave / S curve / rounded tip"
+      ],
+      "staticSheet": true,
+      "width": 1536,
+      "height": 1024,
+      "transparentPixelFraction": 0.718
+    },
+    {
+      "file": "assets/items/ores/iron-copper.png",
+      "cols": 2,
+      "rows": [
+        "loose iron / loose copper",
+        "iron ore node / copper ore node"
+      ],
+      "staticSheet": true,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.557
+    },
+    {
+      "file": "assets/world/source/landmarks/cave-entrances.png",
+      "cols": 3,
+      "rows": [
+        "forest cave / snow cave / canyon cave"
+      ],
+      "staticSheet": true,
+      "width": 2172,
+      "height": 724,
+      "transparentPixelFraction": 0.3594
+    },
+    {
+      "file": "assets/characters/states/players-repel.png",
+      "cols": 4,
+      "rows": [
+        "scout repel",
+        "builder repel",
+        "survivor repel"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5927
+    },
+    {
+      "file": "assets/world/source/settlement/shelter-construction-clean.png",
+      "cols": 4,
+      "rows": [
+        "foundation / frame / roof / finished"
+      ],
+      "staticSheet": true,
+      "width": 2172,
+      "height": 724,
+      "transparentPixelFraction": 0.6446
+    },
+    {
+      "file": "assets/world/source/settlement/stockpile-chest-states-clean.png",
+      "cols": 4,
+      "rows": [
+        "closed / half open / empty / stocked"
+      ],
+      "staticSheet": true,
+      "width": 2172,
+      "height": 724,
+      "transparentPixelFraction": 0.5709
+    },
+    {
+      "file": "assets/world/source/settlement/settlement-centres.png",
+      "cols": 3,
+      "rows": [
+        "camp / hamlet / village"
+      ],
+      "staticSheet": true,
+      "width": 2172,
+      "height": 724,
+      "transparentPixelFraction": 0.5036
+    },
+    {
+      "file": "assets/items/dropped-haul.png",
+      "cols": 2,
+      "rows": [
+        "world bundle / map icon"
+      ],
+      "staticSheet": true,
+      "width": 1774,
+      "height": 887,
+      "transparentPixelFraction": 0.7462
+    },
+    {
+      "file": "assets/characters/rowing/players-rowing-north.png",
+      "cols": 4,
+      "rows": [
+        "scout rowing",
+        "builder rowing",
+        "survivor rowing"
+      ],
+      "staticSheet": false,
+      "width": 1086,
+      "height": 1448,
+      "transparentPixelFraction": 0.444
+    },
+    {
+      "file": "assets/characters/rowing/players-rowing-south.png",
+      "cols": 4,
+      "rows": [
+        "scout rowing",
+        "builder rowing",
+        "survivor rowing"
+      ],
+      "staticSheet": false,
+      "width": 1086,
+      "height": 1448,
+      "transparentPixelFraction": 0.4587
+    },
+    {
+      "file": "assets/world/source/settlement/ship-sailing-directions.png",
+      "cols": 3,
+      "rows": [
+        "north",
+        "east",
+        "south"
+      ],
+      "staticSheet": false,
+      "width": 1312,
+      "height": 1199,
+      "transparentPixelFraction": 0.6594
+    },
+    {
+      "file": "assets/characters/settlers/settlers-idle.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker directions",
+        "stoneworker directions",
+        "grower directions"
+      ],
+      "staticSheet": true,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.6153
+    },
+    {
+      "file": "assets/characters/settlers/settlers-walk-east.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.6477
+    },
+    {
+      "file": "assets/characters/settlers/settlers-walk-south.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1448,
+      "height": 1086,
+      "transparentPixelFraction": 0.6942
+    },
+    {
+      "file": "assets/characters/settlers/settlers-walk-north.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.6281
+    },
+    {
+      "file": "assets/characters/settlers/settlers-carry.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1448,
+      "height": 1086,
+      "transparentPixelFraction": 0.4062
+    },
+    {
+      "file": "assets/characters/settlers/settlers-deposit.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5788
+    },
+    {
+      "file": "assets/characters/settlers/settlers-chop.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5709
+    },
+    {
+      "file": "assets/characters/settlers/settlers-mine.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5678
+    },
+    {
+      "file": "assets/characters/settlers/settlers-sow.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5748
+    },
+    {
+      "file": "assets/characters/settlers/settlers-tend.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5845
+    },
+    {
+      "file": "assets/characters/settlers/settlers-harvest.png",
+      "cols": 4,
+      "rows": [
+        "woodsworker",
+        "stoneworker",
+        "grower"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5821
+    },
+    {
+      "file": "assets/characters/farming/players-sow.png",
+      "cols": 4,
+      "rows": [
+        "scout",
+        "builder",
+        "survivor"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.6359
+    },
+    {
+      "file": "assets/characters/farming/players-tend.png",
+      "cols": 4,
+      "rows": [
+        "scout",
+        "builder",
+        "survivor"
+      ],
+      "staticSheet": false,
+      "width": 1448,
+      "height": 1086,
+      "transparentPixelFraction": 0.6629
+    },
+    {
+      "file": "assets/characters/farming/players-harvest.png",
+      "cols": 4,
+      "rows": [
+        "scout",
+        "builder",
+        "survivor"
+      ],
+      "staticSheet": false,
+      "width": 1254,
+      "height": 1254,
+      "transparentPixelFraction": 0.5746
+    },
+    {
+      "file": "assets/world/source/farming/wheat-growth.png",
+      "cols": 4,
+      "rows": [
+        "tilled / seedling / growing / ripe"
+      ],
+      "staticSheet": true,
+      "width": 2172,
+      "height": 724,
+      "transparentPixelFraction": 0.7283
+    },
+    {
+      "file": "assets/items/keepsakes/pinefall-keepsakes.png",
+      "cols": 4,
+      "rows": [
+        "notebook / feather / pinecone / moss pebble",
+        "antler / wind stone / skipping stone / empty"
+      ],
+      "staticSheet": true,
+      "width": 1774,
+      "height": 887,
+      "transparentPixelFraction": 0.7131
+    },
+    {
+      "file": "assets/creatures/wolf/wolf-states-clean.png",
+      "cols": 4,
+      "rows": [
+        "idle",
+        "walk",
+        "warning",
+        "attack",
+        "retreat"
+      ],
+      "staticSheet": false,
+      "width": 1294,
+      "height": 1216,
+      "transparentPixelFraction": 0.6163
+    }
+  ]
+}

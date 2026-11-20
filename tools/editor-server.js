@@ -4,7 +4,7 @@
 // The file path and the commands are fixed here; nothing a request sends reaches either.
 
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { shapeErrors as placesShape, writePlaces } from '../src/editor/model.js';
@@ -51,9 +51,25 @@ const MAX_BODY = 1_000_000;
 /** How long after a save or rebuild the page is kept from reloading itself, in milliseconds. */
 const QUIET = 3000;
 
-/** The commands a rebuild runs, in order. The second runs only if the first succeeds. */
+/** The Tiled map the game plays, when there is one (see tools/import-tiled-world.py). */
+const TILED_MAP = 'assets/world/tiled/wildhaven-world-arranged.tmj';
+
+/**
+ * The commands a rebuild runs, in order. Each runs only if the one before succeeds. When a Tiled map
+ * exists, it is brought in after build-map.py: the game plays the Tiled map, with the hills and
+ * regions build-map.py makes and the Objects-mode edits laid over it.
+ */
 const STEPS = [
   { label: 'python tools/build-map.py', cmd: 'python', args: ['tools/build-map.py'] },
+  ...(existsSync(TILED_MAP)
+    ? [
+        {
+          label: 'python tools/import-tiled-world.py',
+          cmd: 'python',
+          args: ['tools/import-tiled-world.py'],
+        },
+      ]
+    : []),
   {
     label: 'node --test (places, sea, map, cliffs, edits, terrain)',
     cmd: process.execPath,

@@ -108,6 +108,7 @@ export function placeCampfire(state, x, y) {
     ...spot,
     grown: 0,
     needs: [],
+    buildings: [],
   };
   camp.needs = makeNeeds(state, camp);
   state.camps.push(camp);
