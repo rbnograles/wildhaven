@@ -13,7 +13,7 @@
 export const ANIMALS = {
   deer: {
     name: 'deer',
-    regions: ['pinefall', 'meadows', 'frostpeak'],
+    regions: ['driftwood-landing', 'greenbough-camp', 'hollowstead'],
     herd: [3, 5],
     walk: 45,
     run: 230,
@@ -23,7 +23,14 @@ export const ANIMALS = {
   },
   rabbit: {
     name: 'rabbit',
-    regions: ['meadows', 'lagoon', 'pinefall'],
+    regions: [
+      'alder-rest',
+      'blossom-crossroads',
+      'driftwood-landing',
+      'hollowstead',
+      'pinefall-camp',
+      'stonebrook-hamlet',
+    ],
     herd: [1, 2],
     walk: 30,
     run: 200,
@@ -33,7 +40,7 @@ export const ANIMALS = {
   },
   boar: {
     name: 'boar',
-    regions: ['jungle', 'pinefall', 'canyons'],
+    regions: ['blossom-crossroads', 'driftwood-landing', 'hollowstead', 'stonebrook-hamlet'],
     herd: [1, 3],
     walk: 35,
     run: 170,
