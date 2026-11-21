@@ -132,18 +132,24 @@ test('flowers give herbs, driftwood and sticks give wood, small stones give ston
 // Guards the second herb source. Flowers grow almost only in the meadows, the lagoon and the
 // jungle, so without wild herbs a player in the pine woods, the snow, the canyons or the desert
 // cannot heal or brew the tea that holds off the cold.
-test('wild herbs give 3 herbs and grow in every region that has few flowers', () => {
+test('herbs come from wild herb patches, or from flowers when the map has no patches', () => {
   const herbs = wild.filter((n) => n.sprite === 'wild-herbs');
 
-  assert.ok(herbs.length >= 110 && herbs.length <= 180, `${herbs.length} patches`);
-  for (const n of herbs) {
-    assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['herbs', 3, undefined, 180], n.id);
-    assert.equal(OBJECT_SPECS[n.sprite].footprint, undefined, 'walk-through');
-  }
-
-  for (const name of ['Pinefall Woods', 'Frostpeak', 'Stonewater Canyons', 'Sunscar Desert']) {
-    const here = herbs.filter((n) => regionOf(n.x, n.y).name === name);
-    assert.ok(here.length >= 20, `${name}: ${here.length}`);
+  if (herbs.length) {
+    // A world with wild-herb patches (the old seven-region map): validate them.
+    assert.ok(herbs.length >= 110 && herbs.length <= 180, `${herbs.length} patches`);
+    for (const n of herbs) {
+      assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['herbs', 3, undefined, 180], n.id);
+      assert.equal(OBJECT_SPECS[n.sprite].footprint, undefined, 'walk-through');
+    }
+    for (const name of ['Pinefall Woods', 'Frostpeak', 'Stonewater Canyons', 'Sunscar Desert']) {
+      const here = herbs.filter((n) => regionOf(n.x, n.y).name === name);
+      assert.ok(here.length >= 20, `${name}: ${here.length}`);
+    }
+  } else {
+    // Spring has no wild-herb patches; flowers are the herb source instead.
+    const flowers = wild.filter((n) => n.sprite === 'flowers' && n.type === 'herbs');
+    assert.ok(flowers.length > 100, `${flowers.length} flower patches give herbs`);
   }
 });
 
@@ -267,14 +273,10 @@ test('solidBases holds standing supplies, beached old boats, campfires and villa
 // needs the right tool and swings an action clip, trees give wood, and there is iron to mine.
 test('every tree and rock in the map is a node that needs a tool', () => {
   assert.ok(harvest.length > 2000);
-  for (const name of Object.keys(HARVEST)) {
-    assert.ok(OBJECT_SPECS[name]?.footprint, name);
-    assert.ok(
-      harvest.some((n) => n.sprite === name),
-      name,
-    );
-  }
   for (const node of harvest) {
+    // Every tree or rock on the map must be a known HARVEST kind with a solid base.
+    assert.ok(HARVEST[node.sprite], node.id);
+    assert.ok(OBJECT_SPECS[node.sprite]?.footprint, node.sprite);
     assert.ok(['axe', 'pickaxe'].includes(node.tool), node.id);
     assert.equal(CLIPS[node.clip]?.action, true, node.id);
     assert.equal(node.clip, node.tool === 'axe' ? 'chop' : 'build', node.id);
@@ -282,8 +284,12 @@ test('every tree and rock in the map is a node that needs a tool', () => {
     assert.equal(node.type === 'wood', node.tool === 'axe', node.id);
     assert.equal(node.id, `${node.sprite}-${node.x}-${node.y}`);
   }
-  // About a hundred iron-streaked rocks (96 after the map clean-up), split between two regions.
-  assert.ok(harvest.filter((n) => n.type === 'iron').length >= 80);
+  // Spring's temperate trees and ordinary rocks are all on the map (no snow/jungle trees or ore).
+  for (const name of ['pine', 'oak', 'big-oak', 'rocks-a', 'boulder', 'beach-rock'])
+    assert.ok(
+      harvest.some((n) => n.sprite === name),
+      name,
+    );
 });
 
 // Guards the quick lookup: it finds every node close to a spot, the same as checking them all.
@@ -322,15 +328,19 @@ test('loose stones give stone, and no antler, feather or pine cone lies about', 
   }
 });
 
-// Guards the precious ores: the gold and diamond rocks placed by the mineral caves must be nodes a
-// pickaxe mines for their own resource, or they would be plain scenery that gives nothing.
-test('gold and diamond ore are mined with a pickaxe for gold and diamond', () => {
+// Guards Spring's "no minerals" rule, and that any precious ore (in a world that has it) is a
+// pickaxe node for its own resource rather than plain scenery that gives nothing.
+test('precious ore is pickaxe-mined where present, and Spring has none', () => {
   for (const [sprite, type] of [
     ['gold-ore', 'gold'],
     ['diamond-ore', 'diamond'],
-  ]) {
-    const rocks = NODES.filter((n) => n.sprite === sprite);
-    assert.ok(rocks.length >= 2, sprite);
-    for (const n of rocks) assert.deepEqual([n.type, n.tool, n.amount], [type, 'pickaxe', 3], n.id);
-  }
+  ])
+    for (const n of NODES.filter((n) => n.sprite === sprite))
+      assert.deepEqual([n.type, n.tool, n.amount], [type, 'pickaxe', 3], n.id);
+
+  // Spring excludes metals and gems: no ore of any kind lies on the map.
+  const ore = NODES.filter((n) =>
+    ['gold-ore', 'diamond-ore', 'iron-ore', 'copper-ore'].includes(n.sprite),
+  );
+  assert.equal(ore.length, 0, ore.map((n) => n.sprite).join(','));
 });

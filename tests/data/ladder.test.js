@@ -43,9 +43,14 @@ test('every tool is reachable from each character start', () => {
         }
     }
 
+    // A tool is only required to be reachable when its materials can actually be gathered in this
+    // world. Spring has no iron, so iron tools are out of reach there, and that is allowed.
+    const can = gatherable();
     for (const tool of TOOL_IDS)
       for (const tier of TIERS) {
-        if (!TOOL_RECIPES[tool][tier]) continue;
+        const recipe = TOOL_RECIPES[tool][tier];
+        if (!recipe) continue;
+        if (!Object.keys(recipe).every((t) => can.has(t))) continue;
         assert.ok(made.has(`${tier} ${tool}`), `${character.id} can't reach the ${tier} ${tool}`);
       }
   }
