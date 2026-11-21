@@ -48,7 +48,8 @@ class Elevation(unittest.TestCase):
 class Places(unittest.TestCase):
     # Guards: regenerated places.json keeps the 3 spawns and gives 8 regions, 52 landmarks, 14 signposts.
     def test_shape(self):
-        p = json.load(open(PLACES, encoding='utf-8'))
+        with open(PLACES, encoding='utf-8') as f:
+            p = json.load(f)
         self.assertEqual(len(p['regions']), 8)
         self.assertEqual(len(p['landmarks']), 52)
         self.assertEqual(len(p['waypoints']), 14)
