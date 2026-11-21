@@ -104,3 +104,22 @@ The grass and dirt patch are scattered in their own pass on a 150-unit grid, wit
 Added four transparent source sheets in `assets/characters/tools/`: stone pickaxe, iron pickaxe, stone axe and iron axe. Each contains Scout, Builder and Survivor in rows with ready/windup/strike/recovery columns. Built-in image generation used the existing character and equipment art as references; exact prompts are beside the PNGs.
 
 `tools/prepare-tool-swings.py` packs twelve game strips in the individual character folders, with four padded 512×512 cells and aligned boot anchors. The renderer uses the owned tool tier while mining or chopping. East is drawn; west is mirrored. All four clips can be inspected in Preview animations. See `assets/characters/tools/README.md` for the inventory and regeneration command.
+
+## Gold and diamond weapon art is a placeholder (2026-11-21)
+
+Weapons now have four tiers (stone, iron, gold, diamond), but only stone and iron have art. **TODO:** paint gold and diamond versions. Until then the game reuses the iron art:
+
+- Sword and bow swing sheets: `huntClip` in `src/actions/animals.js` plays the iron clips (`swordIron`, `bowIron`) for every tier above stone.
+- Flying arrow: the iron arrow (`assets/world/effects/arrow-iron.png`) is drawn for gold and diamond bows.
+- HUD: the tools-row chip and the Build menu row show the iron picture for gold and diamond (CSS: the `.iron` chip class and the `[data-tier='gold']`/`[data-tier='diamond']` selectors beside the iron ones in `src/style.css`).
+
+Files to add when the real art is made (each with a `.prompt.txt` holding its exact prompt, and listed in the matching `tools/prepare-*.py` script):
+
+| File | Made by |
+| --- | --- |
+| `assets/characters/<id>/<id>-sword-gold.png`, `-sword-diamond.png` (one row of 4 east-facing frames, like `-sword-iron.png`) | `tools/prepare-weapon-art.py` |
+| `assets/characters/<id>/<id>-bow-gold.png`, `-bow-diamond.png` | `tools/prepare-weapon-art.py` |
+| `assets/world/effects/arrow-gold.png`, `arrow-diamond.png` | `tools/prepare-weapon-art.py` |
+| `assets/ui/game/tool-sword-gold.png`, `tool-sword-diamond.png`, `tool-bow-gold.png`, `tool-bow-diamond.png` | `tools/prepare-equipment-art.py` |
+
+Then add `gold`/`diamond` clips and sheets in `src/animation/clips.js` and `sheets.js`, and change `huntClip` and the chip CSS to use them.

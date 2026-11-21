@@ -25,9 +25,13 @@ import { hasTool, toolTier, wearTool } from '../world/tools.js';
 import { facing } from './move.js';
 import { BAG_FULL, addItem, hasRoomFor } from '../world/bag.js';
 import { startAction, slantOf } from '../animation/clips.js';
+import { weaponDamage } from './combat.js';
 
 /** The start of a timed hunting action's target: `hunt:<animal id>`. */
 export const HUNT_PREFIX = 'hunt:';
+
+/** Pulls the creature id out of a hunt action target, dropping any :weapon:tenths suffix. */
+export const huntIdOf = (target) => target.slice(HUNT_PREFIX.length).split(':')[0];
 
 // How far from the player an animal is still worth moving each frame; farther ones wait, unseen.
 const AWAKE = 3000;
@@ -80,7 +84,14 @@ export function tickAnimals(
   for (const a of WILD_ANIMALS) {
     if (a.phase === 'gone') {
       if (state.time >= a.respawnAt)
-        Object.assign(a, { phase: 'idle', x: a.herd.x, y: a.herd.y, left: 2, clock: 0 });
+        Object.assign(a, {
+          phase: 'idle',
+          x: a.herd.x,
+          y: a.herd.y,
+          hp: ANIMALS[a.kind].hp,
+          left: 2,
+          clock: 0,
+        });
       continue;
     }
     a.clock += dt;
@@ -187,7 +198,7 @@ export function huntWeapon(state, d) {
  * Picks the swing animation for a weapon, in the metal the player owns.
  *
  * The axe keeps its chopping swing, a sword gets its own slash, and a bow its draw-and-loose. Each
- * has a stone and an iron picture, so an iron weapon shows the iron art.
+ * has a stone and an iron picture, so every metal above stone shows the iron art.
  *
  * @param {object} state - The game being played.
  * @param {string} tool - The weapon's id: 'axe', 'sword' or 'bow'.
@@ -195,7 +206,8 @@ export function huntWeapon(state, d) {
  */
 export function huntClip(state, tool) {
   const base = tool === 'axe' ? 'chop' : tool;
-  return base + (toolTier(state, tool) === 'iron' ? 'Iron' : '');
+  // Only stone and iron swing sheets exist; gold and diamond reuse the iron art for now.
+  return base + (toolTier(state, tool) !== 'stone' ? 'Iron' : '');
 }
 
 /**
@@ -267,39 +279,89 @@ export function beginHunt(state, animator, animal) {
 }
 
 /**
- * Finishes a hunt when its timed action runs out: the animal lies down, and its food (and, for a deer
- * sometimes, an antler) goes into the backpack. The weapon used wears a use if it is a stone one,
- * as chopping wears an axe.
+ * Starts a sword swing at a creature in reach: what the left mouse button does while a weapon is
+ * drawn. The swing's clip plays for the sword's tier time, and finishInteraction lands the hit.
+ *
+ * @param {object} state - The game being played. The player turns to face the creature.
+ * @param {object} animator - The player's animation state.
+ * @param {object} creature - The animal or wolf to hit (picked by meleeTarget).
+ * @returns {{ok: boolean, tool?: string, reason?: string, message?: string}} Whether the swing
+ *   started, or why not: 'busy', 'tool' (no sword), 'far', or 'full' (no room for the food).
+ */
+export function beginSwing(state, animator, creature) {
+  if (animator.pending) return { ok: false, reason: 'busy' };
+  if (!hasTool(state, 'sword')) return { ok: false, reason: 'tool' };
+  if (!creature || !isAlive(creature)) return { ok: false, reason: 'far' };
+  const d = Math.hypot(state.player.x - creature.x, state.player.y - creature.y);
+  if (d > HUNT_REACH) return { ok: false, reason: 'far' };
+  if (!creature.den && !hasRoomFor(state, { food: ANIMALS[creature.kind].food }))
+    return { ok: false, reason: 'full', message: BAG_FULL };
+  state.player.direction = creature.x < state.player.x ? 1 : 2;
+  startAction(
+    animator,
+    huntClip(state, 'sword'),
+    `${HUNT_PREFIX}${creature.id}:sword:10`,
+    SWORD_SECONDS[toolTier(state, 'sword')],
+  );
+  return { ok: true, tool: 'sword' };
+}
+
+/**
+ * Starts a bow shot at a locked creature: what releasing the right mouse button does. How long the
+ * button was held (0 to 1) is turned into tenths and carried in the target, so finishInteraction
+ * knows how charged the shot was, and so how strong.
+ *
+ * @param {object} state - The game being played. The player turns to face the target.
+ * @param {object} animator - The player's animation state.
+ * @param {object} creature - The locked creature (from aimTarget).
+ * @param {number} chargeFrac - How charged the shot is, 0 (quick tap) to 1 (full hold).
+ * @returns {{ok: boolean, tool?: string, charge?: number, reason?: string, message?: string}}
+ *   Whether the shot started, or why not: 'busy', 'tool' (no bow), 'arrows', 'far', or 'full'.
+ */
+export function beginShot(state, animator, creature, chargeFrac) {
+  if (animator.pending) return { ok: false, reason: 'busy' };
+  if (!hasTool(state, 'bow')) return { ok: false, reason: 'tool' };
+  if (!hasArrows(state))
+    return {
+      ok: false,
+      reason: 'arrows',
+      message: 'Out of arrows · Fletch more in the Build menu (B)',
+    };
+  if (!creature || !isAlive(creature)) return { ok: false, reason: 'far' };
+  const d = Math.hypot(state.player.x - creature.x, state.player.y - creature.y);
+  if (d > BOW_REACH[toolTier(state, 'bow')]) return { ok: false, reason: 'far' };
+  if (!creature.den && !hasRoomFor(state, { food: ANIMALS[creature.kind].food }))
+    return { ok: false, reason: 'full', message: BAG_FULL };
+  state.player.direction = creature.x < state.player.x ? 1 : 2;
+  const tenths = Math.round(Math.min(Math.max(chargeFrac, 0), 1) * 10);
+  startAction(
+    animator,
+    huntClip(state, 'bow'),
+    `${HUNT_PREFIX}${creature.id}:bow:${tenths}`,
+    BOW_SECONDS,
+  );
+  return { ok: true, tool: 'bow', charge: tenths / 10 };
+}
+
+/**
+ * Gives one creature the rewards for being felled, and lays it down.
+ *
+ * A wolf gives only its pelt and is back at its den next dusk. Any other animal gives its food (and
+ * for a deer sometimes an antler) and its hide, and comes back to its herd a day later. An animal
+ * whose food has no room in the bag is not felled: the caller leaves it wounded instead.
  *
  * @param {object} state - The game being played. Resources change.
- * @param {string} target - Such as 'hunt:herd-meadows-2-1'.
- * @param {() => number} [roll] - Gives a number from 0 to 1, for the antler; tests pass their own.
- * @returns {{kind: 'hunt', animal: string, food: number, leather?: number, pelt?: number, antler: boolean,
- *   wear: string|null}|null}
- *   What the hunt gave (`animal` 'wolf' and no food for a wolf), or null when the animal got away
- *   (it is gone, or too far now).
+ * @param {object} a - The creature (already at 0 hp).
+ * @param {() => number} roll - Gives 0 to 1, for the antler.
+ * @returns {{animal: string, food: number, leather?: number, pelt?: number, antler: boolean}|null}
+ *   The reward, or null when a full bag means an animal is not felled after all.
  */
-export function finishHunt(state, target, roll = Math.random) {
-  const id = target.slice(HUNT_PREFIX.length),
-    a = animalById(id) ?? WOLVES.find((w) => w.id === id);
-  if (!a || !isAlive(a)) return null;
-  // The animal may have shifted a little during the swing: half as far again still counts.
-  const weapon = huntWeapon(state, Math.hypot(state.player.x - a.x, state.player.y - a.y) / 1.5);
-  if (!weapon) return null;
-  // A wolf gives nothing: it lies down, and its pack is whole again at the next dusk.
+function fellCreature(state, a, roll) {
+  // A wolf's thick pelt is the reward for a dangerous fight; it is left behind if the bag is full.
   if (a.den) {
-    if (weapon.tool === 'bow') state.resources.arrow -= ARROW_PER_SHOT;
     Object.assign(a, { phase: 'down', clock: 0, respawnAt: nextDusk(state.time) });
-    // A wolf's thick pelt is the reward for a dangerous fight; it is left behind if the bag is full.
     const pelt = addItem(state, 'wolfpelt') ? 1 : 0;
-    return {
-      kind: 'hunt',
-      animal: 'wolf',
-      food: 0,
-      pelt,
-      antler: false,
-      wear: wearTool(state, weapon.tool),
-    };
+    return { animal: 'wolf', food: 0, pelt, antler: false };
   }
   // The bag is checked again: it may have filled since the swing began.
   const kind = ANIMALS[a.kind];
@@ -310,13 +372,100 @@ export function finishHunt(state, target, roll = Math.random) {
   // The hide and an antler are extras: one with no room in the item box is left behind.
   const leather = addItem(state, 'leather', kind.leather) ? kind.leather : 0;
   const antler = rolled && addItem(state, 'antler');
-  if (weapon.tool === 'bow') state.resources.arrow -= ARROW_PER_SHOT;
-  return {
-    kind: 'hunt',
-    animal: kind.name,
-    food: kind.food,
-    leather,
-    antler,
-    wear: wearTool(state, weapon.tool),
-  };
+  return { animal: kind.name, food: kind.food, leather, antler };
+}
+
+/**
+ * Lands one hit on a creature: takes the damage off its hit points, and fells it if that empties them.
+ *
+ * A wounded animal bolts (a wounded wolf keeps coming). If a killing blow lands on an animal but the
+ * bag has no room for its food, the hit is wasted and the animal stays up, so a full bag never loses
+ * a kill into thin air.
+ *
+ * @param {object} state - The game being played.
+ * @param {object} creature - The animal or wolf being hit.
+ * @param {number} damage - How much to take off.
+ * @param {() => number} [roll=Math.random] - For a deer's antler.
+ * @returns {{dead: boolean, reward?: object, blocked?: boolean}} Whether it fell and the reward, or
+ *   `blocked` when a full bag stopped an animal's kill.
+ */
+export function applyHit(state, creature, damage, roll = Math.random) {
+  if (creature.hp - damage > 0) {
+    creature.hp -= damage;
+    // Animals run from a wound; wolves press on.
+    if (!creature.den) {
+      if (creature.phase !== 'run') creature.clock = 0;
+      Object.assign(creature, { phase: 'run', fleeFor: FLEE_SECONDS });
+    }
+    return { dead: false };
+  }
+  const reward = fellCreature(state, creature, roll);
+  if (!reward) return { dead: false, blocked: true };
+  creature.hp = 0;
+  return { dead: true, reward };
+}
+
+/**
+ * Confirms a weapon the mouse combat chose is still usable on a target at distance `d`.
+ *
+ * The player must still own it, and the target must be within that weapon's reach (a bow's long
+ * reach, or arm's length for a sword or axe).
+ *
+ * @param {object} state - The game being played.
+ * @param {string} tool - 'sword', 'bow' or 'axe'.
+ * @param {number} d - How far the target is (already made a little lenient by the caller).
+ * @returns {{tool: string}|null} The weapon, or null when it can't be used now.
+ */
+function forcedWeapon(state, tool, d) {
+  if (!hasTool(state, tool)) return null;
+  if (tool === 'bow') return d <= BOW_REACH[toolTier(state, 'bow')] ? { tool } : null;
+  return d <= HUNT_REACH ? { tool } : null;
+}
+
+/**
+ * Finishes a hunt when its timed action runs out: it deals ONE hit to the creature. The creature
+ * is felled (and its food, hide and maybe an antler go into the backpack) only when that hit
+ * empties its hit points; otherwise it is wounded and the result says `wounded: true`. The weapon
+ * used wears a use if it is a stone one, as chopping wears an axe.
+ *
+ * The target is `hunt:<id>` (the best weapon is picked, full damage) or
+ * `hunt:<id>:<weapon>:<tenths>` (the mouse combat chose the weapon and how charged it was, in
+ * tenths from 0 to 10).
+ *
+ * @param {object} state - The game being played. Resources change.
+ * @param {string} target - Such as 'hunt:herd-meadows-2-1' or 'hunt:herd-meadows-2-1:bow:7'.
+ * @param {() => number} [roll] - Gives a number from 0 to 1, for the antler; tests pass their own.
+ * @returns {{kind: 'hunt', animal: string, food?: number, leather?: number, pelt?: number,
+ *   antler?: boolean, wounded?: boolean, wear: string|null, tool: string}|null}
+ *   What the hit did (`wounded: true` when the creature is still up; `animal` 'wolf' and no food
+ *   for a wolf), or null when it got away (it is gone, too far now, or nothing can be used).
+ */
+export function finishHunt(state, target, roll = Math.random) {
+  const [id, forcedTool, chargeTag] = target.slice(HUNT_PREFIX.length).split(':');
+  const a = animalById(id) ?? WOLVES.find((w) => w.id === id);
+  if (!a || !isAlive(a)) return null;
+
+  // The creature may have shifted a little during the swing: half as far again still counts.
+  const d = Math.hypot(state.player.x - a.x, state.player.y - a.y) / 1.5;
+  const weapon = forcedTool ? forcedWeapon(state, forcedTool, d) : huntWeapon(state, d);
+  if (!weapon) return null;
+
+  // A bow spends an arrow per shot, hit or miss.
+  if (weapon.tool === 'bow') {
+    if (!hasArrows(state)) return null;
+    state.resources.arrow -= ARROW_PER_SHOT;
+  }
+
+  const frac = chargeTag ? Number(chargeTag) / 10 : 1;
+  const wear = wearTool(state, weapon.tool);
+  const hit = applyHit(state, a, weaponDamage(state, weapon.tool, frac), roll);
+  if (!hit.dead)
+    return {
+      kind: 'hunt',
+      wounded: true,
+      animal: a.den ? 'wolf' : ANIMALS[a.kind].name,
+      wear,
+      tool: weapon.tool,
+    };
+  return { kind: 'hunt', ...hit.reward, wear, tool: weapon.tool };
 }

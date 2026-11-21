@@ -142,6 +142,8 @@ test('a wolf fought with an axe lies down and is back at dusk', () => {
   assert.equal(huntable(game), wolf);
   const animator = createAnimator();
   assert.equal(beginHunt(game, animator, wolf).ok, true);
+  // Hunting is damage-based: leave the wolf one hit from falling.
+  wolf.hp = 1;
   const done = finishHunt(game, animator.pending.target);
   assert.equal(done.animal, 'wolf');
   assert.equal(done.food, 0);

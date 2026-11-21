@@ -244,19 +244,30 @@ export const FOG_RADIUS = 1000;
 // ---- Tools and crafting ----
 
 /**
- * What each tool costs to craft, per tier. Stone tools are made anywhere; iron tools also need a
- * hammer and one of the player's campfires (the fire is the forge).
+ * What each tool costs to craft, per tier. Stone tools are made anywhere; the forged tiers (iron, gold
+ * and diamond) also need a hammer and one of the player's campfires (the fire is the forge).
  */
 export const TOOL_RECIPES = {
   axe: { stone: { wood: 3, stone: 2 }, iron: { wood: 2, stone: 1, iron: 3 } },
   pickaxe: { stone: { wood: 3, stone: 3 }, iron: { wood: 2, stone: 1, iron: 4 } },
   hammer: { stone: { wood: 2, stone: 3 }, iron: { wood: 2, stone: 1, iron: 3 } },
-  // The weapons. A bow is strung with plant fibre, so it asks for herbs (wild flowers).
-  sword: { stone: { wood: 1, stone: 4 }, iron: { wood: 1, stone: 1, iron: 4 } },
-  bow: { stone: { wood: 4, stone: 1, herbs: 2 }, iron: { wood: 3, iron: 2, herbs: 2 } },
+  // The weapons. A bow is strung with plant fibre, so it asks for herbs (wild flowers). Gold and
+  // diamond are forged like iron, giving the mined gold and diamond their first use.
+  sword: {
+    stone: { wood: 1, stone: 4 },
+    iron: { wood: 1, stone: 1, iron: 4 },
+    gold: { wood: 1, gold: 4 },
+    diamond: { wood: 1, diamond: 4 },
+  },
+  bow: {
+    stone: { wood: 4, stone: 1, herbs: 2 },
+    iron: { wood: 3, iron: 2, herbs: 2 },
+    gold: { wood: 3, gold: 2, herbs: 2 },
+    diamond: { wood: 3, diamond: 2, herbs: 2 },
+  },
 };
 
-/** How many uses a new stone tool has. Iron tools never wear out. */
+/** How many uses a new stone tool has. Iron, gold and diamond tools never wear out. */
 export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10, sword: 20, bow: 20 };
 
 // Seconds a gather that needs a tool takes with a stone or an iron one. Bare-hand gathers keep
@@ -427,17 +438,34 @@ export const FLEE_SECONDS = 3;
 export const HUNT_REACH = 95;
 export const HUNT_SECONDS = 1.5;
 
-// Seconds a hunt or a wolf fight takes with a sword, by its tier: quicker than the axe's HUNT_SECONDS.
-export const SWORD_SECONDS = { stone: 1, iron: 0.6 };
+// Seconds a melee hit with a sword takes, by tier: quicker than the axe's HUNT_SECONDS, and quicker
+// at higher tiers.
+export const SWORD_SECONDS = { stone: 1, iron: 0.6, gold: 0.6, diamond: 0.5 };
 
 // Seconds a bow shot takes from nocking the arrow to the hit: the archer draws and aims for most of
 // it, and the arrow flies for the last quarter second (the `bow` clip in animation/clips.js is laid
 // out to fill exactly this long).
 export const BOW_SECONDS = 1.5;
 
-// How far away a bow can hunt from, by its tier. A walking player startles an animal only within
+// How far away a bow can hunt from, by tier. A walking player startles an animal only within
 // FLEE_WALKING, so a bow lets a careful hunter shoot before the animal runs.
-export const BOW_REACH = { stone: 260, iron: 340 };
+export const BOW_REACH = { stone: 260, iron: 340, gold: 400, diamond: 460 };
+
+// How much damage one full-strength hit deals, by weapon and tier. A hit subtracts this from a
+// creature's hit points; when they reach 0 it falls. The sword and the bow share the same curve;
+// the axe is the weak fallback and is only ever stone or iron.
+export const WEAPON_DAMAGE = {
+  sword: { stone: 2, iron: 3, gold: 4, diamond: 6 },
+  bow: { stone: 2, iron: 3, gold: 4, diamond: 6 },
+  axe: { stone: 1, iron: 2 },
+};
+
+// How many hit points a wolf has. Animals carry their own hp in data/animals.js.
+export const WOLF_HP = 6;
+
+// Seconds of holding the right mouse button to charge a bow shot to full. A quick tap ("quick
+// release") is about half damage; a full hold is full damage.
+export const CHARGE_SECONDS = 0.9;
 
 /** Game seconds before a hunted animal is back with its herd: one game day. */
 export const ANIMAL_RETURN = 360;

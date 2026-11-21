@@ -509,3 +509,17 @@ Added the sword/bow attack animations and the bow's aim ring + flying arrow. Che
 - Save handling: old-world saves whose regions/places/positions don't exist in Spring are handled by the existing restoreGame validation (unknown ids dropped; incompatible on-foot positions refuse to load, starting fresh). No save-version bump was needed.
 - Browser smoke test at `127.0.0.1:5179` (Scout and Builder): Spring loads with no console errors. Scout spawns in **Pinefall Camp** (village with houses and the `village-well` sprite rendering); Builder spawns in **Hollowstead** with the **Woodsworker villager** rendering and the welcome toast reading "Welcome to Hollowstead". The selection screen shows each character's Spring district (Pinefall Camp / Hollowstead / Driftwood Landing) and "1 of 8 regions".
 - Fences are solid (2026-11-21): `fence-horizontal` and `fence-vertical` got footprints sized so the blocking strip (~30px / ~27px drawn) is wider than the longest step (24.5px), so the player can't walk through or tunnel across them. The importer leaves out any solid object (a fence) whose footprint would seal a start, supply, signpost or old boat, so the survivor spawn and the p-wp-camp signpost stay reachable. Checked: 40/40 sampled fences are non-walkable at their base; places/nodes/sea reachability tests pass.
+
+## Mouse combat (2026-11-21, to verify in the browser)
+
+Not yet browser-checked. Once the Spring world spawns animals, play through with a character that owns a sword and a bow:
+
+- Q draws and sheathes the weapon; the stance marker appears in the tools row and the sword and bow chips glow.
+- Left click swings the sword and fells a deer in the expected number of hits for the tier (stone, iron, gold, diamond).
+- Right click: a quick tap and a held draw do different damage; the aim path and charge ring show.
+- Lock-on keeps following an animal while it runs.
+- Arrows run down with each shot, and the out-of-arrows toast shows when none are left.
+- E beside an animal still hunts (the old fallback).
+- Wolves are fought over several hits, not one.
+- A gold or diamond weapon shows the iron picture and its tier name in the tools row and Build menu.
+- Layout at about 390 px wide (stance marker wraps), and no console errors.

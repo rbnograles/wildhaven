@@ -16,7 +16,7 @@ import { preloadFootprints, createFootprints } from './footprints.js';
 import { isAvailable } from '../actions/gather.js';
 import { toolTier } from '../world/tools.js';
 import { chooseInteraction } from '../actions/interact.js';
-import { HUNT_PREFIX } from '../actions/animals.js';
+import { HUNT_PREFIX, huntIdOf } from '../actions/animals.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress, CLIPS } from '../animation/clips.js';
 import { waterBlend } from '../animation/water.js';
@@ -890,8 +890,10 @@ export async function createRenderer(container, miniCanvas) {
    *   drawn at `x`/`y`, coloured by `check.ok`.
    * @param {{node: object, state: string}|null} [hover=null] - The tree or rock under the mouse
    *   and its aim state ('ready', 'far' or 'locked'), from core/input.js.
+   * @param {{drawn: boolean, aiming: object|null}|null} [combat=null] - The combat stance from the
+   *   session: `drawn` shows a ring under the player, `aiming` shows the bow's aim path and charge.
    */
-  function draw(state, dt, animator, build = null, hover = null) {
+  function draw(state, dt, animator, build = null, hover = null, combat = null) {
     // The game boots while its container is still hidden, so the canvas is sized here once it is on screen.
     const w = container.clientWidth,
       h = container.clientHeight;
@@ -1248,7 +1250,7 @@ export async function createRenderer(container, miniCanvas) {
     reticle.clear();
     const quarry =
       (animator.clip === 'bow' || animator.clip === 'bowIron') && target.startsWith(HUNT_PREFIX)
-        ? [...WILD_ANIMALS, ...WOLVES].find((a) => a.id === target.slice(HUNT_PREFIX.length))
+        ? [...WILD_ANIMALS, ...WOLVES].find((a) => a.id === huntIdOf(target))
         : null;
     reticle.setVisible(!!quarry);
     arrow.setVisible(false);
@@ -1283,6 +1285,28 @@ export async function createRenderer(container, miniCanvas) {
           .setDepth(WORLD.height + 1)
           .setPosition(fromX + (quarry.x - fromX) * flight, fromY + (aimed - fromY) * flight);
       }
+    }
+
+    // Holding the right mouse button: show where the shot is going and how charged it is, before it
+    // is loosed. A line runs from the archer to the locked creature, and the ring tightens as it
+    // charges. Skipped while an action is already running (then the in-flight arrow above is drawn).
+    if (combat?.aiming?.target && !animator.pending) {
+      const t = combat.aiming.target,
+        ch = combat.aiming.charge,
+        aimed = t.y - 18;
+      reticle
+        .setVisible(true)
+        .lineStyle(2, 0xf7f1de, 0.35 + 0.4 * ch)
+        .lineBetween(state.player.x, state.player.y - 40, t.x, aimed)
+        .strokeCircle(t.x, aimed, RETICLE_RADIUS * (1.6 - 0.6 * ch));
+    }
+
+    // A drawn weapon: a faint ring under the player, so the stance reads at a glance.
+    if (combat?.drawn) {
+      reticle
+        .setVisible(true)
+        .lineStyle(2, 0xf7d98a, 0.5)
+        .strokeCircle(state.player.x, state.player.y + 8, 26);
     }
 
     // A timed action is longer than one pass of its clip, so it loops until the action ends.

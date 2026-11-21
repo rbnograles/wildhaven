@@ -1999,7 +1999,9 @@ button.slot:hover {
   --picture: url('../assets/ui/game/tool-axe-stone.png');
 }
 
-#craft-axe[data-tier='iron'] {
+#craft-axe[data-tier='iron'],
+#craft-axe[data-tier='gold'],
+#craft-axe[data-tier='diamond'] {
   --picture: url('../assets/ui/game/tool-axe-iron.png');
 }
 
@@ -2007,7 +2009,9 @@ button.slot:hover {
   --picture: url('../assets/ui/game/tool-pickaxe-stone.png');
 }
 
-#craft-pickaxe[data-tier='iron'] {
+#craft-pickaxe[data-tier='iron'],
+#craft-pickaxe[data-tier='gold'],
+#craft-pickaxe[data-tier='diamond'] {
   --picture: url('../assets/ui/game/tool-pickaxe-iron.png');
 }
 
@@ -2015,7 +2019,9 @@ button.slot:hover {
   --picture: url('../assets/ui/game/tool-hammer-stone.png');
 }
 
-#craft-hammer[data-tier='iron'] {
+#craft-hammer[data-tier='iron'],
+#craft-hammer[data-tier='gold'],
+#craft-hammer[data-tier='diamond'] {
   --picture: url('../assets/ui/game/tool-hammer-iron.png');
 }
 
@@ -2023,7 +2029,9 @@ button.slot:hover {
   --picture: url('../assets/ui/game/tool-sword-stone.png');
 }
 
-#craft-sword[data-tier='iron'] {
+#craft-sword[data-tier='iron'],
+#craft-sword[data-tier='gold'],
+#craft-sword[data-tier='diamond'] {
   --picture: url('../assets/ui/game/tool-sword-iron.png');
 }
 
@@ -2031,7 +2039,9 @@ button.slot:hover {
   --picture: url('../assets/ui/game/tool-bow-stone.png');
 }
 
-#craft-bow[data-tier='iron'] {
+#craft-bow[data-tier='iron'],
+#craft-bow[data-tier='gold'],
+#craft-bow[data-tier='diamond'] {
   --picture: url('../assets/ui/game/tool-bow-iron.png');
 }
 
@@ -2229,6 +2239,32 @@ button.slot:hover {
 
 #tool-bow.iron::before {
   background-image: url('../assets/ui/game/tool-bow-iron.png');
+}
+
+/* ---- Combat stance ---- */
+/* While a weapon is drawn (Q), the sword and bow chips glow gold and a small marker joins the */
+/* tools row. The row wraps, so the marker still shows on a phone. */
+.tool-row {
+  flex-wrap: wrap;
+}
+
+.tool-chip.drawn {
+  filter: drop-shadow(0 0 5px #ffd35a) drop-shadow(0 0 2px #ffd35a);
+}
+
+.stance-marker {
+  align-self: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #5a3a14;
+  color: #ffe9a8;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stance-marker[hidden] {
+  display: none;
 }
 
 /* ---- In-game: build mode ---- */

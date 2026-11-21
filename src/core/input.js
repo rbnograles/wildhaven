@@ -14,6 +14,9 @@ import { BAG_FULL, hasRoomFor } from '../world/bag.js';
 import { campInReach } from '../world/camps.js';
 import { nearbyBuilding } from '../world/buildings.js';
 import { canSleep } from '../actions/camp.js';
+import { beginSwing, beginShot } from '../actions/animals.js';
+import { meleeTarget, aimTarget } from '../actions/combat.js';
+import { hasTool } from '../world/tools.js';
 import { BUILDING_REACH } from '../data/balance.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
@@ -43,6 +46,23 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
 export function setupInput(session, ui) {
   const { keys } = session;
   const world = $('world');
+
+  /**
+   * Says whether a weapon is drawn AND combat can act right now: on foot, not paused, and not in
+   * the build menu or placing a building. Entering the boat or any dialog quietly sheathes.
+   *
+   * @returns {boolean} True when the left/right mouse buttons mean sword and bow.
+   */
+  function isDrawn() {
+    return (
+      session.combat.drawn &&
+      session.screen === 'game' &&
+      !ui.dialogs.isPaused() &&
+      !session.build.active &&
+      !session.build.menu &&
+      !session.state?.aboard
+    );
+  }
 
   /**
    * Sends the player to the spot beside a node or old boat in reach, if they aren't there yet.
@@ -283,6 +303,19 @@ export function setupInput(session, ui) {
       return;
     }
 
+    // Q draws a weapon (sword in the left hand, bow in the right) or sheathes it.
+    if (key === 'q' && !event.repeat) {
+      event.preventDefault();
+      if (!hasTool(session.state, 'sword') && !hasTool(session.state, 'bow')) {
+        ui.hud.notify('You have no weapon to draw. Make one in the Build menu (B).');
+        return;
+      }
+      session.combat.drawn = !session.combat.drawn;
+      session.combat.aiming = null;
+      ui.hud.update();
+      return;
+    }
+
     // With the build menu open, 1 picks its first building (the campfire).
     if (key === '1' && !event.repeat && session.build.menu) {
       event.preventDefault();
@@ -385,7 +418,21 @@ export function setupInput(session, ui) {
   });
   world.addEventListener('pointerdown', (event) => {
     session.pointer = { x: event.clientX, y: event.clientY };
-    if (event.button !== 0 || session.screen !== 'game') return;
+    if (session.screen !== 'game') return;
+
+    // Right button while drawn: begin aiming the bow (the contextmenu handler blocks the menu).
+    if (event.button === 2 && isDrawn()) {
+      beginAim(event);
+      return;
+    }
+    if (event.button !== 0) return;
+
+    // Left button while drawn: swing the sword at the nearest creature in reach.
+    if (isDrawn()) {
+      swing();
+      return;
+    }
+
     if (!session.build.active) {
       const aim = hover();
       if (aim?.tent) clickTent(aim);
@@ -397,6 +444,61 @@ export function setupInput(session, ui) {
     event.preventDefault();
     interact();
   });
+
+  // Right button up anywhere finishes an aim (even if the cursor left the world).
+  window.addEventListener('pointerup', (event) => {
+    if (event.button === 2 && session.combat.aiming) releaseAim();
+  });
+  // While drawn, the right button is the bow, so block its browser context menu over the world.
+  world.addEventListener('contextmenu', (event) => {
+    if (isDrawn() || session.combat.aiming) event.preventDefault();
+  });
+
+  /**
+   * Swings the drawn sword at the nearest creature in reach (left mouse button).
+   *
+   * Like swinging a stick at whatever is closest: if nothing is near, nothing happens.
+   */
+  function swing() {
+    const { state, animator } = session;
+    if (animator.pending || animator.asleep > 0) return;
+    const r = beginSwing(state, animator, meleeTarget(state));
+    if (r.ok) {
+      keys.clear();
+      ui.hud.update();
+    } else if (r.message) ui.hud.notify(r.message);
+  }
+
+  /**
+   * Begins aiming the bow (right mouse button down).
+   *
+   * It locks onto the creature nearest the cursor and starts the charge stopwatch. The frame loop
+   * grows the charge while the button stays held.
+   *
+   * @param {PointerEvent} event - The mouse-down event, for the cursor position.
+   */
+  function beginAim(event) {
+    const { state, renderer, animator } = session;
+    if (!renderer || animator.pending || animator.asleep > 0) return;
+    const spot = renderer.screenToWorld(event.clientX, event.clientY);
+    const target = aimTarget(state, spot.x, spot.y);
+    session.combat.aiming = { target, start: performance.now(), charge: 0 };
+    keys.clear();
+  }
+
+  /**
+   * Looses the arrow (right mouse button up).
+   *
+   * Like letting go of a pulled bowstring: it fires at the locked target with the charge held.
+   */
+  function releaseAim() {
+    const aim = session.combat.aiming;
+    session.combat.aiming = null;
+    if (!aim || !aim.target) return;
+    const r = beginShot(session.state, session.animator, aim.target, aim.charge);
+    if (r.ok) ui.hud.update();
+    else if (r.message) ui.hud.notify(r.message);
+  }
 
   // Touch buttons: holding one "presses" its key; lifting the finger (or losing it) releases it.
   document.querySelectorAll('[data-move]').forEach((button) => {

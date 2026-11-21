@@ -31,7 +31,7 @@ import { TAKEDOWN_PREFIX, FIRE } from '../actions/takedown.js';
 import { renderItemBox } from './itembox.js';
 import { BUILDINGS, buildingInfo } from '../data/buildings.js';
 import { campAt, centreOf } from '../world/buildings.js';
-import { HUNT_PREFIX, canHunt } from '../actions/animals.js';
+import { HUNT_PREFIX, canHunt, huntIdOf } from '../actions/animals.js';
 import { FISH_PREFIX } from '../actions/fish.js';
 import { animalById } from '../world/animals.js';
 import { ANIMALS } from '../data/animals.js';
@@ -146,17 +146,26 @@ export function describeFinish(finished) {
       return `${finished.camp.name}: the camp centre is now a ${CENTRE_NAMES[finished.raised - 1]}`;
     return buildingInfo(finished.kind).made;
   }
+  if (finished.kind === 'hunt' && finished.wounded)
+    return [
+      finished.animal === 'wolf'
+        ? 'You struck the wolf — it keeps coming'
+        : `You wounded the ${finished.animal} — it bolts`,
+      wearWords(finished.tool ?? 'axe', finished.wear),
+    ]
+      .filter(Boolean)
+      .join(' · ');
   if (finished.kind === 'hunt' && finished.animal === 'wolf')
     return [
       `The wolf is down${finished.pelt ? ' · +1 wolf pelt' : ''} · Its pack is whole again at dusk`,
-      wearWords('axe', finished.wear),
+      wearWords(finished.tool ?? 'axe', finished.wear),
     ]
       .filter(Boolean)
       .join(' · ');
   if (finished.kind === 'hunt')
     return [
       `+${finished.food} food${finished.leather ? ` · +${finished.leather} leather` : ''}${finished.antler ? ' · +1 antler' : ''} · You hunted a ${finished.animal}`,
-      wearWords('axe', finished.wear),
+      wearWords(finished.tool ?? 'axe', finished.wear),
     ]
       .filter(Boolean)
       .join(' · ');
@@ -248,7 +257,7 @@ function busyLabel(state, animator) {
       : 'Taking it down… move to stop';
   if (target.startsWith(HUNT_PREFIX + 'wolf-')) return 'Fighting the wolf… move to stop';
   if (target.startsWith(HUNT_PREFIX)) {
-    const animal = animalById(target.slice(HUNT_PREFIX.length));
+    const animal = animalById(huntIdOf(target));
     return `Hunting the ${animal ? ANIMALS[animal.kind].name : 'animal'}… move to stop`;
   }
   if (target.startsWith(FARM_PREFIX)) {
@@ -544,20 +553,25 @@ export function createHud(session) {
    * @param {object} state - The game being played.
    */
   function updateTools(state) {
-    for (const { id, name } of TOOLS) {
+    const drawn = session.combat.drawn;
+    $('stance-marker').hidden = !drawn;
+    for (const { id, name, weapon } of TOOLS) {
       const chip = $(`tool-${id}`),
         owned = state.tools[id];
+      chip.classList.toggle('drawn', drawn && Boolean(weapon) && Boolean(owned));
       chip.classList.toggle('empty', !owned);
-      chip.classList.toggle('iron', owned?.tier === 'iron');
+      // Gold and diamond weapons have no chip picture yet, so they borrow the iron one.
+      const advanced = Boolean(owned) && owned.tier !== 'stone';
+      chip.classList.toggle('iron', advanced);
       chip.querySelector('.tool-state').textContent = !owned
         ? '—'
-        : owned.tier === 'iron'
-          ? 'Iron'
+        : advanced
+          ? capital(owned.tier)
           : String(owned.uses);
       chip.title = !owned
         ? `No ${name} yet · Craft one in the Build menu (B)`
-        : owned.tier === 'iron'
-          ? `Iron ${name}`
+        : advanced
+          ? `${capital(owned.tier)} ${name}`
           : `Stone ${name} · ${owned.uses} uses left`;
     }
   }

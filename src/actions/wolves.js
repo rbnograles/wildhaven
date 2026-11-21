@@ -21,6 +21,7 @@ import {
   REPEL_EVERY,
   REPEL_SECONDS,
   ANIMAL_DOWN_SECONDS,
+  WOLF_HP,
   DAY_SECONDS,
   PHASES,
 } from '../data/balance.js';
@@ -173,7 +174,7 @@ export function tickWolves(state, dt, { hunting = null, random = Math.random } =
   for (const w of WOLVES) {
     if (w.phase === 'gone') {
       if (state.time >= w.respawnAt)
-        Object.assign(w, { phase: 'idle', x: w.den.x, y: w.den.y, left: 1, clock: 0 });
+        Object.assign(w, { phase: 'idle', x: w.den.x, y: w.den.y, hp: WOLF_HP, left: 1, clock: 0 });
       continue;
     }
     w.clock += dt;

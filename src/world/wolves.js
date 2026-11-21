@@ -3,7 +3,7 @@
 // never saved: every time a game is opened the packs start again at home. Moving them is
 // actions/wolves.js.
 
-import { DENS_PER_REGION, PACK_SIZE, DEN_FROM_SPAWN } from '../data/balance.js';
+import { DENS_PER_REGION, PACK_SIZE, DEN_FROM_SPAWN, WOLF_HP } from '../data/balance.js';
 import { SPAWNS } from '../data/places.js';
 import { VILLAGES } from '../data/villages.js';
 import { MAP_OBJECTS, isWalkable } from './map.js';
@@ -63,6 +63,7 @@ function atDen(den, i) {
   return {
     id: `wolf-${den.id}-${i}`,
     den,
+    hp: WOLF_HP,
     x: den.x + (i - 1) * 50,
     y: den.y + (i % 2) * 30,
     facing: i % 2 ? 1 : 2,

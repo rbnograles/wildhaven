@@ -1,5 +1,5 @@
 // The "craft" action: making tools from wood, stone and iron in the Build menu. Stone tools are
-// made anywhere; iron tools need a hammer and one of the player's campfires (the fire is the
+// made anywhere; iron, gold and diamond tools need a hammer and one of the player's campfires (the fire is the
 // forge). Like gathering, crafting takes time: beginCraft starts it, and the game loop finishes it
 // through finishCraft, which checks everything again and only then pays, so nothing is paid twice.
 
@@ -35,7 +35,7 @@ export function nextTier(state, tool) {
  * Puts a tool and its tier into words, such as "stone axe".
  *
  * @param {string} tool - The tool's id.
- * @param {string} tier - 'stone' or 'iron'.
+ * @param {string} tier - 'stone', 'iron', 'gold' or 'diamond'.
  * @returns {string} The words, all lower case.
  */
 export const toolName = (tool, tier) => `${tier} ${toolInfo(tool).name}`;
@@ -64,11 +64,19 @@ function missingFor(state, cost) {
 const aOrAn = (name) => `${'aeiou'.includes(name[0]) ? 'an' : 'a'} ${name}`;
 
 /**
+ * Makes a word start with a capital letter, so "gold" reads "Gold" at the start of a sentence.
+ *
+ * @param {string} word - A word in small letters.
+ * @returns {string} The word with a big first letter.
+ */
+const capital = (word) => word[0].toUpperCase() + word.slice(1);
+
+/**
  * Checks whether the player can craft the next tier of a tool right now, without changing anything.
  *
  * The first rule that fails is the answer, in the order that helps most: they already own the iron
  * one, they are sitting in the boat, the backpack is short (with a hint where iron is found), they
- * have no hammer (iron only), or they are away from their campfires (iron only).
+ * have no hammer (forged tiers only), or they are away from their campfires (forged tiers only).
  *
  * @param {object} state - The game being played.
  * @param {string} tool - The tool's id.
@@ -102,15 +110,23 @@ export function canCraft(state, tool) {
       message: `Needs ${listMissing(missing)} more${hint}`,
     };
   }
-  if (tier === 'iron' && !hasTool(state, 'hammer'))
-    return { ok: false, tier, cost, reason: 'hammer', message: 'Iron tools need a hammer' };
-  if (tier === 'iron' && !byFire(state))
+  // Every tier above stone is forged: it needs a hammer and the player's fire.
+  const forged = tier !== 'stone';
+  if (forged && !hasTool(state, 'hammer'))
+    return {
+      ok: false,
+      tier,
+      cost,
+      reason: 'hammer',
+      message: `${capital(tier)} tools need a hammer`,
+    };
+  if (forged && !byFire(state))
     return {
       ok: false,
       tier,
       cost,
       reason: 'fire',
-      message: 'Forge iron tools beside your campfire',
+      message: `Forge ${tier} tools beside your campfire`,
     };
   return { ok: true, tier, cost };
 }
@@ -151,9 +167,10 @@ export function finishCraft(state, tool) {
   if (!check.ok) return { ...check, tool };
 
   for (const [type, n] of Object.entries(check.cost)) state.resources[type] -= n;
-  // Forging iron wears a stone hammer one use. The iron hammer replaces the stone one anyway, so
-  // that hammer's wear isn't worth a message.
-  const wear = check.tier === 'iron' ? wearTool(state, 'hammer') : null;
-  state.tools[tool] = check.tier === 'iron' ? { tier: 'iron' } : newStoneTool(tool);
+  const forged = check.tier !== 'stone';
+  // Forging wears a stone hammer one use. A forged tool lasts forever, so it is stored without
+  // uses. A forged hammer replaces the stone one anyway, so that wear isn't worth a message.
+  const wear = forged ? wearTool(state, 'hammer') : null;
+  state.tools[tool] = forged ? { tier: check.tier } : newStoneTool(tool);
   return { ok: true, tool, tier: check.tier, wear: tool === 'hammer' ? null : wear };
 }
