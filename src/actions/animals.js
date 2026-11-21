@@ -25,6 +25,7 @@ import { hasTool, toolTier, wearTool } from '../world/tools.js';
 import { facing } from './move.js';
 import { BAG_FULL, addItem, hasRoomFor } from '../world/bag.js';
 import { startAction, slantOf } from '../animation/clips.js';
+import { weaponDamage } from './combat.js';
 
 /** The start of a timed hunting action's target: `hunt:<animal id>`. */
 export const HUNT_PREFIX = 'hunt:';
@@ -274,39 +275,24 @@ export function beginHunt(state, animator, animal) {
 }
 
 /**
- * Finishes a hunt when its timed action runs out: the animal lies down, and its food (and, for a deer
- * sometimes, an antler) goes into the backpack. The weapon used wears a use if it is a stone one,
- * as chopping wears an axe.
+ * Gives one creature the rewards for being felled, and lays it down.
+ *
+ * A wolf gives only its pelt and is back at its den next dusk. Any other animal gives its food (and
+ * for a deer sometimes an antler) and its hide, and comes back to its herd a day later. An animal
+ * whose food has no room in the bag is not felled: the caller leaves it wounded instead.
  *
  * @param {object} state - The game being played. Resources change.
- * @param {string} target - Such as 'hunt:herd-meadows-2-1'.
- * @param {() => number} [roll] - Gives a number from 0 to 1, for the antler; tests pass their own.
- * @returns {{kind: 'hunt', animal: string, food: number, leather?: number, pelt?: number, antler: boolean,
- *   wear: string|null}|null}
- *   What the hunt gave (`animal` 'wolf' and no food for a wolf), or null when the animal got away
- *   (it is gone, or too far now).
+ * @param {object} a - The creature (already at 0 hp).
+ * @param {() => number} roll - Gives 0 to 1, for the antler.
+ * @returns {{animal: string, food: number, leather?: number, pelt?: number, antler: boolean}|null}
+ *   The reward, or null when a full bag means an animal is not felled after all.
  */
-export function finishHunt(state, target, roll = Math.random) {
-  const id = target.slice(HUNT_PREFIX.length),
-    a = animalById(id) ?? WOLVES.find((w) => w.id === id);
-  if (!a || !isAlive(a)) return null;
-  // The animal may have shifted a little during the swing: half as far again still counts.
-  const weapon = huntWeapon(state, Math.hypot(state.player.x - a.x, state.player.y - a.y) / 1.5);
-  if (!weapon) return null;
-  // A wolf gives nothing: it lies down, and its pack is whole again at the next dusk.
+function fellCreature(state, a, roll) {
+  // A wolf's thick pelt is the reward for a dangerous fight; it is left behind if the bag is full.
   if (a.den) {
-    if (weapon.tool === 'bow') state.resources.arrow -= ARROW_PER_SHOT;
     Object.assign(a, { phase: 'down', clock: 0, respawnAt: nextDusk(state.time) });
-    // A wolf's thick pelt is the reward for a dangerous fight; it is left behind if the bag is full.
     const pelt = addItem(state, 'wolfpelt') ? 1 : 0;
-    return {
-      kind: 'hunt',
-      animal: 'wolf',
-      food: 0,
-      pelt,
-      antler: false,
-      wear: wearTool(state, weapon.tool),
-    };
+    return { animal: 'wolf', food: 0, pelt, antler: false };
   }
   // The bag is checked again: it may have filled since the swing began.
   const kind = ANIMALS[a.kind];
@@ -317,13 +303,99 @@ export function finishHunt(state, target, roll = Math.random) {
   // The hide and an antler are extras: one with no room in the item box is left behind.
   const leather = addItem(state, 'leather', kind.leather) ? kind.leather : 0;
   const antler = rolled && addItem(state, 'antler');
-  if (weapon.tool === 'bow') state.resources.arrow -= ARROW_PER_SHOT;
-  return {
-    kind: 'hunt',
-    animal: kind.name,
-    food: kind.food,
-    leather,
-    antler,
-    wear: wearTool(state, weapon.tool),
-  };
+  return { animal: kind.name, food: kind.food, leather, antler };
+}
+
+/**
+ * Lands one hit on a creature: takes the damage off its hit points, and fells it if that empties them.
+ *
+ * A wounded animal bolts (a wounded wolf keeps coming). If a killing blow lands on an animal but the
+ * bag has no room for its food, the hit is wasted and the animal stays up, so a full bag never loses
+ * a kill into thin air.
+ *
+ * @param {object} state - The game being played.
+ * @param {object} creature - The animal or wolf being hit.
+ * @param {number} damage - How much to take off.
+ * @param {() => number} [roll=Math.random] - For a deer's antler.
+ * @returns {{dead: boolean, reward?: object, blocked?: boolean}} Whether it fell and the reward, or
+ *   `blocked` when a full bag stopped an animal's kill.
+ */
+export function applyHit(state, creature, damage, roll = Math.random) {
+  if (creature.hp - damage > 0) {
+    creature.hp -= damage;
+    // Animals run from a wound; wolves press on.
+    if (!creature.den) {
+      if (creature.phase !== 'run') creature.clock = 0;
+      Object.assign(creature, { phase: 'run', fleeFor: FLEE_SECONDS });
+    }
+    return { dead: false };
+  }
+  const reward = fellCreature(state, creature, roll);
+  if (!reward) return { dead: false, blocked: true };
+  creature.hp = 0;
+  return { dead: true, reward };
+}
+
+/**
+ * Confirms a weapon the mouse combat chose is still usable on a target at distance `d`.
+ *
+ * The player must still own it, and the target must be within that weapon's reach (a bow's long
+ * reach, or arm's length for a sword or axe).
+ *
+ * @param {object} state - The game being played.
+ * @param {string} tool - 'sword', 'bow' or 'axe'.
+ * @param {number} d - How far the target is (already made a little lenient by the caller).
+ * @returns {{tool: string}|null} The weapon, or null when it can't be used now.
+ */
+function forcedWeapon(state, tool, d) {
+  if (!hasTool(state, tool)) return null;
+  if (tool === 'bow') return d <= BOW_REACH[toolTier(state, 'bow')] ? { tool } : null;
+  return d <= HUNT_REACH ? { tool } : null;
+}
+
+/**
+ * Finishes a hunt when its timed action runs out: it deals ONE hit to the creature. The creature
+ * is felled (and its food, hide and maybe an antler go into the backpack) only when that hit
+ * empties its hit points; otherwise it is wounded and the result says `wounded: true`. The weapon
+ * used wears a use if it is a stone one, as chopping wears an axe.
+ *
+ * The target is `hunt:<id>` (the best weapon is picked, full damage) or
+ * `hunt:<id>:<weapon>:<tenths>` (the mouse combat chose the weapon and how charged it was, in
+ * tenths from 0 to 10).
+ *
+ * @param {object} state - The game being played. Resources change.
+ * @param {string} target - Such as 'hunt:herd-meadows-2-1' or 'hunt:herd-meadows-2-1:bow:7'.
+ * @param {() => number} [roll] - Gives a number from 0 to 1, for the antler; tests pass their own.
+ * @returns {{kind: 'hunt', animal: string, food?: number, leather?: number, pelt?: number,
+ *   antler?: boolean, wounded?: boolean, wear: string|null}|null}
+ *   What the hit did (`wounded: true` when the creature is still up; `animal` 'wolf' and no food
+ *   for a wolf), or null when it got away (it is gone, too far now, or nothing can be used).
+ */
+export function finishHunt(state, target, roll = Math.random) {
+  const [id, forcedTool, chargeTag] = target.slice(HUNT_PREFIX.length).split(':');
+  const a = animalById(id) ?? WOLVES.find((w) => w.id === id);
+  if (!a || !isAlive(a)) return null;
+
+  // The creature may have shifted a little during the swing: half as far again still counts.
+  const d = Math.hypot(state.player.x - a.x, state.player.y - a.y) / 1.5;
+  const weapon = forcedTool ? forcedWeapon(state, forcedTool, d) : huntWeapon(state, d);
+  if (!weapon) return null;
+
+  // A bow spends an arrow per shot, hit or miss.
+  if (weapon.tool === 'bow') {
+    if (!hasArrows(state)) return null;
+    state.resources.arrow -= ARROW_PER_SHOT;
+  }
+
+  const frac = chargeTag ? Number(chargeTag) / 10 : 1;
+  const wear = wearTool(state, weapon.tool);
+  const hit = applyHit(state, a, weaponDamage(state, weapon.tool, frac), roll);
+  if (!hit.dead)
+    return {
+      kind: 'hunt',
+      wounded: true,
+      animal: a.den ? 'wolf' : ANIMALS[a.kind].name,
+      wear,
+    };
+  return { kind: 'hunt', ...hit.reward, wear };
 }

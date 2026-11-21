@@ -1,6 +1,7 @@
 // Tests for the animals (world/animals.js, actions/animals.js): herds live on open ground in their
 // own regions away from the starts, run from a running player but let a walking one creep up, and
-// hunting needs an axe, gives food, freezes the animal, and brings it back a day later.
+// hunting needs an axe, gives food, freezes the animal, and brings it back a day later. Hunting
+// is damage-based: a hit lowers hp, a wounded animal flees, and only the killing hit rewards.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +19,7 @@ import {
   huntWeapon,
   beginHunt,
   finishHunt,
+  applyHit,
 } from '../../src/actions/animals.js';
 import {
   FLEE_RUNNING,
@@ -85,6 +87,8 @@ test('hunting needs an axe, gives food, and the animal returns a day later', () 
   tickAnimals(game, 0.5, { running: false, hunting: deer.id });
   assert.equal(deer.phase, 'idle');
 
+  // An iron axe does 2 damage and a deer has 4 hp, so leave it one hit from falling.
+  deer.hp = 2;
   const food = game.resources.food;
   const done = finishHunt(game, animator.pending.target, () => 0);
   assert.equal(done.food, ANIMALS.deer.food);
@@ -181,5 +185,55 @@ test('a sword hunts faster than an axe, and a bow hunts from a distance', () => 
   assert.ok(finishHunt(far.game, animator.pending.target, () => 1));
   assert.equal(far.game.tools.bow.uses, TOOL_USES.bow - 1);
   assert.equal(far.game.resources.arrow, 2);
+  resetAnimals();
+});
+
+/** Builds a plain deer-like creature for a hit test. */
+const testDeer = () => ({
+  id: 'test-deer',
+  kind: 'deer',
+  hp: 4,
+  phase: 'idle',
+  x: 0,
+  y: 0,
+  clock: 0,
+  fleeFor: 0,
+});
+
+// A non-lethal hit lowers hp and sends an animal running, with no reward. Guards a hit that gives
+// food without lowering hp.
+test('a non-lethal hit wounds and does not reward', () => {
+  const state = createGame('scout');
+  const a = testDeer();
+  const before = state.resources.food;
+  const hit = applyHit(state, a, 2);
+  assert.equal(hit.dead, false);
+  assert.equal(a.hp, 2);
+  assert.equal(a.phase, 'run');
+  assert.equal(state.resources.food, before);
+});
+
+// The hit that drops hp to 0 fells the animal and gives its food. Guards a kill with no reward.
+test('the killing hit fells and rewards', () => {
+  const state = createGame('scout');
+  const a = testDeer();
+  a.hp = 2;
+  const hit = applyHit(state, a, 5);
+  assert.equal(hit.dead, true);
+  assert.equal(a.phase, 'down');
+  assert.equal(hit.reward.food, 5);
+});
+
+// finishHunt with a real animal and a sword takes one bite of hp per call. Guards one-shot kills
+// creeping back.
+test('finishHunt deals one hit, not an instant kill', () => {
+  const state = createGame('scout');
+  state.tools.sword = { tier: 'stone' };
+  resetAnimals();
+  const a = WILD_ANIMALS.find((x) => x.kind === 'deer');
+  Object.assign(a, { x: state.player.x + 20, y: state.player.y, hp: 4, phase: 'idle' });
+  const r = finishHunt(state, `hunt:${a.id}:sword:10`, () => 0.99);
+  assert.equal(r.wounded, true);
+  assert.equal(a.hp, 2);
   resetAnimals();
 });

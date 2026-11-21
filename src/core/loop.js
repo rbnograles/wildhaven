@@ -282,13 +282,13 @@ export function startLoop(session, ui) {
         tickAnimals(state, dt, {
           running: moving && running,
           hunting: animator.pending?.target?.startsWith('hunt:')
-            ? animator.pending.target.slice(5)
+            ? animator.pending.target.slice(5).split(':')[0]
             : null,
         });
         // The wolves guard their dens by day and roam at night; a growl or a bite is told in a toast.
         const howled = tickWolves(state, dt, {
           hunting: animator.pending?.target?.startsWith('hunt:wolf-')
-            ? animator.pending.target.slice(5)
+            ? animator.pending.target.slice(5).split(':')[0]
             : null,
         });
         if (howled.some((e) => e.kind === 'bite')) [bittenAt, bittenGameAt] = [now, state.time];
