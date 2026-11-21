@@ -88,9 +88,10 @@ test('surfaceAt tells sand, snow and earth apart on dry land', () => {
       }
     }
 
-  assert.ok(seen.sand > 200 && seen.snow > 200 && seen.earth > 2000, JSON.stringify(seen));
-  // Nearly all of the snowy region is snow underfoot (its beach is sand).
-  assert.ok(snowyAsSnow / snowy > 0.8, `${snowyAsSnow} of ${snowy}`);
+  assert.ok(seen.sand > 200 && seen.earth > 2000, JSON.stringify(seen));
+  // Spring has no snow; only check the snow surface where the world actually has a snowy region.
+  // Nearly all of a snowy region is snow underfoot (its beach is sand).
+  if (snowy > 0) assert.ok(snowyAsSnow / snowy > 0.8, `${snowyAsSnow} of ${snowy}`);
 });
 
 // Guards the footpaths between the villages, starting places and signposts: a piece in a river, on

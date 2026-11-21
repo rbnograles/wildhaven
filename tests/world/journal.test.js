@@ -24,33 +24,13 @@ test('each journal has one page per place in its region, all on the trail once',
   }
 });
 
-// Guards the pages shown as found or blank, and the clue moving on to the next unfound place.
-test('pages follow the places found, and the trail points at the first one not found', () => {
-  const game = createGame('scout');
-  let journal = readJournal(game, 'pinefall');
-  assert.equal(journal.found, 0);
-  assert.equal(journal.total, 7);
-  assert.equal(journal.regionName, 'Pinefall Woods');
-  assert.equal(journal.trail.id, 'p-camp');
-
-  // Finding places out of order skips them on the trail.
-  game.landmarks.push('p-camp', 'p-grandfather');
-  journal = readJournal(game, 'pinefall');
-  assert.equal(journal.found, 2);
-  assert.equal(journal.trail.id, 'p-hollow');
-  assert.equal(journal.pages.find((p) => p.id === 'p-grandfather').found, true);
-  assert.equal(journal.pages.find((p) => p.id === 'p-hollow').found, false);
-
-  // Once every page is filled there is nothing left to point at.
-  game.landmarks.push(...JOURNALS.pinefall.trail);
-  assert.equal(readJournal(game, 'pinefall').trail, null);
-});
-
-// Guards the find message: only places with a page should announce one.
-test('only places with a page say a journal page was added', () => {
-  assert.equal(hasJournalPage('p-hollow'), true);
-  assert.equal(hasJournalPage('h-oak'), false);
+// Guards the parked state in Spring: no region has journal pages yet, so the notebook is empty and
+// nothing announces a page. When Spring journal content is authored, bring back the found/trail tests.
+test('the field journal is parked for Spring: no pages, no trail, nothing announced', () => {
+  assert.deepEqual(Object.keys(JOURNALS), []);
+  assert.equal(readJournal(createGame('scout'), 'pinefall-camp'), null);
   assert.equal(readJournal(createGame('scout'), 'jungle'), null);
+  assert.equal(hasJournalPage('p-hollow'), false);
 });
 
 // The things clues measure from, by the words a hint uses for them.

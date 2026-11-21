@@ -14,13 +14,13 @@ test('a region is discovered once, when the player first stands in it', () => {
   const game = createGame('survivor');
 
   const first = discover(game).filter((f) => f.kind === 'region');
-  assert.deepEqual(first, [{ kind: 'region', id: 'lagoon', name: 'Driftwood Lagoon' }]);
+  assert.deepEqual(first, [{ kind: 'region', id: 'driftwood-landing', name: 'Driftwood Landing' }]);
   assert.equal(discover(game).filter((f) => f.kind === 'region').length, 0);
 
   // Teleport the survivor to the scout's start, which is in a different region.
   Object.assign(game.player, SPAWNS.scout);
-  assert.equal(discover(game).filter((f) => f.kind === 'region')[0].id, 'pinefall');
-  assert.deepEqual(game.discovered, ['lagoon', 'pinefall']);
+  assert.equal(discover(game).filter((f) => f.kind === 'region')[0].id, 'pinefall-camp');
+  assert.deepEqual(game.discovered, ['driftwood-landing', 'pinefall-camp']);
 });
 
 // Guards landmark finding: standing close enough finds it once; standing just outside does not.
@@ -43,7 +43,7 @@ test('a landmark is found once when the player comes within its radius', () => {
 // Guards signpost finding, which is what unlocks fast travel.
 test('a signpost is found once when the player walks up to it', () => {
   const game = createGame('builder'),
-    post = WAYPOINTS.find((w) => w.id === 'h-wp-east');
+    post = WAYPOINTS.find((w) => w.id === 'h-wp-village');
 
   Object.assign(game.player, { x: post.x + WAYPOINT_RADIUS + 5, y: post.y });
   assert.equal(discover(game).filter((f) => f.kind === 'waypoint').length, 0);
@@ -51,9 +51,9 @@ test('a signpost is found once when the player walks up to it', () => {
   Object.assign(game.player, { x: post.x, y: post.y });
   assert.deepEqual(
     discover(game).filter((f) => f.kind === 'waypoint'),
-    [{ kind: 'waypoint', id: 'h-wp-east', name: 'East Meadow Signpost' }],
+    [{ kind: 'waypoint', id: post.id, name: post.name }],
   );
-  assert.deepEqual(game.waypoints, ['h-wp-east']);
+  assert.deepEqual(game.waypoints, ['h-wp-village']);
 });
 
 // Guards the old-boat finds: each is found once, from up to WRECK_RADIUS away, so the map can mark it.

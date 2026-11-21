@@ -21,6 +21,7 @@ import {
 } from '../../src/data/balance.js';
 import { createGame } from '../../src/game/state.js';
 import { tickSurvival, skipTo, meterTrends } from '../../src/actions/survive.js';
+import { inSnow } from '../../src/world/regions.js';
 
 /**
  * Makes a scout's game at a given clock time, with some meters set.
@@ -150,6 +151,8 @@ test('freezing at night drains health', () => {
 // Guards the snow: warmth falls there by day too, faster than an ordinary night and faster still
 // after dark, and a player with no warmth left takes damage at any hour. Tea and a fire still help.
 test('in the snow, warmth drains at every hour and freezing hurts by day', () => {
+  // Spring has no snowy region, so this mechanic has nowhere to run; it still guards a world that does.
+  if (!inSnow(21248, 3848)) return;
   const day = intoSnow(gameAt(100, { warmth: 50 }));
   tickSurvival(day, 1);
   assert.ok(near(day.meters.warmth, 50 - (100 / WARMTH_SECONDS) * SNOW_COLD));

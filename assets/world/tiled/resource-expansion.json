@@ -1,0 +1,306 @@
+[
+  {
+    "id": 0,
+    "name": "grey-rock-small",
+    "width": 48,
+    "height": 47,
+    "material": "grey",
+    "size": "small"
+  },
+  {
+    "id": 1,
+    "name": "grey-rock-medium",
+    "width": 112,
+    "height": 94,
+    "material": "grey",
+    "size": "medium"
+  },
+  {
+    "id": 2,
+    "name": "grey-rock-big",
+    "width": 240,
+    "height": 206,
+    "material": "grey",
+    "size": "big"
+  },
+  {
+    "id": 3,
+    "name": "grey-rock-mountain",
+    "width": 640,
+    "height": 586,
+    "material": "grey",
+    "size": "mountain"
+  },
+  {
+    "id": 4,
+    "name": "flat-rock-small",
+    "width": 48,
+    "height": 27,
+    "material": "flat",
+    "size": "small"
+  },
+  {
+    "id": 5,
+    "name": "flat-rock-medium",
+    "width": 112,
+    "height": 83,
+    "material": "flat",
+    "size": "medium"
+  },
+  {
+    "id": 6,
+    "name": "flat-rock-big",
+    "width": 240,
+    "height": 190,
+    "material": "flat",
+    "size": "big"
+  },
+  {
+    "id": 7,
+    "name": "flat-rock-mountain",
+    "width": 640,
+    "height": 503,
+    "material": "flat",
+    "size": "mountain"
+  },
+  {
+    "id": 8,
+    "name": "mossy-rock-small",
+    "width": 48,
+    "height": 41,
+    "material": "mossy",
+    "size": "small"
+  },
+  {
+    "id": 9,
+    "name": "mossy-rock-medium",
+    "width": 112,
+    "height": 95,
+    "material": "mossy",
+    "size": "medium"
+  },
+  {
+    "id": 10,
+    "name": "mossy-rock-big",
+    "width": 240,
+    "height": 194,
+    "material": "mossy",
+    "size": "big"
+  },
+  {
+    "id": 11,
+    "name": "mossy-rock-mountain",
+    "width": 640,
+    "height": 559,
+    "material": "mossy",
+    "size": "mountain"
+  },
+  {
+    "id": 12,
+    "name": "beach-rock-small",
+    "width": 48,
+    "height": 41,
+    "material": "beach",
+    "size": "small"
+  },
+  {
+    "id": 13,
+    "name": "beach-rock-medium",
+    "width": 112,
+    "height": 87,
+    "material": "beach",
+    "size": "medium"
+  },
+  {
+    "id": 14,
+    "name": "beach-rock-big",
+    "width": 240,
+    "height": 204,
+    "material": "beach",
+    "size": "big"
+  },
+  {
+    "id": 15,
+    "name": "beach-rock-mountain",
+    "width": 640,
+    "height": 566,
+    "material": "beach",
+    "size": "mountain"
+  },
+  {
+    "id": 16,
+    "name": "ice-rock-small",
+    "width": 48,
+    "height": 39,
+    "material": "ice",
+    "size": "small"
+  },
+  {
+    "id": 17,
+    "name": "ice-rock-medium",
+    "width": 112,
+    "height": 86,
+    "material": "ice",
+    "size": "medium"
+  },
+  {
+    "id": 18,
+    "name": "ice-rock-big",
+    "width": 240,
+    "height": 202,
+    "material": "ice",
+    "size": "big"
+  },
+  {
+    "id": 19,
+    "name": "ice-rock-mountain",
+    "width": 640,
+    "height": 559,
+    "material": "ice",
+    "size": "mountain"
+  },
+  {
+    "id": 20,
+    "name": "iron-rock-small",
+    "width": 48,
+    "height": 42,
+    "material": "iron",
+    "size": "small"
+  },
+  {
+    "id": 21,
+    "name": "iron-rock-medium",
+    "width": 112,
+    "height": 80,
+    "material": "iron",
+    "size": "medium"
+  },
+  {
+    "id": 22,
+    "name": "iron-rock-big",
+    "width": 240,
+    "height": 188,
+    "material": "iron",
+    "size": "big"
+  },
+  {
+    "id": 23,
+    "name": "iron-rock-mountain",
+    "width": 640,
+    "height": 560,
+    "material": "iron",
+    "size": "mountain"
+  },
+  {
+    "id": 24,
+    "name": "copper-rock-small",
+    "width": 48,
+    "height": 44,
+    "material": "copper",
+    "size": "small"
+  },
+  {
+    "id": 25,
+    "name": "copper-rock-medium",
+    "width": 112,
+    "height": 91,
+    "material": "copper",
+    "size": "medium"
+  },
+  {
+    "id": 26,
+    "name": "copper-rock-big",
+    "width": 240,
+    "height": 206,
+    "material": "copper",
+    "size": "big"
+  },
+  {
+    "id": 27,
+    "name": "copper-rock-mountain",
+    "width": 640,
+    "height": 552,
+    "material": "copper",
+    "size": "mountain"
+  },
+  {
+    "id": 28,
+    "name": "gold-rock-small",
+    "width": 48,
+    "height": 44,
+    "material": "gold",
+    "size": "small"
+  },
+  {
+    "id": 29,
+    "name": "gold-rock-medium",
+    "width": 112,
+    "height": 85,
+    "material": "gold",
+    "size": "medium"
+  },
+  {
+    "id": 30,
+    "name": "gold-rock-big",
+    "width": 240,
+    "height": 176,
+    "material": "gold",
+    "size": "big"
+  },
+  {
+    "id": 31,
+    "name": "gold-rock-mountain",
+    "width": 640,
+    "height": 547,
+    "material": "gold",
+    "size": "mountain"
+  },
+  {
+    "id": 32,
+    "name": "diamond-rock-small",
+    "width": 47,
+    "height": 48,
+    "material": "diamond",
+    "size": "small"
+  },
+  {
+    "id": 33,
+    "name": "diamond-rock-medium",
+    "width": 112,
+    "height": 102,
+    "material": "diamond",
+    "size": "medium"
+  },
+  {
+    "id": 34,
+    "name": "diamond-rock-big",
+    "width": 240,
+    "height": 207,
+    "material": "diamond",
+    "size": "big"
+  },
+  {
+    "id": 35,
+    "name": "diamond-rock-mountain",
+    "width": 640,
+    "height": 557,
+    "material": "diamond",
+    "size": "mountain"
+  },
+  {
+    "id": 36,
+    "name": "coconut-palm",
+    "width": 256,
+    "height": 320,
+    "material": "wood",
+    "size": "tree"
+  },
+  {
+    "id": 37,
+    "name": "coconut",
+    "width": 24,
+    "height": 24,
+    "material": "food",
+    "size": "pickup"
+  }
+]

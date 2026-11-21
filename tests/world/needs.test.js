@@ -141,8 +141,8 @@ test('needs are described in plain words with a progress count', () => {
   const bring = { kind: 'bring', resource: 'stone', amount: 3, done: false };
   assert.equal(describeNeed(bring), 'Bring 3 stone');
   assert.equal(
-    describeNeed({ kind: 'place', region: 'frostpeak', done: false }),
-    'Find a place in Frostpeak',
+    describeNeed({ kind: 'place', region: 'pinefall-camp', done: false }),
+    'Find a place in Pinefall Camp',
   );
   assert.equal(describeNeed({ kind: 'signpost', done: false }), 'Find a new signpost');
 

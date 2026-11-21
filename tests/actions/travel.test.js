@@ -28,7 +28,8 @@ test('travel moves the player to a found signpost', () => {
   game.waypoints.push('j-wp-temple');
 
   const post = travelTo(game, 'j-wp-temple');
-  assert.equal(post.name, 'Temple Path Signpost');
+  assert.equal(post.id, 'j-wp-temple');
+  assert.equal(post.name, WAYPOINTS.find((w) => w.id === 'j-wp-temple').name);
   assert.deepEqual(game.player, { x: post.x, y: post.y, direction: 0 });
 });
 
@@ -64,7 +65,9 @@ test('travelling from the boat sends the boat home and puts the player on foot',
 test('after landing on each lagoon islet and travelling home, the boat can be boarded again', () => {
   const east = WRECKS.find((w) => w.id === 'wreck-east');
 
-  for (const id of ['l-gull-isle', 'l-turtle-isle', 'l-lantern-islet']) {
+  // l-gull-isle is open water (a sail-by landmark found from the boat by proximity, no land to stand
+  // on), so only the two islets that have ground are landed on here.
+  for (const id of ['l-turtle-isle', 'l-lantern-islet']) {
     const islet = LANDMARKS.find((l) => l.id === id),
       game = createGame('survivor');
     game.boat = { from: east.id, x: 0, y: 0, dir: 0 };

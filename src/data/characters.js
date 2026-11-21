@@ -19,7 +19,7 @@ export const CHARACTERS = [
     id: 'scout',
     name: 'The Frontier Scout',
     shortName: 'Frontier Scout',
-    location: 'Pinefall Woods',
+    location: 'Pinefall Camp',
     tagline: 'Follow the trail. Find your home.',
     description:
       'A curious wanderer with a steady step and a love of the wild. Begin among the pines, where every trail leads somewhere new.',
@@ -32,7 +32,7 @@ export const CHARACTERS = [
     id: 'builder',
     name: 'The Wandering Builder',
     shortName: 'Wandering Builder',
-    location: 'Hollowstead Village',
+    location: 'Hollowstead',
     tagline: 'Where others see ruins, you see a beginning.',
     description:
       'A resourceful craftsperson looking for a place to belong. Start in an abandoned village, with old foundations and new possibilities.',
@@ -45,7 +45,7 @@ export const CHARACTERS = [
     id: 'survivor',
     name: 'The Shipwreck Survivor',
     shortName: 'Shipwreck Survivor',
-    location: 'Driftwood Coast',
+    location: 'Driftwood Landing',
     tagline: 'The sea took your ship. Not your spirit.',
     description:
       'Washed ashore with a handful of supplies and a will to carry on. Search the coast, follow the inland trail, and make a fresh start.',

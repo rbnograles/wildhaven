@@ -15,6 +15,7 @@ import {
   WAKE_OFFSET,
 } from '../../src/data/balance.js';
 import { WRECKS } from '../../src/data/places.js';
+import { facing } from '../../src/actions/move.js';
 import { createGame } from '../../src/game/state.js';
 import { giveToNeed, eat, heal, brewTea, rest, passOut } from '../../src/actions/camp.js';
 
@@ -181,7 +182,8 @@ test('passing out in the boat wakes the player ashore and sends the boat home', 
   assert.equal(result.boatHome, true);
   assert.equal(game.aboard, false);
   assert.ok(Math.hypot(game.player.x - camp.x, game.player.y - camp.y) <= WAKE_OFFSET);
-  assert.deepEqual(game.boat, { from: wreck.id, x: wreck.launch.x, y: wreck.launch.y, dir: 2 });
+  const dir = facing(wreck.launch.x - wreck.x, wreck.launch.y - wreck.y);
+  assert.deepEqual(game.boat, { from: wreck.id, x: wreck.launch.x, y: wreck.launch.y, dir });
 });
 
 // Guards passing out on foot with a boat moored somewhere: the boat stays where it was left.

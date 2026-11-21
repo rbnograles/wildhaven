@@ -109,13 +109,35 @@ test('a fleeing animal slants north or south with the way it runs', () => {
   const game = createGame('scout'),
     animal = WILD_ANIMALS[0];
 
+  // Put the animal (and its home, so it is not pulled back) on ground that is clear all around, so
+  // the flee runs straight away from the player instead of sliding along a tree or the shore.
+  let open = null;
+  for (let y = 2000; y < 18000 && !open; y += 192)
+    for (let x = 2000; x < 26000 && !open; x += 192)
+      if (
+        [
+          [0, 0],
+          [96, 0],
+          [-96, 0],
+          [0, 96],
+          [0, -96],
+          [96, 96],
+          [-96, -96],
+          [96, -96],
+          [-96, 96],
+        ].every(([dx, dy]) => isWalkable(x + dx, y + dy))
+      )
+        open = { x, y };
+  assert.ok(open, 'found open ground');
+  animal.herd = { ...animal.herd, x: open.x, y: open.y };
+
   for (const [dx, dy, slant] of [
     [-100, 0, null],
     [-80, 80, 'n'],
     [80, -80, 's'],
   ]) {
-    Object.assign(animal, { phase: 'idle', slant: null });
-    Object.assign(game.player, { x: animal.x + dx, y: animal.y + dy });
+    Object.assign(animal, { x: open.x, y: open.y, phase: 'idle', slant: null });
+    Object.assign(game.player, { x: open.x + dx, y: open.y + dy });
     tickAnimals(game, 0.05, { running: true });
     assert.equal(animal.phase, 'run');
     assert.equal(animal.slant, slant);

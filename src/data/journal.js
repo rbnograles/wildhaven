@@ -12,7 +12,12 @@
  *   the trail. Hints point from fixed things (the camp, signposts, a compass direction), never
  *   from the place the player happens to be standing in, because places can be found in any order.
  */
-export const JOURNALS = {
+// Parked for Spring Country: the Pinefall Woods prototype below was written for the old seven-region
+// world, so no region's pages are active yet. Spring's own journal content is authored later (build 2).
+// The prototype data is kept (unused) so it can be re-themed to a Spring district when that happens.
+export const JOURNALS = {};
+
+const PINEFALL_PROTOTYPE = {
   pinefall: {
     intro: 'A scout mapped these woods before you and left the notebook half full.',
     trail: ['p-camp', 'p-hollow', 'p-grandfather', 'p-stones', 'p-clearing', 'p-ledge', 'p-pond'],

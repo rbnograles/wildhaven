@@ -56,7 +56,7 @@ const campAt = (game) => ({
   grown: 0,
   needs: [
     { kind: 'bring', resource: 'stone', amount: 3, done: false },
-    { kind: 'place', region: 'frostpeak', done: false },
+    { kind: 'place', region: 'hollowstead', done: false },
     { kind: 'signpost', done: false },
   ],
   buildings: [],
@@ -172,7 +172,7 @@ test('save restores character, coordinates and progress without sharing mutable 
   original.regrowAt[flowers[0].id] = 1042; // still growing back at time 1000
   original.landmarks.push('h-square');
   original.waypoints.push('h-wp-village');
-  original.discovered.push('meadows');
+  original.discovered.push('hollowstead');
   original.wrecks.push('wreck-east');
   original.boat = { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: 2 };
   original.time = 1000;
@@ -347,7 +347,7 @@ test('a version 3 save is upgraded to the morning of day 1 on the bigger map, ke
       elapsed: 500,
       regrowAt: { [`flowers-${flower.x - SEA_BORDER}-${flower.y - SEA_BORDER}`]: 560 },
       collected: ['pine-wood'],
-      discovered: ['pinefall'],
+      discovered: ['pinefall-camp'],
       landmarks: ['h-square'],
     }),
   );
@@ -367,7 +367,7 @@ test('a version 3 save is upgraded to the morning of day 1 on the bigger map, ke
   assert.equal(game.collected, undefined);
 
   // The fog lifts over the region entered and around the player, but not over the new sea border.
-  const pinefall = REGIONS.find((r) => r.id === 'pinefall');
+  const pinefall = REGIONS.find((r) => r.id === 'pinefall-camp');
   assert.ok(isRevealed(game, pinefall.x, pinefall.y));
   assert.ok(isRevealed(game, game.player.x, game.player.y));
   const border = [];
@@ -376,7 +376,7 @@ test('a version 3 save is upgraded to the morning of day 1 on the bigger map, ke
       const x = (cx + 0.5) * FOG_CELL,
         y = (cy + 0.5) * FOG_CELL;
       const inBorder = cx < BORDER_SQUARES || cy < BORDER_SQUARES;
-      if (inBorder && regionOf(x, y).id === 'pinefall') border.push([x, y]);
+      if (inBorder && regionOf(x, y).id === 'pinefall-camp') border.push([x, y]);
     }
   assert.ok(border.length > 0);
   for (const [x, y] of border) assert.equal(isRevealed(game, x, y), false, `${x},${y}`);
@@ -435,7 +435,7 @@ test('a version 4 save moves onto the bigger map: player, camps, timers and fog 
       'pine-wood': 900,
     },
     camps: [before(camp)],
-    discovered: ['meadows'],
+    discovered: ['hollowstead'],
     landmarks: ['h-square'],
     fog: oldFog([[0, 0], square]),
   });
@@ -447,7 +447,7 @@ test('a version 4 save moves onto the bigger map: player, camps, timers and fog 
   assert.deepEqual(game.regrowAt, { [flower.id]: 500, 'pine-wood': 900 });
   assert.deepEqual([game.time, game.elapsed, game.tea], [400, 380, 5]);
   assert.deepEqual(game.meters, { health: 80, hunger: 60, warmth: 40 });
-  assert.deepEqual([game.discovered, game.landmarks], [['meadows'], ['h-square']]);
+  assert.deepEqual([game.discovered, game.landmarks], [['hollowstead'], ['h-square']]);
   assert.deepEqual([game.wrecks, game.boat, game.aboard], [[], null, false]);
 
   // Both seen squares land SEA_BORDER further in; the new sea squares stay unseen.

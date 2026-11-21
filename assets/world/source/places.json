@@ -22,7 +22,7 @@
     "coast-stone": [23148, 11498]
   },
   "landmarks": [
-    { "id": "d-oasis", "region": "blossom-crossroads", "name": "Blossom Lake", "x": 5048, "y": 4248 },
+    { "id": "d-oasis", "region": "blossom-crossroads", "name": "Blossom Lake", "x": 5044, "y": 4268 },
     { "id": "d-colonnade", "region": "blossom-crossroads", "name": "Old Orchard Ruins", "x": 7648, "y": 3348, "object": "sandstone-ruin" },
     { "id": "d-needle", "region": "pinefall-camp", "name": "Foxglove Ridge", "x": 9648, "y": 4948 },
     { "id": "d-ribs", "region": "blossom-crossroads", "name": "Fallen Elder", "x": 3548, "y": 3248, "object": "dead-bush" },
@@ -36,7 +36,7 @@
     { "id": "p-clearing", "region": "pinefall-camp", "name": "Deer Clearing", "x": 15648, "y": 5248 },
     { "id": "p-hollow", "region": "pinefall-camp", "name": "Hollow Log", "x": 13548, "y": 2948, "object": "log" },
     { "id": "p-ledge", "region": "pinefall-camp", "name": "Northwind Ledge", "x": 16348, "y": 4348 },
-    { "id": "s-tarn", "region": "alder-rest", "name": "Alder Tarn", "x": 19048, "y": 4948 },
+    { "id": "s-tarn", "region": "alder-rest", "name": "Alder Tarn", "x": 19116, "y": 4992 },
     { "id": "s-lookout", "region": "alder-rest", "name": "Springwatch Lookout", "x": 23548, "y": 3048 },
     { "id": "s-cairn", "region": "alder-rest", "name": "Traveller's Cairn", "x": 21248, "y": 3848 },
     { "id": "s-hollow", "region": "alder-rest", "name": "Fern Hollow", "x": 25248, "y": 4648 },
@@ -47,9 +47,9 @@
     { "id": "h-farmhouse", "region": "hollowstead", "name": "Lonely Farmhouse", "x": 11048, "y": 7648, "object": "house-b" },
     { "id": "h-bridge", "region": "hollowstead", "name": "Kingsbridge", "x": 16468, "y": 9548 },
     { "id": "h-oak", "region": "hollowstead", "name": "The Great Oak", "x": 12248, "y": 10448, "object": "big-oak" },
-    { "id": "h-honeybloom", "region": "hollowstead", "name": "Honeybloom Meadow", "x": 18548, "y": 7648 },
+    { "id": "h-honeybloom", "region": "alder-rest", "name": "Honeybloom Meadow", "x": 18548, "y": 7648 },
     { "id": "h-circle", "region": "stonebrook-hamlet", "name": "Shepherd's Circle", "x": 9648, "y": 9048, "object": "rocks-b" },
-    { "id": "h-pond", "region": "hollowstead", "name": "Duckwater Pond", "x": 11448, "y": 11048 },
+    { "id": "h-pond", "region": "hollowstead", "name": "Duckwater Pond", "x": 11444, "y": 11052 },
     { "id": "l-wreck", "region": "driftwood-landing", "name": "Wreck of the Marigold", "x": 23348, "y": 11298 },
     { "id": "l-beacon", "region": "driftwood-landing", "name": "Beacon Rock", "x": 22948, "y": 9248, "object": "beach-rock" },
     { "id": "l-cove", "region": "driftwood-landing", "name": "Shell Cove", "x": 23148, "y": 13348 },
@@ -57,7 +57,6 @@
     { "id": "l-tidepool", "region": "driftwood-landing", "name": "Tidewater Pool", "x": 21448, "y": 13248 },
     { "id": "l-dunes", "region": "driftwood-landing", "name": "Gullwing Dunes", "x": 21548, "y": 9048 },
     { "id": "l-jetty", "region": "driftwood-landing", "name": "Old Jetty", "x": 23398, "y": 10248, "object": "log" },
-    { "id": "l-gull-isle", "region": "driftwood-landing", "name": "Gull Isle", "x": 25287, "y": 10111 },
     { "id": "l-turtle-isle", "region": "driftwood-landing", "name": "Turtle Isle", "x": 25748, "y": 14548, "object": "beach-rock" },
     { "id": "l-lantern-islet", "region": "driftwood-landing", "name": "Lantern Islet", "x": 25048, "y": 16848 },
     { "id": "c-mine", "region": "stonebrook-hamlet", "name": "Stonebrook Quarry", "x": 6648, "y": 9648, "object": "workshop" },
@@ -68,7 +67,7 @@
     { "id": "c-overlook", "region": "willowbank", "name": "Eagle Overlook", "x": 3048, "y": 12648 },
     { "id": "c-prospector", "region": "willowbank", "name": "Willowbank Camp", "x": 3348, "y": 17048 },
     { "id": "j-temple", "region": "greenbough-camp", "name": "Greenbough Ruins", "x": 14048, "y": 16348, "object": "sandstone-ruin" },
-    { "id": "j-pool", "region": "greenbough-camp", "name": "Willow Pool", "x": 10248, "y": 15648 },
+    { "id": "j-pool", "region": "greenbough-camp", "name": "Willow Pool", "x": 10244, "y": 15660 },
     { "id": "j-kapok", "region": "hollowstead", "name": "The Elder Oak", "x": 17648, "y": 15448 },
     { "id": "j-camp", "region": "greenbough-camp", "name": "Overgrown Camp", "x": 7248, "y": 16848 },
     { "id": "j-idol", "region": "driftwood-landing", "name": "Sleeping Idol", "x": 20648, "y": 16948, "object": "boulder" },
@@ -92,9 +91,9 @@
     { "id": "j-wp-temple", "region": "hollowstead", "name": "Spring trail signpost 14", "x": 15048, "y": 17048 }
   ],
   "wrecks": [
-    { "id": "wreck-north", "region": "pinefall-camp", "name": "Pinefall Camp Rowboat", "x": 14948, "y": 2338, "launch": [14828, 2288] },
-    { "id": "wreck-west", "region": "blossom-crossroads", "name": "Blossom Crossroads Rowboat", "x": 2024, "y": 8848, "launch": [1974, 8728] },
-    { "id": "wreck-south", "region": "greenbough-camp", "name": "Greenbough Camp Rowboat", "x": 11048, "y": 18619, "launch": [10918, 18619] },
-    { "id": "wreck-east", "region": "driftwood-landing", "name": "Driftwood Landing Rowboat", "x": 23682, "y": 10748, "launch": [23632, 10628] }
+    { "id": "wreck-north", "region": "pinefall-camp", "name": "Pinefall Camp Rowboat", "x": 14948, "y": 2410, "launch": [14828, 2288] },
+    { "id": "wreck-west", "region": "blossom-crossroads", "name": "Blossom Crossroads Rowboat", "x": 2096, "y": 8848, "launch": [1974, 8728] },
+    { "id": "wreck-south", "region": "greenbough-camp", "name": "Greenbough Camp Rowboat", "x": 11048, "y": 18579, "launch": [10918, 18619] },
+    { "id": "wreck-east", "region": "driftwood-landing", "name": "Driftwood Landing Rowboat", "x": 23634, "y": 10748, "launch": [23632, 10628] }
   ]
 }

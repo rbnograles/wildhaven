@@ -185,9 +185,9 @@ test('tools shorten the gathers that need them, and only those', () => {
 test('a bigger rock gives more, takes longer to mine and wears the pickaxe more', () => {
   const game = createGame('survivor');
   game.tools.pickaxe = { tier: 'stone', uses: 25 };
-  const [small, medium, large] = ['beach-rock', 'rocks-a', 'boulder'].map((sprite) =>
-    NODES.find((n) => n.sprite === sprite && n.inScenery && n.size === HARVEST[sprite].size),
-  );
+  // The size mechanic is tested from the HARVEST data (the three sizes), so it does not depend on
+  // which rock sizes a particular map happens to scatter (Spring draws only small and large rocks).
+  const [small, medium, large] = ['beach-rock', 'rocks-a', 'boulder'].map((s) => HARVEST[s]);
 
   assert.deepEqual([small.size, medium.size, large.size], [1, 2, 3]);
   assert.ok(small.amount < medium.amount && medium.amount < large.amount);
@@ -208,9 +208,10 @@ test('a bigger rock gives more, takes longer to mine and wears the pickaxe more'
   assert.equal(sizedHarvest(HARVEST['beach-rock'], 0.5).size, 1); // nothing is smaller than small
   assert.equal(sizedHarvest(HARVEST.oak, 0.5), HARVEST.oak); // trees have no size
 
-  // Mining the boulder through the finish step costs the stone pickaxe three uses.
-  Object.assign(game.player, { x: large.x, y: large.y + 30 });
-  assert.equal(finishInteraction(game, large.id)?.node, large);
+  // Mining a real boulder (size 3) on the map through the finish step costs the pickaxe three uses.
+  const bigRock = NODES.find((n) => n.sprite === 'boulder' && n.inScenery && n.size === 3);
+  Object.assign(game.player, { x: bigRock.x, y: bigRock.y + 30 });
+  assert.equal(finishInteraction(game, bigRock.id)?.node, bigRock);
   assert.equal(game.tools.pickaxe.uses, 25 - SIZE_WEAR[2]);
 });
 
@@ -218,7 +219,8 @@ test('a bigger rock gives more, takes longer to mine and wears the pickaxe more'
 // picking berries keeps the full bare-hand time.
 test('picking up small stones and sticks is quicker than chopping or picking berries', () => {
   const game = createGame('scout');
-  for (const sprite of ['pebbles', 'sticks', 'driftwood', 'grey-rock']) {
+  // Spring scatters no beach driftwood, so sticks are the bare-hands wood here.
+  for (const sprite of ['pebbles', 'sticks', 'grey-rock']) {
     const node = NODES.find((n) => n.sprite === sprite);
     assert.equal(gatherTime(game, node), PICKUP_SECONDS, sprite);
   }
@@ -247,17 +249,17 @@ test('wild herbs are picked by hand for 3 herbs in the full hand-pick time', () 
 });
 
 // Guards the map's trees and rocks: with the right tool they give their wood, stone or iron.
-test('map trees and iron rocks can be gathered with the right tool', () => {
+test('map trees and rocks can be gathered with the right tool', () => {
   const game = createGame('survivor');
   game.tools = { axe: { tier: 'iron' }, pickaxe: { tier: 'iron' } };
-  for (const sprite of ['big-oak', 'boulder', 'cliff-rock']) {
+  // Spring has no iron-streaked rocks, so this checks a big tree and an ordinary boulder.
+  for (const sprite of ['big-oak', 'boulder']) {
     const node = NODES.find((n) => n.sprite === sprite && n.inScenery);
     Object.assign(game.player, { x: node.x, y: node.y + 30 });
     const before = game.resources[node.type];
     assert.equal(finishGather(game, node.id)?.id, node.id, sprite);
     assert.equal(game.resources[node.type], before + node.amount, sprite);
   }
-  assert.ok(game.resources.iron >= 1);
 });
 
 // Guards the mouse badge and the click: a click must only chop the tree it points at, and only

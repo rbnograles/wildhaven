@@ -59,12 +59,9 @@ function campHere(game) {
  * @param {object} game - The game being played. Its player moves.
  */
 function standByWater(game) {
-  const wreck = WRECKS[0],
-    length = Math.hypot(wreck.launch.x - wreck.x, wreck.launch.y - wreck.y);
-  Object.assign(game.player, {
-    x: wreck.x + ((wreck.launch.x - wreck.x) / length) * 60,
-    y: wreck.y + ((wreck.launch.y - wreck.y) / length) * 60,
-  });
+  // Stand on an old boat's beach: walkable ground with sailable water within reach to launch into.
+  const wreck = WRECKS[0];
+  Object.assign(game.player, { x: wreck.x, y: wreck.y });
 }
 
 /** Moves the clock to the middle of the night, when the cold bites. */

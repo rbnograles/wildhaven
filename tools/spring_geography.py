@@ -60,6 +60,16 @@ def region_grid(settlements, cols, rows, cell):
     return ''.join(digits), ids
 
 
+# Says which district a single spot belongs to, exactly as the game's regionOf does.
+# The game reads the region grid by the square a spot falls in, and each square went to the settlement
+# nearest the square's centre. So a place is given the district of its own square's centre, not of the
+# place's exact point: that keeps places.json's region and the game's regionOf in perfect step.
+def region_at(x, y, settlements, cell):
+    cx, cy = int(x // cell), int(y // cell)
+    mx, my = (cx + 0.5) * cell, (cy + 0.5) * cell
+    return min(range(len(settlements)), key=lambda i: (settlements[i]['x'] - mx) ** 2 + (settlements[i]['y'] - my) ** 2)
+
+
 # Builds a flat height map: every tile is level 0, with no cliff walls or stairs.
 # Spring has no hills, so collision never blocks on height. The string is one letter per tile,
 # row-major, the same shape src/world/map.js reads from the map's `elevation` property.
