@@ -95,6 +95,7 @@ test('hunting needs an axe, gives food, and the animal returns a day later', () 
   const food = game.resources.food;
   const done = finishHunt(game, animator.pending.target, () => 0);
   assert.equal(done.food, ANIMALS.deer.food);
+  assert.equal(done.tool, 'axe');
   assert.equal(done.antler, true);
   // The hide comes off too: leather for the backpack.
   assert.equal(done.leather, ANIMALS[done.animal].leather);
@@ -237,6 +238,7 @@ test('finishHunt deals one hit, not an instant kill', () => {
   Object.assign(a, { x: state.player.x + 20, y: state.player.y, hp: 4, phase: 'idle' });
   const r = finishHunt(state, `hunt:${a.id}:sword:10`, () => 0.99);
   assert.equal(r.wounded, true);
+  assert.equal(r.tool, 'sword');
   assert.equal(a.hp, 2);
   resetAnimals();
 });

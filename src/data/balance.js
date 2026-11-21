@@ -244,8 +244,8 @@ export const FOG_RADIUS = 1000;
 // ---- Tools and crafting ----
 
 /**
- * What each tool costs to craft, per tier. Stone tools are made anywhere; iron tools also need a
- * hammer and one of the player's campfires (the fire is the forge).
+ * What each tool costs to craft, per tier. Stone tools are made anywhere; the forged tiers (iron, gold
+ * and diamond) also need a hammer and one of the player's campfires (the fire is the forge).
  */
 export const TOOL_RECIPES = {
   axe: { stone: { wood: 3, stone: 2 }, iron: { wood: 2, stone: 1, iron: 3 } },
@@ -267,7 +267,7 @@ export const TOOL_RECIPES = {
   },
 };
 
-/** How many uses a new stone tool has. Iron tools never wear out. */
+/** How many uses a new stone tool has. Iron, gold and diamond tools never wear out. */
 export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10, sword: 20, bow: 20 };
 
 // Seconds a gather that needs a tool takes with a stone or an iron one. Bare-hand gathers keep

@@ -436,7 +436,7 @@ function forcedWeapon(state, tool, d) {
  * @param {string} target - Such as 'hunt:herd-meadows-2-1' or 'hunt:herd-meadows-2-1:bow:7'.
  * @param {() => number} [roll] - Gives a number from 0 to 1, for the antler; tests pass their own.
  * @returns {{kind: 'hunt', animal: string, food?: number, leather?: number, pelt?: number,
- *   antler?: boolean, wounded?: boolean, wear: string|null}|null}
+ *   antler?: boolean, wounded?: boolean, wear: string|null, tool: string}|null}
  *   What the hit did (`wounded: true` when the creature is still up; `animal` 'wolf' and no food
  *   for a wolf), or null when it got away (it is gone, too far now, or nothing can be used).
  */
@@ -465,6 +465,7 @@ export function finishHunt(state, target, roll = Math.random) {
       wounded: true,
       animal: a.den ? 'wolf' : ANIMALS[a.kind].name,
       wear,
+      tool: weapon.tool,
     };
-  return { kind: 'hunt', ...hit.reward, wear };
+  return { kind: 'hunt', ...hit.reward, wear, tool: weapon.tool };
 }

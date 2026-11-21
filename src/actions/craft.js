@@ -1,5 +1,5 @@
 // The "craft" action: making tools from wood, stone and iron in the Build menu. Stone tools are
-// made anywhere; iron tools need a hammer and one of the player's campfires (the fire is the
+// made anywhere; iron, gold and diamond tools need a hammer and one of the player's campfires (the fire is the
 // forge). Like gathering, crafting takes time: beginCraft starts it, and the game loop finishes it
 // through finishCraft, which checks everything again and only then pays, so nothing is paid twice.
 
@@ -35,7 +35,7 @@ export function nextTier(state, tool) {
  * Puts a tool and its tier into words, such as "stone axe".
  *
  * @param {string} tool - The tool's id.
- * @param {string} tier - 'stone' or 'iron'.
+ * @param {string} tier - 'stone', 'iron', 'gold' or 'diamond'.
  * @returns {string} The words, all lower case.
  */
 export const toolName = (tool, tier) => `${tier} ${toolInfo(tool).name}`;
@@ -76,7 +76,7 @@ const capital = (word) => word[0].toUpperCase() + word.slice(1);
  *
  * The first rule that fails is the answer, in the order that helps most: they already own the iron
  * one, they are sitting in the boat, the backpack is short (with a hint where iron is found), they
- * have no hammer (iron only), or they are away from their campfires (iron only).
+ * have no hammer (forged tiers only), or they are away from their campfires (forged tiers only).
  *
  * @param {object} state - The game being played.
  * @param {string} tool - The tool's id.

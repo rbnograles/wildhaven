@@ -146,17 +146,26 @@ export function describeFinish(finished) {
       return `${finished.camp.name}: the camp centre is now a ${CENTRE_NAMES[finished.raised - 1]}`;
     return buildingInfo(finished.kind).made;
   }
+  if (finished.kind === 'hunt' && finished.wounded)
+    return [
+      finished.animal === 'wolf'
+        ? 'You struck the wolf — it keeps coming'
+        : `You wounded the ${finished.animal} — it bolts`,
+      wearWords(finished.tool ?? 'axe', finished.wear),
+    ]
+      .filter(Boolean)
+      .join(' · ');
   if (finished.kind === 'hunt' && finished.animal === 'wolf')
     return [
       `The wolf is down${finished.pelt ? ' · +1 wolf pelt' : ''} · Its pack is whole again at dusk`,
-      wearWords('axe', finished.wear),
+      wearWords(finished.tool ?? 'axe', finished.wear),
     ]
       .filter(Boolean)
       .join(' · ');
   if (finished.kind === 'hunt')
     return [
       `+${finished.food} food${finished.leather ? ` · +${finished.leather} leather` : ''}${finished.antler ? ' · +1 antler' : ''} · You hunted a ${finished.animal}`,
-      wearWords('axe', finished.wear),
+      wearWords(finished.tool ?? 'axe', finished.wear),
     ]
       .filter(Boolean)
       .join(' · ');
