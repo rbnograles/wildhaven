@@ -56,7 +56,7 @@ test('all three villagers live and work in Hollowstead village', () => {
   assert.deepEqual(NPCS.map((npc) => npc.row).sort(), [0, 1, 2]);
   for (const npc of NPCS)
     for (const spot of spotsOf(npc)) {
-      assert.equal(regionAt(spot), 'Hollowstead Meadows', npc.id);
+      assert.equal(regionAt(spot), 'Hollowstead', npc.id);
       assert.ok(Math.hypot(spot.x - square.x, spot.y - square.y) < 600, `${npc.id} in the village`);
     }
 });
