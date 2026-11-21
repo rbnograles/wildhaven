@@ -14,9 +14,7 @@ test('a region is discovered once, when the player first stands in it', () => {
   const game = createGame('survivor');
 
   const first = discover(game).filter((f) => f.kind === 'region');
-  assert.deepEqual(first, [
-    { kind: 'region', id: 'driftwood-landing', name: 'Driftwood Landing' },
-  ]);
+  assert.deepEqual(first, [{ kind: 'region', id: 'driftwood-landing', name: 'Driftwood Landing' }]);
   assert.equal(discover(game).filter((f) => f.kind === 'region').length, 0);
 
   // Teleport the survivor to the scout's start, which is in a different region.

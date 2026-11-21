@@ -100,7 +100,12 @@ test('a repair takes REPAIR_SECONDS, pays exactly once and floats the boat at it
   assert.deepEqual(advanceAnimation(animator, 0.02, {}), { clip: 'build', target: 'wreck-east' });
   assert.equal(finishRepair(game, 'wreck-east'), east);
   assert.deepEqual([game.resources.wood, game.resources.stone], [0, 0]);
-  assert.deepEqual(game.boat, { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: eastDir });
+  assert.deepEqual(game.boat, {
+    from: 'wreck-east',
+    x: east.launch.x,
+    y: east.launch.y,
+    dir: eastDir,
+  });
 
   assert.equal(finishRepair(game, 'wreck-east'), null);
   assert.deepEqual([game.resources.wood, game.resources.stone], [0, 0]);
