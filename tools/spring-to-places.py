@@ -24,6 +24,14 @@ OBJECTS = os.path.join(ROOT, 'assets', 'world', 'source', 'objects.json')
 FORBIDDEN = {'iron-ore', 'copper-ore', 'gold-ore', 'diamond-ore', 'cliff-rock', 'ice-rock',
              'snowy-pine', 'jungle-tree', 'palm', 'cactus', 'snow-grass', 'dry-grass',
              'cave-snow', 'cave-canyon', 'snow-stairs', 'canyon-stairs'}
+# The four old boats (A1 sailing). The Spring map was built around these same beach/launch points, so
+# they stay fixed here; only the region (district) and the player-facing name are set for Spring.
+WRECKS = [
+    {'id': 'wreck-north', 'x': 14948, 'y': 2338, 'launch': [14828, 2288]},
+    {'id': 'wreck-west', 'x': 2024, 'y': 8848, 'launch': [1974, 8728]},
+    {'id': 'wreck-south', 'x': 11048, 'y': 18619, 'launch': [10918, 18619]},
+    {'id': 'wreck-east', 'x': 23682, 'y': 10748, 'launch': [23632, 10628]},
+]
 
 
 # Picks a short, unique letter key for each region, used by the world editor.
@@ -65,13 +73,13 @@ def render(data):
         lines.append(f'    {json.dumps(k)}: {json.dumps(v)}' + (',' if i < len(items) - 1 else ''))
     lines.append('  },')
     for field, order in (('landmarks', ('id', 'region', 'name', 'x', 'y', 'object')),
-                         ('waypoints', ('id', 'region', 'name', 'x', 'y'))):
+                         ('waypoints', ('id', 'region', 'name', 'x', 'y')),
+                         ('wrecks', ('id', 'region', 'name', 'x', 'y', 'launch'))):
         lines.append(f'  "{field}": [')
         rows = data[field]
         for i, row in enumerate(rows):
             lines.append('    ' + inline(row, order) + (',' if i < len(rows) - 1 else ''))
-        lines.append('  ],')
-    lines.append('  "wrecks": []')
+        lines.append('  ]' + (',' if field != 'wrecks' else ''))
     lines.append('}')
     return '\n'.join(lines) + '\n'
 
@@ -104,10 +112,18 @@ def main():
         waypoints.append({'id': wp_id, 'region': nearest_region(mk['x'], mk['y'], settlements, ids),
                           'name': mk['name'], 'x': mk['x'], 'y': mk['y']})
 
+    # Old boats stay (sailing is included): keep each wreck's beach and launch points, name it for its district.
+    name_of = {r['id']: r['name'] for r in regions}
+    wrecks = []
+    for w in WRECKS:
+        region = nearest_region(w['x'], w['y'], settlements, ids)
+        wrecks.append({'id': w['id'], 'region': region, 'name': f'{name_of[region]} Rowboat',
+                       'x': w['x'], 'y': w['y'], 'launch': w['launch']})
+
     data = {'regions': regions, 'spawns': old['spawns'], 'supplies': old['supplies'],
-            'landmarks': landmarks, 'waypoints': waypoints, 'wrecks': []}
+            'landmarks': landmarks, 'waypoints': waypoints, 'wrecks': wrecks}
     open(PLACES, 'w', encoding='utf-8', newline='\n').write(render(data))
-    print(f'regions {len(regions)}, landmarks {len(landmarks)}, waypoints {len(waypoints)}, wrecks 0')
+    print(f'regions {len(regions)}, landmarks {len(landmarks)}, waypoints {len(waypoints)}, wrecks {len(wrecks)}')
     icons = sum('object' in lm for lm in landmarks)
     print(f'landmark icons kept: {icons}/{len(landmarks)}')
 

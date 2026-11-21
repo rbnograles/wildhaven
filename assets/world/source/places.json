@@ -91,5 +91,10 @@
     { "id": "j-wp-gate", "region": "hollowstead", "name": "Spring trail signpost 13", "x": 14348, "y": 13348 },
     { "id": "j-wp-temple", "region": "hollowstead", "name": "Spring trail signpost 14", "x": 15048, "y": 17048 }
   ],
-  "wrecks": []
+  "wrecks": [
+    { "id": "wreck-north", "region": "pinefall-camp", "name": "Pinefall Camp Rowboat", "x": 14948, "y": 2338, "launch": [14828, 2288] },
+    { "id": "wreck-west", "region": "blossom-crossroads", "name": "Blossom Crossroads Rowboat", "x": 2024, "y": 8848, "launch": [1974, 8728] },
+    { "id": "wreck-south", "region": "greenbough-camp", "name": "Greenbough Camp Rowboat", "x": 11048, "y": 18619, "launch": [10918, 18619] },
+    { "id": "wreck-east", "region": "driftwood-landing", "name": "Driftwood Landing Rowboat", "x": 23682, "y": 10748, "launch": [23632, 10628] }
+  ]
 }

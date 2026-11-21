@@ -53,7 +53,7 @@ class Places(unittest.TestCase):
         self.assertEqual(len(p['regions']), 8)
         self.assertEqual(len(p['landmarks']), 52)
         self.assertEqual(len(p['waypoints']), 14)
-        self.assertEqual(p['wrecks'], [])
+        self.assertEqual(len(p['wrecks']), 4)
         self.assertEqual(p['spawns']['scout'], [14348, 4148])
         # every landmark/waypoint names a real region id
         region_ids = {r['id'] for r in p['regions']}
@@ -62,6 +62,30 @@ class Places(unittest.TestCase):
         # region keys are unique (the world editor reads region.key)
         keys = [r['key'] for r in p['regions']]
         self.assertEqual(len(keys), len(set(keys)))
+
+
+class Importer(unittest.TestCase):
+    # Guards: the imported game map is flat, 448x320, Spring-sourced, and keeps the collision layers.
+    def test_map_shape(self):
+        with open(GAME_MAP, encoding='utf-8') as f:
+            g = json.load(f)
+        props = {p['name']: p['value'] for p in g['properties']}
+        self.assertEqual((g['width'], g['height']), (448, 320))
+        self.assertEqual(set(props['elevation']), {'0'})
+        self.assertEqual(props['importedFrom'], 'spring-country.tmj')
+        self.assertEqual(len(set(props['regionGrid'])), 8)
+        names = {l['name'] for l in g['layers']}
+        self.assertTrue({'water', 'deep', 'sand', 'snow', 'objects'} <= names)
+
+
+class Banks(unittest.TestCase):
+    # Guards: either a banks layer is drawn along Spring's water, or the map declares the MVP fallback.
+    def test_banks_present_or_declared(self):
+        with open(GAME_MAP, encoding='utf-8') as f:
+            g = json.load(f)
+        names = {l['name'] for l in g['layers']}
+        props = {p['name']: p['value'] for p in g['properties']}
+        self.assertTrue('banks' in names or props.get('banks') == 'none')
 
 
 if __name__ == '__main__':
