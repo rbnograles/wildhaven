@@ -51,6 +51,14 @@ SKIP_SPRITES = {'wheat-4'}
 # Sprites drawn at a fixed scale instead of the Tiled size: the berry bushes were authored large
 # ("big cherry"); the standard is a small bush, so they are pinned small.
 RESCALE = {'wild-berries': 0.4}
+# Rock swap: the old rocks were one picture stretched to each size, which looked wrong. They are
+# swapped for the resource-expansion sprites, which have one correct picture per size. A rock's size
+# is its base size nudged by how big the Tiled map drew it (the game's own SIZE_SHRINK/SIZE_GROW).
+ROCK_BASE = {'rocks-a': 2, 'rocks-b': 2, 'boulder': 3, 'beach-rock': 1}
+ROCK_MATERIAL = {'beach-rock': 'beach'}   # every other rock becomes grey stone
+SIZE_WORD = {1: 'small', 2: 'medium', 3: 'big'}
+SIZE_SHRINK, SIZE_GROW = 0.85, 1.2        # match data/balance.js
+IRON_NEAR = 1600                          # grey rocks this close to a cave become iron ore (mine by the cave)
 
 tiled = json.load(open(SOURCE))
 game = json.load(open(os.path.join(GAME_DIR, 'wildhaven.json')))
@@ -181,6 +189,10 @@ for l in tiled['layers']:
             y = o['y'] + dx * math.sin(turn) + dy * math.cos(turn)
             scale = w / usual_width(name)
         if name in RESCALE: scale = RESCALE[name]
+        if name in ROCK_BASE:
+            size = max(1, min(3, ROCK_BASE[name] + (-1 if scale < SIZE_SHRINK else 1 if scale > SIZE_GROW else 0)))
+            name = f'{ROCK_MATERIAL.get(name, "grey")}-rock-{SIZE_WORD[size]}'
+            scale = 1   # the new sprite is already the right size for its own picture
         why = misplaced(name, x, y)
         if why: left_out.append(f'{name} at {round(x)},{round(y)}: {why}'); continue
         point = {'id': len(points) + 1, 'name': name, 'type': name, 'x': round(x), 'y': round(y), 'width': 0,
@@ -190,6 +202,15 @@ for l in tiled['layers']:
                       if q.get('name') in KEPT_PROPERTIES]
         if props_out: point['properties'] = props_out
         points.append(point)
+
+# Iron ore near the caves: a forest cave means minerals, so the grey rocks close to one are mined as
+# iron instead of plain stone. That is the only metal in Spring; copper, gold and diamond stay out.
+caves = [(p['x'], p['y']) for p in points if p['name'] == 'cave-forest']
+iron = 0
+for p in points:
+    if p['name'] in ('grey-rock-medium', 'grey-rock-big') and any(math.hypot(p['x'] - cx, p['y'] - cy) < IRON_NEAR for cx, cy in caves):
+        p['name'] = p['type'] = p['name'].replace('grey', 'iron'); iron += 1
+report['iron rocks near caves'] = iron
 
 # A path square the player can't walk is taken off the path layer, so the path just ends there. Two
 # cases: a square whose middle lies inside something solid (a house put down over a path), and a square

@@ -84,5 +84,14 @@
   "farm-barn": { "kind": "buildings", "origin": [0.5, 1.0] },
   "village-well": { "kind": "props", "origin": [0.5, 1.0] },
   "fence-horizontal": { "kind": "props", "origin": [0.5, 1.0] },
-  "fence-vertical": { "kind": "props", "origin": [0.5, 1.0] }
+  "fence-vertical": { "kind": "props", "origin": [0.5, 1.0] },
+  "grey-rock-small": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [20, 12] },
+  "grey-rock-medium": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [46, 28] },
+  "grey-rock-big": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [95, 55] },
+  "beach-rock-small": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [20, 12] },
+  "beach-rock-medium": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [46, 28] },
+  "beach-rock-big": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [95, 55] },
+  "iron-rock-small": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [20, 12] },
+  "iron-rock-medium": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [46, 28] },
+  "iron-rock-big": { "kind": "rocks", "origin": [0.5, 0.95], "footprint": [95, 55] }
 }
