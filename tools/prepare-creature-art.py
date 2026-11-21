@@ -5,10 +5,12 @@ trimmed to its paint, shrunk so the animal stands its game height, and set into 
 bottom middle, like stickers lined up on a shelf, so the animal never jumps about between frames.
 Inputs : assets/creatures/<animal>/<animal>-states.png   (the wolf: wolf-states-clean.png) a grid of rows
          assets/creatures/wolf/wolf-dying.png            one row of six: the wolf lying down
+         assets/creatures/<animal>/<animal>-run-diagonal.png   two rows of six: running north-east, south-east
 Outputs: assets/world/creatures/<animal>.png             one even sheet per animal, a row per state
          assets/world/creatures/creatures.json           each sheet's cell size, ground point and rows
 Rows: deer, rabbit, boar: idle, walk, run, lying down (4 frames each). Wolf: idle, walk, snarl, lunge, run
-(4 frames each), then lying down (6 frames, from wolf-dying.png).
+(4 frames each), then lying down (6 frames, from wolf-dying.png). Every animal then gets runNE and runSE
+(6 frames each, from its run-diagonal sheet); running north-west and south-west mirror them.
 Safe to re-run: the inputs are never changed.
 Run: python tools/prepare-creature-art.py
 """
@@ -31,6 +33,9 @@ ANIMALS = {
 # Extra rows from a sheet of their own: animal, sheet, columns, row name.
 EXTRA = {'wolf': ('wolf/wolf-dying.png', 6, 'down')}
 
+# The diagonal running sheet every animal has: its file name ending, its grid, and its rows' names.
+DIAGONAL = ('-run-diagonal.png', (6, 2), ['runNE', 'runSE'])
+
 # Trims a picture to its paint: faint haze below SOLID opacity is not counted.
 def trim(im):
     ys, xs = np.nonzero(np.asarray(im)[:, :, 3] > SOLID)
@@ -42,6 +47,22 @@ def cells(path, cols, rows):
     return [[trim(sheet.crop((c * sheet.width // cols, r * sheet.height // rows,
                               (c + 1) * sheet.width // cols, (r + 1) * sheet.height // rows)))
              for c in range(cols)] for r in range(rows)]
+
+# Counts a picture's painted pixels: a fair measure of how big the animal is drawn, whichever way it faces.
+def paint(im):
+    return int((np.asarray(im)[:, :, 3] > SOLID).sum())
+
+# Cuts a row of a sheet into cells that all keep the same strip of rows, so a leap stays in the air:
+# the strip runs from the highest paint to the lowest paint in the whole row. Each cell is trimmed sideways only.
+def strip(sheet, cols, top, bottom):
+    band = np.asarray(sheet)[top:bottom, :, 3] > SOLID
+    ys = np.nonzero(band.any(axis=1))[0]
+    out = []
+    for c in range(cols):
+        left, right = c * sheet.width // cols, (c + 1) * sheet.width // cols
+        xs = np.nonzero(band[:, left:right].any(axis=0))[0]
+        out.append(sheet.crop((left + xs.min(), top + ys.min(), left + xs.max() + 1, top + ys.max() + 1)))
+    return out
 
 # Writes a prompt file beside a sheet saying where it came from.
 def note(target, sources):
@@ -65,6 +86,17 @@ for animal, (path, (cols, rows), names, tall) in ANIMALS.items():
         grid.append([shrink(f, grid[0][0].width / extra[0].width) for f in extra])
         names = names + [extra_name]
         sources.append(extra_path)
+    # The diagonal runs were painted at their own size too. They are shrunk so the animal covers as much
+    # paint, on average, as it does in its side-on run: the same animal, seen from a corner.
+    ending, (dcols, drows), dnames = DIAGONAL
+    dpath = f'{animal}/{animal}{ending}'
+    dsheet = Image.open(os.path.join(IN, dpath)).convert('RGBA')
+    drawn = [strip(dsheet, dcols, r * dsheet.height // drows, (r + 1) * dsheet.height // drows) for r in range(drows)]
+    side = grid[names.index('run')]
+    fit = (np.mean([paint(f) for f in side]) / np.mean([paint(f) for row in drawn for f in row])) ** 0.5
+    grid += [[shrink(f, fit) for f in row] for row in drawn]
+    names = names + dnames
+    sources.append(dpath)
     cw = max(f.width for row in grid for f in row) + 4
     ch = max(f.height for row in grid for f in row) + 4
     width = max(len(row) for row in grid)

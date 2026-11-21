@@ -867,8 +867,10 @@ kbd {
 /* ---- In-game HUD: the item box and the Build button ---- */
 /* --slot is how wide one slot is on screen; everything else is sized from it, so the box and the */
 /* button shrink together on small screens. */
-.hotbar-area {
+.game {
   --slot: 52px;
+}
+.hotbar-area {
   position: relative;
   justify-self: center;
 }
@@ -885,10 +887,10 @@ kbd {
   }
 }
 
-/* The item box and the Build button sit side by side. */
+/* The item box and the Build button sit side by side; the button lines up with the lower box. */
 .hotbar {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: calc(var(--slot) * 0.12);
   filter: drop-shadow(0 3px 8px #1f311b55);
 }
@@ -898,6 +900,18 @@ kbd {
 /* slots painted in, two rows of five. The grid below lays one cell exactly over each painted slot. */
 /* The script prints where the slots are in the picture; the numbers here are those, worked out per */
 /* slot width (a slot is 15% of the picture's width): the edges, the gaps and a row's height. */
+/* The two item boxes are stacked: the backpack's on top of the one every player starts with. */
+.item-boxes {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--slot) * 0.06);
+}
+
+/* `display: grid` below would show a hidden box, so say outright that hidden means gone. */
+.item-box[hidden] {
+  display: none;
+}
+
 .item-box {
   box-sizing: content-box;
   display: grid;
@@ -1008,7 +1022,7 @@ button.slot:hover {
   filter: none;
 }
 
-/* A slot of the second row before the backpack is made: darkened, with a small bar across it like */
+/* An empty slot of the backpack's box while no backpack is carried (only an old save shows it): darkened, with a small bar across it like */
 /* a latch, so it reads as shut and not merely empty. */
 .item-box .slot.locked::before {
   content: '';
@@ -1929,6 +1943,41 @@ button.slot:hover {
   --picture: url('../assets/world/source/objects/props/rowboat.png');
 }
 
+/* The backpack (made of leather and antler) has its own painted picture: the tidy pack on the right of */
+/* assets/items/dropped-haul.png, trimmed, centred in a square and sized to 128 px. */
+#make-backpack {
+  --picture: url('../assets/ui/game/item-backpack.png');
+}
+
+/* The new kept gear: each shows its cut painted picture (tools/prepare-equipment-art.py). */
+#make-rod {
+  --picture: url('../assets/ui/game/gear-rod.png');
+}
+
+#make-hoe {
+  --picture: url('../assets/ui/game/gear-hoe.png');
+}
+
+#make-hat {
+  --picture: url('../assets/ui/game/gear-hat.png');
+}
+
+#make-jacket {
+  --picture: url('../assets/ui/game/gear-jacket.png');
+}
+
+#make-gloves {
+  --picture: url('../assets/ui/game/gear-gloves.png');
+}
+
+#make-boots {
+  --picture: url('../assets/ui/game/gear-boots.png');
+}
+
+#make-arrows {
+  --picture: url('../assets/ui/game/item-arrow.png');
+}
+
 /* The camp buildings show their finished pictures: a tent, a closed chest, a ripe wheat bed, the pavilion. */
 #build-tent {
   --picture: url('../assets/world/source/objects/buildings/tent.png');
@@ -1968,6 +2017,22 @@ button.slot:hover {
 
 #craft-hammer[data-tier='iron'] {
   --picture: url('../assets/ui/game/tool-hammer-iron.png');
+}
+
+#craft-sword {
+  --picture: url('../assets/ui/game/tool-sword-stone.png');
+}
+
+#craft-sword[data-tier='iron'] {
+  --picture: url('../assets/ui/game/tool-sword-iron.png');
+}
+
+#craft-bow {
+  --picture: url('../assets/ui/game/tool-bow-stone.png');
+}
+
+#craft-bow[data-tier='iron'] {
+  --picture: url('../assets/ui/game/tool-bow-iron.png');
 }
 
 .build-cost {
@@ -2148,6 +2213,22 @@ button.slot:hover {
 
 #tool-hammer.iron::before {
   background-image: url('../assets/ui/game/tool-hammer-iron.png');
+}
+
+#tool-sword::before {
+  background-image: url('../assets/ui/game/tool-sword-stone.png');
+}
+
+#tool-sword.iron::before {
+  background-image: url('../assets/ui/game/tool-sword-iron.png');
+}
+
+#tool-bow::before {
+  background-image: url('../assets/ui/game/tool-bow-stone.png');
+}
+
+#tool-bow.iron::before {
+  background-image: url('../assets/ui/game/tool-bow-iron.png');
 }
 
 /* ---- In-game: build mode ---- */
@@ -2877,8 +2958,10 @@ dialog::backdrop {
     max-width: 213px;
     padding: 16px;
   }
-  .hotbar-area {
+  .game {
     --slot: 36px;
+  }
+  .hotbar-area {
   }
   .meter {
     grid-template-columns: 13px 56px 48px;
@@ -2896,8 +2979,10 @@ dialog::backdrop {
 /* Narrow tablets: the ten-slot item box and the round map shrink once more, so the player card, */
 /* the box and the whole map ring still fit side by side. */
 @media (max-width: 860px) and (min-width: 701px) {
-  .hotbar-area {
+  .game {
     --slot: 32px;
+  }
+  .hotbar-area {
   }
   .minimap {
     width: 112px;
@@ -2959,8 +3044,10 @@ dialog::backdrop {
     bottom: 120px;
     transform: translateX(-50%);
   }
-  .hotbar-area {
+  .game {
     --slot: 38px;
+  }
+  .hotbar-area {
   }
   /* Phones have no keyboard, so the slots' key hints are hidden. */
   .slot kbd,
@@ -3361,4 +3448,13 @@ dialog::backdrop {
     right: 10px;
     font-size: 10px;
   }
+}
+
+/* ---- Room for the backpack's item box ---- */
+
+/* The backpack's box sits on top of the first one, right where the E prompt */
+/* floats. While it shows, the prompt moves up by one box's height (a box is about 3.2 slots */
+/* tall). The slot size is set on .game, not on the bar, so the prompt can read it too. */
+.game:has(#item-box-extra:not([hidden])) .interact {
+  translate: 0 calc(var(--slot) * -3.2);
 }

@@ -147,7 +147,7 @@ SOLID = {'tent', 'house-a', 'house-b', 'house-c', 'workshop', 'ship', 'sandstone
          'cliff-rock', 'iron-ore', 'copper-ore', 'meadow-stairs', 'canyon-stairs', 'snow-stairs'} | TREES
 BUILT = {'tent', 'house-a', 'house-b', 'house-c', 'workshop', 'ship', 'sandstone-ruin', 'cave-forest', 'cave-snow',
          'cave-canyon', 'signpost', 'campfire'}   # things a tree must never cover
-PICKUPS = {'pebbles', 'sticks', 'antler', 'mossy-stone', 'grey-rock', 'flat-stone', 'wild-berries', 'driftwood'}
+PICKUPS = {'pebbles', 'sticks', 'antler', 'mossy-stone', 'grey-rock', 'flat-stone', 'wild-berries', 'wild-herbs', 'driftwood'}
 
 # ---- read the map ------------------------------------------------------------------------------------
 # A dated copy of the map about to be replaced is kept first, in case it was edited by hand since the last run.

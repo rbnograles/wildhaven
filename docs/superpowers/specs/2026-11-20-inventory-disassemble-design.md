@@ -11,24 +11,26 @@ in the wrong place is not a permanent mistake.
 
 ## Item box
 
-- The box has ten slots (`BAG_MAX`). A slot holds one kind of thing, however many of it.
-- A slot shows something only while the player carries it. A new kind takes the first empty open
-  slot; when it runs out the slot is empty again.
+- A slot holds one pile of one kind of thing, up to 50 pieces (`STACK_SIZE`). The excess takes
+  another slot: 120 wood is three slots (50, 50, 20).
+- A slot shows something only while the player carries it. A new pile takes the first empty open
+  slot; when it runs out the slot is empty again. Spending takes from a kind's last pile first.
 - The starting kit sits in the first slots of a new game.
-- Dragging a filled slot onto another open slot moves it there; if that slot is taken the two swap.
-  Mouse and touch both work (pointer events). The order is saved.
+- Dragging a pile onto another open slot moves it there; onto a pile of the same kind it joins it
+  up to 50; onto another kind the two swap. Mouse and touch both work (pointer events). Where the
+  piles lie is saved.
 - The food and herbs slots still eat and heal on a click, wherever they sit, and show F and H.
 
 ## Bag size
 
-- Five slots are open at the start (`BAG_SLOTS`, the top row). The bottom row is drawn shut.
-- The backpack (Build menu, Gear, key P; 8 wood + 4 feathers + 1 antler; made once) opens all ten
-  (`BACKPACK_SLOTS`).
-- There is no stack limit. The bag is full when a new kind has no open slot. More of a kind already
-  carried always fits.
-- A full bag refuses a new kind: gathering and hunting do not start ("Your bag is full"), a ripe
-  wheat bed is not harvested, a chest's "Take all" is disabled, and a tree's dropped find or a
-  deer's antler is left behind.
+- Ten slots are open at the start (`BAG_SLOTS`): one painted box.
+- The backpack (Build menu, Gear, key P; 6 leather + 2 antlers, no wood or feathers; made once).
+  Leather is a resource that comes from hunting (deer 2, rabbit 1, boar 2). The backpack adds ten more
+  (`BACKPACK_SLOTS` = 20), shown as a second box above the first.
+- The bag is full when a thing has neither a pile with space nor an empty slot. What a gather or a
+  hunt gives must fit whole, or it does not start ("Your bag is full"). A ripe wheat bed is not
+  harvested, a chest's "Take all" takes only what fits, and a tree's dropped find or a deer's
+  antler is left behind.
 - There is no dropping things on the ground. A chest holds what does not fit.
 
 ## Taking things down
@@ -58,14 +60,16 @@ Halves round down. Putting out the fire removes the camp, its name and its needs
 
 ## Save
 
-Version 11 adds `slots` (ten entries, a kind of thing or null), `backpack` and `packedTent`.
-A version 10 save is upgraded: its slots are filled in the old fixed order. If it carries more
-kinds than the five open slots, the extra ones sit in the shut row, stay visible and usable, and
-leave it as they run out.
+Version 12 holds `slots` (twenty entries, a pile `{item, n}` or null), `backpack` and
+`packedTent`. The totals stay in `resources`; the slots only say how the piles lie. A version 10
+save is upgraded: its piles are laid out in the old fixed order, fifty to a slot. Version 11 (one
+slot per kind, never released) keeps each kind's slot for its first pile. A save that carries more
+than its open slots hold keeps the extra piles in the backpack's slots, visible and usable, until
+they run out.
 
 ## Code
 
-- `src/world/bag.js`: slots, open size, room checks, `addItem`, `moveSlot`, `tidyBag`.
+- `src/world/bag.js`: piles, open size, room checks, `addItem`, `moveSlot`, `tidyBag`, `viewSlots`.
 - `src/actions/takedown.js`: `checkTakeDown`, `beginTakeDown`, `finishTakeDown`, `refundOf`.
 - `src/actions/building.js`: `priceOf` (a packed tent is free), `hasTent`, the one-tent rule.
 - `src/ui/itembox.js`: drawing the slots, dragging, the food and herbs clicks.
@@ -74,6 +78,7 @@ leave it as they run out.
 
 ## Not in this change
 
-- No painted art for the backpack or the packed tent: the packed tent's slot borrows the tent's
-  world sprite, and the backpack's menu row uses a line icon.
-- No stack limits, no dropping items, no touch button for anything new.
+- No new painted art: the packed tent's slot borrows the tent's world sprite, and the backpack's
+  menu row shows the pack cut from `assets/items/dropped-haul.png`
+  (`assets/ui/game/item-backpack.png`).
+- No dropping items, no splitting a pile by hand, no touch button for anything new.

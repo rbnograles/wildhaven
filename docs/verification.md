@@ -474,3 +474,27 @@ Checked in the `wildhaven` preview at 127.0.0.1 (port 5175) with the Scout, on a
 - At 375 px wide the item box and its ten slots sit above the touch arrows as before.
 - `npm test`: one failure that is there without this change too (`nodes.test.js`: the Scout has 2 small-stone piles within 1,500 units, the test wants 5).
 - Not checked in play: pitching the packed tent again, the "bag is full" toast on a gather, the chest's disabled Take all, dragging with a finger, and taking down a chest, wheat bed or camp centre (all covered by unit tests except the finger drag).
+
+## Item box: ten slots, fifty to a slot, ten more with the backpack (2026-11-20)
+
+Checked in the `wildhaven` preview at 127.0.0.1 (port 5176) with the Scout, with 130 wood, 60 stone, 7 herbs, 4 feathers and an antler edited into a new save:
+- The box showed food 3, wood 50, 50 and 30, stone 50 and 10, herbs, feathers and the antler: nine of its ten slots, with no backpack box.
+- Making the backpack (B, then P) took 8 wood from the last wood pile (30 became 22), freed the feather and antler slots, and showed a second box of ten empty slots above the first.
+- The E prompt moved up clear of the second box, on the desktop and at 375 px wide. No console errors.
+- The dev server stopped once on its own (exit code 3221225477) while another session was writing art files into the folder; it ran normally after a restart.
+- Not checked in play: dragging one pile onto another of the same kind, a full bag refusing a gather, and the chest's partial Take all (unit tests cover the first two rules).
+
+## Weapon swings, bow aim and arrow flight (2026-11-21)
+
+Added the sword/bow attack animations and the bow's aim ring + flying arrow. Checked in the `wildhaven` preview at 127.0.0.1 (port 5174) with the Scout:
+- The world and selection screen loaded and played normally; the new weapon-sheet and `fx-arrow-*` texture imports did not break loading. (Vite logged many `vite:json` "invalid JSON syntax" warnings on the huge `assets/world/map/wildhaven.json`, but python parses the file fine, the world still loaded, and those warnings predate this change — the same map-data state fails the world/map unit tests.)
+- `wildhavenPreview()` → the Animation dropdown now lists `sword, swordIron, bow, bowIron`. The `bow` clip showed the Scout nocking/drawing, correctly sized and foot-anchored; the `sword` clip facing West mirrored the east art (sword in hand, lunging left). All four sheets are packed by `tools/prepare-weapon-art.py`.
+- Unit tests: `clips.test.js`, `tool-swings.test.js`, `animals.test.js`, `gather.test.js` all pass (32 in clips). `npm run build` and `npm run format:check` pass.
+- Not checked in a live hunt: the aim ring over the target and the flying arrow travelling to the animal during an actual bow shot (the overlay is drawn deterministically off the hunt action's progress in `renderer.js`; verifying it in play needs a crafted bow and a deer in range). The sword/bow/axe clip selection on a live hunt is wired through `huntClip`/`beginHunt` and covered by `animals.test.js`.
+
+## Wild herbs: a second herb source — 2026-11-21
+
+- Added `wild-herbs` (WILD in `src/data/supplies.js`): a walk-through plant picked by hand for **3 herbs** in `GATHER_SECONDS` (6 s), regrowing in 180 game-seconds. Stand-in sprite from `tools/make-biome-standins.py` (recoloured tall grass). Scattered mostly where flowers are scarce.
+- Pipeline: `HERBS` pass in `tools/build-map.py` (generator/world-editor fallback); `tools/add-tiled-herbs.py` adds the patches to the Tiled map as class-only point objects; `tools/import-tiled-world.py` now reads a Class-named point with no picture as that sprite at its usual size. 143 herb points added to the played map, 0 dropped on import. Per region: Pinefall 29, Frostpeak 35, Stonewater Canyons 26, Sunscar Desert 33, jungle 9, meadows 9, lagoon 2.
+- `npm run build` and `npm run format:check` pass. New tests pass: `tests/actions/gather.test.js` (wild herbs take the full hand-pick time, 3 herbs) and `tests/world/nodes.test.js` (143 patches, 3 herbs each, walk-through, ≥20 in each of the four flower-poor regions). The full `npm test` has two failures outside this change (a weapons-hunting test and the flowers test's pebbles-near-scout assertion, `scout: 2` — both present before this work and unrelated to herbs; the scout-spawn pebble count is identical in the pre-herbs map backup).
+- Browser play check (Scout, Pinefall, at `127.0.0.1`): `wild-herbs.png` loaded 200 OK, no console errors, and picking a patch showed the toast "+3 herbs · Wild herbs" and filled the herbs slot. Screenshot captured.

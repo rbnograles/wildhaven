@@ -1,0 +1,3 @@
+Final input: players-bow-iron.png
+
+Create the STONE tier version of this transparent sprite atlas. Preserve all characters, all twelve poses, framing, 4x3 grid and transparent background exactly. Change ONLY every silver iron bow band to rough pale stone reinforcement tied with tan twine, and every arrowhead to chipped flint stone. Bow remains wood. No other changes. Preserve true transparent alpha-zero background.

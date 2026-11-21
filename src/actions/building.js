@@ -13,10 +13,11 @@ import {
   SOW_COST,
   GROW_SECONDS,
   HARVEST_FOOD,
+  HOE_BONUS,
   FARM_SECONDS,
 } from '../data/balance.js';
 import { RESOURCES } from '../data/supplies.js';
-import { BAG_FULL, TENT_ITEM, addItem, hasRoomFor, tidyBag } from '../world/bag.js';
+import { BAG_FULL, TENT_ITEM, addItem, hasRoomFor, roomFor, tidyBag } from '../world/bag.js';
 import { buildingInfo } from '../data/buildings.js';
 import { isWalkable, blocks } from '../world/map.js';
 import { NODES, solidBases } from '../world/nodes.js';
@@ -294,27 +295,31 @@ export function finishBuilding(state, target) {
 }
 
 /**
- * Moves every one of a resource between the backpack and a chest.
+ * Moves every one of a resource between the backpack and a chest (out of the chest: as many as
+ * the item box has room for).
  *
  * @param {object} state - The game being played. Its resources change.
  * @param {object} chest - The chest building. Its contents change.
  * @param {string} resource - Which resource, such as 'wood'.
  * @param {boolean} into - True to put it all in the chest, false to take it all out.
- * @returns {number} How many moved: 0 when there was nothing to move, or no open slot to take it into.
+ * @returns {number} How many moved: 0 when there was nothing to move, or no room to take it into.
  */
 export function moveAll(state, chest, resource, into) {
   if (chest?.kind !== 'chest' || !RESOURCES.includes(resource)) return 0;
   const contents = (chest.contents ??= {});
-  const n = into ? state.resources[resource] : (contents[resource] ?? 0);
+  // Out of the chest comes only as much as the item box has room for; the rest stays inside.
+  const n = into
+    ? state.resources[resource]
+    : Math.min(contents[resource] ?? 0, roomFor(state, resource));
   if (!n) return 0;
   if (into) {
     state.resources[resource] = 0;
     contents[resource] = (contents[resource] ?? 0) + n;
     tidyBag(state);
   } else {
-    // Taking out a new kind of thing needs an open slot in the item box.
     if (!addItem(state, resource, n)) return 0;
-    delete contents[resource];
+    contents[resource] -= n;
+    if (!contents[resource]) delete contents[resource];
   }
   return n;
 }
@@ -327,7 +332,7 @@ export function moveAll(state, chest, resource, into) {
  * @param {object} bed - The wheat bed.
  * @returns {{ok: boolean, what?: string, reason?: string, message?: string}} The job ('sow', 'tend'
  *   or 'harvest'), or why there is none: 'seed' (no food to sow), 'tended' (wait for it to grow),
- *   'full' (ripe, but the item box has no open slot for food).
+ *   'full' (ripe, but the item box has no room for the food).
  */
 export function farmJob(state, bed) {
   const crop = bed.crop;
@@ -338,7 +343,7 @@ export function farmJob(state, bed) {
       : { ok: true, what: 'sow' };
   }
   if (crop.stage >= 3)
-    return hasRoomFor(state, ['food'])
+    return hasRoomFor(state, { food: HARVEST_FOOD + (state.hoe ? HOE_BONUS : 0) })
       ? { ok: true, what: 'harvest' }
       : { ok: false, reason: 'full', message: BAG_FULL };
   return crop.tended
@@ -386,9 +391,11 @@ export function finishFarm(state, target) {
     crop.readyAt = state.time + (crop.readyAt - state.time) / 2;
     crop.tended = true;
   } else {
-    addItem(state, 'food', HARVEST_FOOD);
+    // A hoe makes the harvest more bountiful.
+    const food = HARVEST_FOOD + (state.hoe ? HOE_BONUS : 0);
+    addItem(state, 'food', food);
     Object.assign(crop, { stage: 0, readyAt: null, tended: false });
-    return { ok: true, what, food: HARVEST_FOOD };
+    return { ok: true, what, food };
   }
   return { ok: true, what };
 }

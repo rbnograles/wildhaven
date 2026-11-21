@@ -29,11 +29,13 @@ import { BUILDING_IDS } from '../data/buildings.js';
 import { emptySlots, isSlots, tidyBag } from '../world/bag.js';
 
 /**
- * The save format this code writes. Version 11 is version 10 (buildings at each camp) plus the
- * item box: which kind of thing sits in which slot, whether the backpack is made, and whether a
- * packed tent is carried. Version 3 to 10 saves are upgraded when loaded (see `upgrade`).
+ * The save format this code writes. Version 12 is version 10 (buildings at each camp) plus the
+ * item box: which pile of things sits in which slot (up to fifty pieces to a pile), whether the
+ * backpack is made, and whether a packed tent is carried. Version 11, which was never released,
+ * kept one slot per kind with no limit. Version 13 added the gold and diamond resources. Version 3
+ * to 12 saves are upgraded when loaded (see `upgrade`).
  */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 16;
 
 /** The three survival meters. Each is a number from 0 to 100. */
 const METERS = ['health', 'hunger', 'warmth'];
@@ -56,8 +58,8 @@ export const BORDER_SQUARES = SEA_BORDER / FOG_CELL;
  *   `distance` is world units travelled; `time` is the world clock (game seconds since the dawn
  *   of day 1); `meters` holds health, hunger and warmth; `tea` is the seconds of tea warmth left;
  *   `camps` lists the camps built; `fog` records the squares of the world seen so far; `tools`
- *   holds the tools owned (see world/tools.js); `slots` says which kind of thing sits in each
- *   item box slot (see world/bag.js), `backpack` is true once the second row is open, and
+ *   holds the tools owned (see world/tools.js); `slots` says which pile of things sits in each
+ *   item box slot (see world/bag.js), `backpack` is true once the second item box is carried, and
  *   `packedTent` is true while a tent that was taken down is carried.
  * @throws {Error} If the character id isn't one of the known characters.
  */
@@ -84,6 +86,12 @@ export function createGame(characterId) {
     tea: 0,
     torch: 0,
     coat: false,
+    rod: false,
+    hoe: false,
+    hat: false,
+    jacket: false,
+    gloves: false,
+    boots: false,
     slots: emptySlots(),
     backpack: false,
     packedTent: false,
@@ -495,14 +503,105 @@ function addBuildings(s) {
  *
  * Version 10 had no slots, no backpack and no packed tent. The slots start empty here and
  * restoreGame fills them with what is carried, in the old fixed order, like unpacking a bag onto
- * a shelf. A save that carries more kinds than the top row holds keeps the extra ones in the
- * closed row until they run out.
+ * a shelf.
  *
  * @param {object} s - The parsed version 10 save.
  * @returns {object} The same adventure in the version 11 shape.
  */
 function addBag(s) {
-  return { ...s, version: SAVE_VERSION, slots: emptySlots(), backpack: false, packedTent: false };
+  return { ...s, version: 11, slots: [], backpack: false, packedTent: false };
+}
+
+/**
+ * Brings a version 11 save (one slot per kind of thing, no limit) up to version 12.
+ *
+ * Version 12 slots hold piles of up to fifty pieces. Each kind keeps the slot the player gave it,
+ * as the place of its first pile; restoreGame then lays out the rest of what is carried, fifty to
+ * a slot. A save that carries more than its open slots hold keeps the extra piles in the shut
+ * slots, still in sight and usable, until they run out.
+ *
+ * @param {object} s - The parsed version 11 save.
+ * @returns {object} The same adventure in the version 12 shape.
+ */
+function addPiles(s) {
+  const slots = emptySlots();
+  if (Array.isArray(s.slots))
+    s.slots.slice(0, slots.length).forEach((item, i) => {
+      if (typeof item === 'string') slots[i] = { item, n: 1 };
+    });
+  return { ...s, version: 12, slots };
+}
+
+/**
+ * Brings a version 12 save (piles in the item box, before gold and diamond) up to version 13.
+ *
+ * Version 12 had no gold and no diamond: the backpack gets an empty pocket for each. Anything odd
+ * is left alone, for restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 12 save.
+ * @returns {object} The same adventure in the version 13 shape.
+ */
+function addPrecious(s) {
+  return {
+    ...s,
+    version: 13,
+    resources: isPlainObject(s.resources) ? { ...s.resources, gold: 0, diamond: 0 } : s.resources,
+  };
+}
+
+/**
+ * Brings a version 13 save (gold and diamond, before leather) up to version 14.
+ *
+ * Version 13 had no leather: the backpack gets an empty pocket for it. Anything odd is left alone,
+ * for restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 13 save.
+ * @returns {object} The same adventure in the version 14 shape.
+ */
+function addAmmo(s) {
+  // Version 15 had no wolf pelt and no arrows: the backpack gets an empty pocket for each.
+  return {
+    ...s,
+    version: SAVE_VERSION,
+    resources: isPlainObject(s.resources) ? { ...s.resources, wolfpelt: 0, arrow: 0 } : s.resources,
+  };
+}
+
+/**
+ * Brings a version 14 save (leather, before the clothes, rod and hoe) up to version 15.
+ *
+ * @param {object} s - The parsed version 14 save.
+ * @returns {object} The same adventure in the version 15 shape.
+ */
+function addHides(s) {
+  // Version 14 had no clothes, rod or hoe. Each of the new kept flags starts off.
+  return {
+    ...s,
+    version: 15,
+    rod: false,
+    hoe: false,
+    hat: false,
+    jacket: false,
+    gloves: false,
+    boots: false,
+  };
+}
+
+/**
+ * Brings a version 13 save (gold and diamond, before leather) up to version 14.
+ *
+ * Version 13 had no leather: the backpack gets an empty pocket for it. Anything odd is left alone,
+ * for restoreGame to refuse.
+ *
+ * @param {object} s - The parsed version 13 save.
+ * @returns {object} The same adventure in the version 14 shape.
+ */
+function addLeather(s) {
+  return {
+    ...s,
+    version: 14,
+    resources: isPlainObject(s.resources) ? { ...s.resources, leather: 0 } : s.resources,
+  };
 }
 
 /**
@@ -574,11 +673,11 @@ const stillThere = (ids, places) => ids.filter((id) => places.some((p) => p.id =
  * Like climbing stairs one step at a time: a version 3 or 4 save is first brought to version 5,
  * every version 5 save then gains its tools, every version 6 save its pockets for the finds, and
  * every version 7 save its (unlit) torch and (unworn) coat, every version 8 save its copper,
- * every version 9 save an empty list of buildings at each camp, and every version 10 save its
- * item box slots.
+ * every version 9 save an empty list of buildings at each camp, every version 10 save its item
+ * box slots, every version 11 save its piles, and every version 12 save its gold and diamond pockets.
  *
  * @param {*} parsed - The parsed save.
- * @returns {*} The save in the version 11 shape (still to be checked), or the save unchanged.
+ * @returns {*} The save in the version 13 shape (still to be checked), or the save unchanged.
  */
 function upgrade(parsed) {
   let s = parsed;
@@ -589,7 +688,12 @@ function upgrade(parsed) {
   if (s?.version === 7) s = addGear(s);
   if (s?.version === 8) s = addCopper(s);
   if (s?.version === 9) s = addBuildings(s);
-  return s?.version === 10 ? addBag(s) : s;
+  if (s?.version === 10) s = addBag(s);
+  if (s?.version === 11) s = addPiles(s);
+  if (s?.version === 12) s = addPrecious(s);
+  if (s?.version === 13) s = addLeather(s);
+  if (s?.version === 14) s = addHides(s);
+  return s?.version === 15 ? addAmmo(s) : s;
 }
 
 /**
@@ -676,11 +780,12 @@ export function restoreGame(json) {
       !Number.isFinite(s.torch) ||
       s.torch < 0 ||
       s.torch > TORCH_SECONDS ||
-      typeof s.coat !== 'boolean'
+      typeof s.coat !== 'boolean' ||
+      ['rod', 'hoe', 'hat', 'jacket', 'gloves', 'boots'].some((f) => typeof s[f] !== 'boolean')
     )
       return null;
 
-    // The item box: ten slots of known things, and two yes-or-no facts.
+    // The item box: its slots, each empty or a pile of a known thing, and two yes-or-no facts.
     if (!isSlots(s.slots) || typeof s.backpack !== 'boolean' || typeof s.packedTent !== 'boolean')
       return null;
 
@@ -760,13 +865,19 @@ export function restoreGame(json) {
       tea,
       torch: s.torch,
       coat: s.coat,
-      slots: [...s.slots],
+      rod: s.rod,
+      hoe: s.hoe,
+      hat: s.hat,
+      jacket: s.jacket,
+      gloves: s.gloves,
+      boots: s.boots,
+      slots: s.slots.map((pile) => (pile ? { item: pile.item, n: pile.n } : null)),
       backpack: s.backpack,
       packedTent: s.packedTent,
       camps: camps.map(copyCamp),
       fog: s.fog,
     };
-    // Give every kind carried a slot, and empty the slot of anything that has run out.
+    // Lay the piles out to match what is carried: fifty to a slot, nothing left out.
     tidyBag(restored);
     return restored;
   } catch {

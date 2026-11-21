@@ -11,6 +11,11 @@ import pineconeIconUrl from '../../assets/ui/game/item-pinecone.png';
 import antlerIconUrl from '../../assets/ui/game/item-antler.png';
 import ironIconUrl from '../../assets/ui/game/item-iron.png';
 import copperIconUrl from '../../assets/ui/game/item-copper.png';
+import goldIconUrl from '../../assets/ui/game/item-gold.png';
+import diamondIconUrl from '../../assets/ui/game/item-diamond.png';
+import leatherIconUrl from '../../assets/ui/game/item-leather.png';
+import wolfpeltIconUrl from '../../assets/ui/game/item-wolfpelt.png';
+import arrowIconUrl from '../../assets/ui/game/item-arrow.png';
 import journalIconUrl from '../../assets/ui/game/icon-journal.png';
 import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
 import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
@@ -34,13 +39,59 @@ export const ITEM_LOOKS = {
   stone: { icon: stoneIconUrl, name: 'Stone' },
   iron: { icon: ironIconUrl, name: 'Iron' },
   copper: { icon: copperIconUrl, name: 'Copper' },
+  gold: { icon: goldIconUrl, name: 'Gold' },
+  diamond: { icon: diamondIconUrl, name: 'Diamond' },
   food: { icon: foodIconUrl, name: 'Food · Click or press F to eat one', key: 'F' },
   herbs: { icon: herbsIconUrl, name: 'Herbs · Click or press H to heal with 3', key: 'H' },
   feather: { icon: featherIconUrl, name: 'Feathers' },
   pinecone: { icon: pineconeIconUrl, name: 'Pine cones' },
   antler: { icon: antlerIconUrl, name: 'Antlers' },
+  leather: { icon: leatherIconUrl, name: 'Leather' },
+  wolfpelt: { icon: wolfpeltIconUrl, name: 'Wolf pelt' },
+  arrow: { icon: arrowIconUrl, name: 'Arrows' },
   tent: { icon: tentIconUrl, name: 'Packed tent · Pitch it from the Build menu (B), for nothing' },
 };
+
+/**
+ * Makes the Build menu row for one tool or weapon. ui/hud.js fills in its name and cost.
+ *
+ * @param {object} t - The tool's entry in TOOLS.
+ * @returns {string} The row's button as an HTML string.
+ */
+const craftRow = (t) =>
+  /* HTML */ `<button id="craft-${t.id}" class="build-option craft-option" data-tool="${t.id}">
+    ${icon(t.icon)}<span class="build-option-text"
+      ><b class="craft-name"></b><small>${t.use}</small></span
+    ><span class="build-cost craft-cost"></span><kbd>${t.key.toUpperCase()}</kbd>
+  </button>`;
+
+/**
+ * Makes the Build menu row for one piece of gear. ui/hud.js fills in its name and cost.
+ *
+ * @param {object} g - The gear's entry in GEAR.
+ * @returns {string} The row's button as an HTML string.
+ */
+const gearRow = (g) =>
+  /* HTML */ `<button id="make-${g.id}" class="build-option gear-option">
+    ${icon(g.icon)}<span class="build-option-text"
+      ><b class="gear-name"></b><small>${g.use}</small></span
+    ><span class="build-cost gear-cost"></span><kbd>${g.key.toUpperCase()}</kbd>
+  </button>`;
+
+/**
+ * Makes the HTML for the ten slots of one item box. ui/itembox.js fills them in.
+ *
+ * @param {number} first - The number of the box's first slot: 0 for the main box, 10 for the backpack's.
+ * @returns {string} Ten slot buttons as an HTML string.
+ */
+const itemSlots = (first) =>
+  Array.from(
+    { length: BAG_MAX / 2 },
+    (_, i) =>
+      /* HTML */ `<button type="button" class="slot" data-slot="${first + i}">
+        <img alt="" hidden /><b hidden></b><span class="slot-label"></span><kbd hidden></kbd>
+      </button>`,
+  ).join('');
 
 /**
  * Finds an element on the page by its id.
@@ -307,27 +358,20 @@ export function mountLayout(app) {
                 </button>`,
             ).join('')}
             <p class="build-menu-title">TOOLS</p>
-            ${TOOLS.map(
-              (t) =>
-                /* HTML */ `<button
-                  id="craft-${t.id}"
-                  class="build-option craft-option"
-                  data-tool="${t.id}"
-                >
-                  ${icon(t.icon)}<span class="build-option-text"
-                    ><b class="craft-name"></b><small>${t.use}</small></span
-                  ><span class="build-cost craft-cost"></span><kbd>${t.key}</kbd>
-                </button>`,
-            ).join('')}
+            ${TOOLS.filter((t) => !t.weapon)
+              .map(craftRow)
+              .join('')}
+            <p class="build-menu-title">WEAPONS</p>
+            ${TOOLS.filter((t) => t.weapon)
+              .map(craftRow)
+              .join('')}
+            ${GEAR.filter((g) => g.id === 'arrows')
+              .map(gearRow)
+              .join('')}
             <p class="build-menu-title">GEAR</p>
-            ${GEAR.map(
-              (g) =>
-                /* HTML */ `<button id="make-${g.id}" class="build-option gear-option">
-                  ${icon(g.icon)}<span class="build-option-text"
-                    ><b class="gear-name"></b><small>${g.use}</small></span
-                  ><span class="build-cost gear-cost"></span><kbd>${g.key}</kbd>
-                </button>`,
-            ).join('')}
+            ${GEAR.filter((g) => g.id !== 'arrows')
+              .map(gearRow)
+              .join('')}
           </div>
           <!-- The tools owned: a chip per tool with its tier, and the uses left on a stone one. -->
           <div class="tool-row" aria-label="Tools">
@@ -339,15 +383,13 @@ export function mountLayout(app) {
             ).join('')}
           </div>
           <div class="hotbar">
-            <div id="item-box" class="item-box" aria-label="Items">
-              ${Array.from(
-                { length: BAG_MAX },
-                (_, i) =>
-                  /* HTML */ `<button type="button" class="slot" data-slot="${i}">
-                    <img alt="" hidden /><b hidden></b><span class="slot-label"></span
-                    ><kbd hidden></kbd>
-                  </button>`,
-              ).join('')}
+            <!-- Two boxes of ten slots: the backpack's (hidden until it is made) sits above the
+                 one every player starts with. -->
+            <div class="item-boxes">
+              <div id="item-box-extra" class="item-box" aria-label="Backpack" hidden>
+                ${itemSlots(BAG_MAX / 2)}
+              </div>
+              <div id="item-box" class="item-box" aria-label="Items">${itemSlots(0)}</div>
             </div>
             <button
               id="build-button"

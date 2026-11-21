@@ -16,8 +16,9 @@ Outputs: assets/world/map/ground-kit.png, path-kit.png   copies of the two kits,
          assets/world/map/wildhaven.json the nine ground layers in the game's own coding, hidden, which collision
                                          and the world editor read (water, deep, sand, snow...); then the Tiled
                                          map's tile layers, drawn as they are; every object as a point with its
-                                         `scale` and turn, and a cave's `holds` and `mineral`. tileset.png is not
-                                         changed
+                                         `scale` and turn, and a cave's `holds` and `mineral` (a Tiled point with a
+                                         Class and no picture, such as a wild herb patch, is taken as it is, at its
+                                         usual size). tileset.png is not changed
          assets/world/map/overview.webp  the minimap and world map picture, drawn by Tiled's tmxrasterizer
          source/objects/<kind>/<name>.png and objects.json entries for sprites on the map the game did not have
                                          yet (ore rocks and caves), cut from the sprite sheet
@@ -41,6 +42,7 @@ KIT = ['deep', 'water', 'sand', 'grass', 'jungle', 'rock', 'snow', 'dirt', 'soil
 GAME = ['grass', 'dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep']  # the game's, by rank
 OVERVIEW = (1568, 1120)        # the minimap picture's size: the map's own 7:5 shape
 KEPT_PROPERTIES = {'holds', 'mineral'}   # Tiled object properties the game map keeps (a cave's labels)
+NOT_PLACED = {'antler'}        # sprites the game never lays on the ground: an antler only comes from a hunted deer
 # Sprites the game gets from the sprite sheet the first time a map uses them: the kind folder they go in, the
 # solid base [halfWidth, depth], and the picture their prompt comes from.
 NEW_SPRITES = {
@@ -198,21 +200,28 @@ def misplaced(name, x, y, scale):
         return 'on or beside stairs'
     return ''
 
-points, skipped, left_out = [], {}, []
+points, skipped, left_out, unplaced = [], {}, [], {}
 source_of = {}   # id(point) -> (its Tiled layer's name, its Tiled object), so the minimap can draw the same things
 for l in tiled['layers']:
     if l['type'] != 'objectgroup' or l['name'] == 'places': continue
     for o in l['objects']:
         name = sprite_of(o)
+        if name in NOT_PLACED: unplaced[name] = unplaced.get(name, 0) + 1; continue
         if name not in specs: skipped[name] = skipped.get(name, 0) + 1; continue
-        ox, oy = specs[name]['origin']; w, h = o['width'], o['height']
-        turn = math.radians(o.get('rotation', 0))
-        dx, dy = (ox - 0.5) * w, (oy - 1) * h
-        x = o['x'] + dx * math.cos(turn) - dy * math.sin(turn)
-        y = o['y'] + dx * math.sin(turn) + dy * math.cos(turn)
+        if 'gid' not in o:
+            # A plain point with a Class and no picture (tools/add-tiled-herbs.py makes these): the point is the
+            # spot where the thing meets the ground, and it is drawn at its usual size.
+            if not o.get('point'): skipped[name] = skipped.get(name, 0) + 1; continue
+            x, y, scale = o['x'], o['y'], 1
+        else:
+            ox, oy = specs[name]['origin']; w, h = o['width'], o['height']
+            turn = math.radians(o.get('rotation', 0))
+            dx, dy = (ox - 0.5) * w, (oy - 1) * h
+            x = o['x'] + dx * math.cos(turn) - dy * math.sin(turn)
+            y = o['y'] + dx * math.sin(turn) + dy * math.cos(turn)
+            scale = w / usual_width(name)
         point = {'id': len(points) + 1, 'name': name, 'type': name, 'x': round(x), 'y': round(y), 'width': 0, 'height': 0,
                  'rotation': o.get('rotation', 0), 'point': True, 'visible': True}
-        scale = w / usual_width(name)
         why = misplaced(name, x, y, scale)
         if why: left_out.append(f'{name} at {round(x)},{round(y)}: {why}'); continue
         props_out = [{'name': 'scale', 'type': 'float', 'value': round(scale, 3)}] if abs(scale - 1) > 0.02 else []
@@ -220,7 +229,9 @@ for l in tiled['layers']:
         props_out += [{'name': q['name'], 'type': 'string', 'value': q['value']} for q in o.get('properties', [])
                       if q.get('name') in KEPT_PROPERTIES]
         if props_out: point['properties'] = props_out
-        points.append(point); source_of[id(point)] = (l['name'], o)
+        points.append(point)
+        # A point has no picture, and Tiled's renderer would draw it as a pin: it is left off the minimap.
+        if 'gid' in o: source_of[id(point)] = (l['name'], o)
 # The world editor's hand edits (source/edits.json, Objects mode) are laid over the Tiled objects, as build-map.py
 # lays them over the generated ones: each `removed` entry takes out one object of that name at that spot, and each
 # `added` entry puts one in. Moving an object in the editor is a removal plus an addition, so an added object takes
@@ -233,6 +244,7 @@ for r in edits.get('removed', []):
     if hit: points.remove(hit); taken.append(hit)
     else: stale.append(f"{r['name']} at {r['x']},{r['y']}")
 for a in edits.get('added', []):
+    if a['name'] in NOT_PLACED: unplaced[a['name']] = unplaced.get(a['name'], 0) + 1; continue
     if a['name'] not in specs: skipped[a['name']] = skipped.get(a['name'], 0) + 1; continue
     near = [t for t in taken if t['name'] == a['name'] and math.hypot(t['x'] - a['x'], t['y'] - a['y']) < MOVED_NEAR]
     was = min(near, key=lambda t: math.hypot(t['x'] - a['x'], t['y'] - a['y'])) if near else None
@@ -266,6 +278,7 @@ layers.append({'id': len(layers) + 1, 'name': 'objects', 'type': 'objectgroup', 
                'visible': True, 'draworder': 'topdown', 'objects': points})
 report['objects'] = len(points)
 if skipped: report['objects the game has no sprite for (left out)'] = skipped
+if unplaced: report['objects the game never lays on the ground (left out)'] = unplaced
 if left_out: report['objects left out (move them in Tiled)'] = '\n  ' + '\n  '.join(left_out)
 
 # ---- save --------------------------------------------------------------------------------------------

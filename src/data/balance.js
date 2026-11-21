@@ -251,10 +251,13 @@ export const TOOL_RECIPES = {
   axe: { stone: { wood: 3, stone: 2 }, iron: { wood: 2, stone: 1, iron: 3 } },
   pickaxe: { stone: { wood: 3, stone: 3 }, iron: { wood: 2, stone: 1, iron: 4 } },
   hammer: { stone: { wood: 2, stone: 3 }, iron: { wood: 2, stone: 1, iron: 3 } },
+  // The weapons. A bow is strung with plant fibre, so it asks for herbs (wild flowers).
+  sword: { stone: { wood: 1, stone: 4 }, iron: { wood: 1, stone: 1, iron: 4 } },
+  bow: { stone: { wood: 4, stone: 1, herbs: 2 }, iron: { wood: 3, iron: 2, herbs: 2 } },
 };
 
 /** How many uses a new stone tool has. Iron tools never wear out. */
-export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10 };
+export const TOOL_USES = { axe: 25, pickaxe: 25, hammer: 10, sword: 20, bow: 20 };
 
 // Seconds a gather that needs a tool takes with a stone or an iron one. Bare-hand gathers keep
 // GATHER_SECONDS; this is how tools shorten gathering, as GATHER_SECONDS always promised.
@@ -266,7 +269,13 @@ export const TOOL_SECONDS = { stone: 5, iron: 3 };
 // and is harder on a stone pickaxe. Each list below has one number per size, smallest first.
 
 // How much one mining gives, by what the rock holds and its size.
-export const ROCK_YIELD = { stone: [2, 4, 10], iron: [1, 2, 3], copper: [1, 2, 3] };
+export const ROCK_YIELD = {
+  stone: [2, 4, 10],
+  iron: [1, 2, 3],
+  copper: [1, 2, 3],
+  gold: [1, 2, 3],
+  diamond: [1, 2, 3],
+};
 
 // How many times TOOL_SECONDS mining takes, by size: a large rock takes twice as long as a small one.
 export const SIZE_SECONDS = [1, 1.5, 2];
@@ -288,21 +297,46 @@ export const PICKUP_SECONDS = 2;
 
 // What each piece of gear costs (data/gear.js lists them). The boat's recipe is a first pass: it
 // will also need nails once those exist.
+// How far from the bank a fishing line reaches, how long a catch takes, and the food it gives.
+export const FISH_REACH = 150;
+export const FISH_SECONDS = 7;
+export const FISH_FOOD = 3;
+
+// Extra food a hoe adds to a wheat harvest (on top of HARVEST_FOOD).
+export const HOE_BONUS = 3;
+
+// How much each piece of deer-hide clothing multiplies the cold drain (less than 1 means warmer).
+// Four pieces together is about 0.6; with a feather coat (COAT_COLD) the winter bites far less.
+export const HIDE_COLD = 0.88;
+
+// How many arrows one "fletch arrows" craft makes, and how many a single bow shot spends.
+export const ARROWS_PER_CRAFT = 5;
+export const ARROW_PER_SHOT = 1;
+
 export const GEAR_RECIPES = {
   torch: { wood: 1, pinecone: 2 },
   coat: { feather: 10, antler: 2 },
   grip: { antler: 1 },
   boat: { wood: 30, iron: 6 },
-  backpack: { wood: 8, feather: 4, antler: 1 },
+  backpack: { leather: 6, antler: 2 },
+  rod: { wood: 3, stone: 1 },
+  hoe: { wood: 2, iron: 1 },
+  hat: { leather: 2 },
+  jacket: { leather: 3, wolfpelt: 1 },
+  gloves: { leather: 2 },
+  boots: { leather: 2 },
+  arrows: { wood: 1, stone: 1 },
 };
 
 /**
- * How many item box slots are open: BAG_SLOTS at the start (the top row), BACKPACK_SLOTS once the
- * backpack is made (both rows). A slot holds one kind of thing, however many of it, so the bag is
- * "full" when a new kind has no open slot left; a chest holds the rest.
+ * How many item box slots are open: BAG_SLOTS at the start (one box of ten), BACKPACK_SLOTS once
+ * the backpack is made (a second box of ten above it). A slot holds one pile of one kind of thing,
+ * up to STACK_SIZE pieces; more of that kind starts another pile in another slot. The bag is
+ * "full" when a thing has neither a pile with space nor an empty slot; a chest holds the rest.
  */
-export const BAG_SLOTS = 5;
-export const BACKPACK_SLOTS = 10;
+export const BAG_SLOTS = 10;
+export const BACKPACK_SLOTS = 20;
+export const STACK_SIZE = 50;
 
 /** Seconds it takes to take a building or a campfire down. Moving stops it, and nothing changes. */
 export const TAKEDOWN_SECONDS = 3;
@@ -392,6 +426,18 @@ export const FLEE_SECONDS = 3;
 // Hunting: how close the player must stand (world units), and how long the swing takes (seconds).
 export const HUNT_REACH = 95;
 export const HUNT_SECONDS = 1.5;
+
+// Seconds a hunt or a wolf fight takes with a sword, by its tier: quicker than the axe's HUNT_SECONDS.
+export const SWORD_SECONDS = { stone: 1, iron: 0.6 };
+
+// Seconds a bow shot takes from nocking the arrow to the hit: the archer draws and aims for most of
+// it, and the arrow flies for the last quarter second (the `bow` clip in animation/clips.js is laid
+// out to fill exactly this long).
+export const BOW_SECONDS = 1.5;
+
+// How far away a bow can hunt from, by its tier. A walking player startles an animal only within
+// FLEE_WALKING, so a bow lets a careful hunter shoot before the animal runs.
+export const BOW_REACH = { stone: 260, iron: 340 };
 
 /** Game seconds before a hunted animal is back with its herd: one game day. */
 export const ANIMAL_RETURN = 360;

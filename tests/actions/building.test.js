@@ -126,7 +126,7 @@ test('a chest takes all of a resource and gives it all back', () => {
   assert.equal(moveAll(game, chest, 'wood', false), wood);
   assert.equal(game.resources.wood, wood);
   assert.equal(chest.contents.wood, undefined);
-  assert.equal(moveAll(game, chest, 'gold', true), 0);
+  assert.equal(moveAll(game, chest, 'jade', true), 0);
 });
 
 // Guards the wheat bed's whole round: sow (pays a food), grow by the clock, tending hurries the

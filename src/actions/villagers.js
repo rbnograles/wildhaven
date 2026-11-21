@@ -8,6 +8,7 @@ import { isWalkable } from '../world/map.js';
 import { NODES, isAvailable, nodeBases, goneSupplies, wreckBases } from '../world/nodes.js';
 import { campBases } from '../world/camps.js';
 import { findPath } from './approach.js';
+import { slantOf } from '../animation/clips.js';
 import {
   NPC_SPEED,
   NPC_STOP,
@@ -147,6 +148,9 @@ function walkOn(villager, free, dt) {
   // The carrying pictures only face sideways, so a loaded villager never turns north or south.
   const sideways = dx < 0 ? 1 : dx > 0 ? 2 : villager.facing === 1 ? 1 : 2;
   villager.facing = villager.carrying ? sideways : toward(dx, dy);
+
+  // An empty-handed villager heading diagonally has pictures for that (see villagerPose).
+  villager.slant = villager.carrying ? null : slantOf(dx, dy, true);
   Object.assign(villager, { x, y, moving: true });
   villager.clock += dt;
 }

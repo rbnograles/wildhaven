@@ -173,6 +173,12 @@ for w, x, y, flip in ((88, 4, 6, False), (70, 96, 30, True), (54, 44, 56, False)
 save(recolor(sprite('berry-bush'), (1.06, 1.1, 0.98), (4, 6, 0)), obj('wild-berries'),
      object_prompt('a small low wild berry bush with bright green leaves and a few clusters of red berries',
                    150, 104))
+# ---- wild herbs (picked by hand) ------------------------------------------------------------
+# The painted tall grass turned a darker, bluer green, so a herb patch can be told from plain grass (which
+# can't be picked). A stand-in until the real plant is painted; the prompt asks for broad leaves.
+save(recolor(sprite('tall-grass'), (0.62, 0.92, 0.9), (0, 8, 14)), obj('wild-herbs'),
+     object_prompt('a small clump of wild medicinal herbs: broad soft sage-green leaves with a few tiny pale '
+                   'purple flower spikes, clearly a leafy herb and not grass', 79, 74))
 save(pebbles, obj('pebbles'),
      object_prompt('three small loose grey stones lying close together on the ground, each about the size of a '
                    'fist, no moss', 170, 96))

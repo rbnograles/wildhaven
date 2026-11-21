@@ -7,7 +7,8 @@
  *
  * Fields: `name` is the word used in messages; `regions` are the region ids it lives in; `herd` is
  * the smallest and largest number in one herd; `walk` and `run` are its speeds in world units per
- * second; `food` is what hunting one gives; `antler` is the chance it also gives an antler (deer only).
+ * second; `food` is what hunting one gives; `leather` is how many pieces of leather its hide gives
+ * (the backpack is made of it); `antler` is the chance it also gives an antler (deer only).
  */
 export const ANIMALS = {
   deer: {
@@ -17,6 +18,7 @@ export const ANIMALS = {
     walk: 45,
     run: 230,
     food: 5,
+    leather: 2,
     antler: 0.5,
   },
   rabbit: {
@@ -26,6 +28,7 @@ export const ANIMALS = {
     walk: 30,
     run: 200,
     food: 2,
+    leather: 1,
     antler: 0,
   },
   boar: {
@@ -35,6 +38,7 @@ export const ANIMALS = {
     walk: 35,
     run: 170,
     food: 6,
+    leather: 2,
     antler: 0,
   },
 };

@@ -1,4 +1,5 @@
-// The three tools the player can craft (axe, pickaxe, hammer) and their two tiers (stone, iron).
+// The tools the player can craft (axe, pickaxe, hammer) and the two weapons (sword, bow), each in
+// two tiers (stone, iron). A weapon is kept, crafted, worn out and saved exactly like a tool.
 // What a tool costs and how long it lasts are game balance, so those numbers live in balance.js.
 
 /** The tiers a tool can be, weakest first. Stone tools wear out; iron tools last forever. */
@@ -10,7 +11,8 @@ export const TIERS = ['stone', 'iron'];
  * Fields: `id` is the save key; `name` is the word used in messages ("stone axe"); `aName` is the
  * name with "a" or "an" in front, for "You need an axe"; `use` is the Build menu's short line
  * about what it is for; `key` is the number key that picks it while the Build menu is open;
- * `icon` names its picture in ui/layout.js.
+ * `icon` names its picture in ui/layout.js; `weapon` is true for the sword and the bow, which the
+ * Build menu lists under their own heading.
  */
 export const TOOLS = [
   {
@@ -36,6 +38,24 @@ export const TOOLS = [
     use: 'Needed to forge iron tools',
     key: '4',
     icon: 'hammer',
+  },
+  {
+    id: 'sword',
+    name: 'sword',
+    aName: 'a sword',
+    use: 'Hunts and fights faster than an axe',
+    key: 'z',
+    icon: 'axe',
+    weapon: true,
+  },
+  {
+    id: 'bow',
+    name: 'bow',
+    aName: 'a bow',
+    use: 'Hunts from a distance, before the animal runs',
+    key: 'x',
+    icon: 'axe',
+    weapon: true,
   },
 ];
 

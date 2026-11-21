@@ -5,6 +5,7 @@
 import {
   WARMTH_SECONDS,
   COAT_COLD,
+  HIDE_COLD,
   STARVING_COLD,
   SNOW_COLD,
   SNOW_NIGHT_COLD,
@@ -93,7 +94,8 @@ export function tickSurvival(state, dt) {
     (100 / WARMTH_SECONDS) *
     (starving ? STARVING_COLD : 1) *
     snowChill(snow, phase) *
-    (state.coat ? COAT_COLD : 1);
+    (state.coat ? COAT_COLD : 1) *
+    HIDE_COLD ** ['hat', 'jacket', 'gloves', 'boots'].filter((piece) => state[piece]).length;
   if (warm) meters.warmth = clamp(meters.warmth + WARM_BY_FIRE * dt);
   else if (cold && torch) {
     // The torch in hand keeps the cold off, and the tea is not touched.

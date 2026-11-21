@@ -2,13 +2,13 @@
  "deer": {
   "cell": [
    116,
-   96
+   105
   ],
   "origin": [
    0.5,
-   0.9791666666666666
+   0.9809523809523809
   ],
-  "columns": 4,
+  "columns": 6,
   "rows": {
    "idle": {
     "row": 0,
@@ -25,19 +25,27 @@
    "down": {
     "row": 3,
     "frames": 4
+   },
+   "runNE": {
+    "row": 4,
+    "frames": 6
+   },
+   "runSE": {
+    "row": 5,
+    "frames": 6
    }
   }
  },
  "rabbit": {
   "cell": [
    37,
-   35
+   36
   ],
   "origin": [
    0.5,
-   0.9428571428571428
+   0.9444444444444444
   ],
-  "columns": 4,
+  "columns": 6,
   "rows": {
    "idle": {
     "row": 0,
@@ -54,19 +62,27 @@
    "down": {
     "row": 3,
     "frames": 4
+   },
+   "runNE": {
+    "row": 4,
+    "frames": 6
+   },
+   "runSE": {
+    "row": 5,
+    "frames": 6
    }
   }
  },
  "boar": {
   "cell": [
    71,
-   53
+   57
   ],
   "origin": [
    0.5,
-   0.9622641509433962
+   0.9649122807017544
   ],
-  "columns": 4,
+  "columns": 6,
   "rows": {
    "idle": {
     "row": 0,
@@ -83,17 +99,25 @@
    "down": {
     "row": 3,
     "frames": 4
+   },
+   "runNE": {
+    "row": 4,
+    "frames": 6
+   },
+   "runSE": {
+    "row": 5,
+    "frames": 6
    }
   }
  },
  "wolf": {
   "cell": [
    81,
-   56
+   65
   ],
   "origin": [
    0.5,
-   0.9642857142857143
+   0.9692307692307692
   ],
   "columns": 6,
   "rows": {
@@ -119,6 +143,14 @@
    },
    "down": {
     "row": 5,
+    "frames": 6
+   },
+   "runNE": {
+    "row": 6,
+    "frames": 6
+   },
+   "runSE": {
+    "row": 7,
     "frames": 6
    }
   }

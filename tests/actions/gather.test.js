@@ -12,7 +12,7 @@ import {
   SIZE_WEAR,
   ROCK_YIELD,
 } from '../../src/data/balance.js';
-import { HARVEST, sizedHarvest } from '../../src/data/supplies.js';
+import { HARVEST, WILD, sizedHarvest } from '../../src/data/supplies.js';
 import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import {
@@ -230,6 +230,20 @@ test('picking up small stones and sticks is quicker than chopping or picking ber
     ),
     GATHER_SECONDS,
   );
+});
+
+// Guards the second herb source: wild herbs are picked like berries (the full bare-hand time, no
+// tool) and give more than a flower patch, so they are worth walking to.
+test('wild herbs are picked by hand for 3 herbs in the full hand-pick time', () => {
+  const game = createGame('scout');
+  const herbs = { id: 'wild-herbs-0-0', sprite: 'wild-herbs', ...WILD['wild-herbs'] };
+
+  assert.deepEqual(
+    [herbs.type, herbs.amount, herbs.tool, herbs.quick, herbs.regrow],
+    ['herbs', 3, undefined, undefined, 180],
+  );
+  assert.equal(gatherTime(game, herbs), GATHER_SECONDS);
+  assert.ok(herbs.amount > WILD.flowers.amount);
 });
 
 // Guards the map's trees and rocks: with the right tool they give their wood, stone or iron.

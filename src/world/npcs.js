@@ -20,6 +20,10 @@ const SWING_FPS = 5;
 // How many pictures each row of a villager sheet holds.
 const FRAMES = 4;
 
+// The slanted pictures are a six-picture stride, played a little faster so the feet keep pace.
+const SLANT_FRAMES = 6;
+const SLANT_FPS = 8;
+
 // Which sheet a walking villager uses for each facing (0 south, 1 west, 2 east, 3 north).
 // West has no art of its own: it mirrors the east sheet.
 const WALK_SHEETS = ['walkSouth', 'walkEast', 'walkEast', 'walkNorth'];
@@ -28,9 +32,10 @@ const WALK_SHEETS = ['walkSouth', 'walkEast', 'walkEast', 'walkNorth'];
  * Makes one villager's starting state: at home, empty-handed, resting a little before work.
  *
  * @param {object} npc - The villager's entry in `NPCS`.
- * @returns {object} `{npc, job, x, y, facing, phase, heading, left, moving, carrying, clock, path,
- *   i}`: `job` is the one of `npc.jobs` they are doing now; then where they are and which way
- *   they look; `phase` is what they are doing (`rest`, `wait` for a
+ * @returns {object} `{npc, job, x, y, facing, slant, phase, heading, left, moving, carrying, clock,
+ *   path, i}`: `job` is the one of `npc.jobs` they are doing now; then where they are and which way
+ *   they look; `slant` is 'ne', 'nw', 'se' or 'sw' while their walk heads diagonally (else null);
+ *   `phase` is what they are doing (`rest`, `wait` for a
  *   way to open, `walk`, `work` or `deposit`); `heading` is where a walk leads (`work` or `drop`);
  *   `left` is the seconds left of a timed phase; `moving` is true while their feet are moving;
  *   `carrying` is true while they hold a load; `clock` counts the seconds of the pictures being
@@ -43,6 +48,7 @@ function atHome(npc) {
     x: npc.x,
     y: npc.y,
     facing: npc.facing,
+    slant: null,
     phase: 'rest',
     heading: 'work',
     left: NPC_REST_MIN,
@@ -114,7 +120,8 @@ export function npcFacing(villager, player) {
  * @param {object} villager - The villager (see `VILLAGERS`).
  * @param {{x: number, y: number}} player - Where the player is (a resting villager looks at them).
  * @returns {{sheet: string, column: number, flip: boolean}} The settlers sheet to draw from
- *   (`idle`, `walkSouth`, `walkEast`, `walkNorth`, `carry`, `deposit`, `chop` or `mine`), which
+ *   (`idle`, `walkSouth`, `walkEast`, `walkNorth`, `runNE`, `runSE`, `carry`, `deposit`, `chop` or
+ *   `mine`), which
  *   picture in the villager's row, and whether to mirror it.
  */
 export function villagerPose(villager, player) {
@@ -142,6 +149,14 @@ export function villagerPose(villager, player) {
       sheet: 'carry',
       column: villager.moving ? Math.floor(clock * WALK_FPS) % FRAMES : 1,
       flip,
+    };
+
+  // Heading diagonally, empty-handed: the north-east or south-east pictures, mirrored for west.
+  if (villager.moving && villager.slant)
+    return {
+      sheet: villager.slant[0] === 'n' ? 'runNE' : 'runSE',
+      column: Math.floor(clock * SLANT_FPS) % SLANT_FRAMES,
+      flip: villager.slant[1] === 'w',
     };
 
   if (villager.moving)

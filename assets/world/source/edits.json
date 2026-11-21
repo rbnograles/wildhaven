@@ -63,6 +63,11 @@
     { "name": "big-oak", "x": 14289, "y": 10172 },
     { "name": "rocks-a", "x": 13387, "y": 10387 },
     { "name": "cave-forest", "x": 15610, "y": 10828 },
-    { "name": "cave-forest", "x": 15862, "y": 12687 }
+    { "name": "cave-forest", "x": 15862, "y": 12687 },
+    { "name": "gold-ore", "x": 4606, "y": 9876 },
+    { "name": "gold-ore", "x": 4277, "y": 9993 },
+    { "name": "gold-ore", "x": 6456, "y": 7892 },
+    { "name": "diamond-ore", "x": 21764, "y": 8047 },
+    { "name": "diamond-ore", "x": 21486, "y": 7999 }
   ]
 }

@@ -4,7 +4,7 @@
 
 import { RESOURCES, RESOURCE_NAMES } from '../data/supplies.js';
 import { moveAll } from '../actions/building.js';
-import { hasRoomFor } from '../world/bag.js';
+import { roomFor } from '../world/bag.js';
 import { save } from '../core/session.js';
 import { $ } from './layout.js';
 
@@ -50,11 +50,12 @@ export function setupChest(session, ui) {
       put.className = take.className = 'secondary';
       put.textContent = 'Put all in';
       take.textContent = 'Take all';
+      take.title = 'Takes as many as your item box has room for';
       put.disabled = !state.resources[resource];
-      // Taking out a new kind of thing needs an open slot in the item box.
-      const fits = hasRoomFor(state, [resource]);
+      // Out comes only what the item box has room for; with no room at all the button is off.
+      const fits = roomFor(state, resource) > 0;
       take.disabled = !chest.contents?.[resource] || !fits;
-      take.title = fits ? '' : 'Your bag is full';
+      if (!fits) take.title = 'Your bag is full';
       put.addEventListener('click', () => move(resource, true));
       take.addEventListener('click', () => move(resource, false));
       row.append(words, put, take);

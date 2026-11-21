@@ -131,7 +131,7 @@ export function aimState(state, node) {
  *   something to give and need no tool the player lacks. Without an id the nearest node is used.
  * @returns {{ok: boolean, reason?: string, node?: object}} `ok` with the node when it started;
  *   otherwise `reason` is 'busy' (already doing something), 'none' (nothing in reach) or 'full'
- *   (the item box has no open slot for this kind of thing).
+ *   (the item box has no room for what it gives).
  */
 export function beginGather(state, animator, id) {
   if (animator.pending) return { ok: false, reason: 'busy' };
@@ -139,8 +139,8 @@ export function beginGather(state, animator, id) {
     ? nodesInReach(state).find((n) => n.id === id && hasToolFor(state, n))
     : nearbyNode(state);
   if (!node) return { ok: false, reason: 'none' };
-  // A new kind of thing needs an open slot in the item box.
-  if (!hasRoomFor(state, [node.type])) return { ok: false, reason: 'full', node };
+  // What it gives must fit: on a pile with space, or in an empty slot of the item box.
+  if (!hasRoomFor(state, { [node.type]: node.amount })) return { ok: false, reason: 'full', node };
 
   // Face the node, unless it's almost straight above or below the player.
   if (Math.abs(node.x - state.player.x) > 8)
@@ -191,6 +191,6 @@ export function finishGather(state, id = nearbyNode(state)?.id) {
 export function dropFrom(state, node, roll = Math.random) {
   const drop = node.inScenery && TREE_DROPS[node.sprite];
   if (!drop || roll() >= DROP_CHANCE) return null;
-  // A find with no open slot to go to is left lying where it fell.
+  // A find with no room in the item box is left lying where it fell.
   return addItem(state, drop) ? drop : null;
 }

@@ -27,7 +27,7 @@ import {
 import { isWalkable } from '../world/map.js';
 import { phaseOf } from '../world/clock.js';
 import { WOLVES, wolfAlive, isSafe } from '../world/wolves.js';
-import { startAction } from '../animation/clips.js';
+import { startAction, slantOf } from '../animation/clips.js';
 import { findPath } from './approach.js';
 
 // How far from the player a wolf is still worth moving each frame; farther ones wait, unseen.
@@ -59,7 +59,7 @@ export function nextDusk(time) {
  * the player (a village, a fire's warmth), where wolves never go.
  *
  * @param {object} state - The game being played.
- * @param {object} w - The wolf. Its position and facing change.
+ * @param {object} w - The wolf. Its position, facing and slant change.
  * @param {number} tx - Where it is going, x.
  * @param {number} ty - Where it is going, y.
  * @param {number} speed - World units per second.
@@ -75,6 +75,7 @@ function stepToward(state, w, tx, ty, speed, dt) {
     nx = w.x + (dx / d) * step,
     ny = w.y + (dy / d) * step;
   if (dx) w.facing = dx < 0 ? 1 : 2;
+  w.slant = slantOf(dx, dy)?.[0] ?? null;
 
   // A spot the wolf may step onto: walkable, and not into a safe spot from outside one.
   const open = (x, y) => isWalkable(x, y) && (!isSafe(state, x, y) || isSafe(state, w.x, w.y));

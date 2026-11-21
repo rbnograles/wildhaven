@@ -202,6 +202,13 @@ export function setupBuild(session, ui) {
     ui.camp.openNaming(result.camp);
   }
 
+  // A press anywhere outside the open menu closes it, like any pop-up list. The Build button is
+  // left out: its own click already opens and closes the menu.
+  document.addEventListener('pointerdown', (event) => {
+    if (!build.menu || event.target.closest('#build-menu, #build-button')) return;
+    cancel();
+  });
+
   // The Build button opens the menu; the menu's Campfire option starts placing one, and each tool
   // entry starts crafting it.
   $('build-button').addEventListener('click', toggleMenu);

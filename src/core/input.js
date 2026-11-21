@@ -79,8 +79,11 @@ export function setupInput(session, ui) {
     // Something to gather or mend: step beside it first; the frame loop starts the work there.
     // A repair the backpack can't pay for skips the step, so E says at once what is missing.
     const choice = chooseInteraction(session.state);
-    // A new kind of thing with no open slot to go to: say so before walking up to it.
-    if (choice?.kind === 'gather' && !hasRoomFor(session.state, [choice.target.type])) {
+    // No room in the item box for what it gives: say so before walking up to it.
+    if (
+      choice?.kind === 'gather' &&
+      !hasRoomFor(session.state, { [choice.target.type]: choice.target.amount })
+    ) {
       ui.hud.notify(BAG_FULL);
       return;
     }
@@ -225,8 +228,8 @@ export function setupInput(session, ui) {
       ui.hud.notify(`You need ${toolInfo(node.tool).aName}. Make one in the Build menu (B).`);
       return;
     }
-    // A new kind of thing with no open slot to go to: say so before walking over.
-    if (!hasRoomFor(session.state, [node.type])) {
+    // No room in the item box for what it gives: say so before walking over.
+    if (!hasRoomFor(session.state, { [node.type]: node.amount })) {
       ui.hud.notify(BAG_FULL);
       return;
     }

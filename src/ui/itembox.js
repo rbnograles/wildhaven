@@ -1,9 +1,10 @@
-// The item box: ten slots that are empty until the player picks something up. This file draws
-// what each slot holds, lets a slot be dragged onto another to rearrange them (mouse or finger),
-// and makes a click on the food or herbs slot eat or heal. The rules (which slots are open, what
-// fits) live in world/bag.js; the order of the slots is part of the save.
+// The item box: ten slots that are empty until the player picks something up, and ten more in a
+// second box once the backpack is made. A slot holds a pile of up to fifty of one kind. This file
+// draws each slot's pile, lets a pile be dragged onto another slot to rearrange them (mouse or
+// finger), and makes a click on a food or herbs pile eat or heal. The rules (which slots are open,
+// what fits) live in world/bag.js; where the piles lie is part of the save.
 
-import { BAG_MAX, bagSize, carried, slotItem, moveSlot } from '../world/bag.js';
+import { BAG_MAX, BAG_FULL, bagSize, viewSlots, moveSlot } from '../world/bag.js';
 import { save } from '../core/session.js';
 import { $, ITEM_LOOKS } from './layout.js';
 
@@ -12,19 +13,32 @@ import { $, ITEM_LOOKS } from './layout.js';
 const DRAG_START = 6;
 
 /**
- * Draws the item box so it matches the game: each slot's picture and count, or nothing.
+ * Lists every slot element of both item boxes, in slot order.
  *
- * A slot past the open ones is shown shut until the backpack is made. An old save can still hold
- * something in a shut slot; it is shown, and can be dragged out, until it runs out.
+ * @returns {HTMLElement[]} The twenty slot buttons.
+ */
+const allSlots = () => [...$('item-box').children, ...$('item-box-extra').children];
+
+/**
+ * Draws the item boxes so they match the game: each slot's picture and how many are in its pile,
+ * or nothing.
+ *
+ * The backpack's box shows once the backpack is made. An old save can still hold piles in it
+ * without a backpack; then it shows too, with its empty slots shut, until those piles run out.
  *
  * @param {object} state - The game being played.
  */
 export function renderItemBox(state) {
-  const open = bagSize(state);
-  for (const slot of $('item-box').children) {
+  const open = bagSize(state),
+    piles = viewSlots(state);
+  $('item-box-extra').hidden = open < BAG_MAX && !piles.slice(open).some(Boolean);
+
+  for (const slot of allSlots()) {
     const index = Number(slot.dataset.slot),
-      item = slotItem(state, index),
-      look = item && ITEM_LOOKS[item],
+      pile = piles[index],
+      item = pile?.item,
+      // A kind with no picture yet still shows its count, with its name as the tooltip.
+      look = item && (ITEM_LOOKS[item] ?? { icon: '', name: item }),
       [picture, count, label, key] = slot.children;
 
     slot.dataset.item = item ?? '';
@@ -33,14 +47,15 @@ export function renderItemBox(state) {
     slot.title = look
       ? look.name
       : index >= open
-        ? 'Make a backpack (Build menu) to open this slot'
+        ? 'A backpack slot · Make a backpack (Build menu) to use it'
         : '';
 
-    picture.hidden = count.hidden = !item;
+    count.hidden = !item;
+    picture.hidden = !look?.icon;
     key.hidden = !look?.key;
     if (!look) continue;
-    if (picture.getAttribute('src') !== look.icon) picture.src = look.icon;
-    count.textContent = carried(state, item);
+    if (look.icon && picture.getAttribute('src') !== look.icon) picture.src = look.icon;
+    count.textContent = pile.n;
     label.textContent = look.name;
     key.textContent = look.key ?? '';
   }
@@ -51,13 +66,14 @@ export function renderItemBox(state) {
  *
  * Dragging is done with pointer events, which cover the mouse and a finger alike: pressing on a
  * filled slot and moving away lifts a copy of its picture that follows the pointer, and letting
- * go over another open slot moves the thing there (the two swap if that slot is taken).
+ * go over another open slot moves the pile there (two piles of one kind join up to fifty; two
+ * of different kinds swap).
  *
  * @param {object} session - The shared session; its game state's slots change.
  * @param {object} ui - The other UI parts (`hud`, `camp`).
  */
 export function setupItemBox(session, ui) {
-  const box = $('item-box');
+  const box = $('item-box').parentElement;
   // The press in progress: which slot, where it began, and the floating picture once it is a drag.
   let press = null,
     // True just after a drag ends, so the click the browser sends next does not also eat or heal.
@@ -70,12 +86,12 @@ export function setupItemBox(session, ui) {
    * @param {number} y - Screen y.
    * @returns {HTMLElement|null} The slot element, or null when the point is off the item box.
    */
-  const slotUnder = (x, y) => document.elementFromPoint(x, y)?.closest('#item-box .slot') ?? null;
+  const slotUnder = (x, y) => document.elementFromPoint(x, y)?.closest('.item-box .slot') ?? null;
 
   /** Ends the press: takes the floating picture away and clears every drag mark. */
   function endPress() {
     press?.ghost?.remove();
-    for (const slot of box.children) slot.classList.remove('dragging', 'drop-target');
+    for (const slot of allSlots()) slot.classList.remove('dragging', 'drop-target');
     press = null;
   }
 
@@ -103,7 +119,7 @@ export function setupItemBox(session, ui) {
     press.ghost.style.top = `${event.clientY}px`;
     // Light up the slot the thing would land in, if it may land there.
     const over = slotUnder(event.clientX, event.clientY);
-    for (const slot of box.children)
+    for (const slot of allSlots())
       slot.classList.toggle(
         'drop-target',
         slot === over && slot !== press.slot && Number(slot.dataset.slot) < bagSize(session.state),
@@ -123,8 +139,7 @@ export function setupItemBox(session, ui) {
     if (moveSlot(session.state, Number(slot.dataset.slot), to)) {
       save(session, ui, true);
       ui.hud.update();
-    } else if (to >= bagSize(session.state) && to < BAG_MAX)
-      ui.hud.notify('That slot is shut · Make a backpack to open it');
+    } else if (to >= bagSize(session.state) && to < BAG_MAX) ui.hud.notify(BAG_FULL);
   });
 
   window.addEventListener('pointercancel', endPress);

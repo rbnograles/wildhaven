@@ -94,7 +94,8 @@ export const HERDS = chooseHerds();
  *
  * @param {object} herd - The herd.
  * @param {number} i - Which member of the herd, from 0.
- * @returns {object} The animal: id, kind, herd, position, facing (1 west, 2 east) and what it is doing.
+ * @returns {object} The animal: id, kind, herd, position, facing (1 west, 2 east), slant ('n' or
+ *   's' while it heads up or down the screen as well as sideways, else null) and what it is doing.
  */
 function atHome(herd, i) {
   const angle = (i / herd.size) * Math.PI * 2,
@@ -109,6 +110,7 @@ function atHome(herd, i) {
     x,
     y,
     facing: i % 2 ? 1 : 2,
+    slant: null,
     phase: 'idle',
     left: 1 + i * 0.7,
     clock: i * 0.37,

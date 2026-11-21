@@ -17,6 +17,7 @@ import {
   isCollapsing,
   COLLAPSE_SECONDS,
   diagonalOf,
+  slantOf,
   sampleAnimation,
   steadyAnchors,
 } from '../../src/animation/clips.js';
@@ -38,6 +39,10 @@ test('every clip the game plays has its own definition', () => {
     'chopIron',
     'mine',
     'mineIron',
+    'sword',
+    'swordIron',
+    'bow',
+    'bowIron',
     'sleep',
     'wake',
     'hungry',
@@ -48,7 +53,7 @@ test('every clip the game plays has its own definition', () => {
     'collapse',
   ]);
   const four = ['walk', 'gather', 'build', 'craft', 'fight', 'swim', 'chop', 'sleep', 'wake'];
-  const swings = ['chopIron', 'mine', 'mineIron'];
+  const swings = ['chopIron', 'mine', 'mineIron', 'sword', 'swordIron', 'bow', 'bowIron'];
   for (const name of [...four, ...swings, 'hurtHunger', 'hurtCold', 'hurtAttack'])
     assert.equal(CLIPS[name].frames, 4);
   assert.equal(CLIPS.run.frames, 6);
@@ -421,4 +426,20 @@ test('the animator keeps a diagonal only while really moving', () => {
   assert.equal(a.diagonal, null);
   advanceAnimation(a, 0.1, { moving: true, diagonal: 'sideways' });
   assert.equal(a.diagonal, null);
+});
+
+// Guards the diagonal pictures of animals and villagers: a heading that leans far enough off level
+// must name its diagonal, a nearly level one must not, and a nearly upright one only when asked
+// (animals have no north or south pictures, villagers do).
+test('a free heading is sorted into a diagonal only when it slants enough', () => {
+  assert.equal(slantOf(10, -8), 'ne');
+  assert.equal(slantOf(-10, -8), 'nw');
+  assert.equal(slantOf(10, 8), 'se');
+  assert.equal(slantOf(-10, 8), 'sw');
+  assert.equal(slantOf(10, 2), null);
+  assert.equal(slantOf(-10, -2), null);
+  assert.equal(slantOf(0, 0), null);
+  assert.equal(slantOf(1, -10), 'ne');
+  assert.equal(slantOf(1, -10, true), null);
+  assert.equal(slantOf(-6, 10, true), 'sw');
 });

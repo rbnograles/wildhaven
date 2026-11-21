@@ -317,3 +317,32 @@ test('a villager is solid where they stand now, not where they started', () => {
   assert.notDeepEqual([villager.x, villager.y], [villager.npc.x, villager.npc.y]);
   resetVillagers();
 });
+
+// Guards the villagers' diagonal pictures: an empty-handed villager heading diagonally shows the
+// north-east or south-east sheet (mirrored for west) with a picture that sheet really has, and a
+// loaded one keeps the carrying pictures, which only face sideways.
+test('a villager walking diagonally shows the diagonal pictures unless carrying', () => {
+  resetVillagers();
+  const villager = VILLAGERS[0],
+    player = { x: villager.x + 5000, y: villager.y };
+
+  for (const [slant, sheet, flip] of [
+    ['ne', 'runNE', false],
+    ['nw', 'runNE', true],
+    ['se', 'runSE', false],
+    ['sw', 'runSE', true],
+  ])
+    for (let clock = 0; clock < 2; clock += 0.1) {
+      Object.assign(villager, { phase: 'walk', moving: true, carrying: false, slant, clock });
+      const pose = villagerPose(villager, player);
+      assert.equal(pose.sheet, sheet);
+      assert.equal(pose.flip, flip);
+      assert.ok(pose.column >= 0 && pose.column < 6);
+    }
+
+  Object.assign(villager, { carrying: true, slant: 'ne' });
+  assert.equal(villagerPose(villager, player).sheet, 'carry');
+  Object.assign(villager, { carrying: false, slant: null, facing: 3 });
+  assert.equal(villagerPose(villager, player).sheet, 'walkNorth');
+  resetVillagers();
+});

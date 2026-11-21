@@ -150,7 +150,7 @@ test('all characters begin at distinct, walkable locations with their own identi
 test('a new game starts on the morning of day 1 with full meters, on foot, and the fog lifted around the spawn', () => {
   const game = createGame('scout');
   assert.equal(game.version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 11);
+  assert.equal(SAVE_VERSION, 16);
   assert.equal(game.time, START_TIME);
   assert.deepEqual(game.meters, { health: 100, hunger: 100, warmth: 100 });
   assert.equal(game.tea, 0);
@@ -263,7 +263,7 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
       g.camps.push({
         ...campAt(g),
         needs: [
-          { kind: 'bring', resource: 'gold', amount: 3, done: false },
+          { kind: 'bring', resource: 'jade', amount: 3, done: false },
           ...campAt(g).needs.slice(1),
         ],
       }),
@@ -608,6 +608,47 @@ test('a version 8 save gains an empty copper pocket', () => {
   assert.deepEqual([loaded.resources.copper, loaded.resources.iron], [0, 3]);
 });
 
+// Guards saves made before gold and diamond existed: a version 12 save has neither, and must load
+// with an empty pocket for each and everything else kept.
+test('a version 12 save gains empty gold and diamond pockets', () => {
+  const game = createGame('scout');
+  delete game.resources.gold;
+  delete game.resources.diamond;
+  game.resources.copper = 4;
+  const loaded = restoreGame(JSON.stringify({ ...game, version: 12 }), 'scout');
+  assert.equal(loaded.version, SAVE_VERSION);
+  assert.deepEqual(
+    [loaded.resources.gold, loaded.resources.diamond, loaded.resources.copper],
+    [0, 0, 4],
+  );
+});
+
+// Guards saves made before the clothes, rod and hoe existed: a version 14 save has none of those
+// flags, and must load with each one off instead of being thrown away.
+test('a version 14 save gains the clothing, rod and hoe flags, all off', () => {
+  const game = createGame('builder');
+  for (const flag of ['rod', 'hoe', 'hat', 'jacket', 'gloves', 'boots']) delete game[flag];
+  const loaded = restoreGame(JSON.stringify({ ...game, version: 14 }), 'builder');
+  assert.equal(loaded.version, SAVE_VERSION);
+  for (const flag of ['rod', 'hoe', 'hat', 'jacket', 'gloves', 'boots'])
+    assert.equal(loaded[flag], false, flag);
+});
+
+// Guards saves made before wolf pelts and arrows existed: a version 15 save has neither, and must
+// load with an empty pocket for each instead of being thrown away.
+test('a version 15 save gains empty wolf-pelt and arrow pockets', () => {
+  const game = createGame('scout');
+  delete game.resources.wolfpelt;
+  delete game.resources.arrow;
+  game.resources.leather = 3;
+  const loaded = restoreGame(JSON.stringify({ ...game, version: 15 }), 'scout');
+  assert.equal(loaded.version, SAVE_VERSION);
+  assert.deepEqual(
+    [loaded.resources.wolfpelt, loaded.resources.arrow, loaded.resources.leather],
+    [0, 0, 3],
+  );
+});
+
 // Guards saves made before camp buildings existed: a version 9 save's camps have none, and must
 // load with an empty list instead of being thrown away.
 test('a version 9 save gains an empty list of buildings at each camp', () => {
@@ -626,7 +667,7 @@ test('a save with a broken camp building is refused', () => {
   const spot = { x: game.player.x + 120, y: game.player.y };
   for (const buildings of [
     [{ id: 'b-1', kind: 'castle', ...spot }],
-    [{ id: 'b-1', kind: 'chest', ...spot, contents: { gold: 3 } }],
+    [{ id: 'b-1', kind: 'chest', ...spot, contents: { jade: 3 } }],
     [
       { id: 'b-1', kind: 'tent', ...spot },
       { id: 'b-1', kind: 'chest', ...spot, contents: {} },

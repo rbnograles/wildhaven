@@ -1062,22 +1062,46 @@ for gy in range(STICK_STEP // 2 - 9 * STICK_STEP, LAND_H + PAD, STICK_STEP):
                 or (np.hypot(crowded_xy[:, 0] - x, crowded_xy[:, 1] - y) < 110).any() or on_path(x, y, PATH_DETAIL)): continue
         sticks.append(('sticks', x, y))
 
-# Finds: small things lying about for bare hands (WILD in src/data/supplies.js): antlers, a resource of their own,
-# and three kinds of loose stone, which give plain stone. Feathers and pine cones are never scattered: they only drop
+# Wild herbs: leafy plants picked with bare hands for herbs (WILD['wild-herbs'] in src/data/supplies.js). Flowers
+# were the only herbs and grow almost only in the meadows, the lagoon and the jungle, so this pass does the
+# opposite: most herbs in the pine woods, the snow, the canyons and the desert, a few elsewhere. The same kind of
+# pass as the berries and sticks, with its own seeds, so adding it moved nothing else. The desert's ground is
+# sand, so sand is allowed there; the sea beach (inland < BEACH) stays bare everywhere.
+HERBS = {'P': 0.9, 'S': 0.26, 'C': 0.6, 'D': 0.26, 'J': 0.05, 'h': 0.06, 'L': 0.05}
+HERB_STEP = 420
+full_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered + pebbles + berries + sticks], float)
+herbs = []
+for gy in range(HERB_STEP // 2 - 5 * HERB_STEP, LAND_H + PAD, HERB_STEP):
+    for gx in range(HERB_STEP // 2 - 5 * HERB_STEP, LAND_W + PAD, HERB_STEP):
+        rng = random.Random(gx * 83492791 ^ gy * 49979687 ^ 0x4e2b)
+        x, y = gx + rng.randint(-120, 120), gy + rng.randint(-120, 120)
+        k, ground, roll = region_key(x, y), terrain(x, y), rng.random()
+        if (roll >= HERBS.get(k, 0) or not (60 - PAD < x < LAND_W + PAD - 60 and 120 - PAD < y < LAND_H + PAD - 30)
+                or ground in (WATER, DIRT) or (ground == SAND and k != 'D') or inland(x, y) < BEACH
+                or not on_flat(x, y, 60) or near_water(x, y, 60)
+                or any(math.hypot(x - px, y - py) < 130 for px, py in POINTS)
+                or any(math.hypot(x - bx_, y - by_) < 260 for bx_, by_ in BRIDGES)
+                or any(l < x < r and t < y < b for l, t, r, b in fixed_bases)
+                or (np.hypot(full_xy[:, 0] - x, full_xy[:, 1] - y) < 120).any() or on_path(x, y, PATH_DETAIL)): continue
+        herbs.append(('wild-herbs', x, y))
+print('wild herbs:', {k: sum(1 for _, x, y in herbs if region_key(x, y) == k) for k in HERBS})
+
+# Finds: small things lying about for bare hands (WILD in src/data/supplies.js): three kinds of loose stone, which
+# give plain stone. Antlers are no longer scattered: one only comes from a hunted deer. Feathers and pine cones are never scattered: they only drop
 # from chopped trees. Another separate pass with its own seeds. Per region: the chance a grid square gets one, and
 # what it can be (a name listed twice is twice as likely). Antlers lie where deer would roam; the dry regions get
 # only stones.
 FINDS = {
-    'P': (0.6, ['antler', 'mossy-stone']),   # high: the forest is so thick that few squares have room
-    'S': (0.22, ['antler', 'grey-rock']),
-    'h': (0.12, ['antler', 'flat-stone', 'grey-rock']),
+    'P': (0.3, ['mossy-stone']),   # high: the forest is so thick that few squares have room
+    'S': (0.11, ['grey-rock']),
+    'h': (0.08, ['flat-stone', 'grey-rock']),
     'L': (0.1, ['flat-stone']),
     'J': (0.14, ['mossy-stone']),
     'C': (0.12, ['grey-rock', 'flat-stone']),
     'D': (0.06, ['grey-rock', 'flat-stone']),
 }
 FIND_STEP = 250
-busy_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered + pebbles + berries + sticks], float)
+busy_xy = np.array([(sx, sy) for _, sx, sy in fixed + stairs_objects + scattered + pebbles + berries + sticks + herbs], float)
 finds = []
 for gy in range(FIND_STEP // 2 - 9 * FIND_STEP, LAND_H + PAD, FIND_STEP):
     for gx in range(FIND_STEP // 2 - 9 * FIND_STEP, LAND_W + PAD, FIND_STEP):
@@ -1125,7 +1149,7 @@ for gy in range(RIPPLE_STEP // 2 - PAD, LAND_H + PAD, RIPPLE_STEP):
                 or (kind != 1 and dry_near(x, y, rx, ry)) or any(math.hypot(x - bx_, y - by_) < 300 for bx_, by_ in BRIDGES)): continue
         ripples.append((name, x, y))
 # Everything above is in LAND units; the map file is in WORLD units.
-objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + sticks + finds + ripples]
+objects = [(n, x + PAD, y + PAD) for n, x, y in fixed + stairs_objects + scattered + details + pebbles + berries + sticks + herbs + finds + ripples]
 # The pieces of path come last and are the only objects that are turned: `rotation` is in degrees, clockwise.
 path_objects = [(n, x + PAD, y + PAD, turn) for n, x, y, turn in paths]
 

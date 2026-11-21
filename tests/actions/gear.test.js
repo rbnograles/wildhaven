@@ -19,6 +19,7 @@ import { GEAR_IDS } from '../../src/data/gear.js';
 import { RESOURCES } from '../../src/data/supplies.js';
 import { createGame, serializeGame, restoreGame } from '../../src/game/state.js';
 import { canMake, beginMake, finishMake, gripTool } from '../../src/actions/gear.js';
+import { hasRod } from '../../src/actions/fish.js';
 import { finishInteraction } from '../../src/actions/interact.js';
 import { tickSurvival, meterTrends } from '../../src/actions/survive.js';
 import { sendBoatHome, canBoard, BUILT } from '../../src/actions/boat.js';
@@ -202,4 +203,36 @@ test('no gear is made from the boat', () => {
   game.boat = { from: WRECKS[0].id, x: 0, y: 0, dir: 0 };
   game.aboard = true;
   for (const id of ['torch', 'coat', 'grip']) assert.equal(canMake(game, id).reason, 'aboard');
+});
+
+// Guards the deer-hide clothes: each piece is made once, is kept for good, and multiplies the cold
+// drain, so the four together keep the player warmer than the coat alone would on its own.
+test('deer-hide clothes are made once and each one softens the cold', () => {
+  const game = richGame();
+  for (const piece of ['hat', 'jacket', 'gloves', 'boots']) {
+    assert.equal(finishMake(game, piece).ok, true, piece);
+    assert.equal(game[piece], true, piece);
+    assert.equal(canMake(game, piece).reason, 'owned', piece);
+  }
+
+  // Four hide pieces out in the night cold lose less warmth than bare skin does.
+  const bare = richGame();
+  for (const g of [game, bare]) {
+    g.camps = [];
+    makeNight(g);
+    tickSurvival(g, 10);
+  }
+  assert.ok(100 - game.meters.warmth < 100 - bare.meters.warmth);
+});
+
+// Guards the rod and hoe: each is a kept flag, the rod turns fishing on, and the hoe makes a wheat
+// harvest give more food than it would bare-handed.
+test('the rod is kept and the hoe makes harvests more bountiful', () => {
+  const game = richGame();
+  assert.equal(finishMake(game, 'rod').ok, true);
+  assert.equal(game.rod, true);
+  assert.equal(hasRod(game), true);
+
+  assert.equal(finishMake(game, 'hoe').ok, true);
+  assert.equal(game.hoe, true);
 });

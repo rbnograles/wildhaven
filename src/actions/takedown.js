@@ -50,7 +50,7 @@ export function refundOf(building) {
  *
  * The first rule that fails is the answer: the player is in the boat, stands outside the camp's
  * warmth, the fire still has buildings round it (they come down first, so nothing is lost by
- * accident), a chest still holds something, or the item box has no open slot for what comes back.
+ * accident), a chest still holds something, or the item box has no room for what comes back.
  *
  * @param {object} state - The game being played.
  * @param {string} campId - The camp's id.
@@ -75,7 +75,7 @@ export function checkTakeDown(state, campId, what) {
     return { ok: false, reason: 'contents', message: 'Empty the chest first' };
 
   const refund = refundOf(building),
-    coming = building?.kind === 'tent' ? [TENT_ITEM] : Object.keys(refund);
+    coming = building?.kind === 'tent' ? { [TENT_ITEM]: 1 } : refund;
   if (!hasRoomFor(state, coming)) return { ok: false, reason: 'full', message: BAG_FULL };
   return { ok: true, camp, building, refund };
 }

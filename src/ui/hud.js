@@ -31,7 +31,8 @@ import { TAKEDOWN_PREFIX, FIRE } from '../actions/takedown.js';
 import { renderItemBox } from './itembox.js';
 import { BUILDINGS, buildingInfo } from '../data/buildings.js';
 import { campAt, centreOf } from '../world/buildings.js';
-import { HUNT_PREFIX } from '../actions/animals.js';
+import { HUNT_PREFIX, canHunt } from '../actions/animals.js';
+import { FISH_PREFIX } from '../actions/fish.js';
 import { animalById } from '../world/animals.js';
 import { ANIMALS } from '../data/animals.js';
 import { $ } from './layout.js';
@@ -146,12 +147,15 @@ export function describeFinish(finished) {
     return buildingInfo(finished.kind).made;
   }
   if (finished.kind === 'hunt' && finished.animal === 'wolf')
-    return ['The wolf is down · Its pack is whole again at dusk', wearWords('axe', finished.wear)]
+    return [
+      `The wolf is down${finished.pelt ? ' · +1 wolf pelt' : ''} · Its pack is whole again at dusk`,
+      wearWords('axe', finished.wear),
+    ]
       .filter(Boolean)
       .join(' · ');
   if (finished.kind === 'hunt')
     return [
-      `+${finished.food} food${finished.antler ? ' · +1 antler' : ''} · You hunted a ${finished.animal}`,
+      `+${finished.food} food${finished.leather ? ` · +${finished.leather} leather` : ''}${finished.antler ? ' · +1 antler' : ''} · You hunted a ${finished.animal}`,
       wearWords('axe', finished.wear),
     ]
       .filter(Boolean)
@@ -164,6 +168,7 @@ export function describeFinish(finished) {
         : `+${finished.food} food · Wheat harvested`;
   if (finished.kind === 'repair')
     return 'Boat repaired · Walk to the water’s edge and press E to board';
+  if (finished.kind === 'fish') return `+${finished.food} food · You caught a fish`;
   if (finished.kind === 'craft') {
     if (!finished.ok) return finished.message;
     if (finished.gear) return madeWords(finished);
@@ -194,16 +199,17 @@ function actionLabel(state, choice) {
   if (choice.kind === 'chest') return 'Open the chest';
   if (choice.kind === 'sleep') return 'Sleep in the tent';
   if (choice.kind === 'hunt' && choice.target.den)
-    return state.tools.axe ? 'Fight the wolf' : 'Fight the wolf — needs an axe';
+    return canHunt(state) ? 'Fight the wolf' : 'Fight the wolf — needs a weapon';
   if (choice.kind === 'hunt') {
     const name = ANIMALS[choice.target.kind].name;
-    return state.tools.axe ? `Hunt the ${name}` : `Hunt the ${name} — needs an axe`;
+    return canHunt(state) ? `Hunt the ${name}` : `Hunt the ${name} — needs a weapon`;
   }
   if (choice.kind === 'farm') {
     const { job } = choice;
     if (!job.ok) return job.message;
     return { sow: 'Sow wheat', tend: 'Tend the wheat', harvest: 'Harvest the wheat' }[job.what];
   }
+  if (choice.kind === 'fish') return 'Cast a line';
   if (choice.kind === 'board') return 'Board the boat';
   if (choice.kind === 'repair') {
     const missing = missingForRepair(state);
@@ -250,6 +256,7 @@ function busyLabel(state, animator) {
     return `${{ sow: 'Sowing', tend: 'Tending', harvest: 'Harvesting' }[what]} wheat… move to stop`;
   }
   const node = NODES.find((n) => n.id === target);
+  if (target.startsWith(FISH_PREFIX)) return 'Fishing… move to stop';
   return node ? `${DOING[node.verb]} ${node.label.toLowerCase()}… move to stop` : null;
 }
 

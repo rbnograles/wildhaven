@@ -1,0 +1,316 @@
+{
+  "date": "2026-11-20",
+  "generator": "built-in image_gen",
+  "status": "Generated source atlases; not runtime-integrated or playback-tested",
+  "baseline": "Diagonal running for all creatures and characters. NE/SE source views; NW/SW horizontal mirrors. Base players already have diagonal run sheets.",
+  "assets": [
+    {
+      "id": "deer-run-diagonal",
+      "path": "assets/creatures/deer/deer-run-diagonal.png",
+      "rows": 2,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-9fe7cdcc-5f0e-4973-b387-25b5884858d6.png",
+      "width": 2172,
+      "height": 724,
+      "sampledAlpha": {
+        "partial": 2851,
+        "opaque": 51,
+        "transparent": 8139
+      }
+    },
+    {
+      "id": "rabbit-run-diagonal",
+      "path": "assets/creatures/rabbit/rabbit-run-diagonal.png",
+      "rows": 2,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-e324b592-2644-43c2-8385-bd9305116c2a.png",
+      "width": 2172,
+      "height": 724,
+      "sampledAlpha": {
+        "partial": 2997,
+        "opaque": 8,
+        "transparent": 8036
+      }
+    },
+    {
+      "id": "boar-run-diagonal",
+      "path": "assets/creatures/boar/boar-run-diagonal.png",
+      "rows": 2,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-da248840-4a8e-487c-a022-8173852ff092.png",
+      "width": 2172,
+      "height": 724,
+      "sampledAlpha": {
+        "partial": 3845,
+        "opaque": 13,
+        "transparent": 7183
+      }
+    },
+    {
+      "id": "wolf-run-diagonal",
+      "path": "assets/creatures/wolf/wolf-run-diagonal.png",
+      "rows": 2,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-16eec5aa-e1b0-4e74-a6dc-85d742972062.png",
+      "width": 2172,
+      "height": 724,
+      "sampledAlpha": {
+        "partial": 3781,
+        "opaque": 9,
+        "transparent": 7251
+      }
+    },
+    {
+      "id": "settlers-run-ne",
+      "path": "assets/characters/settlers/settlers-run-ne.png",
+      "rows": 3,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-20635153-7d3f-42d8-9d70-71777e16eb0c.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 3930,
+        "opaque": 4,
+        "transparent": 7018
+      }
+    },
+    {
+      "id": "settlers-run-se",
+      "path": "assets/characters/settlers/settlers-run-se.png",
+      "rows": 3,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-91cd870f-1976-4509-9a4c-08b05a085d0b.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 4530,
+        "opaque": 6,
+        "transparent": 6416
+      }
+    },
+    {
+      "id": "equipment-icons",
+      "path": "assets/items/equipment-expansion-v1.png",
+      "rows": 4,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-da271998-c3ab-461b-89d8-bc8170dcaf58.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4658,
+        "opaque": 13,
+        "transparent": 6354
+      }
+    },
+    {
+      "id": "wolf-outfit-icons",
+      "path": "assets/items/wolf-outfit-v1.png",
+      "rows": 1,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-541fb1cc-075c-4d09-bbd4-37fc3a4d3d94.png",
+      "width": 2172,
+      "height": 724,
+      "sampledAlpha": {
+        "partial": 3844,
+        "opaque": 7,
+        "transparent": 7190
+      }
+    },
+    {
+      "id": "journal-notebook",
+      "path": "assets/ui/game/journal-notebook-v1.png",
+      "rows": 1,
+      "columns": 2,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-69de0a57-f608-4dc9-ac55-de659cc6fd2c.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 6778,
+        "opaque": 2,
+        "transparent": 4172
+      }
+    },
+    {
+      "id": "players-sword-stone",
+      "path": "assets/characters/equipment/players-sword-stone.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-51c97f93-4d28-4973-8daa-36c7b7bb6b0f.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4310,
+        "opaque": 8,
+        "transparent": 6707
+      }
+    },
+    {
+      "id": "players-sword-iron",
+      "path": "assets/characters/equipment/players-sword-iron.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-f665876b-7de7-48e0-b3b2-52729dfe6776.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4799,
+        "opaque": 14,
+        "transparent": 6212
+      }
+    },
+    {
+      "id": "players-bow-stone",
+      "path": "assets/characters/equipment/players-bow-stone.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-cf286f17-4a1f-4009-a3bb-1c54ba78a9d3.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 5268,
+        "opaque": 5,
+        "transparent": 5752
+      }
+    },
+    {
+      "id": "players-bow-iron",
+      "path": "assets/characters/equipment/players-bow-iron.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-7b6cbd8f-2bcc-49a2-9f2a-e63d8635d893.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4679,
+        "opaque": 10,
+        "transparent": 6336
+      }
+    },
+    {
+      "id": "players-fishing",
+      "path": "assets/characters/equipment/players-fishing.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-fa480579-961e-483e-89e7-ee30ed7fbcea.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4078,
+        "opaque": 6,
+        "transparent": 6941
+      }
+    },
+    {
+      "id": "players-hoe",
+      "path": "assets/characters/equipment/players-hoe.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-b71d0652-243e-4db7-b694-bb4550789f92.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4759,
+        "opaque": 11,
+        "transparent": 6255
+      }
+    },
+    {
+      "id": "ore-nodes",
+      "path": "assets/world/source/originals/rocks/precious-ore-nodes-v1.png",
+      "rows": 1,
+      "columns": 2,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-284bb8d9-163c-48f8-918a-f26cd7eed83d.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 4560,
+        "opaque": 3,
+        "transparent": 6389
+      }
+    },
+    {
+      "id": "players-deer-outfit-idle",
+      "path": "assets/characters/outfits/players-deer-idle.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-679ce5c4-d015-4705-86c8-e6bc28e57ef4.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 4151,
+        "opaque": 10,
+        "transparent": 6864
+      }
+    },
+    {
+      "id": "players-wolf-outfit-idle",
+      "path": "assets/characters/outfits/players-wolf-idle.png",
+      "rows": 3,
+      "columns": 4,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-a6af3779-aa12-4a2d-9508-c1c753f75f2b.png",
+      "width": 1254,
+      "height": 1254,
+      "sampledAlpha": {
+        "partial": 5080,
+        "opaque": 1,
+        "transparent": 5944
+      }
+    },
+    {
+      "id": "players-deer-run-ne",
+      "path": "assets/characters/outfits/players-deer-run-ne.png",
+      "rows": 3,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-c78dd5fd-bbc9-4551-841b-bdd7ddcfac78.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 4142,
+        "opaque": 12,
+        "transparent": 6798
+      }
+    },
+    {
+      "id": "players-deer-run-se",
+      "path": "assets/characters/outfits/players-deer-run-se.png",
+      "rows": 3,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-d133fb62-0dec-4d4b-b31b-db3340c81c68.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 5075,
+        "opaque": 11,
+        "transparent": 5866
+      }
+    },
+    {
+      "id": "players-wolf-run-ne",
+      "path": "assets/characters/outfits/players-wolf-run-ne.png",
+      "rows": 3,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-387316d0-1915-48ed-b1ac-4d96f7bc7bed.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 4216,
+        "opaque": 5,
+        "transparent": 6731
+      }
+    },
+    {
+      "id": "players-wolf-run-se",
+      "path": "assets/characters/outfits/players-wolf-run-se.png",
+      "rows": 3,
+      "columns": 6,
+      "generationSource": "D:\\Code\\GWD\\codex-home\\generated_images\\01a1f8c2-3a3b-7712-a9dc-a23718edf6ce\\exec-5f841de8-3f49-41f3-b25e-f58ee7b6f3cf.png",
+      "width": 1774,
+      "height": 887,
+      "sampledAlpha": {
+        "partial": 4421,
+        "opaque": 3,
+        "transparent": 6528
+      }
+    }
+  ]
+}

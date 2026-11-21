@@ -21,13 +21,18 @@ import {
   refundOf,
 } from '../../src/actions/takedown.js';
 import { finishInteraction } from '../../src/actions/interact.js';
-import { tidyBag, slotItem, addItem } from '../../src/world/bag.js';
-import { BUILDING_COSTS, CAMPFIRE_COST, TAKEDOWN_SECONDS } from '../../src/data/balance.js';
+import { tidyBag, viewSlots, bagSize } from '../../src/world/bag.js';
+import {
+  BUILDING_COSTS,
+  CAMPFIRE_COST,
+  TAKEDOWN_SECONDS,
+  STACK_SIZE,
+} from '../../src/data/balance.js';
 
 /** Makes a game with a camp at the player's feet and plenty of wood, stone and iron. */
 function campGame() {
   const game = createGame('scout');
-  Object.assign(game.resources, { wood: 200, stone: 200, iron: 50, food: 0 });
+  Object.assign(game.resources, { wood: 100, stone: 100, iron: 50, food: 0 });
   tidyBag(game);
   game.camps.push(camp(game, 'camp-1', 0));
   return game;
@@ -99,7 +104,7 @@ test('a tent is packed into the item box and pitched again for nothing', () => {
   assert.equal(takeDown(game, tent.id).what, 'tent');
   assert.equal(game.packedTent, true);
   assert.deepEqual(game.resources, before);
-  assert.ok(game.slots.some((_, i) => slotItem(game, i) === 'tent'));
+  assert.ok(viewSlots(game).some((pile) => pile?.item === 'tent'));
   assert.deepEqual(priceOf(game, 'tent'), {});
 
   // Even with no wood left, the packed tent goes up, and leaves the item box.
@@ -158,9 +163,9 @@ test('taking down needs the player at the camp and room in the bag', () => {
   assert.equal(checkTakeDown(game, 'camp-1', tent.id).reason, 'far');
   game.player.x -= 5000;
 
-  // wood, stone and iron are carried; two more kinds fill the five open slots.
-  addItem(game, 'herbs');
-  addItem(game, 'copper');
+  // Every open slot holds a full pile of wood: no slot is left for the packed tent.
+  Object.assign(game.resources, { stone: 0, iron: 0, wood: bagSize(game) * STACK_SIZE });
+  tidyBag(game);
   assert.equal(checkTakeDown(game, 'camp-1', tent.id).reason, 'full');
   const failed = finishTakeDown(game, `takedown:camp-1:${tent.id}`);
   assert.equal(failed.ok, false);

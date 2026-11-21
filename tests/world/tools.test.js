@@ -20,7 +20,7 @@ test('characters start with the stone tools their kit names', () => {
 // Guards the tool table: a tool with no recipe for a tier, no use count, or a clashing key would
 // break the Build menu or crafting.
 test('every tool has a recipe for each tier, a stone use count and its own key', () => {
-  assert.deepEqual(TOOL_IDS, ['axe', 'pickaxe', 'hammer']);
+  assert.deepEqual(TOOL_IDS, ['axe', 'pickaxe', 'hammer', 'sword', 'bow']);
   for (const id of TOOL_IDS) {
     for (const tier of TIERS) assert.ok(TOOL_RECIPES[id][tier], `${id} ${tier}`);
     assert.ok(Number.isInteger(TOOL_USES[id]) && TOOL_USES[id] > TOOL_WEAR_WARNING, id);

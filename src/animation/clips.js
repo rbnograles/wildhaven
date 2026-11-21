@@ -10,7 +10,7 @@
  * - `fps`: how many of those steps to show per second.
  * - `loop`: start over at the end (true) or hold the last picture (false).
  * - `sheet`: which sprite sheet the pictures live on (`idleLoop`, `locomotion`, `run`, `actions`,
- *   `chop`, `chopIron`, `mine`, `mineIron`, or one of the survival sheets: `sleep`, `wake`, `hungry`, `hurtHunger`, `hurtCold`,
+ *   `chop`, `chopIron`, `mine`, `mineIron`, `sword`, `swordIron`, `bow`, `bowIron`, or one of the survival sheets: `sleep`, `wake`, `hungry`, `hurtHunger`, `hurtCold`,
  *   `hurtAttack`, `dying`).
  * - `row`: which row of that sheet.
  * - `turns`: the sheet has one row per facing (south, west, east, north), added to `row`.
@@ -20,6 +20,9 @@
  * - `once`: a timed action that plays through one time and then holds its last picture (also
  *   after it finishes), where other actions loop. It also can't be cancelled: a falling character
  *   can't change their mind.
+ * - `single`: an action whose clip plays through one time and holds its last picture while it runs
+ *   (a single sword slash or bow shot), instead of looping like a repeated chop. Unlike `once` it
+ *   can still be cancelled by moving. The renderer reads it to decide whether to loop the clip.
  * - `east`: the art only faces east and is mirrored for west, like an action's, but it is not one.
  * - `reaction`: a short flinch played once when something hurts (see `advanceAnimation`).
  * - `every`: seconds a reaction waits before it may play again while its cause lasts. A flinch
@@ -128,6 +131,51 @@ export const CLIPS = {
     row: 0,
     action: true,
   },
+  // Slashing a stone/iron sword at an animal or a wolf: guard, raise, downward strike, recover.
+  // `single` so one hunt is one clean slash that holds the recovery, not a repeating chop.
+  sword: {
+    label: 'Sword — stone',
+    frames: 4,
+    fps: 7,
+    loop: false,
+    sheet: 'sword',
+    row: 0,
+    action: true,
+    single: true,
+  },
+  swordIron: {
+    label: 'Sword — iron',
+    frames: 4,
+    fps: 7,
+    loop: false,
+    sheet: 'swordIron',
+    row: 0,
+    action: true,
+    single: true,
+  },
+  // Shooting a stone/iron bow: nock, draw to the cheek, release, lower. `single`, so the whole
+  // shot is one pass that holds the lower pose; the release frame lands near ARROW_RELEASE in the
+  // renderer, so the drawn arrow and the flying arrow on screen let go together.
+  bow: {
+    label: 'Bow — stone',
+    frames: 4,
+    fps: 3,
+    loop: false,
+    sheet: 'bow',
+    row: 0,
+    action: true,
+    single: true,
+  },
+  bowIron: {
+    label: 'Bow — iron',
+    frames: 4,
+    fps: 3,
+    loop: false,
+    sheet: 'bowIron',
+    row: 0,
+    action: true,
+    single: true,
+  },
   // Lying on one side, breathing slowly: after passing out, and for a short nap when resting.
   sleep: { label: 'Sleeping', frames: 4, fps: 2, loop: true, sheet: 'sleep', row: 0, east: true },
   // Getting up: lying, pushing upright, kneeling, standing. A timed action, so the character
@@ -232,6 +280,32 @@ export const NAP_SECONDS = 2;
  */
 export function diagonalOf(dx, dy) {
   if (!(dx && dy) || ![dx, dy].every(Number.isFinite)) return null;
+  return (dy < 0 ? 'n' : 's') + (dx < 0 ? 'w' : 'e');
+}
+
+// How steep a heading must be to count as slanted: its smaller part at least this share of its
+// bigger part. Below it the movement reads as straight along the bigger part.
+const SLANT = 0.4;
+
+/**
+ * Says which diagonal a free-roaming walker's heading is closest to, if it slants enough.
+ *
+ * The player moves in eight exact directions, but an animal or a villager heads any way at all,
+ * like a compass needle. This sorts a heading into "slanted north" or "slanted south" once it
+ * leans far enough off level, and (when asked) back to "straight" once it is nearly straight up
+ * or down.
+ *
+ * @param {number} dx - Sideways movement: negative is west.
+ * @param {number} dy - Up/down movement: negative is north.
+ * @param {boolean} [between=false] - Also return null for a heading that is nearly straight north
+ *   or south (for walkers that have north and south pictures of their own).
+ * @returns {string|null} 'ne', 'nw', 'se' or 'sw', or null for a heading that is not slanted.
+ */
+export function slantOf(dx, dy, between = false) {
+  const across = Math.abs(dx),
+    down = Math.abs(dy);
+  if (!(across || down) || down < across * SLANT) return null;
+  if (between && across < down * SLANT) return null;
   return (dy < 0 ? 'n' : 's') + (dx < 0 ? 'w' : 'e');
 }
 

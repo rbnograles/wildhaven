@@ -145,6 +145,9 @@ test('a wolf fought with an axe lies down and is back at dusk', () => {
   const done = finishHunt(game, animator.pending.target);
   assert.equal(done.animal, 'wolf');
   assert.equal(done.food, 0);
+  // A wolf hunt yields a wolf pelt.
+  assert.equal(done.pelt, 1);
+  assert.equal(game.resources.wolfpelt, 1);
   assert.equal(wolfAlive(wolf), false);
   assert.equal(wolf.respawnAt, nextDusk(game.time));
 });

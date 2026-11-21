@@ -10,7 +10,8 @@ import { finishCraft, CRAFT_PREFIX } from './craft.js';
 import { finishMake } from './gear.js';
 import { GEAR_IDS } from '../data/gear.js';
 import { nearbyBuilding } from '../world/buildings.js';
-import { huntable, beginHunt, finishHunt, HUNT_PREFIX } from './animals.js';
+import { huntable, huntReach, beginHunt, finishHunt, HUNT_PREFIX } from './animals.js';
+import { hasRod, fishingSpot, beginFish, finishFish, FISH_PREFIX } from './fish.js';
 import { canSleep } from './camp.js';
 import { TAKEDOWN_PREFIX, finishTakeDown } from './takedown.js';
 import {
@@ -65,7 +66,14 @@ export function chooseInteraction(state) {
   const tent = canSleep(state) && nearbyBuilding(state, ['tent']);
   if (tent) return { kind: 'sleep', target: tent.building, camp: tent.camp };
   const node = nearbyNode(state);
-  return node ? { kind: 'gather', target: node } : null;
+  if (node) return { kind: 'gather', target: node };
+  // With a rod and open water near, casting a line comes before a far-off bow shot.
+  const water = hasRod(state) && fishingSpot(state);
+  if (water) return { kind: 'fish', target: water };
+  // An animal farther off that a bow can reach comes last, so a bow never gets in the way of
+  // gathering or using what is right beside the player.
+  const far = huntable(state, huntReach(state));
+  return far ? { kind: 'hunt', target: far } : null;
 }
 
 /**
@@ -98,6 +106,7 @@ export function beginInteraction(state, animator, id) {
   // Opening a chest is not a timed action: the caller opens the chest window.
   if (choice.kind === 'chest') return { ok: true, kind: 'chest', chest: choice.target };
   if (choice.kind === 'farm') return { ...beginFarm(state, animator, choice.target), kind: 'farm' };
+  if (choice.kind === 'fish') return { ...beginFish(state, animator, choice.target), kind: 'fish' };
   // Sleeping in a tent is not a timed action either: the caller rests at the tent's camp.
   if (choice.kind === 'sleep') return { ok: true, kind: 'sleep', camp: choice.camp };
   return { ...beginGather(state, animator), kind: 'gather' };
@@ -136,6 +145,7 @@ export function finishInteraction(state, target, roll = Math.random) {
     const done = finishFarm(state, target);
     return done ? { kind: 'farm', ...done } : null;
   }
+  if (target.startsWith(FISH_PREFIX)) return finishFish(state, target);
   if (WRECKS.some((w) => w.id === target)) {
     const wreck = finishRepair(state, target);
     return wreck ? { kind: 'repair', wreck } : null;

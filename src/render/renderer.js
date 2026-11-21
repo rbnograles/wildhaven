@@ -16,6 +16,7 @@ import { preloadFootprints, createFootprints } from './footprints.js';
 import { isAvailable } from '../actions/gather.js';
 import { toolTier } from '../world/tools.js';
 import { chooseInteraction } from '../actions/interact.js';
+import { HUNT_PREFIX } from '../actions/animals.js';
 import { loadCharacterSheets, loadImage, resolvePose } from '../animation/sheets.js';
 import { actionProgress, CLIPS } from '../animation/clips.js';
 import { waterBlend } from '../animation/water.js';
@@ -123,6 +124,25 @@ const itemUrls = Object.fromEntries(
     ),
   ).map(([path, url]) => [path.match(/item-([\w-]+)\.png$/)[1], url]),
 );
+
+// Arrow picture name ("arrow-stone", "arrow-iron") → its URL. The flying arrow a bow shot sends
+// toward the animal, cut from the bow art by tools/prepare-weapon-art.py.
+const arrowUrls = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/world/effects/arrow-*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.match(/(arrow-[\w]+)\.png$/)[1], url]),
+);
+
+// A bow shot's flight: the arrow sits still being aimed for the first part of the shot, then flies
+// from the archer to the animal over the last stretch, reaching it just as the hunt lands. RELEASE
+// is the share of the shot where the arrow lets go, and RETICLE_* size the aim ring over the target.
+const ARROW_RELEASE = 0.45;
+const RETICLE_RADIUS = 26;
+const ARROW_LEN = 46;
 
 // Moving water (see WATER_LAYERS): WATER_DRIFT is how far the drifting copy strays, in world
 // units: small enough that the painted bank (56 units wide) always hides its edge on the shore.
@@ -309,6 +329,8 @@ export async function createRenderer(container, miniCanvas) {
     cue,
     bar,
     badge,
+    arrow,
+    reticle,
     ghost,
     ring,
     lighting,
@@ -377,6 +399,7 @@ export async function createRenderer(container, miniCanvas) {
         preloadFootprints(this);
         for (const [name, url] of Object.entries(toolUrls)) this.load.image(`tool-${name}`, url);
         for (const [name, url] of Object.entries(itemUrls)) this.load.image(`item-${name}`, url);
+        for (const [name, url] of Object.entries(arrowUrls)) this.load.image(`fx-${name}`, url);
         for (const [name, url] of Object.entries(objectUrls))
           this.load.image(`object-${name}`, url);
         // The animals: one sheet each, cut into even cells (creatures.json says how big).
@@ -572,6 +595,19 @@ export async function createRenderer(container, miniCanvas) {
           .setDepth(WORLD.height + 1)
           .setVisible(false);
         bar = this.add.graphics().setDepth(WORLD.height + 1);
+
+        // A bow shot: the aim ring over the target while the arrow is drawn, and the arrow picture
+        // that flies from the archer to the animal once it looses. Both sit above everything and
+        // hide until a bow hunt is running.
+        reticle = this.add
+          .graphics()
+          .setDepth(WORLD.height + 1)
+          .setVisible(false);
+        arrow = this.add
+          .image(0, 0, `fx-arrow-stone`)
+          .setOrigin(0.5)
+          .setDepth(WORLD.height + 1)
+          .setVisible(false);
 
         // The badge over the thing under the mouse: the item box's dark slot with a painted axe or
         // pickaxe on it (or the wood, stone, food or herbs a hand-picked patch gives), and a red
@@ -1205,15 +1241,62 @@ export async function createRenderer(container, miniCanvas) {
         bar.fillStyle(0xf7f1de, 1).fillRoundedRect(x, y, Math.max(9, w * progress), 9, 4.5);
     }
 
+    // A bow shot: an aim ring sits over the target while the arrow is drawn, then the arrow flies
+    // from the archer to the animal. Both are driven by the shot's progress, so the drawn arrow in
+    // the clip and the flying arrow on screen let go at the same moment (the last stretch, when the
+    // arrow reaches the animal just as the hunt lands).
+    reticle.clear();
+    const quarry =
+      (animator.clip === 'bow' || animator.clip === 'bowIron') && target.startsWith(HUNT_PREFIX)
+        ? [...WILD_ANIMALS, ...WOLVES].find((a) => a.id === target.slice(HUNT_PREFIX.length))
+        : null;
+    reticle.setVisible(!!quarry);
+    arrow.setVisible(false);
+    if (quarry) {
+      const progress = actionProgress(animator),
+        aimed = quarry.y - 18,
+        drawn = Math.min(1, progress / ARROW_RELEASE),
+        r = RETICLE_RADIUS * (1.6 - 0.6 * drawn),
+        fade =
+          progress < ARROW_RELEASE
+            ? 0.5 + 0.4 * drawn
+            : Math.max(0, 1 - (progress - ARROW_RELEASE) * 4);
+      // A ring with four little ticks, tightening as the archer draws and fading as the arrow leaves.
+      reticle
+        .lineStyle(2.5, 0xf7f1de, fade)
+        .strokeCircle(quarry.x, aimed, r)
+        .lineBetween(quarry.x - r - 6, aimed, quarry.x - r + 4, aimed)
+        .lineBetween(quarry.x + r - 4, aimed, quarry.x + r + 6, aimed)
+        .lineBetween(quarry.x, aimed - r - 6, quarry.x, aimed - r + 4)
+        .lineBetween(quarry.x, aimed + r - 4, quarry.x, aimed + r + 6);
+      // After the loose the arrow travels from the bow (about the player's hands) to the target.
+      if (progress >= ARROW_RELEASE) {
+        const flight = (progress - ARROW_RELEASE) / (1 - ARROW_RELEASE),
+          fromX = state.player.x,
+          fromY = state.player.y - 40,
+          angle = Math.atan2(aimed - fromY, quarry.x - fromX);
+        arrow
+          .setTexture(`fx-arrow-${animator.clip === 'bowIron' ? 'iron' : 'stone'}`)
+          .setScale(ARROW_LEN / arrow.width)
+          .setVisible(true)
+          .setRotation(angle)
+          .setDepth(WORLD.height + 1)
+          .setPosition(fromX + (quarry.x - fromX) * flight, fromY + (aimed - fromY) * flight);
+      }
+    }
+
     // A timed action is longer than one pass of its clip, so it loops until the action ends.
-    // A `once` action (the collapse) holds its last picture instead: nobody falls down twice.
+    // A `once` action (the collapse) holds its last picture instead: nobody falls down twice. A
+    // `single` action (one sword slash or bow shot) plays through once and holds too, so it reads
+    // as one decisive swing rather than a repeating chop.
+    const held = CLIPS[animator.clip]?.once || CLIPS[animator.clip]?.single;
     const pose = resolvePose(
       sheets,
       state.character,
       animator.clip,
       animator.time,
       state.player.direction,
-      animator.pending && !CLIPS[animator.clip]?.once ? true : undefined,
+      animator.pending && !held ? true : undefined,
       animator.diagonal,
     );
     // Pin the sprite at its anchor (mirrored when the pose is flipped), with feet on the ground.

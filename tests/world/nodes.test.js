@@ -12,6 +12,7 @@ import { WRECKS } from '../../src/data/places.js';
 import { RESOURCES, SUPPLIES, HARVEST, WILD } from '../../src/data/supplies.js';
 import { GATHER_SECONDS, SUPPLY_REGROW, HARVEST_REGROW } from '../../src/data/balance.js';
 import { WORLD, isWalkable } from '../../src/world/map.js';
+import { regionOf } from '../../src/world/regions.js';
 import {
   NODES,
   nodeBases,
@@ -51,7 +52,6 @@ const pngSize = (name) => {
 // future tools are meant to shorten it, so it shouldn't be lowered as a quick "fix".
 /** The finds the map scatters: sprite name → the resource one gives. */
 const FINDS = {
-  antler: 'antler',
   'mossy-stone': 'stone',
   'grey-rock': 'stone',
   'flat-stone': 'stone',
@@ -84,7 +84,7 @@ test('wild patches are walk-through, regrowing and drawn smaller than a characte
   }
 });
 
-// Guards what each wild patch gives: flowers are the only source of herbs, driftwood on the
+// Guards what each wild patch gives: flowers and wild herbs are the sources of herbs, driftwood on the
 // beaches gives the wood an old boat's repair needs, and small stones, wild berries and sticks
 // give stone, food and wood to bare hands. The counts are floors, not targets: the Tiled map
 // (tools/arrange-tiled-world.py) keeps about half of the hand-picked things on purpose, so a
@@ -95,6 +95,7 @@ test('flowers give herbs, driftwood and sticks give wood, small stones give ston
     pebbles = wild.filter((n) => n.sprite === 'pebbles'),
     berries = wild.filter((n) => n.sprite === 'wild-berries'),
     sticks = wild.filter((n) => n.sprite === 'sticks'),
+    herbs = wild.filter((n) => n.sprite === 'wild-herbs'),
     finds = wild.filter((n) => FINDS[n.sprite]);
   assert.ok(flowers.length >= 30);
   assert.ok(driftwood.length >= 12);
@@ -107,6 +108,7 @@ test('flowers give herbs, driftwood and sticks give wood, small stones give ston
       pebbles.length +
       berries.length +
       sticks.length +
+      herbs.length +
       finds.length,
     wild.length,
   );
@@ -124,6 +126,24 @@ test('flowers give herbs, driftwood and sticks give wood, small stones give ston
   for (const c of CHARACTERS) {
     const close = pebbles.filter((n) => Math.hypot(n.x - c.spawn.x, n.y - c.spawn.y) < 1500);
     assert.ok(close.length >= 5, `${c.id}: ${close.length}`);
+  }
+});
+
+// Guards the second herb source. Flowers grow almost only in the meadows, the lagoon and the
+// jungle, so without wild herbs a player in the pine woods, the snow, the canyons or the desert
+// cannot heal or brew the tea that holds off the cold.
+test('wild herbs give 3 herbs and grow in every region that has few flowers', () => {
+  const herbs = wild.filter((n) => n.sprite === 'wild-herbs');
+
+  assert.ok(herbs.length >= 110 && herbs.length <= 180, `${herbs.length} patches`);
+  for (const n of herbs) {
+    assert.deepEqual([n.type, n.amount, n.tool, n.regrow], ['herbs', 3, undefined, 180], n.id);
+    assert.equal(OBJECT_SPECS[n.sprite].footprint, undefined, 'walk-through');
+  }
+
+  for (const name of ['Pinefall Woods', 'Frostpeak', 'Stonewater Canyons', 'Sunscar Desert']) {
+    const here = herbs.filter((n) => regionOf(n.x, n.y).name === name);
+    assert.ok(here.length >= 20, `${name}: ${here.length}`);
   }
 });
 
@@ -283,8 +303,15 @@ test('nodesNear finds every node close to a spot', () => {
 
 // Guards the finds scattered for bare hands: each kind must be on the map in fair numbers and give
 // the resource its name promises (the three loose stones all give plain stone). Feathers and pine
-// cones never lie on the ground: they come only from chopped trees (TREE_DROPS).
-test('antlers give their own resource, loose stones give stone, and no feather or pine cone lies about', () => {
+// cones never lie on the ground: they come only from chopped trees (TREE_DROPS). Antlers do not
+// either: they come only from hunted deer.
+test('loose stones give stone, and no antler, feather or pine cone lies about', () => {
+  // An antler only comes from a hunted deer: none is a node, and the map holds none.
+  assert.equal(WILD.antler, undefined);
+  assert.equal(
+    NODES.some((n) => n.type === 'antler'),
+    false,
+  );
   assert.equal(WILD.feather, undefined);
   assert.equal(WILD['pine-cone'], undefined);
   for (const [sprite, type] of Object.entries(FINDS)) {
@@ -292,5 +319,18 @@ test('antlers give their own resource, loose stones give stone, and no feather o
     assert.ok(nodes.length >= 15, `${sprite}: ${nodes.length}`);
     for (const n of nodes)
       assert.deepEqual([n.type, n.amount, n.tool, n.regrow], [type, 1, undefined, 180], n.id);
+  }
+});
+
+// Guards the precious ores: the gold and diamond rocks placed by the mineral caves must be nodes a
+// pickaxe mines for their own resource, or they would be plain scenery that gives nothing.
+test('gold and diamond ore are mined with a pickaxe for gold and diamond', () => {
+  for (const [sprite, type] of [
+    ['gold-ore', 'gold'],
+    ['diamond-ore', 'diamond'],
+  ]) {
+    const rocks = NODES.filter((n) => n.sprite === sprite);
+    assert.ok(rocks.length >= 2, sprite);
+    for (const n of rocks) assert.deepEqual([n.type, n.tool, n.amount], [type, 'pickaxe', 3], n.id);
   }
 });

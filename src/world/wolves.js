@@ -55,7 +55,8 @@ export const DENS = chooseDens();
  *
  * @param {object} den - The den.
  * @param {number} i - Which wolf of the pack, from 0.
- * @returns {object} The wolf: id, den, position, facing (1 west, 2 east), what it is doing, and its
+ * @returns {object} The wolf: id, den, position, facing (1 west, 2 east), slant ('n' or 's' while
+ *   it heads up or down the screen as well as sideways, else null), what it is doing, and its
  *   plan while chasing (`path`, the turning points to run through, made again in `replanIn` s).
  */
 function atDen(den, i) {
@@ -65,6 +66,7 @@ function atDen(den, i) {
     x: den.x + (i - 1) * 50,
     y: den.y + (i % 2) * 30,
     facing: i % 2 ? 1 : 2,
+    slant: null,
     phase: 'idle',
     clock: i * 0.4,
     left: 1 + i,

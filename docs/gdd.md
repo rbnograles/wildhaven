@@ -69,7 +69,7 @@ Two kit tools are real since the tools update [Built 2026-11-19]: the Scout's ha
 4. Keep walking to reach the other starting regions (3 total).
 5. The first objective completes when you have gathered once and discovered three regions. After that the goals card follows the region you are in: places found n / 7 (n / 10 in the lagoon) and signposts found n / 2. Free exploration continues.
 
-The fixed supplies are finite: 9 one-time supply nodes, all near the three starting places. The other four regions (Sunscar Desert, Frostpeak, Stonewater Canyons, Emerald Jungle) have no fixed supplies yet. Wild flower patches (38) are the one renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Wood and stone build campfires and mend old boats, food and herbs feed and heal, and wood, stone and iron craft tools. Iron is the fifth resource: it comes only from iron-streaked rocks (Stonewater Canyons' cliff rocks and Frostpeak's ice rocks), mined with a pickaxe [Built 2026-11-19].
+The fixed supplies are finite: 9 one-time supply nodes, all near the three starting places. The other four regions (Sunscar Desert, Frostpeak, Stonewater Canyons, Emerald Jungle) have no fixed supplies yet. Wild flower patches (38) are a renewable source: each gives 2 herbs and grows back 180 game-seconds after picking [Built 2026-11-19]. Wild herb patches (about 140) are a second, larger herb source: each gives 3 herbs and grows back 180 game-seconds, scattered mostly in the flower-poor regions (Pinefall Woods, Frostpeak, Stonewater Canyons, Sunscar Desert) so a player far from the meadows can still heal and brew tea [Built 2026-11-21]. Wood and stone build campfires and mend old boats, food and herbs feed and heal, and wood, stone and iron craft tools. Iron is the fifth resource: it comes only from iron-streaked rocks (Stonewater Canyons' cliff rocks and Frostpeak's ice rocks), mined with a pickaxe [Built 2026-11-19].
 
 **Original spec loop** [Planned, moved from spec "Experience and visual direction"]
 > The character begins at the edge of a forest with a few supplies. Explore woodland, meadow, riverbank, and abandoned ruins; gather resources; choose a camp location; and build a settlement that makes subsequent journeys easier.
@@ -164,6 +164,7 @@ Wood, stone and food nodes **regrow slowly**, over several in-game days, using t
 | Starting kit | [Built] | See the character table in section 1 |
 | 9 supply nodes | [Built], regrowing after 2 in-game days | Totals per full harvest: 10 wood, 7 stone, 7 food. Each stands solid as its own sprite while it stands |
 | 38 wild flower patches, regrowing | [Built] | 2 herbs each, back 180 game-seconds after picking (the game clock pauses with the game) |
+| ~140 wild herb patches, regrowing | [Built] | 3 herbs each, back 180 game-seconds; mostly in the flower-poor regions (Pinefall, Frostpeak, canyons, desert) |
 | Spec supply rule | [Planned] | "initial supplies and resource distribution must allow at least two camps and sustained food production." Met by slow regrowth [Built] |
 | Settler work | [M3] | Settlers assigned to wood, stone, or farming |
 | Farm | [M3] | "produces food over time when assigned a settler" |

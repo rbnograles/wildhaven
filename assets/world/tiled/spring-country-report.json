@@ -1,0 +1,555 @@
+{
+  "biome": "spring",
+  "dimensions": [
+    448,
+    320
+  ],
+  "tileSize": 64,
+  "characterHeight": 76,
+  "objectCount": 19820,
+  "pathTiles": 2057,
+  "resourceTotals": {
+    "wood": 69361,
+    "herbs": 818,
+    "stone": 2408,
+    "food": 153
+  },
+  "starts": {
+    "scout": {
+      "x": 14348,
+      "y": 4148,
+      "bareHandBudget": {
+        "wood": 16,
+        "stone": 12,
+        "food": 8,
+        "herbs": 6
+      },
+      "reachableBudget": {
+        "wood": 16,
+        "stone": 12,
+        "food": 8,
+        "herbs": 6
+      },
+      "walkable": true,
+      "connectedRegion": 0
+    },
+    "builder": {
+      "x": 14336,
+      "y": 9248,
+      "bareHandBudget": {
+        "wood": 16,
+        "stone": 12,
+        "food": 20,
+        "herbs": 6
+      },
+      "reachableBudget": {
+        "wood": 16,
+        "stone": 12,
+        "food": 20,
+        "herbs": 6
+      },
+      "walkable": true,
+      "connectedRegion": 0
+    },
+    "survivor": {
+      "x": 23298,
+      "y": 11348,
+      "bareHandBudget": {
+        "wood": 16,
+        "stone": 13,
+        "herbs": 14,
+        "food": 8
+      },
+      "reachableBudget": {
+        "wood": 16,
+        "stone": 13,
+        "herbs": 14,
+        "food": 8
+      },
+      "walkable": true,
+      "connectedRegion": 0
+    }
+  },
+  "settlements": [
+    {
+      "name": "Hollowstead",
+      "x": 14336,
+      "y": 9348,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Pinefall Camp",
+      "x": 14288,
+      "y": 4108,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Blossom Crossroads",
+      "x": 4248,
+      "y": 7148,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Stonebrook Hamlet",
+      "x": 6648,
+      "y": 9648,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Alder Rest",
+      "x": 23048,
+      "y": 6948,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Driftwood Landing",
+      "x": 22900,
+      "y": 10700,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Greenbough Camp",
+      "x": 7248,
+      "y": 16848,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    },
+    {
+      "name": "Willowbank",
+      "x": 3348,
+      "y": 17048,
+      "reachableFrom": [
+        "scout",
+        "builder",
+        "survivor"
+      ]
+    }
+  ],
+  "herds": [
+    {
+      "kind": "rabbit",
+      "x": 7279,
+      "y": 12959,
+      "count": 2
+    },
+    {
+      "kind": "deer",
+      "x": 8440,
+      "y": 3613,
+      "count": 3
+    },
+    {
+      "kind": "rabbit",
+      "x": 14535,
+      "y": 11640,
+      "count": 2
+    },
+    {
+      "kind": "boar",
+      "x": 3856,
+      "y": 13572,
+      "count": 2
+    },
+    {
+      "kind": "rabbit",
+      "x": 11265,
+      "y": 4626,
+      "count": 2
+    },
+    {
+      "kind": "deer",
+      "x": 13873,
+      "y": 16047,
+      "count": 3
+    },
+    {
+      "kind": "rabbit",
+      "x": 5884,
+      "y": 11149,
+      "count": 2
+    },
+    {
+      "kind": "boar",
+      "x": 22679,
+      "y": 12672,
+      "count": 2
+    },
+    {
+      "kind": "rabbit",
+      "x": 10901,
+      "y": 17201,
+      "count": 2
+    },
+    {
+      "kind": "deer",
+      "x": 15576,
+      "y": 7854,
+      "count": 3
+    },
+    {
+      "kind": "rabbit",
+      "x": 24623,
+      "y": 7572,
+      "count": 2
+    },
+    {
+      "kind": "boar",
+      "x": 10154,
+      "y": 11562,
+      "count": 2
+    },
+    {
+      "kind": "rabbit",
+      "x": 16203,
+      "y": 6032,
+      "count": 2
+    },
+    {
+      "kind": "deer",
+      "x": 7489,
+      "y": 5325,
+      "count": 3
+    },
+    {
+      "kind": "rabbit",
+      "x": 19389,
+      "y": 4709,
+      "count": 2
+    },
+    {
+      "kind": "boar",
+      "x": 18289,
+      "y": 12788,
+      "count": 2
+    },
+    {
+      "kind": "rabbit",
+      "x": 8842,
+      "y": 6868,
+      "count": 2
+    },
+    {
+      "kind": "deer",
+      "x": 15195,
+      "y": 16511,
+      "count": 3
+    },
+    {
+      "kind": "rabbit",
+      "x": 10807,
+      "y": 3200,
+      "count": 2
+    },
+    {
+      "kind": "boar",
+      "x": 19506,
+      "y": 16774,
+      "count": 2
+    },
+    {
+      "kind": "rabbit",
+      "x": 18578,
+      "y": 2857,
+      "count": 2
+    },
+    {
+      "kind": "deer",
+      "x": 22348,
+      "y": 4034,
+      "count": 3
+    },
+    {
+      "kind": "rabbit",
+      "x": 10982,
+      "y": 9346,
+      "count": 2
+    },
+    {
+      "kind": "boar",
+      "x": 5027,
+      "y": 16159,
+      "count": 2
+    }
+  ],
+  "wolfDens": [
+    {
+      "x": 4123,
+      "y": 2864,
+      "distanceFromSpawn": 10305
+    },
+    {
+      "x": 10868,
+      "y": 4477,
+      "distanceFromSpawn": 3496
+    },
+    {
+      "x": 16502,
+      "y": 6980,
+      "distanceFromSpawn": 3136
+    },
+    {
+      "x": 4556,
+      "y": 9267,
+      "distanceFromSpawn": 9780
+    }
+  ],
+  "spriteDefinitions": {
+    "house-a": {
+      "id": 0,
+      "width": 435,
+      "height": 335,
+      "image": "../source/objects/buildings/house-a.png"
+    },
+    "house-b": {
+      "id": 1,
+      "width": 475,
+      "height": 355,
+      "image": "../source/objects/buildings/house-b.png"
+    },
+    "house-c": {
+      "id": 2,
+      "width": 455,
+      "height": 355,
+      "image": "../source/objects/buildings/house-c.png"
+    },
+    "workshop": {
+      "id": 3,
+      "width": 595,
+      "height": 380,
+      "image": "../source/objects/buildings/workshop.png"
+    },
+    "oak": {
+      "id": 4,
+      "width": 267,
+      "height": 300,
+      "image": "../source/objects/trees/oak.png"
+    },
+    "ship": {
+      "id": 5,
+      "width": 530,
+      "height": 525,
+      "image": "../source/objects/buildings/ship.png"
+    },
+    "sandstone-ruin": {
+      "id": 6,
+      "width": 280,
+      "height": 220,
+      "image": "../source/objects/buildings/sandstone-ruin.png"
+    },
+    "cave-forest": {
+      "id": 7,
+      "width": 250,
+      "height": 253,
+      "image": "../source/objects/buildings/cave-forest.png"
+    },
+    "bridge": {
+      "id": 8,
+      "width": 460,
+      "height": 179,
+      "image": "../source/objects/props/bridge.png"
+    },
+    "driftwood": {
+      "id": 9,
+      "width": 150,
+      "height": 70,
+      "image": "../source/objects/props/driftwood.png"
+    },
+    "flowers": {
+      "id": 10,
+      "width": 255,
+      "height": 155,
+      "image": "../source/objects/plants/flowers.png"
+    },
+    "pebbles": {
+      "id": 11,
+      "width": 170,
+      "height": 96,
+      "image": "../source/objects/rocks/pebbles.png"
+    },
+    "sticks": {
+      "id": 12,
+      "width": 170,
+      "height": 47,
+      "image": "../source/objects/props/sticks.png"
+    },
+    "grey-rock": {
+      "id": 13,
+      "width": 61,
+      "height": 80,
+      "image": "../source/objects/rocks/grey-rock.png"
+    },
+    "mossy-stone": {
+      "id": 14,
+      "width": 84,
+      "height": 71,
+      "image": "../source/objects/rocks/mossy-stone.png"
+    },
+    "flat-stone": {
+      "id": 15,
+      "width": 88,
+      "height": 42,
+      "image": "../source/objects/rocks/flat-stone.png"
+    },
+    "sea-wave": {
+      "id": 16,
+      "width": 110,
+      "height": 43,
+      "image": "../source/objects/props/sea-wave.png"
+    },
+    "lake-ripple": {
+      "id": 17,
+      "width": 96,
+      "height": 43,
+      "image": "../source/objects/props/lake-ripple.png"
+    },
+    "river-ripple": {
+      "id": 18,
+      "width": 76,
+      "height": 33,
+      "image": "../source/objects/props/river-ripple.png"
+    },
+    "boulder": {
+      "id": 19,
+      "width": 290,
+      "height": 170,
+      "image": "../source/objects/rocks/boulder.png"
+    },
+    "tall-grass": {
+      "id": 20,
+      "width": 79,
+      "height": 74,
+      "image": "../source/objects/plants/tall-grass.png"
+    },
+    "pines": {
+      "id": 21,
+      "width": 225,
+      "height": 270,
+      "image": "../source/objects/trees/pines.png"
+    },
+    "rocks-a": {
+      "id": 22,
+      "width": 220,
+      "height": 198,
+      "image": "../source/objects/rocks/rocks-a.png"
+    },
+    "log": {
+      "id": 23,
+      "width": 150,
+      "height": 90,
+      "image": "../source/objects/props/log.png"
+    },
+    "rocks-b": {
+      "id": 24,
+      "width": 265,
+      "height": 135,
+      "image": "../source/objects/rocks/rocks-b.png"
+    },
+    "pine": {
+      "id": 25,
+      "width": 122,
+      "height": 210,
+      "image": "../source/objects/trees/pine.png"
+    },
+    "big-oak": {
+      "id": 26,
+      "width": 270,
+      "height": 320,
+      "image": "../source/objects/trees/big-oak.png"
+    },
+    "beach-rock": {
+      "id": 27,
+      "width": 205,
+      "height": 125,
+      "image": "../source/objects/rocks/beach-rock.png"
+    },
+    "signpost": {
+      "id": 28,
+      "width": 90,
+      "height": 130,
+      "image": "../source/objects/props/signpost.png"
+    },
+    "wild-berries": {
+      "id": 29,
+      "width": 150,
+      "height": 104,
+      "image": "../source/objects/plants/wild-berries.png"
+    },
+    "grass-tuft": {
+      "id": 30,
+      "width": 62,
+      "height": 44,
+      "image": "../source/objects/plants/grass-tuft.png"
+    },
+    "wheat-4": {
+      "id": 31,
+      "width": 120,
+      "height": 99,
+      "image": "../source/objects/plants/wheat-4.png"
+    },
+    "rabbit": {
+      "id": 32,
+      "width": 37,
+      "height": 36,
+      "image": "spring-country-art/rabbit.png",
+      "animal": true
+    },
+    "deer": {
+      "id": 33,
+      "width": 116,
+      "height": 105,
+      "image": "spring-country-art/deer.png",
+      "animal": true
+    },
+    "boar": {
+      "id": 34,
+      "width": 71,
+      "height": 57,
+      "image": "spring-country-art/boar.png",
+      "animal": true
+    },
+    "wolf": {
+      "id": 35,
+      "width": 81,
+      "height": 65,
+      "image": "spring-country-art/wolf.png",
+      "animal": true
+    },
+    "old-boat": {
+      "id": 36,
+      "width": 200,
+      "height": 90,
+      "image": "../source/objects/props/old-boat.png"
+    }
+  },
+  "resourceNodes": 11232,
+  "forbiddenObjects": [],
+  "invalidResourcePositions": 0,
+  "pathJoinErrors": 0
+}

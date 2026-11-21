@@ -20,6 +20,18 @@ import survivorChop from '../../assets/characters/survivor/survivor-axe-stone.pn
 import survivorChopIron from '../../assets/characters/survivor/survivor-axe-iron.png';
 import survivorMine from '../../assets/characters/survivor/survivor-pickaxe-stone.png';
 import survivorMineIron from '../../assets/characters/survivor/survivor-pickaxe-iron.png';
+import scoutSword from '../../assets/characters/scout/scout-sword-stone.png';
+import builderSword from '../../assets/characters/builder/builder-sword-stone.png';
+import survivorSword from '../../assets/characters/survivor/survivor-sword-stone.png';
+import scoutSwordIron from '../../assets/characters/scout/scout-sword-iron.png';
+import builderSwordIron from '../../assets/characters/builder/builder-sword-iron.png';
+import survivorSwordIron from '../../assets/characters/survivor/survivor-sword-iron.png';
+import scoutBow from '../../assets/characters/scout/scout-bow-stone.png';
+import builderBow from '../../assets/characters/builder/builder-bow-stone.png';
+import survivorBow from '../../assets/characters/survivor/survivor-bow-stone.png';
+import scoutBowIron from '../../assets/characters/scout/scout-bow-iron.png';
+import builderBowIron from '../../assets/characters/builder/builder-bow-iron.png';
+import survivorBowIron from '../../assets/characters/survivor/survivor-bow-iron.png';
 import scoutSideWalk from '../../assets/characters/scout/scout-side-walk-v2.png';
 import builderSideWalk from '../../assets/characters/builder/builder-side-walk-v2.png';
 import survivorSideWalk from '../../assets/characters/survivor/survivor-side-walk-v2.png';
@@ -72,6 +84,8 @@ import settlersIdle from '../../assets/characters/settlers/settlers-idle.png';
 import settlersWalkSouth from '../../assets/characters/settlers/settlers-walk-south.png';
 import settlersWalkEast from '../../assets/characters/settlers/settlers-walk-east.png';
 import settlersWalkNorth from '../../assets/characters/settlers/settlers-walk-north.png';
+import settlersRunNE from '../../assets/characters/settlers/settlers-run-ne.png';
+import settlersRunSE from '../../assets/characters/settlers/settlers-run-se.png';
 import settlersCarry from '../../assets/characters/settlers/settlers-carry.png';
 import settlersDeposit from '../../assets/characters/settlers/settlers-deposit.png';
 import settlersChop from '../../assets/characters/settlers/settlers-chop.png';
@@ -85,6 +99,9 @@ import { sampleAnimation, steadyAnchors } from './clips.js';
  * `idle` is the first standing art (one row, one column per facing); the game now only uses it to
  * size the others. `idleLoop` is standing still and breathing (4 rows: south, west, east, north).
  * `chop`/`chopIron` swing stone/iron axes; `mine`/`mineIron` swing stone/iron pickaxes.
+ * `sword`/`swordIron` slash a stone/iron sword and `bow`/`bowIron` shoot a stone/iron bow (nock,
+ * draw, release, lower); tools/prepare-weapon-art.py packs those the same way, and leaves the
+ * painted flying arrow out of the bow's release pose because the game draws the arrow itself.
  * These one-row east-facing sheets are packed by tools/prepare-tool-swings.py, anchored by
  * the boots rather than the head so raising a tool does not pull the body sideways.
  * `profile` is walking west or east
@@ -113,6 +130,10 @@ const SOURCES = {
     chopIron: { url: scoutChopIron, edges: [0, 512] },
     mine: { url: scoutMine, edges: [0, 512] },
     mineIron: { url: scoutMineIron, edges: [0, 512] },
+    sword: { url: scoutSword, edges: [0, 512] },
+    swordIron: { url: scoutSwordIron, edges: [0, 512] },
+    bow: { url: scoutBow, edges: [0, 512] },
+    bowIron: { url: scoutBowIron, edges: [0, 512] },
     profile: { url: scoutSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: scoutWalk, edges: [0, 228, 447, 663, 889, 1112, 1331, 1547, 1774] },
     run: { url: scoutRun, edges: [0, 290, 579, 887], steady: true, columns: 6 },
@@ -137,6 +158,10 @@ const SOURCES = {
     chopIron: { url: builderChopIron, edges: [0, 512] },
     mine: { url: builderMine, edges: [0, 512] },
     mineIron: { url: builderMineIron, edges: [0, 512] },
+    sword: { url: builderSword, edges: [0, 512] },
+    swordIron: { url: builderSwordIron, edges: [0, 512] },
+    bow: { url: builderBow, edges: [0, 512] },
+    bowIron: { url: builderBowIron, edges: [0, 512] },
     profile: { url: builderSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: builderWalk, edges: [0, 228, 446, 667, 891, 1109, 1332, 1552, 1774] },
     run: { url: builderRun, edges: [0, 292, 579, 887], steady: true, columns: 6 },
@@ -161,6 +186,10 @@ const SOURCES = {
     chopIron: { url: survivorChopIron, edges: [0, 512] },
     mine: { url: survivorMine, edges: [0, 512] },
     mineIron: { url: survivorMineIron, edges: [0, 512] },
+    sword: { url: survivorSword, edges: [0, 512] },
+    swordIron: { url: survivorSwordIron, edges: [0, 512] },
+    bow: { url: survivorBow, edges: [0, 512] },
+    bowIron: { url: survivorBowIron, edges: [0, 512] },
     profile: { url: survivorSideWalk, edges: [0, 418], steady: true },
     locomotion: { url: survivorWalk, edges: [0, 241, 456, 675, 902, 1119, 1331, 1554, 1774] },
     run: { url: survivorRun, edges: [0, 294, 583, 887], steady: true, columns: 6 },
@@ -183,7 +212,10 @@ const SOURCES = {
 /**
  * The villagers' sheets: each has one row per villager (woodsworker, stoneworker, grower).
  * `idle` is standing, with four poses across (south, west, east, north). `walkSouth`, `walkEast`
- * and `walkNorth` are four walking frames each; walking west mirrors the east frames. The work
+ * and `walkNorth` are four walking frames each; walking west mirrors the east frames. `runNE` and
+ * `runSE` are six frames each of heading north-east and south-east (mirrored for the two west
+ * diagonals); they are the only diagonal pictures the villagers have, so a villager walking
+ * diagonally shows them. The work
  * sheets all face east and are mirrored for west: `carry` (walking with a load: logs, a crate of
  * stones or a sheaf of wheat), `deposit` (holding the load, bending, setting it down, standing
  * empty-handed; played backwards it is picking a load up), `chop` (an axe swing) and `mine` (a
@@ -200,6 +232,8 @@ const SETTLERS = {
   walkSouth: { url: settlersWalkSouth, edges: [0, 361, 723, 1086], steady: true },
   walkEast: { url: settlersWalkEast, edges: [0, 420, 836, 1254], steady: true },
   walkNorth: { url: settlersWalkNorth, edges: [0, 418, 836, 1254], steady: true },
+  runNE: { url: settlersRunNE, edges: [0, 302, 597, 887], steady: true, columns: 6 },
+  runSE: { url: settlersRunSE, edges: [0, 301, 593, 887], steady: true, columns: 6 },
   carry: { url: settlersCarry, edges: [0, 361, 720, 1086], steady: true },
   deposit: { url: settlersDeposit, edges: [0, 418, 836, 1254], feet: true },
   chop: {
@@ -221,6 +255,8 @@ const SETTLER_STOOP = {
   walkSouth: 0.97,
   walkEast: 0.97,
   walkNorth: 0.97,
+  runNE: 0.95,
+  runSE: 0.95,
   carry: 0.97,
   deposit: 1,
   chop: 0.97,
@@ -380,7 +416,7 @@ let cached;
  * The first call starts the downloads; later calls get the same answer without loading again.
  * If loading fails, the memory is cleared so the next call (a retry) can try again.
  * Resolves to {atlases:{[characterId]:{idle, profile, locomotion, run, actions}}, settlers:{idle,
- * walkSouth, walkEast, walkNorth, carry, deposit, chop, mine}};
+ * walkSouth, walkEast, walkNorth, runNE, runSE, carry, deposit, chop, mine}};
  * each sheet is {image, frames[row][col], referenceHeight}. `settlers` holds the villagers' sheets.
  *
  * @returns {Promise<{atlases: object, settlers: object}>} Every measured sheet, by character (or
@@ -435,6 +471,12 @@ export function loadCharacterSheets() {
       // Tool poses are packed around the boots; an overhead tool must not shrink the body.
       for (const name of ['chop', 'chopIron', 'mine', 'mineIron'])
         atlas[name].referenceHeight = atlas[name].frames[0][0].height / (standing * 0.97);
+      // The sword and bow strips are packed the same way. The sword's guard is a bent-knee stance
+      // like the axe's; the archer nocking an arrow stands straight.
+      for (const name of ['sword', 'swordIron'])
+        atlas[name].referenceHeight = atlas[name].frames[0][0].height / (standing * 0.97);
+      for (const name of ['bow', 'bowIron'])
+        atlas[name].referenceHeight = atlas[name].frames[0][0].height / standing;
 
       // The survival sheets were painted at their own sizes too. The standing ones are sized by
       // their first pose, a little shorter than standing straight where the body is hunched.

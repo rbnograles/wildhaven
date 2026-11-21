@@ -11,11 +11,13 @@ import {
   TOOL_USES,
   GRIP_MAX,
   BOARD_RANGE,
+  ARROWS_PER_CRAFT,
 } from '../data/balance.js';
 import { gearInfo } from '../data/gear.js';
 import { TOOL_IDS, toolInfo } from '../data/tools.js';
 import { isSailable } from '../world/map.js';
 import { byFire } from '../world/camps.js';
+import { BAG_FULL, addItem, hasRoomFor } from '../world/bag.js';
 import { listMissing, BUILT } from './boat.js';
 import { CRAFT_PREFIX } from './craft.js';
 import { facing } from './move.js';
@@ -68,6 +70,16 @@ export function launchSpot(state) {
  * @returns {string} The message, or '' when nothing of the kind is in the way.
  */
 function alreadyHas(state, id) {
+  // The clothes, the rod and the hoe are each made once and kept for good.
+  const CLOTHING = {
+    rod: 'You already have a fishing rod',
+    hoe: 'You already have a hoe',
+    hat: 'You already wear a deer-hide hat',
+    jacket: 'You already wear a deer-hide jacket',
+    gloves: 'You already wear deer-hide gloves',
+    boots: 'You already wear deer-hide boots',
+  };
+  if (CLOTHING[id] && state[id]) return CLOTHING[id];
   if (id === 'torch' && state.torch > 0) return 'Your torch is still burning';
   if (id === 'coat' && state.coat) return 'You already wear a feather coat';
   if (id === 'boat' && state.boat) return 'You already have a boat';
@@ -113,6 +125,8 @@ export function canMake(state, id) {
       ? { ok: true, cost, tool }
       : { ok: false, cost, reason: 'tool', message: 'You have no stone tool to fit a grip to' };
   }
+  if (id === 'arrows' && !hasRoomFor(state, { arrow: ARROWS_PER_CRAFT }))
+    return { ok: false, cost, reason: 'full', message: BAG_FULL };
   if (id === 'boat') {
     const spot = launchSpot(state);
     return spot
@@ -152,7 +166,7 @@ export function beginMake(state, animator, id) {
  *
  * Everything is checked again first, because the backpack or the player's spot may have changed
  * while they worked. Then the cost is paid and the gear takes effect in one step: the torch
- * starts burning, the coat is worn for good, the backpack opens the item box's second row, the grip adds a new tool's worth of uses to the most
+ * starts burning, the coat is worn for good, the backpack adds its ten slots, the grip adds a new tool's worth of uses to the most
  * worn stone tool (up to GRIP_MAX times a new one's), and the boat floats on the water beside the
  * player, which is also where it drifts back to if it is ever left behind.
  *
@@ -170,6 +184,9 @@ export function finishMake(state, id) {
   if (id === 'torch') state.torch = TORCH_SECONDS;
   if (id === 'coat') state.coat = true;
   if (id === 'backpack') state.backpack = true;
+  // The clothes, the rod and the hoe are kept flags; arrows are a bundle added to the bag.
+  if (['rod', 'hoe', 'hat', 'jacket', 'gloves', 'boots'].includes(id)) state[id] = true;
+  if (id === 'arrows') addItem(state, 'arrow', ARROWS_PER_CRAFT);
   if (id === 'grip') {
     const tool = state.tools[check.tool];
     tool.uses = Math.min(tool.uses + TOOL_USES[check.tool], TOOL_USES[check.tool] * GRIP_MAX);

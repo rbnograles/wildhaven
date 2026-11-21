@@ -11,13 +11,24 @@ import { regionOf } from '../../src/world/regions.js';
 import { SPAWNS } from '../../src/data/places.js';
 import { ANIMALS } from '../../src/data/animals.js';
 import { HERDS, WILD_ANIMALS, resetAnimals, isAlive } from '../../src/world/animals.js';
-import { tickAnimals, huntable, beginHunt, finishHunt } from '../../src/actions/animals.js';
+import {
+  tickAnimals,
+  huntable,
+  huntReach,
+  huntWeapon,
+  beginHunt,
+  finishHunt,
+} from '../../src/actions/animals.js';
 import {
   FLEE_RUNNING,
   FLEE_WALKING,
   ANIMAL_RETURN,
   ANIMAL_DOWN_SECONDS,
   HUNT_REACH,
+  HUNT_SECONDS,
+  SWORD_SECONDS,
+  BOW_REACH,
+  TOOL_USES,
 } from '../../src/data/balance.js';
 
 /** A game with the player standing just beside the first deer, holding an axe. */
@@ -78,6 +89,9 @@ test('hunting needs an axe, gives food, and the animal returns a day later', () 
   const done = finishHunt(game, animator.pending.target, () => 0);
   assert.equal(done.food, ANIMALS.deer.food);
   assert.equal(done.antler, true);
+  // The hide comes off too: leather for the backpack.
+  assert.equal(done.leather, ANIMALS[done.animal].leather);
+  assert.equal(game.resources.leather, done.leather);
   assert.equal(game.resources.food, food + ANIMALS.deer.food);
   assert.equal(isAlive(deer), false);
 
@@ -86,4 +100,64 @@ test('hunting needs an axe, gives food, and the animal returns a day later', () 
   game.time += ANIMAL_RETURN;
   tickAnimals(game, 0.01, {});
   assert.equal(isAlive(deer), true);
+});
+
+// Guards the diagonal running pictures: an animal fleeing up or down the screen must be marked as
+// slanting north or south, and one fleeing level must not, or it would show the wrong run.
+test('a fleeing animal slants north or south with the way it runs', () => {
+  resetAnimals();
+  const game = createGame('scout'),
+    animal = WILD_ANIMALS[0];
+
+  for (const [dx, dy, slant] of [
+    [-100, 0, null],
+    [-80, 80, 'n'],
+    [80, -80, 's'],
+  ]) {
+    Object.assign(animal, { phase: 'idle', slant: null });
+    Object.assign(game.player, { x: animal.x + dx, y: animal.y + dy });
+    tickAnimals(game, 0.05, { running: true });
+    assert.equal(animal.phase, 'run');
+    assert.equal(animal.slant, slant);
+  }
+  resetAnimals();
+});
+
+// Guards the weapons: a sword must make a hunt quicker than the axe and wear instead of it, and a
+// bow must reach an animal an axe cannot, wear a use per shot, and reach no farther than its tier.
+test('a sword hunts faster than an axe, and a bow hunts from a distance', () => {
+  const close = nextToDeer(HUNT_REACH - 20);
+  let animator = createAnimator();
+  close.game.tools = { axe: { tier: 'iron' }, sword: { tier: 'stone', uses: TOOL_USES.sword } };
+  assert.deepEqual(huntWeapon(close.game, HUNT_REACH - 20), {
+    tool: 'sword',
+    seconds: SWORD_SECONDS.stone,
+  });
+  assert.ok(SWORD_SECONDS.iron < SWORD_SECONDS.stone && SWORD_SECONDS.stone < HUNT_SECONDS);
+  assert.equal(beginHunt(close.game, animator, close.deer).ok, true);
+  assert.equal(animator.pending.duration, SWORD_SECONDS.stone);
+  assert.ok(finishHunt(close.game, animator.pending.target, () => 1));
+  assert.equal(close.game.tools.sword.uses, TOOL_USES.sword - 1);
+
+  const far = nextToDeer(BOW_REACH.stone - 20);
+  animator = createAnimator();
+  far.game.tools = { axe: { tier: 'iron' } };
+  assert.equal(huntable(far.game, huntReach(far.game)), null);
+  assert.equal(beginHunt(far.game, animator, far.deer).reason, 'far');
+
+  // A bow needs arrows: with none, it does not even reach the far deer.
+  far.game.tools = { bow: { tier: 'stone', uses: TOOL_USES.bow } };
+  assert.equal(huntReach(far.game), HUNT_REACH);
+  assert.equal(beginHunt(far.game, animator, far.deer).reason, 'arrows');
+
+  // With arrows, the bow reaches, shoots, wears a use and spends one arrow.
+  far.game.resources.arrow = 3;
+  assert.equal(huntReach(far.game), BOW_REACH.stone);
+  assert.equal(huntable(far.game, huntReach(far.game)), far.deer);
+  assert.equal(huntWeapon(far.game, BOW_REACH.stone + 1), null);
+  assert.equal(beginHunt(far.game, animator, far.deer).ok, true);
+  assert.ok(finishHunt(far.game, animator.pending.target, () => 1));
+  assert.equal(far.game.tools.bow.uses, TOOL_USES.bow - 1);
+  assert.equal(far.game.resources.arrow, 2);
+  resetAnimals();
 });
