@@ -1,4 +1,4 @@
-// Checks the seven regions: every part of the world belongs to exactly one, and the places file
+// Checks the eight regions: every part of the world belongs to exactly one, and the places file
 // and the map builder agree about which is which.
 
 import { test } from 'node:test';
@@ -15,7 +15,7 @@ import { LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
 
 // Guards the grid the map builder stored: it must cover the whole world with known regions.
 test('the region grid covers the world and only names known regions', () => {
-  assert.equal(REGIONS.length, 7);
+  assert.equal(REGIONS.length, 8);
   assert.equal(REGION_GRID.cols * REGION_GRID.cell, WORLD.width);
   assert.equal(REGION_GRID.rows * REGION_GRID.cell, WORLD.height);
 
@@ -26,7 +26,7 @@ test('the region grid covers the world and only names known regions', () => {
       assert.ok(REGIONS[i], `square ${cx},${cy}`);
       used.add(i);
     }
-  assert.equal(used.size, 7);
+  assert.equal(used.size, 8);
 });
 
 // Guards the world-map labels: a label on the sea (the lagoon) or on a pool (the desert) looks wrong.
@@ -46,9 +46,9 @@ test('every landmark, signpost and old boat lies inside the region it names', ()
 
 // Guards the starting regions and the name shown at the top of the screen.
 test('each character starts in the expected region', () => {
-  assert.equal(regionAt(SPAWNS.scout), 'Pinefall Woods');
-  assert.equal(regionAt(SPAWNS.builder), 'Hollowstead Meadows');
-  assert.equal(regionAt(SPAWNS.survivor), 'Driftwood Lagoon');
+  assert.equal(regionAt(SPAWNS.scout), 'Pinefall Camp');
+  assert.equal(regionAt(SPAWNS.builder), 'Hollowstead');
+  assert.equal(regionAt(SPAWNS.survivor), 'Driftwood Landing');
 });
 
 // Guards against a crash when a position is right on, or just past, the world's edge.

@@ -19,6 +19,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 SPRING = os.path.join(ROOT, 'assets', 'world', 'spring-country', 'spring-country.tmj')
 PLACES = os.path.join(ROOT, 'assets', 'world', 'source', 'places.json')
 OBJECTS = os.path.join(ROOT, 'assets', 'world', 'source', 'objects.json')
+REGION_CELL = 256   # the region grid's square size (the game map's regionCell); regions assigned to match it
 # Sprites that do not belong in Spring (metals, gems, snow/jungle/desert plants and cliffs). Copied
 # from tools/build-spring-country.py's FORBIDDEN so a landmark never asks for an icon Spring lacks.
 FORBIDDEN = {'iron-ore', 'copper-ore', 'gold-ore', 'diamond-ore', 'cliff-rock', 'ice-rock',
@@ -46,10 +47,9 @@ def region_keys(names):
     return keys
 
 
-# Says which district a spot belongs to: the id of the nearest settlement.
+# Says which district a spot belongs to, matching the game's regionOf exactly (by the spot's grid square).
 def nearest_region(x, y, settlements, ids):
-    best = min(range(len(settlements)), key=lambda i: (settlements[i]['x'] - x) ** 2 + (settlements[i]['y'] - y) ** 2)
-    return ids[best]
+    return ids[sg.region_at(x, y, settlements, REGION_CELL)]
 
 
 # Formats one place as a single line like the hand-written places.json, keeping only the keys it has.

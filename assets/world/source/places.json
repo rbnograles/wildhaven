@@ -47,7 +47,7 @@
     { "id": "h-farmhouse", "region": "hollowstead", "name": "Lonely Farmhouse", "x": 11048, "y": 7648, "object": "house-b" },
     { "id": "h-bridge", "region": "hollowstead", "name": "Kingsbridge", "x": 16468, "y": 9548 },
     { "id": "h-oak", "region": "hollowstead", "name": "The Great Oak", "x": 12248, "y": 10448, "object": "big-oak" },
-    { "id": "h-honeybloom", "region": "hollowstead", "name": "Honeybloom Meadow", "x": 18548, "y": 7648 },
+    { "id": "h-honeybloom", "region": "alder-rest", "name": "Honeybloom Meadow", "x": 18548, "y": 7648 },
     { "id": "h-circle", "region": "stonebrook-hamlet", "name": "Shepherd's Circle", "x": 9648, "y": 9048, "object": "rocks-b" },
     { "id": "h-pond", "region": "hollowstead", "name": "Duckwater Pond", "x": 11448, "y": 11048 },
     { "id": "l-wreck", "region": "driftwood-landing", "name": "Wreck of the Marigold", "x": 23348, "y": 11298 },
