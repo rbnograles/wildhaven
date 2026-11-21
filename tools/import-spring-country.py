@@ -165,10 +165,23 @@ def sprite_of(o):
 ON_WATER = {'sea-wave', 'river-ripple', 'lake-ripple', 'bridge'}
 wet_corner = rank >= WATER
 
+# The spots the player must be able to stand on or gather from: starts, supplies, signposts and the
+# old boats' beaches. A solid object (a fence, say) that covered one would seal it off, so such an
+# object is left out, leaving a gap there. Read from the generated places.json.
+places = json.load(open(os.path.join(SRC, 'places.json')))
+PROTECTED = ([tuple(v) for v in places['spawns'].values()] + [tuple(v) for v in places['supplies'].values()]
+             + [(p['x'], p['y']) for p in places['waypoints']] + [(w['x'], w['y']) for w in places['wrecks']])
+
 # Says why an object can't go into the game, or '' when it can.
-def misplaced(name, x, y):
+def misplaced(name, x, y, scale):
     tx, ty = int(round(x / TILE)), int(round((y - 6) / TILE))
     if name not in ON_WATER and 0 <= ty <= ROWS and 0 <= tx <= COLS and wet_corner[ty, tx]: return 'in the water'
+    base = specs[name].get('footprint')
+    if base:
+        s = specs[name].get('scale', 1) * scale
+        hw, depth, m = base[0] * s, base[1] * s, 30   # a little clearance for the player's own size
+        if any(x - hw - m <= px <= x + hw + m and y - depth - m <= py <= y + m for px, py in PROTECTED):
+            return 'would seal off a start, supply, signpost or old boat'
     return ''
 
 points, skipped, left_out = [], {}, []
@@ -193,7 +206,7 @@ for l in tiled['layers']:
             size = max(1, min(3, ROCK_BASE[name] + (-1 if scale < SIZE_SHRINK else 1 if scale > SIZE_GROW else 0)))
             name = f'{ROCK_MATERIAL.get(name, "grey")}-rock-{SIZE_WORD[size]}'
             scale = 1   # the new sprite is already the right size for its own picture
-        why = misplaced(name, x, y)
+        why = misplaced(name, x, y, scale)
         if why: left_out.append(f'{name} at {round(x)},{round(y)}: {why}'); continue
         point = {'id': len(points) + 1, 'name': name, 'type': name, 'x': round(x), 'y': round(y), 'width': 0,
                  'height': 0, 'rotation': o.get('rotation', 0), 'point': True, 'visible': True}
@@ -239,7 +252,7 @@ layers.append({'id': len(layers) + 1, 'name': 'objects', 'type': 'objectgroup', 
                'visible': True, 'draworder': 'topdown', 'objects': points})
 report['objects'] = len(points)
 if skipped: report['objects the game has no sprite for (left out)'] = skipped
-if left_out: report['objects left out (in water)'] = len(left_out)
+if left_out: report['objects left out (in water or would seal a place)'] = len(left_out)
 
 # ---- the stored values: keep most, but flatten the world and give it Spring's regions ------------------
 # Spring has no hills, so the elevation grid is all level 0 (no walls, no stairs). The region grid is
