@@ -64,6 +64,14 @@ function missingFor(state, cost) {
 const aOrAn = (name) => `${'aeiou'.includes(name[0]) ? 'an' : 'a'} ${name}`;
 
 /**
+ * Makes a word start with a capital letter, so "gold" reads "Gold" at the start of a sentence.
+ *
+ * @param {string} word - A word in small letters.
+ * @returns {string} The word with a big first letter.
+ */
+const capital = (word) => word[0].toUpperCase() + word.slice(1);
+
+/**
  * Checks whether the player can craft the next tier of a tool right now, without changing anything.
  *
  * The first rule that fails is the answer, in the order that helps most: they already own the iron
@@ -102,15 +110,23 @@ export function canCraft(state, tool) {
       message: `Needs ${listMissing(missing)} more${hint}`,
     };
   }
-  if (tier === 'iron' && !hasTool(state, 'hammer'))
-    return { ok: false, tier, cost, reason: 'hammer', message: 'Iron tools need a hammer' };
-  if (tier === 'iron' && !byFire(state))
+  // Every tier above stone is forged: it needs a hammer and the player's fire.
+  const forged = tier !== 'stone';
+  if (forged && !hasTool(state, 'hammer'))
+    return {
+      ok: false,
+      tier,
+      cost,
+      reason: 'hammer',
+      message: `${capital(tier)} tools need a hammer`,
+    };
+  if (forged && !byFire(state))
     return {
       ok: false,
       tier,
       cost,
       reason: 'fire',
-      message: 'Forge iron tools beside your campfire',
+      message: `Forge ${tier} tools beside your campfire`,
     };
   return { ok: true, tier, cost };
 }
@@ -151,9 +167,10 @@ export function finishCraft(state, tool) {
   if (!check.ok) return { ...check, tool };
 
   for (const [type, n] of Object.entries(check.cost)) state.resources[type] -= n;
-  // Forging iron wears a stone hammer one use. The iron hammer replaces the stone one anyway, so
-  // that hammer's wear isn't worth a message.
-  const wear = check.tier === 'iron' ? wearTool(state, 'hammer') : null;
-  state.tools[tool] = check.tier === 'iron' ? { tier: 'iron' } : newStoneTool(tool);
+  const forged = check.tier !== 'stone';
+  // Forging wears a stone hammer one use. A forged tool lasts forever, so it is stored without
+  // uses. A forged hammer replaces the stone one anyway, so that wear isn't worth a message.
+  const wear = forged ? wearTool(state, 'hammer') : null;
+  state.tools[tool] = forged ? { tier: check.tier } : newStoneTool(tool);
   return { ok: true, tool, tier: check.tier, wear: tool === 'hammer' ? null : wear };
 }
