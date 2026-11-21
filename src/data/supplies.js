@@ -55,30 +55,6 @@ export const SUPPLIES = [
     scale: 1,
   },
   {
-    id: 'village-wood',
-    ...SUPPLY_SPOTS['village-wood'],
-    type: 'wood',
-    amount: 4,
-    label: 'Scrap timber',
-    verb: 'Chop',
-    clip: 'chop',
-    tool: 'axe',
-    sprite: 'log',
-    scale: 0.8,
-  },
-  {
-    id: 'village-stone',
-    ...SUPPLY_SPOTS['village-stone'],
-    type: 'stone',
-    amount: 5,
-    label: 'Small boulder',
-    verb: 'Mine',
-    clip: 'build',
-    tool: 'pickaxe',
-    sprite: 'rocks-a',
-    scale: 0.5,
-  },
-  {
     id: 'village-food',
     ...SUPPLY_SPOTS['village-food'],
     type: 'food',
@@ -293,6 +269,18 @@ export const HARVEST = {
   'gold-ore': rock('Gold ore', 'gold', 3),
   'diamond-ore': rock('Diamond ore', 'diamond', 3),
   'ice-rock': rock('Iron-streaked rock', 'iron', 2),
+  // The resource-expansion rocks (tools/build-resource-expansion.py): one picture per size, so a
+  // rock is drawn at the right size instead of one picture stretched. Spring uses the stone ones
+  // (grey, beach) and iron; copper/gold/diamond stay out of Spring.
+  'grey-rock-small': rock('Rock', 'stone', 1),
+  'grey-rock-medium': rock('Rock', 'stone', 2),
+  'grey-rock-big': rock('Boulder', 'stone', 3),
+  'beach-rock-small': rock('Beach rock', 'stone', 1),
+  'beach-rock-medium': rock('Beach rock', 'stone', 2),
+  'beach-rock-big': rock('Beach boulder', 'stone', 3),
+  'iron-rock-small': rock('Iron rock', 'iron', 1),
+  'iron-rock-medium': rock('Iron rock', 'iron', 2),
+  'iron-rock-big': rock('Iron rock', 'iron', 3),
 };
 
 /**

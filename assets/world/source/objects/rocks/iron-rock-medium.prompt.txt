@@ -1,0 +1,1 @@
+Spring resource-expansion iron rock (medium). From tools/build-resource-expansion.py.

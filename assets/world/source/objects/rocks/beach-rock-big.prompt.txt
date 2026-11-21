@@ -1,0 +1,1 @@
+Spring resource-expansion beach rock (big). From tools/build-resource-expansion.py.

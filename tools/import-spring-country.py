@@ -51,6 +51,14 @@ SKIP_SPRITES = {'wheat-4'}
 # Sprites drawn at a fixed scale instead of the Tiled size: the berry bushes were authored large
 # ("big cherry"); the standard is a small bush, so they are pinned small.
 RESCALE = {'wild-berries': 0.4}
+# Rock swap: the old rocks were one picture stretched to each size, which looked wrong. They are
+# swapped for the resource-expansion sprites, which have one correct picture per size. A rock's size
+# is its base size nudged by how big the Tiled map drew it (the game's own SIZE_SHRINK/SIZE_GROW).
+ROCK_BASE = {'rocks-a': 2, 'rocks-b': 2, 'boulder': 3, 'beach-rock': 1}
+ROCK_MATERIAL = {'beach-rock': 'beach'}   # every other rock becomes grey stone
+SIZE_WORD = {1: 'small', 2: 'medium', 3: 'big'}
+SIZE_SHRINK, SIZE_GROW = 0.85, 1.2        # match data/balance.js
+IRON_NEAR = 1600                          # grey rocks this close to a cave become iron ore (mine by the cave)
 
 tiled = json.load(open(SOURCE))
 game = json.load(open(os.path.join(GAME_DIR, 'wildhaven.json')))
@@ -157,10 +165,23 @@ def sprite_of(o):
 ON_WATER = {'sea-wave', 'river-ripple', 'lake-ripple', 'bridge'}
 wet_corner = rank >= WATER
 
+# The spots the player must be able to stand on or gather from: starts, supplies, signposts and the
+# old boats' beaches. A solid object (a fence, say) that covered one would seal it off, so such an
+# object is left out, leaving a gap there. Read from the generated places.json.
+places = json.load(open(os.path.join(SRC, 'places.json')))
+PROTECTED = ([tuple(v) for v in places['spawns'].values()] + [tuple(v) for v in places['supplies'].values()]
+             + [(p['x'], p['y']) for p in places['waypoints']] + [(w['x'], w['y']) for w in places['wrecks']])
+
 # Says why an object can't go into the game, or '' when it can.
-def misplaced(name, x, y):
+def misplaced(name, x, y, scale):
     tx, ty = int(round(x / TILE)), int(round((y - 6) / TILE))
     if name not in ON_WATER and 0 <= ty <= ROWS and 0 <= tx <= COLS and wet_corner[ty, tx]: return 'in the water'
+    base = specs[name].get('footprint')
+    if base:
+        s = specs[name].get('scale', 1) * scale
+        hw, depth, m = base[0] * s, base[1] * s, 30   # a little clearance for the player's own size
+        if any(x - hw - m <= px <= x + hw + m and y - depth - m <= py <= y + m for px, py in PROTECTED):
+            return 'would seal off a start, supply, signpost or old boat'
     return ''
 
 points, skipped, left_out = [], {}, []
@@ -181,7 +202,11 @@ for l in tiled['layers']:
             y = o['y'] + dx * math.sin(turn) + dy * math.cos(turn)
             scale = w / usual_width(name)
         if name in RESCALE: scale = RESCALE[name]
-        why = misplaced(name, x, y)
+        if name in ROCK_BASE:
+            size = max(1, min(3, ROCK_BASE[name] + (-1 if scale < SIZE_SHRINK else 1 if scale > SIZE_GROW else 0)))
+            name = f'{ROCK_MATERIAL.get(name, "grey")}-rock-{SIZE_WORD[size]}'
+            scale = 1   # the new sprite is already the right size for its own picture
+        why = misplaced(name, x, y, scale)
         if why: left_out.append(f'{name} at {round(x)},{round(y)}: {why}'); continue
         point = {'id': len(points) + 1, 'name': name, 'type': name, 'x': round(x), 'y': round(y), 'width': 0,
                  'height': 0, 'rotation': o.get('rotation', 0), 'point': True, 'visible': True}
@@ -190,6 +215,15 @@ for l in tiled['layers']:
                       if q.get('name') in KEPT_PROPERTIES]
         if props_out: point['properties'] = props_out
         points.append(point)
+
+# Iron ore near the caves: a forest cave means minerals, so the grey rocks close to one are mined as
+# iron instead of plain stone. That is the only metal in Spring; copper, gold and diamond stay out.
+caves = [(p['x'], p['y']) for p in points if p['name'] == 'cave-forest']
+iron = 0
+for p in points:
+    if p['name'] in ('grey-rock-medium', 'grey-rock-big') and any(math.hypot(p['x'] - cx, p['y'] - cy) < IRON_NEAR for cx, cy in caves):
+        p['name'] = p['type'] = p['name'].replace('grey', 'iron'); iron += 1
+report['iron rocks near caves'] = iron
 
 # A path square the player can't walk is taken off the path layer, so the path just ends there. Two
 # cases: a square whose middle lies inside something solid (a house put down over a path), and a square
@@ -218,7 +252,7 @@ layers.append({'id': len(layers) + 1, 'name': 'objects', 'type': 'objectgroup', 
                'visible': True, 'draworder': 'topdown', 'objects': points})
 report['objects'] = len(points)
 if skipped: report['objects the game has no sprite for (left out)'] = skipped
-if left_out: report['objects left out (in water)'] = len(left_out)
+if left_out: report['objects left out (in water or would seal a place)'] = len(left_out)
 
 # ---- the stored values: keep most, but flatten the world and give it Spring's regions ------------------
 # Spring has no hills, so the elevation grid is all level 0 (no walls, no stairs). The region grid is

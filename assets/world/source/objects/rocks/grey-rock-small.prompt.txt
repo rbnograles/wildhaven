@@ -1,0 +1,1 @@
+Spring resource-expansion grey rock (small). From tools/build-resource-expansion.py.
