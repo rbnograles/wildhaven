@@ -80,7 +80,14 @@ export function tickAnimals(
   for (const a of WILD_ANIMALS) {
     if (a.phase === 'gone') {
       if (state.time >= a.respawnAt)
-        Object.assign(a, { phase: 'idle', x: a.herd.x, y: a.herd.y, left: 2, clock: 0 });
+        Object.assign(a, {
+          phase: 'idle',
+          x: a.herd.x,
+          y: a.herd.y,
+          hp: ANIMALS[a.kind].hp,
+          left: 2,
+          clock: 0,
+        });
       continue;
     }
     a.clock += dt;

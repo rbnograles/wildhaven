@@ -106,6 +106,7 @@ function atHome(herd, i) {
   return {
     id: `${herd.id}-${i}`,
     kind: herd.kind,
+    hp: ANIMALS[herd.kind].hp,
     herd,
     x,
     y,
