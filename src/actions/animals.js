@@ -325,7 +325,7 @@ export function beginShot(state, animator, creature, chargeFrac) {
     return {
       ok: false,
       reason: 'arrows',
-      message: 'Out of arrows · Fletch more in the Build menu (B)',
+      message: 'Out of arrows Â· Fletch more in the Build menu (B)',
     };
   if (!creature || !isAlive(creature)) return { ok: false, reason: 'far' };
   const d = Math.hypot(state.player.x - creature.x, state.player.y - creature.y);
