@@ -12,6 +12,11 @@ const keyOf = (o) => `${o.name}|${o.x}|${o.y}`;
 
 // Guards against a stale map: the edits file and the map file must tell the same story.
 test('the built map holds every added object and none of the removed ones', () => {
+  // edits.json is the Wildhaven world-editor's hand edits. Spring Country is imported by
+  // tools/import-spring-country.py, which does not apply edits.json, so this check only runs on a
+  // map built from the Wildhaven pipeline.
+  if (mapProperty('importedFrom') === 'spring-country.tmj') return;
+
   const inMap = new Set(MAP_OBJECTS.map(keyOf));
   const added = new Set(EDITS.added.map(keyOf));
 
