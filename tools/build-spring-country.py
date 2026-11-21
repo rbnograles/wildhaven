@@ -17,7 +17,9 @@ from PIL import Image
 from spring_town_layout import NEW_ART, plan_towns, terrain_join_errors
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'assets/world/tiled'
+TILED = ROOT / 'assets/world/tiled'                # shared Tiled kits (terrain + path connectors) still live here
+DEPRECATED = TILED / '_deprecated-wildhaven'       # the old Wildhaven geography + sprite sheet this map is built from
+SPRING = ROOT / 'assets/world/spring-country'       # every spring-country* output now lives in its own folder
 SRC = ROOT / 'assets/world/source'
 ORDER = ['deep', 'water', 'sand', 'grass', 'jungle', 'rock', 'snow', 'dirt', 'soil']
 ALLOWED_GROUND = ['deep', 'water', 'sand', 'grass', 'rock', 'dirt', 'soil']
@@ -84,18 +86,18 @@ def path_join_errors(gids, definitions):
 
 
 def create():
-    source = read(OUT / 'wildhaven-world-arranged.tmj')
+    source = read(DEPRECATED / 'wildhaven-world-arranged.tmj')
     original = {l['name']: l for l in source['layers']}
-    kit = read(OUT / 'terrain-redrawn.json')['materials']
-    paths = read(OUT / 'path-connectors.json')
+    kit = read(TILED / 'terrain-redrawn.json')['materials']
+    paths = read(TILED / 'path-connectors.json')
     specs = {k: v for k, v in read(SRC / 'objects.json').items() if not k.startswith('_')}
     for name in NEW_ART:
-        with Image.open(OUT / 'spring-country-art' / f'{name}.png') as im:
+        with Image.open(SPRING / 'spring-country-art' / f'{name}.png') as im:
             iw, ih = im.size
         fence = name.startswith('fence-')
         specs[name] = dict(kind='props' if fence or name == 'village-well' else 'buildings',
                            origin=[0.5, 1], footprint=[iw*0.46, ih*(0.93 if name == 'fence-vertical' else 0.16)])
-    sheet = read(OUT / 'wildhaven-sheet.json')['objects']
+    sheet = read(DEPRECATED / 'wildhaven-sheet.json')['objects']
     places = read(SRC / 'places.json')
     w, h = source['width'], source['height']
     corner = np.zeros((h + 1, w + 1), dtype=int)
@@ -173,7 +175,7 @@ def create():
     def define(name):
         if name not in definitions:
             if name in specs:
-                path = OUT / 'spring-country-art' / f'{name}.png' if name in NEW_ART else SRC / 'objects' / specs[name]['kind'] / f'{name}.png'
+                path = SPRING / 'spring-country-art' / f'{name}.png' if name in NEW_ART else SRC / 'objects' / specs[name]['kind'] / f'{name}.png'
                 with Image.open(path) as im:
                     width, height = im.size
                 relative = 'spring-country-art/'+name+'.png' if name in NEW_ART else '../source/objects/'+specs[name]['kind']+'/'+name+'.png'
@@ -359,7 +361,7 @@ def create():
     for wreck in places['wrecks']:
         add('old-boat', wreck['x'], wreck['y'], height=90, extra={'repairable': True, 'woodCost': 6, 'stoneCost': 2})
         marker('Future country sea route', 'country-exit', *wreck['launch'], destination='unassigned', enabled=False)
-    tilesets = [dict(firstgid=1, source='terrain-redrawn.tsx'), dict(firstgid=FIRST_PATH, source='path-connectors.tsx'), dict(firstgid=FIRST_OBJECT, source='spring-country-objects.tsx')]
+    tilesets = [dict(firstgid=1, source='../tiled/terrain-redrawn.tsx'), dict(firstgid=FIRST_PATH, source='../tiled/path-connectors.tsx'), dict(firstgid=FIRST_OBJECT, source='spring-country-objects.tsx')]
     world = dict(type='map', version='1.10', tiledversion='1.11.0', orientation='orthogonal', renderorder='right-down',
                  width=w, height=h, tilewidth=64, tileheight=64, infinite=False, nextlayerid=len(layers)+1, nextobjectid=uid,
                  tilesets=tilesets, layers=layers, properties=props(country='spring', biome='spring', difficulty='balanced',
@@ -437,8 +439,8 @@ def create():
 
 
 def write_assets(report):
-    art = OUT / 'spring-country-art'
-    art.mkdir(exist_ok=True)
+    art = SPRING / 'spring-country-art'
+    art.mkdir(parents=True, exist_ok=True)
     root = ET.Element('tileset', version='1.10', tiledversion='1.11.0', name='spring-country-objects', tilewidth='640', tileheight='640', tilecount=str(len(report['spriteDefinitions'])), columns='0', objectalignment='bottom')
     ET.SubElement(root, 'grid', orientation='orthogonal', width='1', height='1')
     for name, d in report['spriteDefinitions'].items():
@@ -448,7 +450,7 @@ def write_assets(report):
         tile = ET.SubElement(root, 'tile', id=str(d['id']), type=name)
         ET.SubElement(tile, 'image', source=d['image'], width=str(d['width']), height=str(d['height']))
     ET.indent(root, space=' ')
-    ET.ElementTree(root).write(OUT / 'spring-country-objects.tsx', encoding='UTF-8', xml_declaration=True)
+    ET.ElementTree(root).write(SPRING / 'spring-country-objects.tsx', encoding='UTF-8', xml_declaration=True)
 
 
 def detail(world, x, y, who):
@@ -465,7 +467,7 @@ def detail(world, x, y, who):
             for o in l['objects']:
                 o['x'] -= tx*64
                 o['y'] -= ty*64
-    (OUT / f'spring-country-detail-{who}.tmj').write_text(json.dumps(result, separators=(',', ':')), encoding='utf-8')
+    (SPRING / f'spring-country-detail-{who}.tmj').write_text(json.dumps(result, separators=(',', ':')), encoding='utf-8')
 
 
 def main():
@@ -477,8 +479,8 @@ def main():
             or any(len(s['reachableFrom']) != len(report['starts']) for s in report['settlements'])):
         raise ValueError('Spring validation failed; see tests before saving')
     write_assets(report)
-    (OUT / 'spring-country.tmj').write_text(json.dumps(world, separators=(',', ':')), encoding='utf-8')
-    (OUT / 'spring-country-report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
+    (SPRING / 'spring-country.tmj').write_text(json.dumps(world, separators=(',', ':')), encoding='utf-8')
+    (SPRING / 'spring-country-report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     for who, start in report['starts'].items():
         detail(world, start['x'], start['y'], who)
     print(json.dumps({k: report[k] for k in ('dimensions', 'objectCount', 'pathTiles', 'resourceNodes', 'starts', 'forbiddenObjects')}, indent=2))

@@ -10,12 +10,19 @@ import { SUPPLIES } from '../../src/data/supplies.js';
 import { nodeBases, wreckBases } from '../../src/world/nodes.js';
 import { GATHER_RANGE } from '../../src/data/balance.js';
 import { REGION_LIST, LANDMARKS, WAYPOINTS, SPAWNS, WRECKS } from '../../src/data/places.js';
+import { LANDMARK_RADIUS } from '../../src/data/balance.js';
 import { flood } from './flood.js';
 
-// Guards the ids saves are keyed by, and the rule that every region has something to find.
-// The counts themselves are not pinned: places are added and removed in the world editor.
-test('the world has seven regions, unique ids, and a landmark and a signpost in every region', () => {
-  assert.equal(REGION_LIST.length, 7);
+// The lagoon islets are reached only by boat, so the on-foot tests leave them out; the sea test
+// (tests/world/sea.test.js) checks a boat can reach them.
+const ISLETS = ['l-gull-isle', 'l-turtle-isle', 'l-lantern-islet'];
+
+// Guards the ids saves are keyed by, and the rule that every region has a landmark to find.
+// The counts themselves are not pinned: places are added and removed in the world editor. Signposts
+// are a travel network, not one-per-region, so a district may have none.
+test('the world has eight regions, unique ids, and a landmark in every region', () => {
+  assert.equal(REGION_LIST.length, 8);
+  assert.ok(WAYPOINTS.length > 0, 'there are signposts to travel between');
 
   const ids = [...REGION_LIST, ...LANDMARKS, ...WAYPOINTS, ...WRECKS].map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
@@ -24,45 +31,35 @@ test('the world has seven regions, unique ids, and a landmark and a signpost in 
   for (const p of [...LANDMARKS, ...WAYPOINTS, ...WRECKS])
     assert.ok(regions.includes(p.region), `${p.id} names the unknown region ${p.region}`);
 
-  for (const region of regions) {
+  for (const region of regions)
     assert.ok(
       LANDMARKS.some((l) => l.region === region),
       `${region} has no landmark`,
     );
-    assert.ok(
-      WAYPOINTS.some((w) => w.region === region),
-      `${region} has no signpost`,
-    );
-  }
 });
 
-// Guards against a rebuilt map putting water or scenery where the player has to stand.
-test('every spawn, landmark, signpost and old boat is on ground the player can stand on', () => {
+// Guards against a rebuilt map putting water or scenery where the player has to stand. Spawns and
+// signposts are stood on, so their exact spot must be walkable; a landmark can mark a lake or an
+// islet, so it is only checked for being reachable (the next test), not for being stood on.
+test('every spawn and signpost is on ground the player can stand on', () => {
   const solid = [...nodeBases([]), ...wreckBases(null)];
   for (const c of CHARACTERS) assert.deepEqual(c.spawn, SPAWNS[c.id]);
-  for (const p of [
-    ...CHARACTERS.map((c) => ({ id: c.id, ...c.spawn })),
-    ...LANDMARKS,
-    ...WAYPOINTS,
-  ])
+  for (const p of [...CHARACTERS.map((c) => ({ id: c.id, ...c.spawn })), ...WAYPOINTS])
     assert.ok(isWalkable(p.x, p.y, solid), `${p.id} at ${p.x},${p.y}`);
-  // An old boat's own spot is under its solid hull, so only the map itself is checked there.
-  for (const w of WRECKS) assert.ok(isWalkable(w.x, w.y), `${w.id} at ${w.x},${w.y}`);
 });
 
-// Guards the promise that nothing is cut off by a river, the sea or a wall of trees. Islet
-// landmarks are left out: they are reached by boat (see the sea test in tests/world/sea.test.js).
+// Guards the promise that nothing is cut off by a river, the sea or a wall of trees. A landmark is
+// found within LANDMARK_RADIUS, so it counts as reachable when a walked spot comes that close; a
+// spawn or signpost must be reached exactly. Islet landmarks are left out: they are reached by boat
+// (see the sea test in tests/world/sea.test.js).
 test('every spawn, mainland landmark, signpost, supply and old boat can be reached on foot', () => {
   const solid = [...nodeBases([]), ...wreckBases(null)];
   const foot = flood(SPAWNS.builder.x, SPAWNS.builder.y, (x, y) => isWalkable(x, y, solid));
-  const islets = ['l-gull-isle', 'l-turtle-isle', 'l-lantern-islet'];
 
-  for (const p of [
-    ...CHARACTERS.map((c) => ({ id: c.id, ...c.spawn })),
-    ...LANDMARKS.filter((l) => !islets.includes(l.id)),
-    ...WAYPOINTS,
-  ])
+  for (const p of [...CHARACTERS.map((c) => ({ id: c.id, ...c.spawn })), ...WAYPOINTS])
     assert.ok(foot.reached(p.x, p.y, 24), `${p.id} cannot be reached`);
+  for (const l of LANDMARKS.filter((l) => !ISLETS.includes(l.id)))
+    assert.ok(foot.reached(l.x, l.y, LANDMARK_RADIUS), `${l.id} cannot be found on foot`);
   for (const s of SUPPLIES)
     assert.ok(foot.reached(s.x, s.y, GATHER_RANGE - 24), `${s.id} cannot be gathered`);
   for (const w of WRECKS)

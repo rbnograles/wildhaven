@@ -51,8 +51,8 @@ const MAX_BODY = 1_000_000;
 /** How long after a save or rebuild the page is kept from reloading itself, in milliseconds. */
 const QUIET = 3000;
 
-/** The Tiled map the game plays, when there is one (see tools/import-tiled-world.py). */
-const TILED_MAP = 'assets/world/tiled/wildhaven-world-arranged.tmj';
+/** The Tiled map the game plays, when there is one (see tools/import-tiled-world.py). Deprecated Wildhaven map; Spring Country is imported with tools/import-spring-country.py. */
+const TILED_MAP = 'assets/world/tiled/_deprecated-wildhaven/wildhaven-world-arranged.tmj';
 
 /**
  * The commands a rebuild runs, in order. Each runs only if the one before succeeds. When a Tiled map

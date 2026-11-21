@@ -4,7 +4,7 @@
 // through finishCraft, which checks everything again and only then pays, so nothing is paid twice.
 
 import { TOOL_RECIPES, CRAFT_SECONDS } from '../data/balance.js';
-import { toolInfo } from '../data/tools.js';
+import { toolInfo, TIERS } from '../data/tools.js';
 import { toolTier, hasTool, newStoneTool, wearTool } from '../world/tools.js';
 import { byFire } from '../world/camps.js';
 import { listMissing } from './boat.js';
@@ -16,15 +16,19 @@ export const CRAFT_PREFIX = 'craft:';
 /**
  * Says which tier of a tool the player would craft next.
  *
+ * Climbs the tier ladder (stone → iron → gold → diamond) and returns the first tier above the one
+ * they own that this tool actually has a recipe for. Gathering tools only have stone and iron
+ * recipes, so they stop at iron; weapons have all four.
+ *
  * @param {object} state - The game being played.
  * @param {string} tool - The tool's id, such as 'axe'.
- * @returns {string|null} 'stone' when they don't own it, 'iron' when they own the stone one, and
- *   null when they already own the iron one.
+ * @returns {string|null} The next craftable tier, or null when they already own the top one.
  */
 export function nextTier(state, tool) {
   const tier = toolTier(state, tool);
-  if (!tier) return 'stone';
-  return tier === 'stone' ? 'iron' : null;
+  const ladder = TIERS.filter((t) => TOOL_RECIPES[tool][t]);
+  const at = tier ? ladder.indexOf(tier) : -1;
+  return ladder[at + 1] ?? null;
 }
 
 /**
@@ -52,6 +56,14 @@ function missingFor(state, cost) {
 }
 
 /**
+ * Puts "a" or "an" in front of a name, choosing by its first sound.
+ *
+ * @param {string} name - A name such as "iron sword" or "gold axe".
+ * @returns {string} The name with the right word in front.
+ */
+const aOrAn = (name) => `${'aeiou'.includes(name[0]) ? 'an' : 'a'} ${name}`;
+
+/**
  * Checks whether the player can craft the next tier of a tool right now, without changing anything.
  *
  * The first rule that fails is the answer, in the order that helps most: they already own the iron
@@ -71,7 +83,7 @@ export function canCraft(state, tool) {
       ok: false,
       tier,
       reason: 'owned',
-      message: `You already have an ${toolName(tool, 'iron')}`,
+      message: `You already have ${aOrAn(toolName(tool, toolTier(state, tool)))}`,
     };
   const cost = TOOL_RECIPES[tool][tier];
   if (state.aboard)
