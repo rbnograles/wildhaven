@@ -28,11 +28,16 @@ FORBIDDEN = {'iron-ore', 'copper-ore', 'gold-ore', 'diamond-ore', 'cliff-rock', 
 # The four old boats (A1 sailing). The Spring map was built around these same beach/launch points, so
 # they stay fixed here; only the region (district) and the player-facing name are set for Spring.
 WRECKS = [
-    {'id': 'wreck-north', 'x': 14948, 'y': 2338, 'launch': [14828, 2288]},
-    {'id': 'wreck-west', 'x': 2024, 'y': 8848, 'launch': [1974, 8728]},
-    {'id': 'wreck-south', 'x': 11048, 'y': 18619, 'launch': [10918, 18619]},
-    {'id': 'wreck-east', 'x': 23682, 'y': 10748, 'launch': [23632, 10628]},
+    {'id': 'wreck-north', 'x': 14948, 'y': 2410, 'launch': [14828, 2288]},
+    {'id': 'wreck-west', 'x': 2096, 'y': 8848, 'launch': [1974, 8728]},
+    {'id': 'wreck-south', 'x': 11048, 'y': 18579, 'launch': [10918, 18619]},
+    {'id': 'wreck-east', 'x': 23634, 'y': 10748, 'launch': [23632, 10628]},
 ]
+# Landmarks whose marker sits in water (a lake, pond or pool centre): moved a few units to the walkable
+# shore so the player can stand there and find it. Computed once against the Spring map's collision.
+NUDGE = {'d-oasis': [5044, 4268], 's-tarn': [19116, 4992], 'h-pond': [11444, 11052], 'j-pool': [10244, 15660]}
+# Landmarks dropped from Spring: Gull Isle marks open lagoon water with no island to reach.
+DROP_LANDMARKS = {'l-gull-isle'}
 
 
 # Picks a short, unique letter key for each region, used by the world editor.
@@ -99,8 +104,11 @@ def main():
     landmarks = []
     for mk in markers['landmarks']:
         lm_id = mk['props'].get('landmarkId') or sg.slug(mk['name'])
-        row = {'id': lm_id, 'region': nearest_region(mk['x'], mk['y'], settlements, ids),
-               'name': mk['name'], 'x': mk['x'], 'y': mk['y']}
+        if lm_id in DROP_LANDMARKS:
+            continue
+        x, y = NUDGE.get(lm_id, [mk['x'], mk['y']])   # water-feature landmarks move to their shore
+        row = {'id': lm_id, 'region': nearest_region(x, y, settlements, ids),
+               'name': mk['name'], 'x': x, 'y': y}
         icon = old_object.get(lm_id)
         if icon and icon not in FORBIDDEN and icon in specs:
             row['object'] = icon

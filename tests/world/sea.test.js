@@ -61,7 +61,7 @@ test('one shallow sea joins every old boat and reaches each islet', () => {
   const sea = flood(east.launch.x, east.launch.y, isSailable);
   for (const w of WRECKS) assert.ok(sea.reached(w.launch.x, w.launch.y, 24), `${w.id} is cut off`);
 
-  for (const id of ['l-gull-isle', 'l-turtle-isle', 'l-lantern-islet']) {
+  for (const id of ['l-turtle-isle', 'l-lantern-islet']) {
     const place = LANDMARKS.find((l) => l.id === id);
     const islet = flood(place.x, place.y, (x, y) => isWalkable(x, y));
     assert.ok(

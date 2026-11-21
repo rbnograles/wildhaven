@@ -51,7 +51,7 @@ class Places(unittest.TestCase):
         with open(PLACES, encoding='utf-8') as f:
             p = json.load(f)
         self.assertEqual(len(p['regions']), 8)
-        self.assertEqual(len(p['landmarks']), 52)
+        self.assertEqual(len(p['landmarks']), 51)
         self.assertEqual(len(p['waypoints']), 14)
         self.assertEqual(len(p['wrecks']), 4)
         self.assertEqual(p['spawns']['scout'], [14348, 4148])
