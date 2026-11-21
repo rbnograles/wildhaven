@@ -20,6 +20,9 @@ import {
   beginHunt,
   finishHunt,
   applyHit,
+  beginSwing,
+  beginShot,
+  huntIdOf,
 } from '../../src/actions/animals.js';
 import {
   FLEE_RUNNING,
@@ -236,4 +239,67 @@ test('finishHunt deals one hit, not an instant kill', () => {
   assert.equal(r.wounded, true);
   assert.equal(a.hp, 2);
   resetAnimals();
+});
+
+// A sword swing starts a melee action aimed at a creature in reach, with the sword in the target.
+test('beginSwing starts a sword action on a nearby creature', () => {
+  const state = createGame('scout');
+  state.tools.sword = { tier: 'iron' };
+  const animator = { pending: null };
+  const a = {
+    id: 'herd-x-0',
+    kind: 'deer',
+    hp: 4,
+    phase: 'idle',
+    x: state.player.x + 30,
+    y: state.player.y,
+  };
+  const r = beginSwing(state, animator, a);
+  assert.equal(r.ok, true);
+  assert.equal(animator.pending.target, 'hunt:herd-x-0:sword:10');
+});
+
+// A bow shot encodes the charge as tenths in the target; a tap is 0, a full hold is 10.
+test('beginShot encodes charge in the target', () => {
+  const state = createGame('scout');
+  state.tools.bow = { tier: 'stone' };
+  state.resources.arrow = 5;
+  const a = {
+    id: 'herd-y-1',
+    kind: 'rabbit',
+    hp: 2,
+    phase: 'idle',
+    x: state.player.x + 150,
+    y: state.player.y,
+  };
+
+  const tap = { pending: null };
+  beginShot(state, tap, a, 0);
+  assert.ok(tap.pending.target.endsWith(':bow:0'));
+
+  const full = { pending: null };
+  beginShot(state, full, a, 1);
+  assert.ok(full.pending.target.endsWith(':bow:10'));
+});
+
+// A bow with no arrows refuses the shot with a clear reason.
+test('beginShot needs arrows', () => {
+  const state = createGame('scout');
+  state.tools.bow = { tier: 'stone' };
+  state.resources.arrow = 0;
+  const a = {
+    id: 'herd-z-0',
+    kind: 'deer',
+    hp: 4,
+    phase: 'idle',
+    x: state.player.x + 150,
+    y: state.player.y,
+  };
+  assert.equal(beginShot(state, { pending: null }, a, 1).reason, 'arrows');
+});
+
+// The shared helper must drop the weapon and charge suffix, or the loop would freeze the wrong animal.
+test('huntIdOf drops the weapon suffix', () => {
+  assert.equal(huntIdOf('hunt:herd-a-1'), 'herd-a-1');
+  assert.equal(huntIdOf('hunt:herd-a-1:bow:7'), 'herd-a-1');
 });

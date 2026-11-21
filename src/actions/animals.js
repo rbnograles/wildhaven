@@ -30,6 +30,9 @@ import { weaponDamage } from './combat.js';
 /** The start of a timed hunting action's target: `hunt:<animal id>`. */
 export const HUNT_PREFIX = 'hunt:';
 
+/** Pulls the creature id out of a hunt action target, dropping any :weapon:tenths suffix. */
+export const huntIdOf = (target) => target.slice(HUNT_PREFIX.length).split(':')[0];
+
 // How far from the player an animal is still worth moving each frame; farther ones wait, unseen.
 const AWAKE = 3000;
 
@@ -195,7 +198,7 @@ export function huntWeapon(state, d) {
  * Picks the swing animation for a weapon, in the metal the player owns.
  *
  * The axe keeps its chopping swing, a sword gets its own slash, and a bow its draw-and-loose. Each
- * has a stone and an iron picture, so an iron weapon shows the iron art.
+ * has a stone and an iron picture, so every metal above stone shows the iron art.
  *
  * @param {object} state - The game being played.
  * @param {string} tool - The weapon's id: 'axe', 'sword' or 'bow'.
@@ -203,7 +206,8 @@ export function huntWeapon(state, d) {
  */
 export function huntClip(state, tool) {
   const base = tool === 'axe' ? 'chop' : tool;
-  return base + (toolTier(state, tool) === 'iron' ? 'Iron' : '');
+  // Only stone and iron swing sheets exist; gold and diamond reuse the iron art for now.
+  return base + (toolTier(state, tool) !== 'stone' ? 'Iron' : '');
 }
 
 /**
@@ -272,6 +276,71 @@ export function beginHunt(state, animator, animal) {
   state.player.direction = facing(animal.x - state.player.x, 0) === 1 ? 1 : 2;
   startAction(animator, huntClip(state, weapon.tool), `${HUNT_PREFIX}${animal.id}`, weapon.seconds);
   return { ok: true, tool: weapon.tool };
+}
+
+/**
+ * Starts a sword swing at a creature in reach: what the left mouse button does while a weapon is
+ * drawn. The swing's clip plays for the sword's tier time, and finishInteraction lands the hit.
+ *
+ * @param {object} state - The game being played. The player turns to face the creature.
+ * @param {object} animator - The player's animation state.
+ * @param {object} creature - The animal or wolf to hit (picked by meleeTarget).
+ * @returns {{ok: boolean, tool?: string, reason?: string, message?: string}} Whether the swing
+ *   started, or why not: 'busy', 'tool' (no sword), 'far', or 'full' (no room for the food).
+ */
+export function beginSwing(state, animator, creature) {
+  if (animator.pending) return { ok: false, reason: 'busy' };
+  if (!hasTool(state, 'sword')) return { ok: false, reason: 'tool' };
+  if (!creature || !isAlive(creature)) return { ok: false, reason: 'far' };
+  const d = Math.hypot(state.player.x - creature.x, state.player.y - creature.y);
+  if (d > HUNT_REACH) return { ok: false, reason: 'far' };
+  if (!creature.den && !hasRoomFor(state, { food: ANIMALS[creature.kind].food }))
+    return { ok: false, reason: 'full', message: BAG_FULL };
+  state.player.direction = creature.x < state.player.x ? 1 : 2;
+  startAction(
+    animator,
+    huntClip(state, 'sword'),
+    `${HUNT_PREFIX}${creature.id}:sword:10`,
+    SWORD_SECONDS[toolTier(state, 'sword')],
+  );
+  return { ok: true, tool: 'sword' };
+}
+
+/**
+ * Starts a bow shot at a locked creature: what releasing the right mouse button does. How long the
+ * button was held (0 to 1) is turned into tenths and carried in the target, so finishInteraction
+ * knows how charged the shot was, and so how strong.
+ *
+ * @param {object} state - The game being played. The player turns to face the target.
+ * @param {object} animator - The player's animation state.
+ * @param {object} creature - The locked creature (from aimTarget).
+ * @param {number} chargeFrac - How charged the shot is, 0 (quick tap) to 1 (full hold).
+ * @returns {{ok: boolean, tool?: string, charge?: number, reason?: string, message?: string}}
+ *   Whether the shot started, or why not: 'busy', 'tool' (no bow), 'arrows', 'far', or 'full'.
+ */
+export function beginShot(state, animator, creature, chargeFrac) {
+  if (animator.pending) return { ok: false, reason: 'busy' };
+  if (!hasTool(state, 'bow')) return { ok: false, reason: 'tool' };
+  if (!hasArrows(state))
+    return {
+      ok: false,
+      reason: 'arrows',
+      message: 'Out of arrows · Fletch more in the Build menu (B)',
+    };
+  if (!creature || !isAlive(creature)) return { ok: false, reason: 'far' };
+  const d = Math.hypot(state.player.x - creature.x, state.player.y - creature.y);
+  if (d > BOW_REACH[toolTier(state, 'bow')]) return { ok: false, reason: 'far' };
+  if (!creature.den && !hasRoomFor(state, { food: ANIMALS[creature.kind].food }))
+    return { ok: false, reason: 'full', message: BAG_FULL };
+  state.player.direction = creature.x < state.player.x ? 1 : 2;
+  const tenths = Math.round(Math.min(Math.max(chargeFrac, 0), 1) * 10);
+  startAction(
+    animator,
+    huntClip(state, 'bow'),
+    `${HUNT_PREFIX}${creature.id}:bow:${tenths}`,
+    BOW_SECONDS,
+  );
+  return { ok: true, tool: 'bow', charge: tenths / 10 };
 }
 
 /**

@@ -12,7 +12,7 @@ import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
 import { growCrops } from '../world/buildings.js';
 import { tidyBag } from '../world/bag.js';
-import { tickAnimals } from '../actions/animals.js';
+import { tickAnimals, huntIdOf } from '../actions/animals.js';
 import { tickWolves } from '../actions/wolves.js';
 import { tickVillagers } from '../actions/villagers.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
@@ -282,13 +282,13 @@ export function startLoop(session, ui) {
         tickAnimals(state, dt, {
           running: moving && running,
           hunting: animator.pending?.target?.startsWith('hunt:')
-            ? animator.pending.target.slice(5).split(':')[0]
+            ? huntIdOf(animator.pending.target)
             : null,
         });
         // The wolves guard their dens by day and roam at night; a growl or a bite is told in a toast.
         const howled = tickWolves(state, dt, {
           hunting: animator.pending?.target?.startsWith('hunt:wolf-')
-            ? animator.pending.target.slice(5).split(':')[0]
+            ? huntIdOf(animator.pending.target)
             : null,
         });
         if (howled.some((e) => e.kind === 'bite')) [bittenAt, bittenGameAt] = [now, state.time];
