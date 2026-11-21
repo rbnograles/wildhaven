@@ -18,7 +18,7 @@ import {
   FOG_CELL,
   TOOL_USES,
 } from '../data/balance.js';
-import { TOOL_IDS } from '../data/tools.js';
+import { TOOL_IDS, TIERS } from '../data/tools.js';
 import { BUILT } from '../actions/boat.js';
 import { isWalkable, isSailable, SEA_BORDER } from '../world/map.js';
 import { NODES, isSceneryNode } from '../world/nodes.js';
@@ -233,9 +233,12 @@ const copyCamp = (c) => ({
 /** Says whether a value is a plain object (not null, not a list), like a saved `regrowAt`. */
 const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 
+// Tiers stored without a use count: they never wear out. Stone is the only one that does.
+const PERMANENT_TIERS = TIERS.filter((t) => t !== 'stone');
+
 /**
- * Checks the saved tools: only known tools, each either iron or stone with a sensible number of
- * uses left.
+ * Checks the saved tools: only known tools, each either a forged (permanent) tier or stone with a
+ * sensible number of uses left.
  *
  * @param {*} tools - The `tools` read from a save.
  * @returns {boolean} True if the game can use them.
@@ -246,7 +249,7 @@ const isTools = (tools) =>
     ([id, t]) =>
       TOOL_IDS.includes(id) &&
       isPlainObject(t) &&
-      (t.tier === 'iron' ||
+      (PERMANENT_TIERS.includes(t.tier) ||
         (t.tier === 'stone' &&
           Number.isSafeInteger(t.uses) &&
           t.uses >= 1 &&
@@ -254,7 +257,7 @@ const isTools = (tools) =>
   );
 
 /**
- * Copies checked tools field by field: iron ones as `{tier}`, stone ones with their uses left.
+ * Copies checked tools field by field: forged ones as `{tier}`, stone ones with their uses left.
  *
  * @param {object} tools - Tools that passed `isTools`.
  * @returns {object} A fresh tools object.
@@ -263,7 +266,7 @@ const copyTools = (tools) =>
   Object.fromEntries(
     Object.entries(tools).map(([id, t]) => [
       id,
-      t.tier === 'iron' ? { tier: 'iron' } : { tier: 'stone', uses: t.uses },
+      PERMANENT_TIERS.includes(t.tier) ? { tier: t.tier } : { tier: 'stone', uses: t.uses },
     ]),
   );
 

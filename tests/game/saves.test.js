@@ -26,6 +26,18 @@ function memoryStorage() {
   };
 }
 
+// A save that holds a forged gold or diamond weapon (no uses, like iron) must load with its tier
+// kept, not be thrown away as unreadable.
+test('gold and diamond weapons survive a save and load', () => {
+  const state = createGame('scout');
+  state.tools.sword = { tier: 'gold' };
+  state.tools.bow = { tier: 'diamond' };
+  const loaded = restoreGame(serializeGame(state));
+  assert.ok(loaded);
+  assert.deepEqual(loaded.tools.sword, { tier: 'gold' });
+  assert.deepEqual(loaded.tools.bow, { tier: 'diamond' });
+});
+
 // Guards against an old tab (still showing old progress) saving over a newer save that another
 // tab made. The old tab must notice the conflict and back off.
 test('a stale tab cannot overwrite another tab’s newer character progress', () => {

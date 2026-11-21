@@ -241,7 +241,7 @@ test('invalid, outdated, mismatched and impossible save data is rejected', () =>
     (g) => (g.tools = undefined),
     (g) => (g.tools = []),
     (g) => (g.tools = { saw: { tier: 'stone', uses: 1 } }),
-    (g) => (g.tools = { axe: { tier: 'gold' } }),
+    (g) => (g.tools = { axe: { tier: 'bronze' } }),
     (g) => (g.tools = { axe: { tier: 'stone', uses: 0 } }),
     (g) => (g.tools = { axe: { tier: 'stone', uses: 1.5 } }),
     // An antler grip can take a stone tool up to twice a new one's uses, and no further.
