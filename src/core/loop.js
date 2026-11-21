@@ -17,7 +17,13 @@ import { tickWolves } from '../actions/wolves.js';
 import { tickVillagers } from '../actions/villagers.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
-import { REPAIR_COST, HUNGRY_BELOW, APPROACH_STUCK, STAND_STUCK } from '../data/balance.js';
+import {
+  REPAIR_COST,
+  HUNGRY_BELOW,
+  APPROACH_STUCK,
+  STAND_STUCK,
+  CHARGE_SECONDS,
+} from '../data/balance.js';
 import { markFinds, describeNeed } from '../world/needs.js';
 import { revealAround } from '../world/fog.js';
 import { inSnow } from '../world/regions.js';
@@ -237,7 +243,10 @@ export function startLoop(session, ui) {
       let moving = false;
 
       // Opening a dialog (the map, a camp, pause) calls off a walk to a clicked tree or rock.
-      if (ui.dialogs.isPaused()) session.walk = null;
+      if (ui.dialogs.isPaused()) {
+        session.walk = null;
+        session.combat.aiming = null;
+      }
 
       // The simulation only runs while nothing is paused and the tab is visible.
       if (!ui.dialogs.isPaused() && !document.hidden) {
@@ -302,6 +311,14 @@ export function startLoop(session, ui) {
           ui.hud.update();
         }
         ui.build.update(); // keep the build ghost on the pointer
+
+        // Walking away drops a bow aim; otherwise the charge grows while the right button is held.
+        if (dx || dy) session.combat.aiming = null;
+        if (session.combat.aiming)
+          session.combat.aiming.charge = Math.min(
+            1,
+            (now - session.combat.aiming.start) / 1000 / CHARGE_SECONDS,
+          );
 
         // Rowing into deep water: say why the boat won't go on, but not every frame.
         if (deepAhead(state, dx, dy) && now - warnedDeepAt > DEEP_WARN_MS) {
