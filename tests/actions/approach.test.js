@@ -25,12 +25,12 @@ const apart = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  * Lists the trees and rocks a little way from the scout's start, nearest first.
  *
  * @param {object} game - The game being played.
- * @returns {object[]} Map trees and rocks between 200 and 900 units from the player.
+ * @returns {object[]} Map trees and rocks between 150 and 1200 units from the player.
  */
 function farTargets(game) {
   return NODES.filter((n) => n.inScenery)
     .map((n) => ({ n, d: apart(n, game.player) }))
-    .filter(({ d }) => d > 200 && d < 900)
+    .filter(({ d }) => d > 150 && d < 1200)
     .sort((a, b) => a.d - b.d)
     .map(({ n }) => n);
 }
