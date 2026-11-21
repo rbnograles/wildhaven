@@ -47,7 +47,7 @@ test('placing is refused too far away, on the player, or on a supply', () => {
   assert.equal(checkPlacement(game, game.player.x + PLACE_RANGE + 1, game.player.y).reason, 'far');
   assert.equal(checkPlacement(game, game.player.x, game.player.y + 30).reason, 'blocked');
 
-  const supply = NODES.find((n) => n.id === 'village-wood');
+  const supply = NODES.find((n) => n.id === 'village-food');
   game.player.x = supply.x;
   game.player.y = supply.y + 100;
   assert.equal(checkPlacement(game, supply.x + 20, supply.y).reason, 'blocked');
