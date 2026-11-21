@@ -44,7 +44,7 @@ class SpringCountryTest(unittest.TestCase):
                     self.assertAlmostEqual(obj['width']/obj['height'], d['width']/d['height'], places=2)
 
     def test_port_checker_rejects_a_broken_neighbor(self):
-        paths = spring.read(spring.OUT / 'path-connectors.json')['dirt']
+        paths = spring.read(spring.TILED / 'path-connectors.json')['dirt']
         gids = np.array([[paths['2']+spring.FIRST_PATH, paths['8']+spring.FIRST_PATH]])
         self.assertEqual(spring.path_join_errors(gids, paths), 0)
         gids[0, 1] = paths['2']+spring.FIRST_PATH

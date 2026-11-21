@@ -1,4 +1,8 @@
-"""Brings the world map drawn in Tiled into the game: writes assets/world/map/ from a Tiled map.
+"""DEPRECATED (Wildhaven). Spring Country is the active map — bring it in with tools/import-spring-country.py.
+
+Brings the world map drawn in Tiled into the game: writes assets/world/map/ from a Tiled map.
+This legacy importer still works on the old seven-region Wildhaven map, now in
+assets/world/tiled/_deprecated-wildhaven/. The shared terrain and path kits stay in assets/world/tiled/.
 
 The game draws and collides with assets/world/map/wildhaven.json. build-map.py makes that file from the
 generated world; this script makes it from a map edited by hand in Tiled instead, so the game looks exactly like
@@ -36,7 +40,8 @@ from PIL import Image
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(TOOLS, '..', 'assets', 'world')
 TILED, GAME_DIR, SRC = os.path.join(ROOT, 'tiled'), os.path.join(ROOT, 'map'), os.path.join(ROOT, 'source')
-SOURCE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(TILED, 'wildhaven-world-arranged.tmj')
+DEP = os.path.join(TILED, '_deprecated-wildhaven')   # the old Wildhaven map and sprite sheet live here now
+SOURCE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(DEP, 'wildhaven-world-arranged.tmj')
 TILE = 64                      # the tiles' size in pixels and world units
 KIT = ['deep', 'water', 'sand', 'grass', 'jungle', 'rock', 'snow', 'dirt', 'soil']   # Tiled's ground layers, bottom first
 GAME = ['grass', 'dirt', 'soil', 'jungle', 'rock', 'snow', 'sand', 'water', 'deep']  # the game's, by rank
@@ -58,7 +63,7 @@ game = json.load(open(os.path.join(GAME_DIR, 'wildhaven.json')))
 props = {p['name']: p['value'] for p in game['properties']}
 COLS, ROWS = tiled['width'], tiled['height']
 assert (COLS, ROWS) == (game['width'], game['height']), 'the Tiled map must be the same size as the game map'
-sheet_spots = json.load(open(os.path.join(TILED, 'wildhaven-sheet.json')))['objects']
+sheet_spots = json.load(open(os.path.join(DEP, 'wildhaven-sheet.json')))['objects']
 names = list(sheet_spots)
 kit = json.load(open(os.path.join(TILED, 'terrain-redrawn.json')))['materials']
 first = {os.path.basename(t.get('source') or t.get('name')): t['firstgid'] for t in tiled['tilesets']}
@@ -151,7 +156,7 @@ for name in sorted(used):
     if name in specs or name not in NEW_SPRITES: continue
     kind, footprint, source = NEW_SPRITES[name]
     s = sheet_spots[name]
-    piece = Image.open(os.path.join(TILED, 'wildhaven-sheet.png')).crop((s['x'], s['y'], s['x'] + s['width'], s['y'] + s['height']))
+    piece = Image.open(os.path.join(DEP, 'wildhaven-sheet.png')).crop((s['x'], s['y'], s['x'] + s['width'], s['y'] + s['height']))
     png = os.path.join(SRC, 'objects', kind, f'{name}.png'); os.makedirs(os.path.dirname(png), exist_ok=True)
     piece.save(png)
     prompt = open(os.path.join(SRC, source[:-4] + '.prompt.txt'), encoding='utf-8').read()
