@@ -544,9 +544,12 @@ export function createHud(session) {
    * @param {object} state - The game being played.
    */
   function updateTools(state) {
-    for (const { id, name } of TOOLS) {
+    const drawn = session.combat.drawn;
+    $('stance-marker').hidden = !drawn;
+    for (const { id, name, weapon } of TOOLS) {
       const chip = $(`tool-${id}`),
         owned = state.tools[id];
+      chip.classList.toggle('drawn', drawn && Boolean(weapon) && Boolean(owned));
       chip.classList.toggle('empty', !owned);
       chip.classList.toggle('iron', owned?.tier === 'iron');
       chip.querySelector('.tool-state').textContent = !owned

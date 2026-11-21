@@ -381,6 +381,7 @@ export function mountLayout(app) {
                   >${icon(t.icon)}<span class="tool-state">—</span></span
                 >`,
             ).join('')}
+            <span id="stance-marker" class="stance-marker" hidden>Weapon drawn (Q)</span>
           </div>
           <div class="hotbar">
             <!-- Two boxes of ten slots: the backpack's (hidden until it is made) sits above the

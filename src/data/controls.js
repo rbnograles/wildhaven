@@ -30,7 +30,7 @@ export const CONTROLS = [
     rows: [
       { keys: ['W A S D', 'Arrows'], does: 'Walk, or row the boat' },
       { keys: ['Shift'], does: 'Hold to run, or to row faster' },
-      { keys: ['Click'], does: 'Walk to a tree, rock or patch and gather it' },
+      { keys: ['Click'], does: 'Walk to a tree, rock or patch and gather it (when sheathed)' },
     ],
   },
   {
@@ -50,6 +50,12 @@ export const CONTROLS = [
         does: 'At your camp: pack up the tent, take down buildings, put out the fire',
       },
       { keys: ['R'], does: 'Drive back wolves close by' },
+      { keys: ['Q'], does: 'Draw or sheathe your weapon (sword + bow)' },
+      { keys: ['Left click'], does: 'Swing the sword (while drawn)' },
+      {
+        keys: ['Right click'],
+        does: 'Aim the bow: tap for a quick shot, hold to charge (while drawn)',
+      },
     ],
   },
   {
