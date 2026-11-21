@@ -2726,6 +2726,33 @@ dialog::backdrop {
   gap: 10px;
 }
 
+/* Empty state: the open-notebook sprite with one short line written across its blank pages. */
+.journal-empty {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.journal-empty-book {
+  width: min(460px, 100%);
+  height: auto;
+  display: block;
+}
+
+/* The line sits over the middle of the two pages, kept narrow so it reads like a note in the book. */
+.journal-empty-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 58%;
+  margin: 0;
+  text-align: center;
+  font: 400 17px/1.4 var(--serif);
+  color: #6b5a3f;
+}
+
 .journal-page {
   display: flex;
   gap: 12px;

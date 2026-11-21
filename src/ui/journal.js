@@ -79,9 +79,32 @@ export function setupJournal(session, ui) {
   /**
    * Fills the dialog with the chosen region's pages and its trail clue.
    *
-   * @param {object} journal - What `readJournal` returned for that region.
+   * If there is no journal to show yet (none of the regions on the current map has pages — Spring
+   * Country ships without journal content), it lays out a short empty state instead so the dialog
+   * still opens and the Controls tab is reachable.
+   *
+   * @param {object|null} journal - What `readJournal` returned, or null when no region has a journal.
    */
   function render(journal) {
+    // Empty state: no pages to show, so hide the intro, trail and pages and show the open notebook
+    // with one line written across it, pointing at the Controls tab.
+    if (!journal) {
+      $('journal-title').textContent = 'Field journal';
+      $('journal-count').textContent = '';
+      $('journal-intro').hidden = true;
+      $('journal-trail').hidden = true;
+      $('journal-pages').hidden = true;
+      $('journal-empty').hidden = false;
+      $('journal-empty-text').textContent =
+        'No places to record here yet. Open the Controls tab to see every key and button.';
+      return;
+    }
+
+    // A map with pages shows the intro, trail and pages, and hides the empty notebook.
+    $('journal-intro').hidden = false;
+    $('journal-trail').hidden = false;
+    $('journal-pages').hidden = false;
+    $('journal-empty').hidden = true;
     $('journal-title').textContent = journal.regionName;
     $('journal-intro').textContent = journal.intro;
     $('journal-count').textContent = `${journal.found} of ${journal.total} pages filled`;
@@ -167,9 +190,11 @@ export function setupJournal(session, ui) {
     if (ui.dialogs.isPaused()) return;
 
     session.keys.clear();
-    const journal = readJournal(session.state, journalRegion());
+    const region = journalRegion();
+    const journal = region ? readJournal(session.state, region) : null;
     render(journal);
-    showTab('places');
+    // With no place pages to read, open straight to the Controls tab, which is the useful half.
+    showTab(journal ? 'places' : 'controls');
     $('journal-dialog').showModal();
     seen.set(session.state, pagesFound());
     refreshDot();

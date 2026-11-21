@@ -17,6 +17,7 @@ import leatherIconUrl from '../../assets/ui/game/item-leather.png';
 import wolfpeltIconUrl from '../../assets/ui/game/item-wolfpelt.png';
 import arrowIconUrl from '../../assets/ui/game/item-arrow.png';
 import journalIconUrl from '../../assets/ui/game/icon-journal.png';
+import journalOpenUrl from '../../assets/ui/game/journal-open.png';
 import healthIconUrl from '../../assets/ui/game/status-icon-health.png';
 import hungerIconUrl from '../../assets/ui/game/status-icon-hunger.png';
 import warmthIconUrl from '../../assets/ui/game/status-icon-warmth.png';
@@ -529,6 +530,11 @@ export function mountLayout(app) {
           <p id="journal-trail-text"></p>
         </div>
         <ol id="journal-pages" class="journal-pages"></ol>
+        <!-- Shown instead of pages when no region has a journal yet: an open notebook with a line on it. -->
+        <div id="journal-empty" class="journal-empty" hidden>
+          <img class="journal-empty-book" src="${journalOpenUrl}" alt="" />
+          <p id="journal-empty-text" class="journal-empty-text"></p>
+        </div>
       </div>
       <!-- The controls list. ui/journal.js builds it once from data/controls.js. -->
       <div

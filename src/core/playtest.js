@@ -59,9 +59,15 @@ export function logFinds(session, finds) {
  * Logs that the journal was opened, how full it is, and the clue it showed.
  *
  * @param {object} session - The shared session.
- * @param {object} journal - What `readJournal` returned for the region shown.
+ * @param {object|null} journal - What `readJournal` returned, or null when no region has a journal.
  */
 export function logJournalOpen(session, journal) {
+  // No journal content on this map (Spring Country): log the bare open and nothing about a trail.
+  if (!journal) {
+    write(session, 'opened journal: no pages on this map');
+    return;
+  }
+
   const clue = journal.trail ? `, trail points to ${journal.trail.name}` : ', every page filled';
   write(session, `opened journal: ${journal.found}/${journal.total} ${journal.regionName}${clue}`);
   if (journal.trail && !cluesRead.has(journal.trail.id))
