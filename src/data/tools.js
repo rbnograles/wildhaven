@@ -2,8 +2,9 @@
 // two tiers (stone, iron). A weapon is kept, crafted, worn out and saved exactly like a tool.
 // What a tool costs and how long it lasts are game balance, so those numbers live in balance.js.
 
-/** The tiers a tool can be, weakest first. Stone tools wear out; iron tools last forever. */
-export const TIERS = ['stone', 'iron'];
+/** The tiers a tool can be, weakest first. Stone tools wear out; iron and up last forever.
+ *  Gathering tools are only made in stone and iron (no gold/diamond recipe); weapons go all the way. */
+export const TIERS = ['stone', 'iron', 'gold', 'diamond'];
 
 /**
  * Every tool, in Build menu order.

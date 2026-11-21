@@ -31,8 +31,10 @@ test('every tool is reachable from each character start', () => {
       const hammer = made.has('stone hammer') || made.has('iron hammer');
       for (const tool of TOOL_IDS)
         for (const tier of TIERS) {
+          const recipe = TOOL_RECIPES[tool][tier];
+          if (!recipe) continue; // gathering tools stop at iron; weapons go to diamond
           const key = `${tier} ${tool}`;
-          const materials = Object.keys(TOOL_RECIPES[tool][tier]).every((t) => can.has(t));
+          const materials = Object.keys(recipe).every((t) => can.has(t));
           const extras = tier === 'stone' || (made.has(`stone ${tool}`) && hammer && fire);
           if (!made.has(key) && materials && extras) {
             made.add(key);
@@ -42,7 +44,9 @@ test('every tool is reachable from each character start', () => {
     }
 
     for (const tool of TOOL_IDS)
-      for (const tier of TIERS)
+      for (const tier of TIERS) {
+        if (!TOOL_RECIPES[tool][tier]) continue;
         assert.ok(made.has(`${tier} ${tool}`), `${character.id} can't reach the ${tier} ${tool}`);
+      }
   }
 });
