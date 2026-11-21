@@ -31,7 +31,7 @@ import { TAKEDOWN_PREFIX, FIRE } from '../actions/takedown.js';
 import { renderItemBox } from './itembox.js';
 import { BUILDINGS, buildingInfo } from '../data/buildings.js';
 import { campAt, centreOf } from '../world/buildings.js';
-import { HUNT_PREFIX, canHunt } from '../actions/animals.js';
+import { HUNT_PREFIX, canHunt, huntIdOf } from '../actions/animals.js';
 import { FISH_PREFIX } from '../actions/fish.js';
 import { animalById } from '../world/animals.js';
 import { ANIMALS } from '../data/animals.js';
@@ -248,7 +248,7 @@ function busyLabel(state, animator) {
       : 'Taking it down… move to stop';
   if (target.startsWith(HUNT_PREFIX + 'wolf-')) return 'Fighting the wolf… move to stop';
   if (target.startsWith(HUNT_PREFIX)) {
-    const animal = animalById(target.slice(HUNT_PREFIX.length));
+    const animal = animalById(huntIdOf(target));
     return `Hunting the ${animal ? ANIMALS[animal.kind].name : 'animal'}… move to stop`;
   }
   if (target.startsWith(FARM_PREFIX)) {

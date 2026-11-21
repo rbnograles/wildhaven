@@ -389,7 +389,7 @@ export function startLoop(session, ui) {
       // While walking to a clicked one, its badge stays up so the player sees where they are going.
       session.hover = ui.input.hover();
       const aim = session.hover ?? (session.walk && { node: session.walk.node, state: 'ready' });
-      renderer.draw(state, dt, animator, session.build, aim);
+      renderer.draw(state, dt, animator, session.build, aim, session.combat);
       clock.sinceHud += dt;
       if (clock.sinceHud > HUD_EVERY) {
         ui.hud.update();
