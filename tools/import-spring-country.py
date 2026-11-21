@@ -45,6 +45,12 @@ KEPT_PROPERTIES = {'holds', 'mineral'}   # object properties the game map keeps 
 # Authoring-only Tiled layers the game does not read: the gameplay markers and the wildlife preview art.
 # Live animals come from the seed-based herd system, so importing the preview art would double them.
 SKIP_LAYERS = {'Gameplay markers - show to edit', 'Wildlife spawn art', 'places'}
+# Sprites left off the Spring map on purpose: the wheat bed is a thing the player crafts to grow food,
+# so it must not be scattered as scenery.
+SKIP_SPRITES = {'wheat-4'}
+# Sprites drawn at a fixed scale instead of the Tiled size: the berry bushes were authored large
+# ("big cherry"); the standard is a small bush, so they are pinned small.
+RESCALE = {'wild-berries': 0.4}
 
 tiled = json.load(open(SOURCE))
 game = json.load(open(os.path.join(GAME_DIR, 'wildhaven.json')))
@@ -162,6 +168,7 @@ for l in tiled['layers']:
     if l['type'] != 'objectgroup' or l['name'] in SKIP_LAYERS: continue
     for o in l['objects']:
         name = sprite_of(o)
+        if name in SKIP_SPRITES: continue
         if name not in specs: skipped[name] = skipped.get(name, 0) + 1; continue
         if 'gid' not in o:
             if not o.get('point'): skipped[name] = skipped.get(name, 0) + 1; continue
@@ -173,6 +180,7 @@ for l in tiled['layers']:
             x = o['x'] + dx * math.cos(turn) - dy * math.sin(turn)
             y = o['y'] + dx * math.sin(turn) + dy * math.cos(turn)
             scale = w / usual_width(name)
+        if name in RESCALE: scale = RESCALE[name]
         why = misplaced(name, x, y)
         if why: left_out.append(f'{name} at {round(x)},{round(y)}: {why}'); continue
         point = {'id': len(points) + 1, 'name': name, 'type': name, 'x': round(x), 'y': round(y), 'width': 0,
