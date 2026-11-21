@@ -551,16 +551,18 @@ export function createHud(session) {
         owned = state.tools[id];
       chip.classList.toggle('drawn', drawn && Boolean(weapon) && Boolean(owned));
       chip.classList.toggle('empty', !owned);
-      chip.classList.toggle('iron', owned?.tier === 'iron');
+      // Gold and diamond weapons have no chip picture yet, so they borrow the iron one.
+      const advanced = Boolean(owned) && owned.tier !== 'stone';
+      chip.classList.toggle('iron', advanced);
       chip.querySelector('.tool-state').textContent = !owned
         ? '—'
-        : owned.tier === 'iron'
-          ? 'Iron'
+        : advanced
+          ? capital(owned.tier)
           : String(owned.uses);
       chip.title = !owned
         ? `No ${name} yet · Craft one in the Build menu (B)`
-        : owned.tier === 'iron'
-          ? `Iron ${name}`
+        : advanced
+          ? `${capital(owned.tier)} ${name}`
           : `Stone ${name} · ${owned.uses} uses left`;
     }
   }

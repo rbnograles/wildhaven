@@ -508,3 +508,17 @@ Added the sword/bow attack animations and the bow's aim ring + flying arrow. Che
 - `npm run build` and `npm run format:check` pass. `npm test`: **348 pass / 2 fail**. The two failures are a pre-existing weapons WIP, unrelated to Spring: "every tool has a recipe for each tier…" fails because `TIERS` includes `gold`/`diamond` with no recipes yet (confirmed failing with the Spring changes reverted). The world/sea flood-fill tests prove every Spring spawn, landmark, signpost, supply and old boat is reachable, and the editor's `checkPlaces` is clean.
 - Save handling: old-world saves whose regions/places/positions don't exist in Spring are handled by the existing restoreGame validation (unknown ids dropped; incompatible on-foot positions refuse to load, starting fresh). No save-version bump was needed.
 - Browser smoke test at `127.0.0.1:5179` (Scout and Builder): Spring loads with no console errors. Scout spawns in **Pinefall Camp** (village with houses and the `village-well` sprite rendering); Builder spawns in **Hollowstead** with the **Woodsworker villager** rendering and the welcome toast reading "Welcome to Hollowstead". The selection screen shows each character's Spring district (Pinefall Camp / Hollowstead / Driftwood Landing) and "1 of 8 regions".
+
+## Mouse combat (2026-11-21, to verify in the browser)
+
+Not yet browser-checked. Once the Spring world spawns animals, play through with a character that owns a sword and a bow:
+
+- Q draws and sheathes the weapon; the stance marker appears in the tools row and the sword and bow chips glow.
+- Left click swings the sword and fells a deer in the expected number of hits for the tier (stone, iron, gold, diamond).
+- Right click: a quick tap and a held draw do different damage; the aim path and charge ring show.
+- Lock-on keeps following an animal while it runs.
+- Arrows run down with each shot, and the out-of-arrows toast shows when none are left.
+- E beside an animal still hunts (the old fallback).
+- Wolves are fought over several hits, not one.
+- A gold or diamond weapon shows the iron picture and its tier name in the tools row and Build menu.
+- Layout at about 390 px wide (stance marker wraps), and no console errors.
