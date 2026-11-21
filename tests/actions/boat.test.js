@@ -12,9 +12,9 @@ import {
   BOAT_SPEED,
   BOAT_FAST_SPEED,
 } from '../../src/data/balance.js';
-import { isWalkable, isSailable } from '../../src/world/map.js';
+import { isWalkable, isSailable, isDryLand } from '../../src/world/map.js';
 import { solidBases } from '../../src/world/nodes.js';
-import { movePlayer } from '../../src/actions/move.js';
+import { movePlayer, facing } from '../../src/actions/move.js';
 import { createGame } from '../../src/game/state.js';
 import { createAnimator, advanceAnimation } from '../../src/animation/clips.js';
 import {
@@ -33,6 +33,9 @@ import {
 
 /** The old boat on the lagoon shore, near the survivor's start. */
 const east = WRECKS.find((w) => w.id === 'wreck-east');
+
+// Which way a repaired boat points: from its beach toward its launch spot (which way is open water).
+const eastDir = facing(east.launch.x - east.x, east.launch.y - east.y);
 
 // The jungle beach's old boat. Open sea lies straight south of it, so the tests that row out to deep
 // water start here: east of the lagoon's boat a spit of snow painted in Tiled is in the way.
@@ -97,7 +100,7 @@ test('a repair takes REPAIR_SECONDS, pays exactly once and floats the boat at it
   assert.deepEqual(advanceAnimation(animator, 0.02, {}), { clip: 'build', target: 'wreck-east' });
   assert.equal(finishRepair(game, 'wreck-east'), east);
   assert.deepEqual([game.resources.wood, game.resources.stone], [0, 0]);
-  assert.deepEqual(game.boat, { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: 2 });
+  assert.deepEqual(game.boat, { from: 'wreck-east', x: east.launch.x, y: east.launch.y, dir: eastDir });
 
   assert.equal(finishRepair(game, 'wreck-east'), null);
   assert.deepEqual([game.resources.wood, game.resources.stone], [0, 0]);
@@ -174,7 +177,8 @@ test('the boat sails only on shallow sea: deep water and the beach stop it', () 
 
   for (let i = 0; i < 900; i++) movePlayer(game, 0, -1, 0.1);
   assert.ok(isSailable(game.player.x, game.player.y));
-  assert.ok(game.player.y > south.y);
+  // The shallows stop the boat short of the sand: dry land lies just north of where it halts.
+  assert.ok(isDryLand(game.player.x, game.player.y - 64), 'shallows stop short of the sand');
   assert.equal(deepAhead(game, 0, -1), false);
   assert.equal(deepAhead(createGame('scout'), 1, 0), false); // on foot there is no warning
 });
@@ -209,7 +213,7 @@ test('sending the boat home floats it at its launch spot and takes the player ou
 
   assert.equal(sendBoatHome(game), true);
   assert.equal(game.aboard, false);
-  assert.deepEqual(game.boat, { from: east.id, x: east.launch.x, y: east.launch.y, dir: 2 });
+  assert.deepEqual(game.boat, { from: east.id, x: east.launch.x, y: east.launch.y, dir: eastDir });
   assert.equal(sendBoatHome(game), false); // already home
 
   const repaired = besideWreck();
