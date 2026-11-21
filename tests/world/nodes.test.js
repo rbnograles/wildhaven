@@ -98,7 +98,8 @@ test('flowers give herbs, driftwood and sticks give wood, small stones give ston
     herbs = wild.filter((n) => n.sprite === 'wild-herbs'),
     finds = wild.filter((n) => FINDS[n.sprite]);
   assert.ok(flowers.length >= 30);
-  assert.ok(driftwood.length >= 12);
+  // Spring scatters no beach driftwood (sticks are the bare-hands wood there); a world with it has plenty.
+  assert.ok(driftwood.length === 0 || driftwood.length >= 12);
   assert.ok(pebbles.length >= 150);
   assert.ok(berries.length >= 60);
   assert.ok(sticks.length >= 60);
