@@ -13,3 +13,14 @@ Use the existing arranged world as the geography and settlement base. Preserve i
 Verified 2026-11-21: two focused tests pass; 39 image references resolve; Tiled opens the map without asset errors. Three starts and eight settlement centers share the traversable component. Every start exceeds the minimum reachable bare-hand supply budget. Final output has 19,820 objects, 11,232 resource nodes and 2,057 connected path tiles. Visual review corrected overlapping houses, east-bay zigzag land, and forage rendering over roofs/canopies. See `assets/world/tiled/SPRING-COUNTRY.md` for editing and simulation limits.
 
 Gameplay country switching and importing this new country over the currently edited live seven-region world are separate integration work. The authoring deliverable must clearly identify this boundary and include usable spawn/resource metadata.
+
+## Town and waterway expansion — 2026-11-21
+
+- [x] Generate town hall, inn, market building, barn, well and two wooden fence sprites.
+- [x] Lay out one major town and seven small villages with four open gates each.
+- [x] Add six diagonal routes and validate shared terrain corners at every path join.
+- [x] Widen waterways, extend bridges, relocate Willowbank inland and keep starter supplies reachable.
+- [x] Render overview and seven details; inspect town, village, diagonal and river views; open final map in native Tiled.
+- [x] Pass all three focused tests, including connectivity, dry resources, forbidden ores and broken-join rejection.
+
+Current canonical output is `assets/world/spring-country/spring-country.tmj`; shared terrain kits remain in `assets/world/tiled`. Expansion totals supersede the earlier build above: 17,414 objects, 9,739 resource nodes, 9,585 path tiles, 153 fence segments, zero path-join errors and zero unreachable gates. See `assets/world/spring-country/SPRING-COUNTRY.md` for the updated editing guide and integration limits.

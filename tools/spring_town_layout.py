@@ -38,9 +38,14 @@ def plan_towns(road, corner, wet, settlements):
             a,b,c,d = left+inset,right-inset,top+inset,bottom-inset
             for p,q in (((a,c),(b,c)),((b,c),(b,d)),((b,d),(a,d)),((a,d),(a,c))):
                 paint_line(trails,p,q,100 if inset < 0 else 120)
-        for p,q in (((cx,top-160),(cx,bottom+160)),((left-160,cy),(right+160,cy))):
+        for p,q in (((cx,cy-3*64 if major else top-160),(cx,bottom+160)),((left-160,cy),(right+160,cy))):
             paint_line(trails,p,q,170 if major else 120)
         if major:
+            paint_line(trails,(cx,top-160),(cx,cy-18*64),140)
+            for side in (-1,1):
+                approach=[(cx,cy-18*64),(cx+side*7*64,cy-17*64),(cx+side*7*64,cy-5*64),(cx,cy-3*64)]
+                for p,q in zip(approach,approach[1:]):
+                    paint_line(trails,p,q,120)
             plan=[(0,-9,'town-hall'),(-13,-5,'country-inn'),(13,-5,'market-stall'),
                   (-15,-14,'house-a'),(15,-14,'house-b'),(-15,7,'house-c'),(-7,7,'house-a'),
                   (7,7,'house-b'),(15,7,'house-a'),(-14,17,'farm-barn'),(14,17,'workshop'),
@@ -60,18 +65,20 @@ def plan_towns(road, corner, wet, settlements):
                     paint_line(trails,(x,y+24),(x,cy+row*64),100)
         yy,xx=np.mgrid[:h+1,:w+1]
         plaza=((xx*64-cx)/ (310 if major else 160))**2+((yy*64-cy)/(250 if major else 140))**2<1
-        corner[plaza & ~wet]=7
+        trails |= plaza & ~wet
         for x,y,direction in ((cx,top,'north'),(right,cy,'east'),(cx,bottom,'south'),(left,cy,'west')):
             gates.append(dict(village=name,x=x,y=y,direction=direction,width=256))
         for y in (top,bottom):
             # Overlap terminal posts, not the rails, to avoid breaks between modules.
-            for x in np.arange(left+120,right,240):
+            count=int(np.ceil((right-left)/240))
+            for x in left+(np.arange(count)+0.5)*(right-left)/count:
                 if abs(x-cx)<240:
                     continue
                 fences.append(('fence-horizontal',float(x),y))
         for x in (left,right):
-            for y in np.arange(top+200,bottom+1,200):
-                if cy-240 < y < cy+240:
+            count=int(np.ceil((bottom-top)/200))
+            for y in top+(np.arange(count)+1)*(bottom-top)/count:
+                if y > cy-128 and y-216 < cy+128:
                     continue
                 fences.append(('fence-vertical',x,float(y)))
     # Add slanted field/country trails, in both diagonal directions; retain river crossings.

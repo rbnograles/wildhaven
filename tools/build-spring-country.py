@@ -10,6 +10,8 @@ import copy
 import json
 import math
 import random
+import os
+import tempfile
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -30,7 +32,7 @@ FORBIDDEN = {'iron-ore', 'copper-ore', 'gold-ore', 'diamond-ore', 'cliff-rock', 
 SETTLEMENTS = [('Hollowstead', 14336, 9348), ('Pinefall Camp', 14288, 4108),
                ('Blossom Crossroads', 4248, 7148), ('Stonebrook Hamlet', 6648, 9648),
                ('Alder Rest', 23048, 6948), ('Driftwood Landing', 22900, 10700),
-               ('Greenbough Camp', 7248, 16848), ('Willowbank', 3000, 16600)]
+               ('Greenbough Camp', 7248, 16848), ('Willowbank', 4960, 16736)]
 HEIGHT = {'pine': 210, 'pines': 265, 'oak': 265, 'big-oak': 315,
           'house-a': 250, 'house-b': 270, 'house-c': 280, 'workshop': 290,
           'tent': 150, 'ship': 470, 'signpost': 75, 'rocks-a': 105, 'rocks-b': 105,
@@ -55,6 +57,14 @@ RESOURCE = {
 
 def read(path):
     return json.loads(path.read_text(encoding='utf-8'))
+
+
+def save_json(path, value, indent=None):
+    # Publish complete files atomically so Tiled/file previews never read a partial map.
+    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent, suffix='.tmp', delete=False) as handle:
+        json.dump(value, handle, indent=indent, separators=None if indent else (',', ':'))
+        staged = handle.name
+    os.replace(staged, path)
 
 
 def props(**values):
@@ -243,9 +253,11 @@ def create():
     for gate in gates:
         marker(gate['village']+' '+gate['direction']+' gate', 'village-gate', gate['x'], gate['y'], clearWidth=gate['width'])
     for _, sx, sy in SETTLEMENTS:
-        for dx, dy in ((-220, 250), (240, 280), (-240, -230)):
+        for dx, dy in ((-450, 250), (450, 250), (-350, -350)):
             x, y = sx+dx, sy+dy
-            if dry_at(x, y) and not blocked(x, y, 90) and not clear_road[int(y//64), int(x//64)]:
+            if (dry_at(x, y) and not blocked(x, y, 90) and not clear_road[int(y//64), int(x//64)]
+                    and not any(a-120 < x < c+120 and b < y < d+220 for a,b,c,d in roofs)
+                    and all(math.hypot(x-bx,y-by)>300 for _,bx,by in village_buildings)):
                 add('oak', x, y, height=225)
     for old in objects:
         name = old.get('type')
@@ -453,21 +465,21 @@ def write_assets(report):
     ET.ElementTree(root).write(SPRING / 'spring-country-objects.tsx', encoding='UTF-8', xml_declaration=True)
 
 
-def detail(world, x, y, who):
+def detail(world, x, y, who, width=20, height=14):
     result = copy.deepcopy(world)
-    tx, ty = int(x//64)-10, int(y//64)-7
-    result['width'], result['height'] = 20, 14
+    tx, ty = int(x//64)-width//2, int(y//64)-height//2
+    result['width'], result['height'] = width, height
     for l in result['layers']:
         if l['type'] == 'tilelayer':
             a = np.array(l['data']).reshape(world['height'], world['width'])
-            l['data'] = a[ty:ty+14, tx:tx+20].ravel().tolist()
-            l['width'], l['height'] = 20, 14
+            l['data'] = a[ty:ty+height, tx:tx+width].ravel().tolist()
+            l['width'], l['height'] = width, height
         else:
-            l['objects'] = [o for o in l['objects'] if tx*64-350 < o['x'] < (tx+20)*64+350 and ty*64 < o['y'] < (ty+14)*64+350]
+            l['objects'] = [o for o in l['objects'] if tx*64-600 < o['x'] < (tx+width)*64+600 and ty*64 < o['y'] < (ty+height)*64+600]
             for o in l['objects']:
                 o['x'] -= tx*64
                 o['y'] -= ty*64
-    (SPRING / f'spring-country-detail-{who}.tmj').write_text(json.dumps(result, separators=(',', ':')), encoding='utf-8')
+    save_json(SPRING / f'spring-country-detail-{who}.tmj', result)
 
 
 def main():
@@ -476,13 +488,18 @@ def main():
     bad_starts = any(not s['walkable'] or any(s['reachableBudget'].get(k, 0) < v for k, v in minimum.items())
                      for s in report['starts'].values())
     if (report['forbiddenObjects'] or report['invalidResourcePositions'] or report['pathJoinErrors'] or bad_starts
-            or any(len(s['reachableFrom']) != len(report['starts']) for s in report['settlements'])):
+            or report['unreachableGates'] or any(len(s['reachableFrom']) != len(report['starts']) for s in report['settlements'])):
         raise ValueError('Spring validation failed; see tests before saving')
     write_assets(report)
-    (SPRING / 'spring-country.tmj').write_text(json.dumps(world, separators=(',', ':')), encoding='utf-8')
-    (SPRING / 'spring-country-report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
+    save_json(SPRING / 'spring-country.tmj', world)
+    save_json(SPRING / 'spring-country-report.json', report, indent=2)
     for who, start in report['starts'].items():
         detail(world, start['x'], start['y'], who)
+    detail(world,14336,9348,'town',54,48)
+    detail(world,14288,4108,'village',28,28)
+    detail(world,13728,7360,'diagonal',30,28)
+    bridge = next(o for l in world['layers'] for o in l.get('objects',[]) if o.get('type')=='bridge')
+    detail(world,property_of(bridge,'footX'),property_of(bridge,'footY'),'river',30,24)
     print(json.dumps({k: report[k] for k in ('dimensions', 'objectCount', 'pathTiles', 'resourceNodes', 'starts', 'forbiddenObjects')}, indent=2))
 
 

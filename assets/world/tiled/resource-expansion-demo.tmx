@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="48" height="116" tilewidth="64" tileheight="64" infinite="0" backgroundcolor="#687447">
+ <tileset firstgid="1" source="resource-expansion.tsx" />
+ <objectgroup id="1" name="Rock sizes by material; coconuts on last row">
+  <object id="1" name="grey-rock-small" gid="1" x="384" y="680" width="48" height="47" />
+  <object id="2" name="grey-rock-medium" gid="2" x="1152" y="680" width="112" height="94" />
+  <object id="3" name="grey-rock-big" gid="3" x="1920" y="680" width="240" height="206" />
+  <object id="4" name="grey-rock-mountain" gid="4" x="2688" y="680" width="640" height="586" />
+  <object id="5" name="flat-rock-small" gid="5" x="384" y="1400" width="48" height="27" />
+  <object id="6" name="flat-rock-medium" gid="6" x="1152" y="1400" width="112" height="83" />
+  <object id="7" name="flat-rock-big" gid="7" x="1920" y="1400" width="240" height="190" />
+  <object id="8" name="flat-rock-mountain" gid="8" x="2688" y="1400" width="640" height="503" />
+  <object id="9" name="mossy-rock-small" gid="9" x="384" y="2120" width="48" height="41" />
+  <object id="10" name="mossy-rock-medium" gid="10" x="1152" y="2120" width="112" height="95" />
+  <object id="11" name="mossy-rock-big" gid="11" x="1920" y="2120" width="240" height="194" />
+  <object id="12" name="mossy-rock-mountain" gid="12" x="2688" y="2120" width="640" height="559" />
+  <object id="13" name="beach-rock-small" gid="13" x="384" y="2840" width="48" height="41" />
+  <object id="14" name="beach-rock-medium" gid="14" x="1152" y="2840" width="112" height="87" />
+  <object id="15" name="beach-rock-big" gid="15" x="1920" y="2840" width="240" height="204" />
+  <object id="16" name="beach-rock-mountain" gid="16" x="2688" y="2840" width="640" height="566" />
+  <object id="17" name="ice-rock-small" gid="17" x="384" y="3560" width="48" height="39" />
+  <object id="18" name="ice-rock-medium" gid="18" x="1152" y="3560" width="112" height="86" />
+  <object id="19" name="ice-rock-big" gid="19" x="1920" y="3560" width="240" height="202" />
+  <object id="20" name="ice-rock-mountain" gid="20" x="2688" y="3560" width="640" height="559" />
+  <object id="21" name="iron-rock-small" gid="21" x="384" y="4280" width="48" height="42" />
+  <object id="22" name="iron-rock-medium" gid="22" x="1152" y="4280" width="112" height="80" />
+  <object id="23" name="iron-rock-big" gid="23" x="1920" y="4280" width="240" height="188" />
+  <object id="24" name="iron-rock-mountain" gid="24" x="2688" y="4280" width="640" height="560" />
+  <object id="25" name="copper-rock-small" gid="25" x="384" y="5000" width="48" height="44" />
+  <object id="26" name="copper-rock-medium" gid="26" x="1152" y="5000" width="112" height="91" />
+  <object id="27" name="copper-rock-big" gid="27" x="1920" y="5000" width="240" height="206" />
+  <object id="28" name="copper-rock-mountain" gid="28" x="2688" y="5000" width="640" height="552" />
+  <object id="29" name="gold-rock-small" gid="29" x="384" y="5720" width="48" height="44" />
+  <object id="30" name="gold-rock-medium" gid="30" x="1152" y="5720" width="112" height="85" />
+  <object id="31" name="gold-rock-big" gid="31" x="1920" y="5720" width="240" height="176" />
+  <object id="32" name="gold-rock-mountain" gid="32" x="2688" y="5720" width="640" height="547" />
+  <object id="33" name="diamond-rock-small" gid="33" x="384" y="6440" width="47" height="48" />
+  <object id="34" name="diamond-rock-medium" gid="34" x="1152" y="6440" width="112" height="102" />
+  <object id="35" name="diamond-rock-big" gid="35" x="1920" y="6440" width="240" height="207" />
+  <object id="36" name="diamond-rock-mountain" gid="36" x="2688" y="6440" width="640" height="557" />
+  <object id="37" name="coconut-palm" gid="37" x="384" y="7160" width="256" height="320" />
+  <object id="38" name="coconut" gid="38" x="1152" y="7160" width="24" height="24" />
+ </objectgroup>
+</map>

@@ -70,12 +70,12 @@ def normalize(a, mask, horizontal, vertical):
     return Image.fromarray(a)
 
 
-def load_tiles():
-    with Image.open(OUT / 'source/path-connectors-clean.png') as source:
-        if source.size != (1536, 1024):
-            raise ValueError('Expected six 256px columns by four 256px rows')
+def load_tiles(source_path=None, names=NAMES):
+    with Image.open(source_path or OUT / 'source/path-connectors-clean.png') as source:
+        if source.size != (1536, 256 * len(names)):
+            raise ValueError('Expected six 256px columns and one row per material')
         result = {}
-        for row, name in enumerate(NAMES):
+        for row, name in enumerate(names):
             bases = []
             for col in range(6):
                 a = np.array(source.crop((col * 256, row * 256, (col + 1) * 256, (row + 1) * 256)).convert('RGBA').resize((64, 64), Image.Resampling.LANCZOS), dtype=float)

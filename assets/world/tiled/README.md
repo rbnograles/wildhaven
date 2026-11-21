@@ -1,5 +1,13 @@
 # Wildhaven terrain for Tiled
 
+## Snow and sand paths
+
+Open [path-snow-sand-demo.tmx](path-snow-sand-demo.tmx) or add [path-snow-sand.tsx](path-snow-sand.tsx) as an existing tileset. The [rendered demo](path-snow-sand-demo.png) shows both materials. This separate palette preserves all existing tileset IDs and does not change the Spring country terrain.
+
+The 64 tiles use a 64px grid, 1px margin and 2px spacing. The upper two 4x4 blocks contain narrow snow/sand paths with matching 32px openings, straights, turns, T junctions, crossings and end caps. Choose **Snow path - narrow** or **Sand path - narrow** in Terrain Sets and paint on a layer above ground. The lower blocks contain wider corner-terrain pieces; choose **Snow path - wide / diagonal** or **Sand path - wide / diagonal** for diagonal trails, wider roads and plazas. Use each set on its own layer; there are no automatic transitions between narrow/wide styles or different materials.
+
+Rebuild with `python tools/build-seasonal-paths.py`. Narrow art uses the built-in image generator; the exact prompt is [source/path-snow-sand.prompt.txt](source/path-snow-sand.prompt.txt), with original and slicing-sized sources alongside it. Wide pieces reuse the existing redrawn snow/sand terrain textures and their deterministic connecting contours. Verify with `python -m unittest discover -s tests/tools -p test_seasonal_paths.py`. The check compares every compatible exported boundary in all four Terrain Sets. These are editor assets; runtime collision and movement behavior are not assigned.
+
 ## Connecting paths (corrected)
 
 Open [path-connectors-demo.tmx](path-connectors-demo.tmx) to see continuous dirt, cobblestone, boardwalk and stepping-stone paths, or inspect the [assembled preview](path-connectors-demo.png).

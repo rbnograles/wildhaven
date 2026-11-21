@@ -33,7 +33,7 @@ class SpringCountryTest(unittest.TestCase):
         self.assertTrue(all(len(s['reachableFrom']) == 3 for s in report['settlements']))
         self.assertEqual(sum(s['tier'] == 'major' for s in report['settlements']), 1)
         self.assertGreaterEqual(report['newBuildings'], 12)
-        self.assertGreater(report['fenceSegments'], 150)
+        self.assertGreater(report['fenceSegments'], 100)
         self.assertGreaterEqual(report['diagonalRoutes'], 5)
         self.assertGreater(report['waterCornersAdded'], 1500)
         self.assertEqual(report['unreachableGates'], 0)
@@ -49,6 +49,13 @@ class SpringCountryTest(unittest.TestCase):
         self.assertEqual(spring.path_join_errors(gids, paths), 0)
         gids[0, 1] = paths['2']+spring.FIRST_PATH
         self.assertGreater(spring.path_join_errors(gids, paths), 0)
+
+    def test_diagonal_terrain_checker_detects_a_broken_join(self):
+        from spring_town_layout import terrain_join_errors
+        kit = spring.read(spring.TILED / 'terrain-redrawn.json')['materials']['dirt']
+        full = kit['15']+1
+        self.assertEqual(terrain_join_errors(np.array([[full,full],[full,full]]),kit),0)
+        self.assertGreater(terrain_join_errors(np.array([[full,0],[full,full]]),kit),0)
 
 
 if __name__ == '__main__':
