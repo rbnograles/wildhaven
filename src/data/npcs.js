@@ -20,9 +20,9 @@
  * that supply and it has not grown back, the job can't be done, and the villager does the next
  * one on the list instead. The last job needs nothing, so there is always something to do.
  *
- * Maren chops at the village's scrap timber and carries logs home; with the timber gone she
- * carries logs from her woodpile to the workshop. Bram breaks stone at the boulder and carries a
- * crate to the workshop; with the boulder gone he carries crates from the workshop to the square.
+ * Maren chops in the village and carries logs home; Bram breaks stone and carries a crate to the
+ * workshop. Their work spots no longer hold a supply node (the rock and log were taken out of
+ * Hollowstead Square), so these two just do the work for show, round and round.
  * Tilly lifts wheat sheaves at the south edge of the village and carries them to the square.
  * tests/world/npcs.test.js checks every spot is clear and can be walked to.
  */
@@ -37,7 +37,6 @@ export const NPCS = [
     facing: 0,
     jobs: [
       {
-        needs: 'village-wood',
         work: { clip: 'chop', x: 14540, y: 9366, facing: 1 },
         drop: { x: 14180, y: 9250, facing: 1 },
       },
@@ -57,7 +56,6 @@ export const NPCS = [
     facing: 1,
     jobs: [
       {
-        needs: 'village-stone',
         work: { clip: 'mine', x: 14330, y: 9362, facing: 1 },
         drop: { x: 14620, y: 9580, facing: 2 },
       },

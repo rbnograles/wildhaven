@@ -38,6 +38,9 @@ WRECKS = [
 NUDGE = {'d-oasis': [5044, 4268], 's-tarn': [19116, 4992], 'h-pond': [11444, 11052], 'j-pool': [10244, 15660]}
 # Landmarks dropped from Spring: Gull Isle marks open lagoon water with no island to reach.
 DROP_LANDMARKS = {'l-gull-isle'}
+# Supplies dropped from Spring: the rock and log that stood in Hollowstead Square (villagers now
+# work there only for show). Wood/stone/food still come from the scattered wild supplies and camps.
+DROP_SUPPLIES = {'village-stone', 'village-wood'}
 
 
 # Picks a short, unique letter key for each region, used by the world editor.
@@ -128,7 +131,8 @@ def main():
         wrecks.append({'id': w['id'], 'region': region, 'name': f'{name_of[region]} Rowboat',
                        'x': w['x'], 'y': w['y'], 'launch': w['launch']})
 
-    data = {'regions': regions, 'spawns': old['spawns'], 'supplies': old['supplies'],
+    supplies = {k: v for k, v in old['supplies'].items() if k not in DROP_SUPPLIES}
+    data = {'regions': regions, 'spawns': old['spawns'], 'supplies': supplies,
             'landmarks': landmarks, 'waypoints': waypoints, 'wrecks': wrecks}
     open(PLACES, 'w', encoding='utf-8', newline='\n').write(render(data))
     print(f'regions {len(regions)}, landmarks {len(landmarks)}, waypoints {len(waypoints)}, wrecks {len(wrecks)}')

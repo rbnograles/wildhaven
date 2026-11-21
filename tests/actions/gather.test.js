@@ -208,8 +208,8 @@ test('a bigger rock gives more, takes longer to mine and wears the pickaxe more'
   assert.equal(sizedHarvest(HARVEST['beach-rock'], 0.5).size, 1); // nothing is smaller than small
   assert.equal(sizedHarvest(HARVEST.oak, 0.5), HARVEST.oak); // trees have no size
 
-  // Mining a real boulder (size 3) on the map through the finish step costs the pickaxe three uses.
-  const bigRock = NODES.find((n) => n.sprite === 'boulder' && n.inScenery && n.size === 3);
+  // Mining a real big rock (size 3) on the map through the finish step costs the pickaxe three uses.
+  const bigRock = NODES.find((n) => n.sprite === 'grey-rock-big' && n.inScenery && n.size === 3);
   Object.assign(game.player, { x: bigRock.x, y: bigRock.y + 30 });
   assert.equal(finishInteraction(game, bigRock.id)?.node, bigRock);
   assert.equal(game.tools.pickaxe.uses, 25 - SIZE_WEAR[2]);
@@ -252,8 +252,8 @@ test('wild herbs are picked by hand for 3 herbs in the full hand-pick time', () 
 test('map trees and rocks can be gathered with the right tool', () => {
   const game = createGame('survivor');
   game.tools = { axe: { tier: 'iron' }, pickaxe: { tier: 'iron' } };
-  // Spring has no iron-streaked rocks, so this checks a big tree and an ordinary boulder.
-  for (const sprite of ['big-oak', 'boulder']) {
+  // A big tree and an ordinary big rock (the map's rocks are the resource-expansion sprites now).
+  for (const sprite of ['big-oak', 'grey-rock-big']) {
     const node = NODES.find((n) => n.sprite === sprite && n.inScenery);
     Object.assign(game.player, { x: node.x, y: node.y + 30 });
     const before = game.resources[node.type];

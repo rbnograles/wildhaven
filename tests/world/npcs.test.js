@@ -102,35 +102,20 @@ test('each job is a kind of work the pictures have, facing sideways', () => {
 
 // Guards the switch: a villager who keeps swinging at a boulder that is no longer there, or who
 // never goes back to it once it has grown back.
-test('a villager takes up another job while the thing they work on is gone', () => {
+test('a villager whose supply was removed just does their first job for show', () => {
   const game = createGame('scout');
   resetVillagers();
   const bram = VILLAGERS[1],
-    [mining, hauling] = bram.npc.jobs;
+    [mining] = bram.npc.jobs;
+
+  // Bram's work spot no longer holds a supply node, so his mining job is never gated: he picks it,
+  // does it, rests, and picks it again, round and round (just a show, nothing is gathered).
   assert.equal(pickJob(game, bram.npc), mining);
-
-  // He is at the boulder, swinging, when the player gathers it.
-  run(game, 240, () => bram.phase === 'work');
-  assert.equal(villagerPose(bram, game.player).sheet, 'mine');
-  game.regrowAt[mining.needs] = game.time + 720;
-  run(game, 0.1);
-  assert.equal(bram.phase, 'rest', 'stopped swinging');
-  assert.equal(bram.carrying, false, 'got nothing from it');
-  assert.equal(villagerPose(bram, game.player).sheet, 'idle');
-
-  // He takes up the other job, and does it while the boulder is gone.
-  assert.equal(pickJob(game, bram.npc), hauling);
-  run(game, 240, () => bram.phase === 'work');
-  assert.equal(bram.job, hauling);
-  assert.deepEqual([bram.x, bram.y], [hauling.work.x, hauling.work.y]);
-  run(game, 240, () => bram.phase === 'deposit');
-  assert.deepEqual([bram.x, bram.y], [hauling.drop.x, hauling.drop.y]);
-
-  // The boulder grows back: after his next rest he goes back to mining.
-  game.time += 721;
   run(game, 240, () => bram.phase === 'work');
   assert.equal(bram.job, mining);
   assert.equal(villagerPose(bram, game.player).sheet, 'mine');
+  run(game, 240, () => bram.phase === 'rest');
+  assert.equal(pickJob(game, bram.npc), mining);
   resetVillagers();
 });
 

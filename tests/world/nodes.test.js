@@ -285,8 +285,15 @@ test('every tree and rock in the map is a node that needs a tool', () => {
     assert.equal(node.type === 'wood', node.tool === 'axe', node.id);
     assert.equal(node.id, `${node.sprite}-${node.x}-${node.y}`);
   }
-  // Spring's temperate trees and ordinary rocks are all on the map (no snow/jungle trees or ore).
-  for (const name of ['pine', 'oak', 'big-oak', 'rocks-a', 'boulder', 'beach-rock'])
+  // Spring's temperate trees and the resource-expansion rocks are all on the map (no snow/jungle trees).
+  for (const name of [
+    'pine',
+    'oak',
+    'big-oak',
+    'grey-rock-small',
+    'grey-rock-big',
+    'beach-rock-small',
+  ])
     assert.ok(
       harvest.some((n) => n.sprite === name),
       name,
