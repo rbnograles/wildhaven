@@ -45,6 +45,23 @@ export function setupInput(session, ui) {
   const world = $('world');
 
   /**
+   * Says whether a weapon is drawn AND combat can act right now: on foot, not paused, and not in
+   * the build menu or placing a building. Entering the boat or any dialog quietly sheathes.
+   *
+   * @returns {boolean} True when the left/right mouse buttons mean sword and bow.
+   */
+  function isDrawn() {
+    return (
+      session.combat.drawn &&
+      session.screen === 'game' &&
+      !ui.dialogs.isPaused() &&
+      !session.build.active &&
+      !session.build.menu &&
+      !session.state?.aboard
+    );
+  }
+
+  /**
    * Sends the player to the spot beside a node or old boat in reach, if they aren't there yet.
    *
    * The walk is only a step or two; the frame loop follows it and starts the work (picking,

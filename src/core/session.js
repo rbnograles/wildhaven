@@ -38,7 +38,8 @@ export const tabStorage = (() => {
  *   (`build`: whether something is being placed and what (`kind`: 'campfire' or a camp building),
  *   whether the build menu is open, the ghost's spot
  *   and its placement check; never saved), the mouse
- *   position over the world (`pointer`, or null) and the tree or rock under the mouse (`hover`:
+ *   position over the world (`pointer`, or null), the combat stance (`combat`: whether a weapon is
+ *   drawn and the live bow aim; never saved) and the tree or rock under the mouse (`hover`:
  *   `{node, state}` with the state from aimState, or null; worked out every frame, never saved),
  *   and the walk to a clicked tree or rock (`walk`, from beginApproach, or null; never saved).
  */
@@ -56,6 +57,8 @@ export function createSession() {
     clock: { last: 0, sinceSave: 0, sinceHud: 0 },
     build: { active: false, menu: false, kind: 'campfire', x: 0, y: 0, check: null },
     pointer: null,
+    // Combat stance (runtime only, never saved): whether a weapon is drawn, and the live bow aim.
+    combat: { drawn: false, aiming: null },
     hover: null,
     walk: null,
   };
