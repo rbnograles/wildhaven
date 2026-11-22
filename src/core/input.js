@@ -5,7 +5,7 @@
 import { beginInteraction, chooseInteraction } from '../actions/interact.js';
 import { listMissing, missingForRepair } from '../actions/boat.js';
 import { lockedNode, aimState } from '../actions/gather.js';
-import { beginApproach, beginPlacing } from '../actions/approach.js';
+import { beginApproach, beginCampApproach, beginPlacing } from '../actions/approach.js';
 import { TOOLS, toolInfo } from '../data/tools.js';
 import { GEAR } from '../data/gear.js';
 import { BUILDINGS } from '../data/buildings.js';
@@ -17,7 +17,7 @@ import { canSleep } from '../actions/camp.js';
 import { beginSwing, beginShot } from '../actions/animals.js';
 import { meleeTarget, aimTarget } from '../actions/combat.js';
 import { hasTool } from '../world/tools.js';
-import { BUILDING_REACH } from '../data/balance.js';
+import { BUILDING_REACH, CAMP_REACH } from '../data/balance.js';
 import { save } from './session.js';
 import { $ } from '../ui/layout.js';
 
@@ -46,6 +46,69 @@ const TOUCH_KEYS = { up: 'w', down: 's', left: 'a', right: 'd' };
 export function setupInput(session, ui) {
   const { keys } = session;
   const world = $('world');
+
+  /** Gives manual control back and drops the automatic walk. */
+  function stopAuto() {
+    if (!session.auto) return;
+    session.auto = false;
+    session.walk = null;
+    ui.hud.notify('Auto-gather stopped');
+    ui.hud.update();
+  }
+
+  /** Starts or stops repeated gathering without saving the setting. */
+  function toggleAuto() {
+    if (
+      session.screen !== 'game' ||
+      ui.dialogs.isPaused() ||
+      session.build.menu ||
+      session.build.active ||
+      session.state.aboard ||
+      session.animator.asleep > 0 ||
+      session.state.meters.health <= 0
+    )
+      return;
+    if (session.auto) stopAuto();
+    else {
+      session.auto = true;
+      session.autoSkipped.clear();
+      session.walk = null;
+      session.combat.aiming = null;
+      keys.clear();
+      ui.hud.update();
+    }
+  }
+
+  /** Uses the same weapon stance for Q and the painted HUD button. */
+  function toggleWeapon() {
+    if (session.screen !== 'game' || ui.dialogs.isPaused()) return;
+    stopAuto();
+    if (!hasTool(session.state, 'sword') && !hasTool(session.state, 'bow')) {
+      ui.hud.notify('You have no weapon to draw. Make one in the Build menu (B).');
+      return;
+    }
+    session.combat.drawn = !session.combat.drawn;
+    session.combat.aiming = null;
+    ui.hud.update();
+  }
+
+  $('auto-gather').addEventListener('click', toggleAuto);
+  $('weapon-toggle').addEventListener('click', toggleWeapon);
+  // Capture manual clicks before their action runs, including food, dialogs and touch movement.
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      if (!event.target.closest('#auto-gather')) stopAuto();
+    },
+    true,
+  );
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (!event.target.closest('#auto-gather')) stopAuto();
+    },
+    true,
+  );
 
   /**
    * Says whether a weapon is drawn AND combat can act right now: on foot, not paused, and not in
@@ -201,6 +264,15 @@ export function setupInput(session, ui) {
       // With nothing to gather there, one of the player's own tents under the mouse can be slept in.
       const found = !aim && !state.aboard && renderer.tentAt(pointer.x, pointer.y, state);
       if (found) aim = { ...found, state: tentState(state, found.tent) };
+      const camp = !aim && !state.aboard && renderer.campAt(pointer.x, pointer.y, state);
+      if (camp)
+        aim = {
+          camp,
+          state:
+            Math.hypot(camp.x - state.player.x, camp.y - state.player.y) <= CAMP_REACH
+              ? 'ready'
+              : 'far',
+        };
     }
     world.style.cursor = aim && aim.state !== 'locked' && aim.state !== 'day' ? 'pointer' : '';
     return aim;
@@ -274,6 +346,16 @@ export function setupInput(session, ui) {
     // Typing in a text box (such as naming a camp) is not a game key.
     if (event.target instanceof HTMLInputElement) return;
     const key = event.key.toLowerCase();
+    if (
+      !event.repeat &&
+      (MOVE_KEYS.includes(key) || ['escape', 'm', 'j', 'b', 'q', 'e', 'f', 'h', 'r'].includes(key))
+    )
+      stopAuto();
+    if (key === 'g' && !event.repeat && !session.build.menu) {
+      event.preventDefault();
+      toggleAuto();
+      return;
+    }
 
     if (key === 'escape') {
       if (ui.dialogs.isPaused()) return;
@@ -306,13 +388,7 @@ export function setupInput(session, ui) {
     // Q draws a weapon (sword in the left hand, bow in the right) or sheathes it.
     if (key === 'q' && !event.repeat) {
       event.preventDefault();
-      if (!hasTool(session.state, 'sword') && !hasTool(session.state, 'bow')) {
-        ui.hud.notify('You have no weapon to draw. Make one in the Build menu (B).');
-        return;
-      }
-      session.combat.drawn = !session.combat.drawn;
-      session.combat.aiming = null;
-      ui.hud.update();
+      toggleWeapon();
       return;
     }
 
@@ -436,7 +512,17 @@ export function setupInput(session, ui) {
     if (!session.build.active) {
       const aim = hover();
       if (aim?.tent) clickTent(aim);
-      else if (aim) clickNode(aim);
+      else if (aim?.camp) {
+        if (!session.animator.pending && !(session.animator.asleep > 0)) {
+          keys.clear();
+          session.walk = null;
+          if (aim.state === 'ready') ui.camp.openCamp(aim.camp);
+          else {
+            session.walk = beginCampApproach(session.state, aim.camp);
+            if (!session.walk) ui.hud.notify("Can't find a way to the campfire.");
+          }
+        }
+      } else if (aim) clickNode(aim);
       return;
     }
     // Stop the click from also focusing the world afterwards, which would pull the keyboard out

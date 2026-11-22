@@ -6,6 +6,7 @@
 import { NODES, nodesNear, isAvailable } from '../world/nodes.js';
 import {
   GATHER_RANGE,
+  AUTO_GATHER_RANGE,
   GATHER_SECONDS,
   PICKUP_SECONDS,
   TOOL_SECONDS,
@@ -77,11 +78,28 @@ function nodesInReach(state) {
 }
 
 /**
- * Finds the closest node the player could gather from right now, with the tools they have.
+ * Finds the nearest available supply within a bounded search, skipping failed paths.
  *
  * @param {object} state - The game being played.
- * @returns {object|null} The nearest available node in reach, or null if there is none.
+ * @param {number} [range] - Maximum search distance in world units.
+ * @param {Set<string>} [excluded] - Nodes whose paths have already failed.
+ * @returns {object|null} The nearest eligible node, or null if there is none.
  */
+export function nextAutoNode(state, range = AUTO_GATHER_RANGE, excluded = new Set()) {
+  let nearest = null,
+    distance = range;
+  for (const node of NODES) {
+    if (excluded.has(node.id) || !isAvailable(state, node) || !hasToolFor(state, node)) continue;
+    const away = Math.hypot(node.x - state.player.x, node.y - state.player.y);
+    if (away < distance) {
+      nearest = node;
+      distance = away;
+    }
+  }
+  return nearest;
+}
+
+/** Finds the nearest available supply within gathering reach. */
 export function nearbyNode(state) {
   return nodesInReach(state).find((n) => hasToolFor(state, n)) ?? null;
 }

@@ -42,6 +42,7 @@ export const CONTROLS = [
       { keys: ['E'], does: 'Open your camp beside its fire, or a storage chest' },
       { keys: ['E'], does: 'Sow, tend or harvest a wheat bed' },
       { keys: ['E'], does: 'Sleep in your tent until dawn, from dusk' },
+      { keys: ['G'], does: 'Toggle auto-gather (also beside Build)' },
       { keys: ['F'], does: 'Eat food' },
       { keys: ['H'], does: 'Heal with herbs' },
       { keys: ['Drag'], does: 'Move a thing to another slot of the item box' },

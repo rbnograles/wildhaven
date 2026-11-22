@@ -5,19 +5,26 @@
 
 import { movePlayer, stepLength } from '../actions/move.js';
 import { beginInteraction, finishInteraction } from '../actions/interact.js';
-import { aimState } from '../actions/gather.js';
-import { beginApproach, beginPlacing, approachStep, eightWay } from '../actions/approach.js';
+import { aimState, nextAutoNode } from '../actions/gather.js';
+import {
+  beginApproach,
+  beginCampApproach,
+  beginPlacing,
+  approachStep,
+  eightWay,
+} from '../actions/approach.js';
 import { deepAhead } from '../actions/boat.js';
 import { discover } from '../actions/discover.js';
 import { tickSurvival, meterTrends } from '../actions/survive.js';
 import { growCrops } from '../world/buildings.js';
-import { tidyBag } from '../world/bag.js';
+import { tidyBag, hasRoomFor } from '../world/bag.js';
 import { tickAnimals, huntIdOf } from '../actions/animals.js';
 import { tickWolves } from '../actions/wolves.js';
 import { tickVillagers } from '../actions/villagers.js';
 import { advanceAnimation, cancelAction, startCollapse, diagonalOf } from '../animation/clips.js';
 import { hasJournalPage } from '../world/journal.js';
 import {
+  CAMP_REACH,
   REPAIR_COST,
   HUNGRY_BELOW,
   APPROACH_STUCK,
@@ -156,9 +163,17 @@ function handleSurvival(session, ui, events) {
  */
 function replanWalk(session, ui) {
   const { walk, state } = session,
-    next = walk.retried ? null : beginApproach(state, walk.node);
+    next = walk.retried
+      ? null
+      : walk.camp
+        ? beginCampApproach(state, walk.camp)
+        : beginApproach(state, walk.node);
   session.walk = next && { ...next, retried: true };
-  if (!next) ui.hud.notify(`Can't find a way to the ${walk.node.label.toLowerCase()}.`);
+  if (!next && session.auto) session.autoSkipped.add(walk.node.id);
+  if (!next)
+    ui.hud.notify(
+      `Can't find a way to the ${walk.camp ? 'campfire' : walk.node.label.toLowerCase()}.`,
+    );
 }
 
 /**
@@ -176,8 +191,23 @@ function replanWalk(session, ui) {
  * @returns {{dx: number, dy: number}|null} The push for movePlayer, or null when not walking on.
  */
 function followWalk(session, ui, dt, running) {
-  const { state, animator, walk } = session,
-    how = aimState(state, walk.node);
+  const { state, animator, walk } = session;
+  if (walk.camp) {
+    const camp = state.camps.find((camp) => camp.id === walk.camp.id);
+    if (!camp || state.aboard) {
+      session.walk = null;
+      return null;
+    }
+    if (Math.hypot(camp.x - state.player.x, camp.y - state.player.y) <= CAMP_REACH) {
+      session.walk = null;
+      ui.camp.openCamp(camp);
+      return null;
+    }
+    const push = approachStep(state, walk, stepLength(state, dt, running));
+    if (!push) replanWalk(session, ui);
+    return push;
+  }
+  const how = aimState(state, walk.node);
 
   if (how !== 'far') {
     // In reach: first step to the spot beside it, so the working picture (bending, chopping,
@@ -195,7 +225,14 @@ function followWalk(session, ui, dt, running) {
     // An old boat is no node (it gives no resource): E's usual order picks its repair.
     session.walk = null;
     const id = walk.node.type ? walk.node.id : undefined;
-    if (how === 'ready' && beginInteraction(state, animator, id).ok) ui.hud.update();
+    if (how === 'ready') {
+      const result = beginInteraction(state, animator, id);
+      if (session.auto && !result.ok) {
+        session.auto = false;
+        ui.hud.notify(result.reason === 'full' ? 'Bag is full' : 'Auto-gather stopped');
+      }
+      ui.hud.update();
+    }
     return null;
   }
 
@@ -245,6 +282,7 @@ export function startLoop(session, ui) {
       // Opening a dialog (the map, a camp, pause) calls off a walk to a clicked tree or rock.
       if (ui.dialogs.isPaused()) {
         session.walk = null;
+        session.auto = false;
         session.combat.aiming = null;
       }
 
@@ -260,6 +298,34 @@ export function startLoop(session, ui) {
         // A click on a far tree or rock walks the player to it. A movement key takes the player
         // back, and so does anything that keeps them busy (an action, a nap, building).
         const { build } = session;
+        if (
+          session.auto &&
+          (dx ||
+            dy ||
+            animator.asleep > 0 ||
+            build.active ||
+            build.menu ||
+            state.aboard ||
+            state.meters.health <= 0)
+        ) {
+          session.auto = false;
+          session.walk = null;
+          ui.hud.notify('Auto-gather stopped');
+        }
+        if (session.auto && !animator.pending && !session.walk) {
+          const node = nextAutoNode(state, undefined, session.autoSkipped);
+          if (!node) {
+            session.auto = false;
+            ui.hud.notify('Nothing nearby to gather');
+          } else {
+            const walk = beginApproach(state, node);
+            if (!walk) session.autoSkipped.add(node.id);
+            else if (!hasRoomFor(state, { [node.type]: node.amount })) {
+              session.auto = false;
+              ui.hud.notify('Bag is full');
+            } else session.walk = walk;
+          }
+        }
         if (dx || dy || animator.pending || animator.asleep > 0 || build.active || build.menu)
           session.walk = null;
         const push = session.walk && followWalk(session, ui, dt, running);
@@ -276,8 +342,6 @@ export function startLoop(session, ui) {
           // The short step beside a patch is never planned again: followWalk gathers from here.
           if (session.walk.stuck > APPROACH_STUCK && !session.walk.placing) replanWalk(session, ui);
         }
-        // The first real step hides the controls strip.
-        if (moving) ui.hud.hideKeyStrip();
         state.elapsed += dt;
         // The world clock, the meters and each camp's dawn update move with the survival tick.
         const events = tickSurvival(state, dt);
@@ -388,7 +452,12 @@ export function startLoop(session, ui) {
       // The tree or rock under the mouse gets a tool badge; the camera moves, so ask every frame.
       // While walking to a clicked one, its badge stays up so the player sees where they are going.
       session.hover = ui.input.hover();
-      const aim = session.hover ?? (session.walk && { node: session.walk.node, state: 'ready' });
+      const aim =
+        session.hover ??
+        (session.walk &&
+          (session.walk.camp
+            ? { camp: session.walk.camp, state: 'far' }
+            : { node: session.walk.node, state: 'ready' }));
       renderer.draw(state, dt, animator, session.build, aim, session.combat);
       clock.sinceHud += dt;
       if (clock.sinceHud > HUD_EVERY) {

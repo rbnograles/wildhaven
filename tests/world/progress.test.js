@@ -8,6 +8,7 @@ import { regionProgress, worldProgress } from '../../src/world/progress.js';
 
 // Totals counted from the places file, so adding a place to the map can't break these tests.
 const placesIn = (region) => LANDMARKS.filter((place) => place.region === region).length;
+// Count signposts in the same region for the expected progress total.
 const signpostsIn = (region) => WAYPOINTS.filter((w) => w.region === region).length;
 
 // Guards the per-region counts: finds in one region must not be counted in another.

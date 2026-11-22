@@ -650,20 +650,6 @@ button:active {
   color: #6b8048;
 }
 
-/* A row of keys, each followed by what it does, like "W A S D Move". */
-.key-guide {
-  display: flex;
-  gap: 22px;
-  align-items: center;
-}
-
-.key-guide > span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
 /* A little keyboard key, like the E or Esc labels. The thicker bottom border makes it look pressable. */
 kbd {
   font-family: inherit;
@@ -823,11 +809,7 @@ kbd {
   pointer-events: auto;
 }
 
-/* The bottom bar: player card | item box | round map. A grid whose two side columns share the */
-/* free space equally, so the item box sits in the middle of the screen (under the region banner */
-/* and the messages), not in the middle of the gap between the card and the map, which are not */
-/* the same width. The three still can never overlap; on a screen too narrow for equal sides the */
-/* box simply sits between them. */
+/* Equal side columns keep the item box centered, with the minimap in the right column. */
 .game-bottom {
   position: absolute;
   left: 24px;
@@ -840,11 +822,15 @@ kbd {
   pointer-events: none;
 }
 
-/* The card hugs the left edge of its column and the map the right edge of its own. The card sits */
-/* in a wrapper so the messages can stack just above it, wherever the card is. */
-.game-bottom > .identity-area {
-  position: relative;
-  justify-self: start;
+/* The player card stays at the top left; its messages stack beneath it. */
+.identity-area {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+}
+
+.game-bottom > .hotbar-area {
+  grid-column: 2;
 }
 
 .game-bottom > .minimap {
@@ -1464,11 +1450,11 @@ button.slot:hover {
   margin: auto;
 }
 
-/* ---- In-game HUD: the quest card on the left ---- */
+/* ---- In-game HUD: the quest card below the top-right controls ---- */
 .quest {
   position: absolute;
-  left: 24px;
-  top: 22px;
+  right: 24px;
+  top: 84px;
   padding: 20px 21px;
   max-width: 251px;
 }
@@ -1648,12 +1634,12 @@ button.slot:hover {
   color: #fff;
 }
 
-/* Short messages such as "+3 wood" stack above the player card, the newest at the bottom. They */
+/* Short messages such as "+3 wood" stack below the player card, the newest at the bottom. They */
 /* are kept out of the middle of the screen so they never cover the build menu or the E button. */
 .toasts {
   position: absolute;
   left: 0;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2167,8 +2153,7 @@ button.slot:hover {
 /* The J key on the journal button, and the number keys in the build menu, are drawn on the */
 /* little count plate. */
 .game-actions kbd,
-.build-option kbd,
-.key-strip kbd {
+.build-option kbd {
   border: 0;
   padding: 4px 7px 5px;
   background: url('../assets/ui/game/item-badge.png') center / 100% 100% no-repeat;
@@ -3068,9 +3053,9 @@ dialog::backdrop {
     display: contents;
   }
   .identity {
-    position: absolute;
-    top: 13px;
-    left: 13px;
+    position: relative;
+    top: auto;
+    left: auto;
     gap: 7px;
   }
   .hud-name {
@@ -3156,9 +3141,28 @@ dialog::backdrop {
     font-size: 7px;
     letter-spacing: 2px;
   }
-  /* The quest card is hidden on phones; there is no room beside the player card. */
+  /* Keep the objective readable beside the smaller player card. */
   .quest {
-    display: none;
+    display: block;
+    top: 68px;
+    right: 10px;
+    width: 158px;
+    max-height: 155px;
+    overflow: auto;
+    border-width: 12px;
+    border-image-width: 12px;
+    padding: 5px;
+  }
+  .quest h2 {
+    font-size: 13px;
+  }
+  .quest p,
+  .quest li {
+    font-size: 9px;
+  }
+  .quest-label {
+    font-size: 7px;
+    letter-spacing: 1px;
   }
   /* The action button and messages sit above the item box. */
   .interact {
@@ -3166,12 +3170,14 @@ dialog::backdrop {
     font-size: 10px;
     max-width: 90vw;
   }
-  /* On phones the card is at the top, so the wrapper steps aside and the messages stack in the */
-  /* middle, above the item box. */
+  /* The player card stays at the top; messages move above the item box on phones. */
   .identity-area {
-    display: contents;
+    top: 13px;
+    left: 10px;
   }
   .toasts {
+    position: fixed;
+    top: auto;
     left: 50%;
     bottom: 334px;
     transform: translateX(-50%);
@@ -3255,53 +3261,6 @@ dialog::backdrop {
   }
   .journal-trail p {
     font-size: 15px;
-  }
-}
-
-/* ---- In-game controls hint ---- */
-/* A strip of keys above the bottom bar (clear of the item box and its tools row) when the game */
-/* opens; it fades after the first step or 8 s, and gives way to the action button and the build */
-/* menu. It wraps onto two lines if narrow. It is the same cream paper in a wooden frame as the */
-/* build menu, and each key sits on the painted count plate (see "painted panels"). */
-.key-strip {
-  position: absolute;
-  left: 50%;
-  bottom: 240px;
-  transform: translateX(-50%);
-  z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 14px;
-  width: max-content;
-  max-width: calc(100vw - 48px);
-  padding: 0 6px;
-  border: 20px solid transparent;
-  border-image: url('../assets/ui/game/hud-popup.png') 40 fill / 20px stretch;
-  filter: drop-shadow(0 3px 8px #1f311b55);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-  transition: opacity 0.6s ease;
-  /* Decorative, so clicks pass through to the E button and minimap underneath. */
-  pointer-events: none;
-}
-
-.key-strip.fading {
-  opacity: 0;
-}
-
-/* Tablets and small laptops: the item box is smaller there, so the strip sits lower. */
-@media (max-width: 1000px) {
-  .key-strip {
-    bottom: 170px;
-  }
-}
-
-/* Hidden where the touch arrows show; phones have no keys to learn. */
-@media (max-width: 720px) {
-  .key-strip {
-    display: none;
   }
 }
 
@@ -3472,9 +3431,9 @@ dialog::backdrop {
 }
 
 /* ---- The player card on wide screens ---- */
-/* From 1280 px wide there is room beside the item box for a bigger card: the portrait, the dial */
+/* From 1600 px wide there is room beside the region banner for a bigger card: the portrait, the dial */
 /* and the three bars all grow by about a third, so the meters are easy to read at a glance. */
-@media (min-width: 1280px) {
+@media (min-width: 1600px) {
   .identity {
     padding: 26px 36px 26px 30px;
     gap: 12px;
@@ -3520,4 +3479,57 @@ dialog::backdrop {
 /* tall). The slot size is set on .game, not on the bar, so the prompt can read it too. */
 .game:has(#item-box-extra:not([hidden])) .interact {
   translate: 0 calc(var(--slot) * -3.2);
+}
+
+/* ---- Gathering and weapon toggles beside the item box ---- */
+.action-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.slot.action-toggle {
+  width: calc(var(--slot) * 1.14);
+  height: calc(var(--slot) * 1.07);
+  background-image: url('../assets/ui/game/item-slot.png');
+}
+.action-toggle .slot-label {
+  display: block;
+  font-size: 9px;
+  color: #fff0bd;
+}
+.action-toggle.active {
+  filter: brightness(1.2) drop-shadow(0 0 4px #ffd166);
+}
+.action-toggle:disabled {
+  opacity: 0.4;
+}
+.action-toggle kbd {
+  top: -3px;
+  right: -3px;
+}
+
+@media (max-width: 700px) {
+  /* Two narrow cards leave a clear gap, even at 390px. */
+  .identity {
+    padding: 12px;
+    gap: 4px;
+    flex-wrap: wrap;
+    width: 158px;
+  }
+  .identity .identity-text {
+    flex-basis: 100%;
+  }
+  .identity .meter {
+    grid-template-columns: 13px 112px;
+  }
+  .region {
+    top: 235px;
+  }
+}
+
+/* Mid-size screens leave the title below the two corner cards. */
+@media (min-width: 701px) and (max-width: 1150px) {
+  .region {
+    top: 185px;
+  }
 }
