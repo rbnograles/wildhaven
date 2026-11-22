@@ -12,6 +12,9 @@ export const RUN_SPEED = 245;
 export const MAX_MOVE_DT = 0.1;
 
 /** How close the player must stand to a supply to gather it. */
+// Maximum distance searched by automatic gathering, in world units.
+export const AUTO_GATHER_RANGE = 2000;
+
 export const GATHER_RANGE = 95;
 
 // ---- Click to walk ----

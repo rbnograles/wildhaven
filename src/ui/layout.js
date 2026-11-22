@@ -309,32 +309,31 @@ export function mountLayout(app) {
         <ul id="quest-lines"></ul>
       </aside>
 
-      <!-- The bottom bar: the player card on the left, the item box and Build button in the middle,
-           and the round map on the right. It is a grid, so the three never overlap. -->
-      <div class="game-bottom">
-        <!-- Who you are, the day clock and your survival meters. Short pop-up messages such as
-             "+3 wood" stack up just above the card (ui/hud.js adds and removes them); screen readers
+      <!-- Who you are, the day clock and your survival meters. Short pop-up messages such as
+             "+3 wood" stack up just below the card (ui/hud.js adds and removes them); screen readers
              announce them too. -->
-        <div class="identity-area">
-          <div id="toasts" class="toasts" role="status"></div>
-          <div class="identity hud-panel">
-            <span id="hud-portrait" class="hud-portrait"></span>
-            <span id="day-dial" class="day-dial" role="img"
-              ><i class="day-dial-face"></i><i class="day-dial-rim"></i><i class="day-dial-pin"></i
+      <div class="identity-area">
+        <div id="toasts" class="toasts" role="status"></div>
+        <div class="identity hud-panel">
+          <span id="hud-portrait" class="hud-portrait"></span>
+          <span id="day-dial" class="day-dial" role="img"
+            ><i class="day-dial-face"></i><i class="day-dial-rim"></i><i class="day-dial-pin"></i
+          ></span>
+          <div class="identity-text">
+            <span id="hud-name" class="hud-name"></span
+            ><span id="identity-status" class="identity-status" data-phase="day"
+              ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
+              ><span id="clock"></span
             ></span>
-            <div class="identity-text">
-              <span id="hud-name" class="hud-name"></span
-              ><span id="identity-status" class="identity-status" data-phase="day"
-                ><span class="sun">${icon('sun')}</span><span class="moon">${icon('moon')}</span
-                ><span id="clock"></span
-              ></span>
-              <div class="meters">
-                ${meter('health', 'Health', healthIconUrl)}${meter('hunger', 'Hunger', hungerIconUrl)}${meter('warmth', 'Warmth', warmthIconUrl)}
-              </div>
+            <div class="meters">
+              ${meter('health', 'Health', healthIconUrl)}${meter('hunger', 'Hunger', hungerIconUrl)}${meter('warmth', 'Warmth', warmthIconUrl)}
             </div>
           </div>
         </div>
+      </div>
 
+      <!-- Bottom: centered item box and right-hand minimap. -->
+      <div class="game-bottom">
         <!-- The item box (ten slots, empty until something is picked up; ui/itembox.js fills them
              and lets them be dragged about) and the Build button beside it, with the build menu
              that opens above it, and the row of tools owned. Clicking the food slot eats and the
@@ -393,15 +392,35 @@ export function mountLayout(app) {
               </div>
               <div id="item-box" class="item-box" aria-label="Items">${itemSlots(0)}</div>
             </div>
-            <button
-              id="build-button"
-              class="slot build-slot"
-              title="Build (B)"
-              aria-controls="build-menu"
-              aria-expanded="false"
-            >
-              <span class="slot-label">Build</span><kbd>B</kbd>
-            </button>
+            <div class="action-toggles">
+              <button
+                id="auto-gather"
+                class="slot action-toggle"
+                title="Auto-gather (G)"
+                aria-label="Toggle auto-gather (G)"
+                aria-pressed="false"
+              >
+                <span class="slot-label">Gather</span><kbd>G</kbd>
+              </button>
+              <button
+                id="weapon-toggle"
+                class="slot action-toggle"
+                title="Draw or sheathe weapon (Q)"
+                aria-label="Draw or sheathe weapon (Q)"
+                aria-pressed="false"
+              >
+                <span class="slot-label">Weapon</span><kbd>Q</kbd>
+              </button>
+              <button
+                id="build-button"
+                class="slot build-slot"
+                title="Build (B)"
+                aria-controls="build-menu"
+                aria-expanded="false"
+              >
+                <span class="slot-label">Build</span><kbd>B</kbd>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -423,14 +442,6 @@ export function mountLayout(app) {
 
       <!-- Build mode's bar: what a campfire costs, or why the ghost's spot is refused. ui/hud.js fills it. -->
       <div id="build-bar" class="build-bar" role="status" hidden></div>
-
-      <!-- The controls, shown for a few seconds each time the game opens. ui/hud.js shows and hides it. -->
-      <div id="key-strip" class="key-strip key-guide" hidden aria-hidden="true">
-        <span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span
-        ><span><kbd>E</kbd> Gather · Boat</span><span><kbd>B</kbd> Build</span
-        ><span><kbd>F</kbd> Eat</span><span><kbd>H</kbd> Heal</span><span><kbd>M</kbd> Map</span
-        ><span><kbd>J</kbd> Journal</span><span><kbd>Esc</kbd> Pause</span>
-      </div>
 
       <!-- Arrow buttons for touch screens. CSS only shows them on narrow screens. -->
       <div class="touch-controls" aria-label="Movement controls">

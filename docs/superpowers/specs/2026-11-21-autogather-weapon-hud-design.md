@@ -1,7 +1,7 @@
 # Auto-gather, weapon toggle + held stance, and HUD layout swap
 
 Date: 2026-11-21
-Status: approved design, pre-implementation
+Status: implemented and verified 2026-11-22
 
 Three independent features for the playing HUD and the gather/combat loops:
 

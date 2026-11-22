@@ -833,6 +833,20 @@ export async function createRenderer(container, miniCanvas) {
     return null;
   }
 
+  /** Finds the player's campfire beneath the pointer using its drawn bounds. */
+  function campAt(clientX, clientY, state) {
+    const box = scene.game.canvas.getBoundingClientRect();
+    const { x, y } = scene.cameras.main.getWorldPoint(clientX - box.left, clientY - box.top);
+    return (
+      [...state.camps]
+        .sort((a, b) => b.y - a.y)
+        .find((camp) => {
+          const sprite = fires.get(`${state.character}:${camp.id}`);
+          return sprite?.getBounds().contains(x, y);
+        }) ?? null
+    );
+  }
+
   /**
    * Shows a supply, tree or rock as standing or gone this frame.
    *
@@ -901,7 +915,7 @@ export async function createRenderer(container, miniCanvas) {
 
     // Camera: zoom out a little on narrow screens, then glide toward the player.
     const view = scene.cameras.main;
-    const zoom = view.width < 700 ? 0.9 : 1.08;
+    const zoom = view.width < 700 ? 1 : 1.2;
     view.setZoom(zoom);
     const smoothing = reducedMotion ? 1 : 1 - Math.exp(-dt * 9);
     if (!camera.initialized) {
@@ -1182,16 +1196,22 @@ export async function createRenderer(container, miniCanvas) {
     // mouse shows "Zz" in the same slot: it can be slept in.
     const pointed = hover?.node && hover.node.id !== busy ? entryOf(hover.node) : null,
       tentImage = hover?.tent ? built.get(`${state.character}:${hover.tent.id}`) : null,
+      campImage =
+        hover?.camp && !hover.tent ? fires.get(`${state.character}:${hover.camp.id}`) : null,
+      hoveredImage = tentImage ?? campImage,
       over = pointed
         ? { x: pointed.node.x, top: pointed.top }
-        : tentImage
-          ? { x: tentImage.x, top: tentImage.y - tentImage.displayHeight * tentImage.originY }
+        : hoveredImage
+          ? {
+              x: hoveredImage.x,
+              top: hoveredImage.y - hoveredImage.displayHeight * hoveredImage.originY,
+            }
           : null;
     badge.setVisible(!!over);
     if (over) {
       const locked = hover.state === 'locked';
-      badge.tool.setVisible(!!pointed);
-      badge.words.setVisible(!pointed);
+      badge.tool.setVisible(!!pointed || !!campImage);
+      badge.words.setVisible(!pointed && !campImage);
       if (pointed) {
         const { tool, type } = hover.node,
           picture = tool ? `tool-${tool}-${toolTier(state, tool) ?? 'stone'}` : `item-${type}`;
@@ -1201,6 +1221,11 @@ export async function createRenderer(container, miniCanvas) {
           badge.tool.setScale((BADGE_SIZE * 0.8) / Math.max(badge.tool.width, badge.tool.height));
         }
         badge.tool.setAlpha(locked ? 0.75 : 1);
+      }
+      if (campImage) {
+        badge.tool.setTexture('anim-campfire', 0);
+        badge.tool.setScale((BADGE_SIZE * 0.8) / Math.max(badge.tool.width, badge.tool.height));
+        badge.tool.setAlpha(1);
       }
       badge.strike.setVisible(locked);
       badge
@@ -1314,11 +1339,24 @@ export async function createRenderer(container, miniCanvas) {
     // `single` action (one sword slash or bow shot) plays through once and holds too, so it reads
     // as one decisive swing rather than a repeating chop.
     const held = CLIPS[animator.clip]?.once || CLIPS[animator.clip]?.single;
+    const weapon = toolTier(state, 'sword') ? 'sword' : toolTier(state, 'bow') ? 'bow' : null;
+    // shortcut: the existing weapon art only faces sideways; add north/south art to extend this.
+    const holding =
+      combat?.drawn &&
+      weapon &&
+      !state.aboard &&
+      !animator.pending &&
+      !(animator.asleep > 0) &&
+      (animator.clip === 'idle' || animator.clip === 'hungry') &&
+      (state.player.direction === 1 || state.player.direction === 2);
+    const stance = holding
+      ? weapon + (toolTier(state, weapon) === 'stone' ? '' : 'Iron')
+      : animator.clip;
     const pose = resolvePose(
       sheets,
       state.character,
-      animator.clip,
-      animator.time,
+      stance,
+      holding ? 0 : animator.time,
       state.player.direction,
       animator.pending && !held ? true : undefined,
       animator.diagonal,
@@ -1445,6 +1483,7 @@ export async function createRenderer(container, miniCanvas) {
 
     nodesAt,
     tentAt,
+    campAt,
 
     /**
      * Makes the next frame jump straight to the player instead of gliding there.

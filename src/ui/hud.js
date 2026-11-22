@@ -11,7 +11,7 @@ import { NODES } from '../world/nodes.js';
 import { regionOf } from '../world/regions.js';
 import { regionProgress } from '../world/progress.js';
 import { clockLabel, phaseOf, timeOfDay } from '../world/clock.js';
-import { nearestCamp, campInReach } from '../world/camps.js';
+import { nearestCamp } from '../world/camps.js';
 import { describeNeed, needProgress } from '../world/needs.js';
 import { missingForRepair, listMissing } from '../actions/boat.js';
 import { chooseInteraction } from '../actions/interact.js';
@@ -73,10 +73,6 @@ const CENTRE_NAMES = ['pavilion', 'small hall', 'big hall'];
  * @returns {string} The same words, starting with a capital.
  */
 const capital = (words) => words[0].toUpperCase() + words.slice(1);
-
-// How long the controls strip stays up when nobody moves, and how long its fade-out takes.
-const KEY_STRIP_MS = 8000,
-  KEY_STRIP_FADE_MS = 600;
 
 // The word shown beside a meter for each cause meterTrends gives (a torch and tea also show their
 // seconds left).
@@ -273,12 +269,9 @@ function busyLabel(state, animator) {
  * Builds the HUD helpers for one game session.
  *
  * @param {object} session - The shared session; `update` reads its game state, animator and build mode.
- * @returns {{notify: Function, update: Function, showKeyStrip: Function, hideKeyStrip: Function}} A way to
- * pop up a message, a way to redraw the HUD, and ways to show and hide the controls strip.
+ * @returns {{notify: Function, update: Function}} Helpers to show messages and redraw the HUD.
  */
 export function createHud(session) {
-  let keyStripTimer;
-
   /**
    * Shows a short message above the player card for about three seconds.
    *
@@ -420,8 +413,7 @@ export function createHud(session) {
    *
    * The button matches what E would do (see core/input.js): "busy" while gathering, repairing or
    * crafting, "Place campfire" in build mode, then step ashore, board, repair or gather
-   * (chooseInteraction), "Open <camp>" beside one of the player's fires when none of those is in
-   * reach, and last of all a faded "Chop pine tree — needs an axe" beside a tree or rock whose tool
+   * (chooseInteraction), and last of all a faded "Chop pine tree — needs an axe" beside a tree or rock whose tool
    * the player lacks, with that tool's painted picture crossed out where the E was.
    *
    * @param {object} state - The game being played.
@@ -430,12 +422,11 @@ export function createHud(session) {
     const { animator, build } = session;
     const choice = chooseInteraction(state),
       busy = busyLabel(state, animator),
-      camp = !choice && !state.aboard && campInReach(state),
-      locked = !choice && !camp && !state.aboard && lockedNode(state),
+      locked = !choice && !state.aboard && lockedNode(state),
       button = $('interact'),
       label = button.querySelector('span');
     // The open build menu covers the button's spot (on phones fully), so the button waits until it closes.
-    button.hidden = build.menu || (!choice && !busy && !build.active && !camp && !locked);
+    button.hidden = build.menu || (!choice && !busy && !build.active && !locked);
     button.classList.toggle('busy', !!busy);
     button.classList.toggle('locked', !busy && !build.active && !!locked);
     // A locked button shows the missing tool's painted picture in place of the E (see style.css).
@@ -445,11 +436,8 @@ export function createHud(session) {
     else if (build.active)
       label.textContent = `Place ${build.kind === 'campfire' ? 'campfire' : buildingInfo(build.kind).name}`;
     else if (choice) label.textContent = actionLabel(state, choice);
-    else if (camp) label.textContent = `Open ${camp.name}`;
     else if (locked)
       label.textContent = `${locked.verb} ${locked.label.toLowerCase()} — needs ${toolInfo(locked.tool).aName}`;
-    // The controls strip sits where the action button and build menu appear, so it gives way.
-    if (!button.hidden || build.menu) hideKeyStrip();
 
     updateBuildMenu(state);
 
@@ -554,6 +542,12 @@ export function createHud(session) {
    */
   function updateTools(state) {
     const drawn = session.combat.drawn;
+    const weapon = $('weapon-toggle');
+    weapon.disabled = !state.tools.sword && !state.tools.bow;
+    weapon.classList.toggle('active', drawn && !weapon.disabled);
+    weapon.setAttribute('aria-pressed', String(drawn && !weapon.disabled));
+    $('auto-gather').classList.toggle('active', session.auto);
+    $('auto-gather').setAttribute('aria-pressed', String(session.auto));
     $('stance-marker').hidden = !drawn;
     for (const { id, name, weapon } of TOOLS) {
       const chip = $(`tool-${id}`),
@@ -600,32 +594,5 @@ export function createHud(session) {
     updateActions(state);
   }
 
-  /**
-   * Shows the controls strip at the bottom of the screen, then fades it after 8 seconds.
-   * Called each time the game screen opens.
-   */
-  function showKeyStrip() {
-    const strip = $('key-strip');
-    clearTimeout(keyStripTimer);
-    strip.classList.remove('fading');
-    strip.hidden = false;
-    keyStripTimer = setTimeout(hideKeyStrip, KEY_STRIP_MS);
-  }
-
-  /**
-   * Fades the controls strip out and then hides it. Does nothing if it is already hidden or
-   * fading, so the game loop can call it on every step without cost.
-   */
-  function hideKeyStrip() {
-    const strip = $('key-strip');
-    if (strip.hidden || strip.classList.contains('fading')) return;
-    clearTimeout(keyStripTimer);
-    strip.classList.add('fading');
-    keyStripTimer = setTimeout(() => {
-      strip.hidden = true;
-      strip.classList.remove('fading');
-    }, KEY_STRIP_FADE_MS);
-  }
-
-  return { notify, update, showKeyStrip, hideKeyStrip };
+  return { notify, update };
 }
