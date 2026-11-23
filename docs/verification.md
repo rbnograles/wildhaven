@@ -524,21 +524,9 @@ Not yet browser-checked. Once the Spring world spawns animals, play through with
 - A gold or diamond weapon shows the iron picture and its tier name in the tools row and Build menu.
 - Layout at about 390 px wide (stance marker wraps), and no console errors.
 
+## Responsive world camera (2026-11-23)
 
-## 2026-11-22 — Auto-gather, weapon stance and HUD layout
-
-- Implemented `docs/superpowers/specs/2026-11-21-autogather-weapon-hud-design.md`.
-- `npm test`: 364 passed. New picker tests cover tool eligibility, depletion, exclusions, no candidates and the 2000-unit bound. Added a missing comment to the existing progress-test helper so the repository comment check passes.
-- `npm run build`, `npm run format:check`, and `git diff --check`: passed. Build retains existing mixed JSON-import and large-chunk warnings.
-- Used the running `wildhaven` dev server at `http://127.0.0.1:5173` in an isolated Playwright Edge profile. Browser-only interception exposed the session for controlled fixtures; no debug globals were added to source. Existing real-browser saves were not used.
-- Scout: clicked Gather, observed walking, a pending berry gather with auto still true, and its award with auto still true. Movement immediately cleared auto and the walk. G followed by B stopped auto and opened Build.
-- Builder and Survivor: each collected two nodes consecutively with auto still enabled; the pause button stopped automation. Full inventory produced `Bag is full`; marking nearby supplies depleted produced `Nothing nearby to gather` and disabled automation.
-- All three characters: weapon button toggled and lit, Q sheathed; inspected stone sword (Scout), iron sword (Builder), and iron bow (Survivor) held poses. Inspected mirrored west bow while hungry and north fallback without held art. No owned weapon leaves the HUD button disabled.
-- Inspected desktop 1440x900 and phone 390x844 screenshots. Player card, visible scrollable objective, bottom items, minimap and touch arrows stay separated. Explicit card/banner rectangle checks also passed at widths 1001, 1280 and 390. Review caught and fixed the intermediate desktop overlap and hungry stance omission.
-- Browser console contained playtest information only, no errors. Directly swapping test characters initially produced the expected save-session mismatch notice; later fixtures stubbed writes. This was test setup, not a live save failure.
-- Screenshots and replay snippets: `output/playwright/autogather-*` and `output/playwright/weapon-*` (local ignored artifacts).
-- Limits: north/south held-weapon art remains out of scope. Live wolf combat, sailing and sleep were not replayed in this pass; their existing paths remain covered by the unit suite and code review.
-
-## 2026-11-22 — Removed keyboard shortcut strip
-
-Removed the startup shortcut strip, its timers, callers and unused CSS. Production build, targeted Prettier check and git diff --check passed. Isolated Edge browser check on 127.0.0.1:5173 confirmed the game starts, the strip is absent, and Build opens without page errors. Keyboard bindings and journal controls remain available.
+- Checked the Scout at `127.0.0.1:5173` in Playwright Edge at 360×732 mobile and 921×920 desktop sizes.
+- At 360 px wide, the camera now uses 0.75 zoom and shows about 7.5 map tiles across instead of 6.25; the character, HUD, item box, touch controls and minimap remain readable and separated.
+- Desktop keeps the existing 1.08 zoom. Opening the pause dialog worked, and both viewports logged no console warnings or errors.
+- Not checked: 320 px phones, mobile landscape orientation, or the other two character starts.

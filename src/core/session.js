@@ -61,8 +61,6 @@ export function createSession() {
     combat: { drawn: false, aiming: null },
     hover: null,
     walk: null,
-    auto: false,
-    autoSkipped: new Set(),
   };
 }
 
@@ -79,8 +77,6 @@ export function changeScreen(session, next) {
   session.screen = next;
   session.keys.clear();
   session.walk = null;
-  session.auto = false;
-  session.autoSkipped.clear();
   for (const name of ['selection', 'loading', 'game']) $(name).hidden = name !== next;
   document.body.classList.toggle('playing', next === 'game');
 }
@@ -180,6 +176,7 @@ export async function start(session, ui, fresh = false) {
     const arrived = discover(state);
     session.renderer.resetCamera();
     changeScreen(session, 'game');
+    ui.hud.showKeyStrip();
     setActive(tabStorage, state.character);
     Object.assign(session.clock, { last: performance.now(), sinceSave: 0, sinceHud: 0 });
     ui.hud.update();
