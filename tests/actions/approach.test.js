@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GATHER_RANGE, CAMP_REACH } from '../../src/data/balance.js';
+import { GATHER_RANGE } from '../../src/data/balance.js';
 import { NODES } from '../../src/world/nodes.js';
 import { createGame } from '../../src/game/state.js';
 import { movePlayer, footing, stepLength } from '../../src/actions/move.js';
@@ -12,7 +12,6 @@ import { aimState } from '../../src/actions/gather.js';
 import {
   planApproach,
   beginApproach,
-  beginCampApproach,
   approachStep,
   eightWay,
   standSpot,
@@ -160,26 +159,4 @@ test('a movement is rounded to the nearest of eight directions', () => {
   assert.deepEqual(eightWay(-1, -10), { dx: 0, dy: -1 });
   assert.deepEqual(eightWay(-7, 6), { dx: -1, dy: 1 });
   assert.deepEqual(eightWay(0, 0), { dx: 0, dy: 0 });
-});
-
-// Camp walks must use camp reach, keep the selected camp, and stay on walkable ground.
-test('a campfire walk reaches the selected camp and cannot start aboard', () => {
-  const game = createGame('scout');
-  const target = farTargets(game).find((node) => planApproach(game, node));
-  const camp = { id: 'clicked-camp', name: 'Test camp', x: target.x, y: target.y, buildings: [] };
-  game.camps.push(camp);
-  const walk = beginCampApproach(game, camp);
-  assert.ok(walk);
-  assert.equal(walk.camp, camp);
-  const free = footing(game);
-  for (const spot of walk.path) assert.ok(free(spot.x, spot.y));
-  for (let frame = 0; frame < 3000 && apart(game.player, camp) > CAMP_REACH; frame++) {
-    const push = approachStep(game, walk, stepLength(game, 1 / 60));
-    assert.ok(push, 'path ends within camp reach');
-    movePlayer(game, push.dx, push.dy, 1 / 60);
-  }
-  assert.ok(apart(game.player, camp) <= CAMP_REACH);
-  assert.deepEqual(beginCampApproach(game, camp).path, []);
-  game.aboard = true;
-  assert.equal(beginCampApproach(game, camp), null);
 });

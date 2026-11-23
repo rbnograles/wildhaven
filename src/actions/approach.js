@@ -7,7 +7,6 @@ import { footing } from './move.js';
 import { OBJECT_SPECS } from '../world/map.js';
 import {
   GATHER_RANGE,
-  CAMP_REACH,
   APPROACH_CELL,
   APPROACH_SPAN,
   APPROACH_MARGIN,
@@ -325,14 +324,4 @@ export function eightWay(dx, dy) {
   const ax = Math.abs(dx),
     ay = Math.abs(dy);
   return { dx: ax > ay * 0.41 ? Math.sign(dx) : 0, dy: ay > ax * 0.41 ? Math.sign(dy) : 0 };
-}
-
-/** Plans a walk to the selected campfire, stopping within opening distance. */
-export function beginCampApproach(state, camp) {
-  if (state.aboard) return null;
-  const path =
-    Math.hypot(camp.x - state.player.x, camp.y - state.player.y) <= CAMP_REACH
-      ? []
-      : findPath(footing(state), state.player, camp, CAMP_REACH - APPROACH_MARGIN);
-  return path && { camp, path, i: 0, stuck: 0, retried: false };
 }
